@@ -6,11 +6,15 @@ import { ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC7
 import { ISPAssetNFT } from "./ISPAssetNFT.sol";
 
 contract SPAssetNFT is ISPAssetNFT, OwnableUpgradeable, ERC721Upgradeable {
-
-    string public constant override version = "0.1.0";
+    
+    string public constant _version = "0.1.0";
 
     constructor() {
         _disableInitializers();
+    }
+
+    function version() virtual override external pure returns (string memory) {
+        return _version;
     }
 
     function initialize(string calldata name, string calldata symbol) public initializer {
