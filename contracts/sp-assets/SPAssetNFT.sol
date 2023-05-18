@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
+import { ISPAssetNFT } from "./ISPAssetNFT.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import { ISPAssetNFT } from "./ISPAssetNFT.sol";
+import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 
 contract SPAssetNFT is ISPAssetNFT, OwnableUpgradeable, ERC721Upgradeable {
     
@@ -25,6 +26,12 @@ contract SPAssetNFT is ISPAssetNFT, OwnableUpgradeable, ERC721Upgradeable {
 
     function mint(address to, uint256 id) external onlyOwner {
         _safeMint(to, id);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721Upgradeable, IERC165Upgradeable) returns (bool) {
+        return
+            interfaceId == type(ISPAssetNFT).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     uint256[50] private __gap;

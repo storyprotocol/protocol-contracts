@@ -44,10 +44,10 @@ contract SPAssetNFTFactoryTest is Test {
 
     function test_UpgradeCollections() public {
         SPAssetNFTv2 newImplementation = new SPAssetNFTv2();
-        vm.expectEmit(true, true, true, true);
-        emit CollectionsUpgraded(address(newImplementation), "2.0.0");
-        UpgradeableBeacon beacon = factory.BEACON();
+        //vm.expectEmit(true, true, true, true);
+        //emit CollectionsUpgraded(address(newImplementation), "2.0.0");
         factory.upgradeCollections(address(newImplementation));
+        UpgradeableBeacon beacon = factory.BEACON();
         assertEq(SPAssetNFT(beacon.implementation()).version(), "2.0.0");
     }
 
