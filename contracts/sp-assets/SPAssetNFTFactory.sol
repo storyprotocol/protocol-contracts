@@ -2,19 +2,20 @@
 
 pragma solidity ^0.8.13;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
-import {SPAssetNFT} from "./SPAssetNFT.sol";
-import {ZeroAddress} from "../errors/General.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import { SPAssetNFT } from "./SPAssetNFT.sol";
+import { ZeroAddress } from "../errors/General.sol";
 
 contract SPAssetNFTFactory is Ownable {
-    address public immutable template;
-    UpgradeableBeacon public immutable beacon;
+
+    event CollectionCreated(address indexed collection, string name, string indexed symbol);
+
+    UpgradeableBeacon public immutable BEACON;
 
     constructor() {
-        template = address(new SPAssetNFT());
-        beacon = new UpgradeableBeacon(template);
+        BEACON = new UpgradeableBeacon(address(new SPAssetNFT()));
     }
 
     function createCollection(
@@ -26,13 +27,14 @@ contract SPAssetNFTFactory is Ownable {
             name,
             symbol
         );
-        address proxy = address(new BeaconProxy(address(beacon), data));
+        address proxy = address(new BeaconProxy(address(BEACON), data));
+        emit CollectionCreated(proxy, name, symbol);
         return proxy;
     }
 
-    function upgradeBeacons(address newImplementation) external onlyOwner {
+    function upgradeCollections(address newImplementation) external onlyOwner {
         if (newImplementation == address(0))
             revert ZeroAddress("newImplementation");
-        beacon.upgradeTo(newImplementation);
+            BEACON.upgradeTo(newImplementation);
     }
 }
