@@ -6,14 +6,11 @@ import "../../contracts/franchises/SPFranchiseNFTFactory.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { IERC1967 } from "@openzeppelin/contracts/interfaces/IERC1967.sol";
 
-contract SPFranchiseNFTv2 is SPFranchiseNFT {
-    function version() virtual override external pure returns (string memory) {
-        return "2.0.0";
-    }
-}
 
 contract SPFranchiseNFTFactoryTest is Test {
     SPFranchiseNFTFactory public factory;
+    SPFranchiseNFT public franchise;
+    address owner = address(this);
 
     event CollectionCreated(address indexed collection, string name, string indexed symbol);
     event CollectionsUpgraded(address indexed newImplementation, string version);
@@ -21,6 +18,16 @@ contract SPFranchiseNFTFactoryTest is Test {
 
     function setUp() public {
         factory = new SPFranchiseNFTFactory();
+        franchise = SPFranchiseNFT(factory.createFranchise("name", "symbol", "description"));
+    }
+
+    function test_setUp() public {
+        assertEq(franchise.name(), "name");
+        assertEq(franchise.symbol(), "symbol");
+        assertEq(franchise.description(), "description");
+        assertEq(franchise.version(), "0.1.0");
+        assertEq(franchise.owner(), address(factory));
+
     }
 
 

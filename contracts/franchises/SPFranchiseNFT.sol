@@ -76,7 +76,6 @@ contract SPFranchiseNFT is ISPFranchiseNFT, OwnableUpgradeable, ERC721Upgradeabl
         revert InvalidStoryBlock(sb);
     }
 
-
     function supportsInterface(
         bytes4 interfaceId
     )
