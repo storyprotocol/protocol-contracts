@@ -6,7 +6,6 @@ import { IStoryBlockAware } from "../IStoryBlockAware.sol";
 import { Unauthorized, ZeroAddress } from "../errors/General.sol";
 import { ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
-import "hardhat/console.sol";
 
 contract SPFranchiseNFT is ISPFranchiseNFT, ERC721Upgradeable {
 

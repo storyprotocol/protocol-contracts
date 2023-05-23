@@ -4,9 +4,9 @@ pragma solidity ^0.8.13;
 import { SPFranchiseNFT } from "../../contracts/franchises/SPFranchiseNFT.sol";
 import { SPFranchiseNFTFactory } from "../../contracts/franchises/SPFranchiseNFTFactory.sol";
 import { IStoryBlockAware } from "../../contracts/IStoryBlockAware.sol";
-import "forge-std/Test.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { IERC1967 } from "@openzeppelin/contracts/interfaces/IERC1967.sol";
+import "forge-std/Test.sol";
 
 contract SPFranchiseNFTTest is Test, IStoryBlockAware {
     using stdStorage for StdStorage;
