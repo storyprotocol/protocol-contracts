@@ -8,10 +8,15 @@ import "../../contracts/access-control/AccessControlSingleton.sol";
 import "../../contracts/franchises/SPFranchiseNFTFactory.sol";
 
 contract SPRegistryTest is Test, ProxyHelper {
+
+    event FranchiseRegistered(address indexed to, uint256 indexed franchiseId, address indexed nftAddress);
+    event FranchiseCreated(address indexed collection, string name, string indexed symbol);
+
     SPFranchiseNFTFactory public factory;
     SPRegistry public register;
 
     address admin;
+    address franchiseAdmin = address(0x234);
 
     function setUp() public {
         factory = new SPFranchiseNFTFactory();
@@ -26,6 +31,16 @@ contract SPRegistryTest is Test, ProxyHelper {
                 )
             )
         );
+    }
+
+    function test_registerFranchise() public {
+        vm.expectEmit(false, true, true, true);
+        emit FranchiseCreated(address(0x123), "name", "symbol");
+        vm.expectEmit(true, true, false, true);
+        emit FranchiseRegistered(franchiseAdmin, 1, address(0x123));
+        address franchise = register.registerFranchise(franchiseAdmin, "name", "symbol", "description");
+        assertEq(register.franchiseContract(1), franchise, "franchise address");
+        assertEq(register.ownerOf(1), franchiseAdmin, "owner");
     }
 
    

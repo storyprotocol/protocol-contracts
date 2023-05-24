@@ -11,8 +11,6 @@ import "forge-std/Test.sol";
 contract SPFranchiseNFTTest is Test, IStoryBlockAware {
     using stdStorage for StdStorage;
 
-    event CollectionCreated(address indexed collection, string name, string indexed symbol);
-    event CollectionsUpgraded(address indexed newImplementation, string version);
     event BeaconUpgraded(address indexed beacon);
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
 

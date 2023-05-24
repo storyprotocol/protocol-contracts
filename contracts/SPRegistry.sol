@@ -11,6 +11,8 @@ import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC
 
 contract SPRegistry is UUPSUpgradeable, AccessControlled, ERC721Upgradeable, IStoryBlockAware {
 
+    event FranchiseRegistered(address indexed to, uint256 indexed franchiseId, address indexed nftAddress);
+
     error AlreadyRegistered();
 
     uint256 _franchiseIds;
@@ -20,7 +22,6 @@ contract SPRegistry is UUPSUpgradeable, AccessControlled, ERC721Upgradeable, ISt
     SPFranchiseNFTFactory public immutable FACTORY;
     uint256 public constant PROTOCOL_ROOT_ID = 0;
     address public constant PROTOCOL_ROOT_ADDRESS = address(0);
-
 
     constructor(address _factory) {
         _disableInitializers();
@@ -34,22 +35,17 @@ contract SPRegistry is UUPSUpgradeable, AccessControlled, ERC721Upgradeable, ISt
         __ERC721_init("Story Protocol", "SP");
     }
 
-    /**
-    function createRegister(
-        string calldata name,
-        string calldata symbol,
-        string calldata description,
-    ) public onlyValidRegisteryType(regType) returns (address) {
-        if (isRegistered(franchiseId, collection)) revert AlreadyRegistered();
-        address collection = FACTORY.createCollection(name, symbol);
-        _registers[franchiseId][collection] = Register({
-            name: name,
-            description: description,
-            regType: regType
-        });
-        return collection;
+    function registerFranchise(address to, string calldata name, string calldata symbol, string calldata description) external returns(address) {
+        address franchise = FACTORY.createFranchise(name, symbol, description);
+        _franchises[++_franchiseIds] = franchise;
+        _safeMint(to, _franchiseIds);
+        emit FranchiseRegistered(to, _franchiseIds, franchise);
+        return franchise;
     }
-    */
+
+    function franchiseContract(uint256 franchiseId) public view returns(address) {
+        return _franchises[franchiseId];
+    }
 
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyRole(UPGRADER_ROLE) {
     }
