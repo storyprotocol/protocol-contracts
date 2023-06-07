@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import { ISPFranchiseNFT } from "./ISPFranchiseNFT.sol";
+import { IStoryBlocksRegistry } from "./IStoryBlocksRegistry.sol";
 import { IStoryBlockAware } from "../IStoryBlockAware.sol";
 import { Unauthorized, ZeroAddress } from "../errors/General.sol";
 import { ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 
-contract SPFranchiseNFT is ISPFranchiseNFT, ERC721Upgradeable {
+contract StoryBlocksRegistry is IStoryBlocksRegistry, ERC721Upgradeable {
 
     event StoryBlockMinted(address indexed to, StoryBlock indexed sb, uint256 indexed tokenId);
 
@@ -89,7 +89,7 @@ contract SPFranchiseNFT is ISPFranchiseNFT, ERC721Upgradeable {
         returns (bool)
     {
         return
-            interfaceId == type(ISPFranchiseNFT).interfaceId ||
+            interfaceId == type(IStoryBlocksRegistry).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 

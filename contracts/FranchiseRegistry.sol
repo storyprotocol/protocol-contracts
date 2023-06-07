@@ -2,14 +2,14 @@
 pragma solidity ^0.8.13;
 
 import { IStoryBlockAware } from "./IStoryBlockAware.sol";
-import { SPFranchiseNFTFactory } from "./franchises/SPFranchiseNFTFactory.sol";
+import { StoryBlocksRegistryFactory } from "./franchises/StoryBlocksRegistryFactory.sol";
 import { AccessControlled } from "./access-control/AccessControlled.sol";
 import { UPGRADER_ROLE } from "./access-control/ProtocolRoles.sol";
 import { ZeroAddress } from "./errors/General.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
-contract SPRegistry is UUPSUpgradeable, AccessControlled, ERC721Upgradeable, IStoryBlockAware {
+contract FranchiseRegistry is UUPSUpgradeable, AccessControlled, ERC721Upgradeable, IStoryBlockAware {
 
     error AlreadyRegistered();
 
@@ -17,7 +17,7 @@ contract SPRegistry is UUPSUpgradeable, AccessControlled, ERC721Upgradeable, ISt
     // Franchise id => Collection address
     mapping(uint256 => address) public _franchises;
 
-    SPFranchiseNFTFactory public immutable FACTORY;
+    StoryBlocksRegistryFactory public immutable FACTORY;
     uint256 public constant PROTOCOL_ROOT_ID = 0;
     address public constant PROTOCOL_ROOT_ADDRESS = address(0);
 
@@ -25,7 +25,7 @@ contract SPRegistry is UUPSUpgradeable, AccessControlled, ERC721Upgradeable, ISt
     constructor(address _factory) {
         _disableInitializers();
         if (_factory == address(0)) revert ZeroAddress("factory");
-        FACTORY = SPFranchiseNFTFactory(_factory);
+        FACTORY = StoryBlocksRegistryFactory(_factory);
     }
 
     function initialize(address accessControl) public initializer {

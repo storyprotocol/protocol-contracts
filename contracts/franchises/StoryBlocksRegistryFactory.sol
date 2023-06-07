@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.13;
 
-import { ISPFranchiseNFT } from "./ISPFranchiseNFT.sol";
-import { SPFranchiseNFT } from "./SPFranchiseNFT.sol";
+import { IStoryBlocksRegistry } from "./IStoryBlocksRegistry.sol";
+import { StoryBlocksRegistry } from "./StoryBlocksRegistry.sol";
 import { ZeroAddress } from "../errors/General.sol";
 import { IVersioned } from "../utils/IVersioned.sol";
 import { UnsupportedInterface } from "../errors/General.sol";
@@ -13,7 +13,7 @@ import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC16
 import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
 
-contract SPFranchiseNFTFactory is Ownable {
+contract StoryBlocksRegistryFactory is Ownable {
     using ERC165Checker for address;
 
     event FranchiseCreated(address indexed collection, string name, string indexed symbol);
@@ -22,7 +22,7 @@ contract SPFranchiseNFTFactory is Ownable {
     UpgradeableBeacon public immutable BEACON;
 
     constructor() {
-        BEACON = new UpgradeableBeacon(address(new SPFranchiseNFT()));
+        BEACON = new UpgradeableBeacon(address(new StoryBlocksRegistry()));
     }
 
     function createFranchise(
@@ -42,7 +42,7 @@ contract SPFranchiseNFTFactory is Ownable {
     }
 
     function upgradeFranchises(address newImplementation) external onlyOwner {
-        if (!newImplementation.supportsInterface(type(ISPFranchiseNFT).interfaceId)) revert UnsupportedInterface("ISPFranchiseNFT");
+        if (!newImplementation.supportsInterface(type(IStoryBlocksRegistry).interfaceId)) revert UnsupportedInterface("IStoryBlocksRegistry");
         BEACON.upgradeTo(newImplementation);
         emit FranchisesUpgraded(address(newImplementation), IVersioned(newImplementation).version());
     }

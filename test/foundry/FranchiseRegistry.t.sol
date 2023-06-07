@@ -3,22 +3,22 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import './utils/ProxyHelper.sol';
-import "../../contracts/SPRegistry.sol";
+import "../../contracts/FranchiseRegistry.sol";
 import "../../contracts/access-control/AccessControlSingleton.sol";
-import "../../contracts/franchises/SPFranchiseNFTFactory.sol";
+import "../../contracts/franchises/StoryBlocksRegistryFactory.sol";
 
-contract SPRegistryTest is Test, ProxyHelper {
-    SPFranchiseNFTFactory public factory;
-    SPRegistry public register;
+contract FranchiseRegistryTest is Test, ProxyHelper {
+    StoryBlocksRegistryFactory public factory;
+    FranchiseRegistry public register;
 
     address admin;
 
     function setUp() public {
-        factory = new SPFranchiseNFTFactory();
+        factory = new StoryBlocksRegistryFactory();
         address accessControl = address(new AccessControlSingleton());
         
-        SPRegistry impl = new SPRegistry(address(factory));
-        register = SPRegistry(
+        FranchiseRegistry impl = new FranchiseRegistry(address(factory));
+        register = FranchiseRegistry(
             _deployUUPSProxy(
                 address(impl),
                 abi.encodeWithSelector(
