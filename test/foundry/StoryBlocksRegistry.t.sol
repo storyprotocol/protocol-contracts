@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BUSDL-1.1
 pragma solidity ^0.8.13;
 
-import { SPFranchiseNFT } from "../../contracts/franchises/SPFranchiseNFT.sol";
-import { SPFranchiseNFTFactory } from "../../contracts/franchises/SPFranchiseNFTFactory.sol";
+import { StoryBlocksRegistry } from "../../contracts/franchises/StoryBlocksRegistry.sol";
+import { StoryBlocksRegistryFactory } from "../../contracts/franchises/StoryBlocksRegistryFactory.sol";
 import { IStoryBlockAware } from "../../contracts/IStoryBlockAware.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { IERC1967 } from "@openzeppelin/contracts/interfaces/IERC1967.sol";
 import "forge-std/Test.sol";
 
-contract SPFranchiseNFTTest is Test, IStoryBlockAware {
+contract StoryBlocksRegistryTest is Test, IStoryBlockAware {
     using stdStorage for StdStorage;
 
     event CollectionCreated(address indexed collection, string name, string indexed symbol);
@@ -18,8 +18,8 @@ contract SPFranchiseNFTTest is Test, IStoryBlockAware {
 
     error IdOverBounds();
 
-    SPFranchiseNFTFactory public factory;
-    SPFranchiseNFT public franchise;
+    StoryBlocksRegistryFactory public factory;
+    StoryBlocksRegistry public franchise;
     address owner = address(this);
     address mintee = address(1);
 
@@ -32,8 +32,8 @@ contract SPFranchiseNFTTest is Test, IStoryBlockAware {
     uint256 private constant _LAST_ID = _ID_RANGE + _FIRST_ID_LOCATION;
 
     function setUp() public {
-        factory = new SPFranchiseNFTFactory();
-        franchise = SPFranchiseNFT(factory.createFranchise("name", "symbol", "description"));
+        factory = new StoryBlocksRegistryFactory();
+        franchise = StoryBlocksRegistry(factory.createFranchise("name", "symbol", "description"));
     }
 
     function test_setUp() public {

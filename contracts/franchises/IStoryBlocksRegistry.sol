@@ -11,6 +11,6 @@ import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ER
  * @author 
  * @notice WARNING: Non upgradeable contract, but part of the Beacon
  */
-interface ISPFranchiseNFT is IVersioned, IERC165Upgradeable, IERC721Upgradeable, IStoryBlockAware {
+interface IStoryBlocksRegistry is IVersioned, IERC165Upgradeable, IERC721Upgradeable, IStoryBlockAware {
     function mint(address to, StoryBlock sb) external;
 }
