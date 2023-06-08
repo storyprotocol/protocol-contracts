@@ -3,19 +3,20 @@ pragma solidity ^0.8.13;
 
 import { IStoryBlockAware } from "./IStoryBlockAware.sol";
 import { StoryBlocksRegistryFactory } from "./franchises/StoryBlocksRegistryFactory.sol";
-import { AccessControlled } from "./access-control/AccessControlled.sol";
+import { AccessControlledUpgradeable } from "./access-control/AccessControlledUpgradeable.sol";
 import { UPGRADER_ROLE } from "./access-control/ProtocolRoles.sol";
 import { ZeroAddress } from "./errors/General.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
-contract FranchiseRegistry is UUPSUpgradeable, AccessControlled, ERC721Upgradeable, IStoryBlockAware {
+contract FranchiseRegistry is UUPSUpgradeable, AccessControlledUpgradeable, ERC721Upgradeable, IStoryBlockAware {
 
+    event FranchiseRegistered(address owner, uint256 id, address storyBlocksContract);
     error AlreadyRegistered();
 
     uint256 _franchiseIds;
     // Franchise id => Collection address
-    mapping(uint256 => address) public _franchises;
+    mapping(uint256 => address) public _storyBlocks;
 
     StoryBlocksRegistryFactory public immutable FACTORY;
     uint256 public constant PROTOCOL_ROOT_ID = 0;
@@ -30,26 +31,21 @@ contract FranchiseRegistry is UUPSUpgradeable, AccessControlled, ERC721Upgradeab
 
     function initialize(address accessControl) public initializer {
         __UUPSUpgradeable_init();
-        __AccessControlled_init(accessControl);
+        __AccessControlledUpgradeable_init(accessControl);
         __ERC721_init("Story Protocol", "SP");
     }
 
-    /**
-    function createRegister(
-        string calldata name,
-        string calldata symbol,
-        string calldata description,
-    ) public onlyValidRegisteryType(regType) returns (address) {
-        if (isRegistered(franchiseId, collection)) revert AlreadyRegistered();
-        address collection = FACTORY.createCollection(name, symbol);
-        _registers[franchiseId][collection] = Register({
-            name: name,
-            description: description,
-            regType: regType
-        });
-        return collection;
+    function registerFranchise(address to, string calldata name, string calldata symbol, string calldata description) external returns(address) {
+        address franchise = FACTORY.createFranchise(name, symbol, description);
+        _storyBlocks[++_franchiseIds] = franchise;
+        _safeMint(to, _franchiseIds);
+        emit FranchiseRegistered(to, _franchiseIds, franchise);
+        return franchise;
     }
-    */
+
+    function storyBlocksContract(uint256 franchiseId) public view returns(address) {
+        return _storyBlocks[franchiseId];
+    }
 
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyRole(UPGRADER_ROLE) {
     }
