@@ -25,13 +25,15 @@ contract StoryBlocksRegistryFactory is Ownable {
         BEACON = new UpgradeableBeacon(address(new StoryBlocksRegistry()));
     }
 
-    function createFranchise(
+    function createFranchiseBlocks(
+        uint256 franchiseId,
         string calldata name,
         string calldata symbol,
         string calldata description
     ) external returns (address) {
         bytes memory data = abi.encodeWithSelector(
-            bytes4(keccak256(bytes("initialize(string,string,string)"))),
+            bytes4(keccak256(bytes("initialize(uint256,string,string,string)"))),
+            franchiseId,
             name,
             symbol,
             description

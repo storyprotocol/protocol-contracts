@@ -8,16 +8,20 @@ import { ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC7
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 
 contract StoryBlocksRegistry is IStoryBlocksRegistry, ERC721Upgradeable {
-
-    event StoryBlockMinted(address indexed to, StoryBlock indexed sb, uint256 indexed tokenId);
+    event StoryBlockMinted(
+        address indexed to,
+        StoryBlock indexed sb,
+        uint256 indexed tokenId
+    );
 
     error IdOverBounds();
 
     mapping(StoryBlock => uint256) private _ids;
     string public description;
+    uint256 public franchiseId;
 
     string private constant _version = "0.1.0";
-    uint256 private constant _ID_RANGE = 10**12;
+    uint256 private constant _ID_RANGE = 10 ** 12;
     uint256 private constant _ZERO_ID_STORY = 0;
     uint256 private constant _ZERO_ID_CHARACTER = _ID_RANGE + _ZERO_ID_STORY;
     uint256 private constant _ZERO_ID_ART = _ID_RANGE + _ZERO_ID_CHARACTER;
@@ -34,29 +38,37 @@ contract StoryBlocksRegistry is IStoryBlocksRegistry, ERC721Upgradeable {
     }
 
     function initialize(
+        uint256 _franchiseId,
         string calldata _name,
         string calldata _symbol,
         string calldata _description
     ) public initializer {
         __ERC721_init(_name, _symbol);
-        description = _description; 
+        if (_franchiseId == 0) revert ZeroAddress("franchiseId");
+        franchiseId = _franchiseId;
+        description = _description;
         // _setBaseURI("https://api.splinterlands.io/asset/");
     }
 
-    function mint(address to, StoryBlock sb) external {
+    function mint(
+        address to,
+        StoryBlock sb
+    ) external returns (uint256) {
         uint256 nextId = currentIdFor(sb) + 1;
         if (nextId > lastId(sb)) revert IdOverBounds();
         _ids[sb] = nextId;
         _safeMint(to, nextId);
         emit StoryBlockMinted(to, sb, nextId);
+        return nextId;
     }
+
 
     function currentIdFor(StoryBlock sb) public view returns (uint256) {
         if (_ids[sb] == 0) {
             return zeroId(sb);
         } else {
             unchecked {
-                return _ids[sb];   
+                return _ids[sb];
             }
         }
     }

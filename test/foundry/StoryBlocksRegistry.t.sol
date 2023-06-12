@@ -33,7 +33,7 @@ contract StoryBlocksRegistryTest is Test, IStoryBlockAware {
 
     function setUp() public {
         factory = new StoryBlocksRegistryFactory();
-        franchise = StoryBlocksRegistry(factory.createFranchise("name", "symbol", "description"));
+        franchise = StoryBlocksRegistry(factory.createFranchiseBlocks(1, "name", "symbol", "description"));
     }
 
     function test_setUp() public {

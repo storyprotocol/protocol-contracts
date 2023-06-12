@@ -32,13 +32,13 @@ contract StoryBlocksRegistryFactoryTest is Test {
         assertEq(StoryBlocksRegistry(beacon.implementation()).version(), "0.1.0");
     }
 
-    function test_CreateFranchise() public {
+    function test_CreateFranchiseBlocks() public {
         vm.expectEmit(false, true, true, true);
         emit FranchiseCreated(address(0x123), "name", "symbol");
         // TODO: figure why this is not matching correctly, the event is emitted according to traces
         // vm.expectEmit();
         // emit BeaconUpgraded(address(0x123));
-        address collection = factory.createFranchise("name", "symbol", "description");
+        address collection = factory.createFranchiseBlocks(1, "name", "symbol", "description");
         assertTrue(collection != address(0));
         assertEq(StoryBlocksRegistry(collection).name(), "name");
         assertEq(StoryBlocksRegistry(collection).symbol(), "symbol");

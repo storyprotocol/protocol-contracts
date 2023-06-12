@@ -12,5 +12,5 @@ import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ER
  * @notice WARNING: Non upgradeable contract, but part of the Beacon
  */
 interface IStoryBlocksRegistry is IVersioned, IERC165Upgradeable, IERC721Upgradeable, IStoryBlockAware {
-    function mint(address to, StoryBlock sb) external;
+    function mint(address to, StoryBlock sb) external returns(uint256);
 }

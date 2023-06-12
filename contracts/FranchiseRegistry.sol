@@ -35,12 +35,12 @@ contract FranchiseRegistry is UUPSUpgradeable, AccessControlledUpgradeable, ERC7
         __ERC721_init("Story Protocol", "SP");
     }
 
-    function registerFranchise(address to, string calldata name, string calldata symbol, string calldata description) external returns(address) {
-        address franchise = FACTORY.createFranchise(name, symbol, description);
-        _storyBlocks[++_franchiseIds] = franchise;
+    function registerFranchise(address to, string calldata name, string calldata symbol, string calldata description) external returns(uint256, address) {
+        address storyBlocksRegistry = FACTORY.createFranchiseBlocks(++_franchiseIds, name, symbol, description);
+        _storyBlocks[_franchiseIds] = storyBlocksRegistry;
         _safeMint(to, _franchiseIds);
-        emit FranchiseRegistered(to, _franchiseIds, franchise);
-        return franchise;
+        emit FranchiseRegistered(to, _franchiseIds, storyBlocksRegistry);
+        return (_franchiseIds, storyBlocksRegistry);
     }
 
     function storyBlocksContract(uint256 franchiseId) public view returns(address) {
