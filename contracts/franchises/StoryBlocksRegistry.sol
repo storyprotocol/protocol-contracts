@@ -91,6 +91,15 @@ contract StoryBlocksRegistry is IStoryBlocksRegistry, ERC721Upgradeable {
         revert InvalidStoryBlock(sb);
     }
 
+    function storyBlockTypeFor(uint256 id) public pure returns (StoryBlock) {
+        if (id >= _ZERO_ID_STORY && id < _ZERO_ID_CHARACTER) return StoryBlock.STORY;
+        if (id >= _ZERO_ID_CHARACTER && id < _ZERO_ID_ART) return StoryBlock.CHARACTER;
+        if (id >= _ZERO_ID_ART && id < _ZERO_ID_GROUP) return StoryBlock.ART;
+        if (id >= _ZERO_ID_GROUP && id < _ZERO_ID_LOCATION) return StoryBlock.GROUP;
+        if (id >= _ZERO_ID_LOCATION && id < _LAST_ID) return StoryBlock.LOCATION;
+        return StoryBlock.UNDEFINED;
+    }
+
     function supportsInterface(
         bytes4 interfaceId
     )
