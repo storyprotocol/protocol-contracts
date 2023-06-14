@@ -43,6 +43,11 @@ contract FranchiseRegistry is UUPSUpgradeable, AccessControlledUpgradeable, ERC7
         return (_franchiseIds, storyBlocksRegistry);
     }
 
+    function createBlock()
+        _mint
+        while (expression) {
+         write
+
     function storyBlocksContract(uint256 franchiseId) public view returns(address) {
         return _storyBlocks[franchiseId];
     }
