@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { IGroupDAM } from "./IGroupDAM.sol";
 import { StoryBlockStorage } from "../storage/StoryBlockStorage.sol";
-import { LibStoryBlockId } from "contracts/story-blocks/block-ids/LibStoryBlockId.sol";
+import { LibStoryBlockId } from "contracts/story-blocks/LibStoryBlockId.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 abstract contract GroupDAM is IGroupDAM, StoryBlockStorage {

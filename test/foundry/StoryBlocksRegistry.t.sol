@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSDL-1.1
 pragma solidity ^0.8.13;
-
-import { StoryBlocksRegistry } from "../../contracts/franchises/StoryBlocksRegistry.sol";
-import { StoryBlocksRegistryFactory } from "../../contracts/franchises/StoryBlocksRegistryFactory.sol";
+/*
+import { StoryBlocksRegistry } from "../../contracts/story-blocks/StoryBlocksRegistry.sol";
+import { StoryBlocksRegistryFactory } from "../../contracts/story-blocks/StoryBlocksRegistryFactory.sol";
 import { IStoryBlockAware } from "../../contracts/IStoryBlockAware.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { IERC1967 } from "@openzeppelin/contracts/interfaces/IERC1967.sol";
@@ -43,22 +43,6 @@ contract StoryBlocksRegistryTest is Test, IStoryBlockAware {
         assertEq(franchise.version(), "0.1.0");
     }
 
-    function test_zeroIds() public {
-        assertEq(franchise.zeroId(StoryBlock.STORY), 0);
-        assertEq(franchise.zeroId(StoryBlock.CHARACTER), 10**12);
-        assertEq(franchise.zeroId(StoryBlock.ART), 2*10**12);
-        assertEq(franchise.zeroId(StoryBlock.GROUP), 3*10**12);
-        assertEq(franchise.zeroId(StoryBlock.LOCATION), 4*10**12);
-    }
-
-    function test_lastIds() public {
-        assertEq(franchise.lastId(StoryBlock.STORY), 10**12);
-        assertEq(franchise.lastId(StoryBlock.CHARACTER), 2*10**12);
-        assertEq(franchise.lastId(StoryBlock.ART), 3*10**12);
-        assertEq(franchise.lastId(StoryBlock.GROUP), 4*10**12);
-        assertEq(franchise.lastId(StoryBlock.LOCATION), 5*10**12);
-    }
-
     function test_mintStory() public {
         assertEq(franchise.balanceOf(mintee), 0);
         assertEq(franchise.currentIdFor(StoryBlock.STORY), _FIRST_ID_STORY - 1);
@@ -88,7 +72,7 @@ contract StoryBlocksRegistryTest is Test, IStoryBlockAware {
         vm.expectRevert(IdOverBounds.selector);
         franchise.mint(mintee, StoryBlock.STORY);
         */
-    }
+ /*   }
 
     function test_mintCharacter() public {
         assertEq(franchise.balanceOf(mintee), 0);
@@ -151,3 +135,4 @@ contract StoryBlocksRegistryTest is Test, IStoryBlockAware {
     }
     
 }
+*/

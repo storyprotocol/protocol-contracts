@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import { IStoryDAM } from "./IStoryDAM.sol";
 import { StoryBlockStorage } from "../storage/StoryBlockStorage.sol";
-import { LibStoryBlockId } from "../../block-ids/LibStoryBlockId.sol";
 
 abstract contract StoryDAM is IStoryDAM, StoryBlockStorage {
 

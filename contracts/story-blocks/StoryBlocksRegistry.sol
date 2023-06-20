@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import { IStoryBlocksRegistry } from "./IStoryBlocksRegistry.sol";
-import { LibStoryBlockId } from "./block-ids/LibStoryBlockId.sol";
+import { LibStoryBlockId } from "./LibStoryBlockId.sol";
 import { IStoryBlockAware } from "../IStoryBlockAware.sol";
 import { Unauthorized, ZeroAddress, NonExistentID } from "../errors/General.sol";
 import { StoryDAM } from "./data-access-modules/story/StoryDAM.sol";

@@ -3,9 +3,9 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import './utils/ProxyHelper.sol';
-import "../../contracts/FranchiseRegistry.sol";
-import "../../contracts/access-control/AccessControlSingleton.sol";
-import "../../contracts/franchises/StoryBlocksRegistryFactory.sol";
+import "contracts/FranchiseRegistry.sol";
+import "contracts/access-control/AccessControlSingleton.sol";
+import "contracts/story-blocks/StoryBlocksRegistryFactory.sol";
 
 contract FranchiseRegistryTest is Test, ProxyHelper {
     StoryBlocksRegistryFactory public factory;

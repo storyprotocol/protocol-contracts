@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import { LibStoryBlockId } from "contracts/story-blocks/block-ids/LibStoryBlockId.sol";
+import { LibStoryBlockId } from "contracts/story-blocks/LibStoryBlockId.sol";
 import { Unauthorized } from "contracts/errors/General.sol";
 import { IStoryBlockStorage } from "./IStoryBlockStorage.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";

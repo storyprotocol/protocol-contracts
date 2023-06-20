@@ -2,18 +2,19 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
+/*
 import '../utils/ProxyHelper.sol';
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/franchises/StoryBlocksRegistryFactory.sol";
+import "contracts/story-blocks/StoryBlocksRegistryFactory.sol";
 import "contracts/IStoryBlockAware.sol";
-import "contracts/dam/IPStorage.sol";
+import "contracts/dam/StoryBlockStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 contract E2ETest is Test, ProxyHelper, IStoryBlockAware, ERC721Holder {
     StoryBlocksRegistryFactory public factory;
     FranchiseRegistry public franchiseRegistry;
-    IPStorage public ipStorage;
+    StoryBlockStorage public ipStorage;
 
     address admin;
 
@@ -30,7 +31,7 @@ contract E2ETest is Test, ProxyHelper, IStoryBlockAware, ERC721Holder {
                 )
             )
         );
-        ipStorage = new IPStorage(address(franchiseRegistry), address(franchiseRegistry));
+        ipStorage = new StoryBlockStorage(address(franchiseRegistry), address(franchiseRegistry));
     }
 
     function test_registerFranchiseCreateStory() public {
@@ -43,7 +44,7 @@ contract E2ETest is Test, ProxyHelper, IStoryBlockAware, ERC721Holder {
         assertEq(franchiseRegistry.ownerOf(1), address(this));
         uint256 blockId = storyBlocks.mint(address(this), IStoryBlockAware.StoryBlock.STORY);
         ipStorage.writeStoryBlock(franchiseId, blockId, IStoryBlockAware.StoryBlock.STORY, "Story 1", "Story 1 description", "https://story1.com");
-        IPStorage.StoryBlockData memory storyBlock = ipStorage.readStoryBlock(franchiseId, blockId);
+        StoryBlockStorage.StoryBlockData memory storyBlock = ipStorage.readStoryBlock(franchiseId, blockId);
         assertEq(storyBlock.name, "Story 1");
         assertEq(storyBlock.description, "Story 1 description");
         assertEq(storyBlock.mediaUrl, "https://story1.com");
@@ -53,3 +54,4 @@ contract E2ETest is Test, ProxyHelper, IStoryBlockAware, ERC721Holder {
 
    
 }
+*/

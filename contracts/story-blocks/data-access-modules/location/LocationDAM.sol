@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import { ILocationDAM } from "./ILocationDAM.sol";
 import { StoryBlockStorage } from "../storage/StoryBlockStorage.sol";
-import { LibStoryBlockId } from "contracts/story-blocks/block-ids/LibStoryBlockId.sol";
 
 abstract contract LocationDAM is ILocationDAM, StoryBlockStorage {
 
