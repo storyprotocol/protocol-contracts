@@ -6,3 +6,4 @@ error ZeroAddress(string name);
 error ZeroAmount(string name);
 error UnsupportedInterface(string name);
 error Unauthorized();
+error NonExistentID(uint256 id);

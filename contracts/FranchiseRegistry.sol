@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import { IStoryBlockAware } from "./IStoryBlockAware.sol";
-import { StoryBlocksRegistryFactory } from "./franchises/StoryBlocksRegistryFactory.sol";
+import { StoryBlocksRegistryFactory } from "./story-blocks/StoryBlocksRegistryFactory.sol";
 import { AccessControlledUpgradeable } from "./access-control/AccessControlledUpgradeable.sol";
 import { UPGRADER_ROLE } from "./access-control/ProtocolRoles.sol";
 import { ZeroAddress } from "./errors/General.sol";
@@ -42,11 +42,6 @@ contract FranchiseRegistry is UUPSUpgradeable, AccessControlledUpgradeable, ERC7
         emit FranchiseRegistered(to, _franchiseIds, storyBlocksRegistry);
         return (_franchiseIds, storyBlocksRegistry);
     }
-
-    function createBlock()
-        _mint
-        while (expression) {
-         write
 
     function storyBlocksContract(uint256 franchiseId) public view returns(address) {
         return _storyBlocks[franchiseId];
