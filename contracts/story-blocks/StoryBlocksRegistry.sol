@@ -6,7 +6,11 @@ import { LibStoryBlockId } from "./LibStoryBlockId.sol";
 import { Unauthorized, ZeroAddress, NonExistentID } from "../errors/General.sol";
 import { StoryBlockStorage } from "./data-access-modules/storage/StoryBlockStorage.sol";
 import { StoryBlock } from "contracts/StoryBlock.sol";
+import { StoryDAM } from "./data-access-modules/story/StoryDAM.sol";
+import { CharacterDAM } from "./data-access-modules/character/CharacterDAM.sol";
+import { ArtDAM } from "./data-access-modules/art/ArtDAM.sol";
 import { GroupDAM } from "./data-access-modules/group/GroupDAM.sol";
+import { LocationDAM } from "./data-access-modules/location/LocationDAM.sol";
 import { ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { MulticallUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
@@ -15,7 +19,11 @@ contract StoryBlocksRegistry is
     IStoryBlocksRegistry,
     ERC721Upgradeable,
     MulticallUpgradeable,
-    GroupDAM
+    StoryDAM,
+    CharacterDAM,
+    ArtDAM,
+    GroupDAM,
+    LocationDAM
 {
     event StoryBlockMinted(
         address indexed to,

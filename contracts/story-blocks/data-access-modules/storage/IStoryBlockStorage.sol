@@ -21,6 +21,7 @@ interface IStoryBlockStorage  {
     }
     
     function readStoryBlock(uint256 storyBlockId) external view returns (StoryBlockData memory);
+    
     function createStoryBlock(
         StoryBlock sb,
         string calldata name,
