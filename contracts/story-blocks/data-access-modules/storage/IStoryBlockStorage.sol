@@ -3,11 +3,11 @@ pragma solidity ^0.8.19;
 
 import { IStoryBlockAware } from "contracts/IStoryBlockAware.sol";
 
-interface IStoryBlockStorage is IStoryBlockAware  {
+interface IStoryBlockStorage  {
 
     event StoryBlockWritten(
         uint256 indexed storyBlockId,
-        StoryBlock indexed blockType,
+        IStoryBlockAware.StoryBlock indexed blockType,
         string name,
         string description,
         string mediaUrl
@@ -17,7 +17,7 @@ interface IStoryBlockStorage is IStoryBlockAware  {
         string name;
         string description;
         string mediaUrl;
-        StoryBlock blockType;
+        IStoryBlockAware.StoryBlock blockType;
     }
     
     function readStoryBlock(uint256 storyBlockId) external view returns (StoryBlockData memory);
