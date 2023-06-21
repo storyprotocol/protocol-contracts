@@ -5,20 +5,20 @@ import { IGroupDAM } from "./IGroupDAM.sol";
 import { StoryBlockStorage } from "../storage/StoryBlockStorage.sol";
 import { LibStoryBlockId } from "contracts/story-blocks/LibStoryBlockId.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import { IStoryBlockAware } from "contracts/IStoryBlockAware.sol";
+import { StoryBlock } from "contracts/StoryBlock.sol";
 
 abstract contract GroupDAM is IGroupDAM, StoryBlockStorage {
 
     using EnumerableSet for EnumerableSet.UintSet;
 
     struct GroupData {
-        IStoryBlockAware.StoryBlock linkedType;
+        StoryBlock linkedType;
         EnumerableSet.UintSet linkedItems;
     }
 
     event GroupedItems(
         uint256 indexed id,
-        IStoryBlockAware.StoryBlock linkedType,
+        StoryBlock linkedType,
         uint256[] linkedItems
     );
     error TooManyLinkedItems();
@@ -29,8 +29,8 @@ abstract contract GroupDAM is IGroupDAM, StoryBlockStorage {
 
     function __GroupDAM_init() internal initializer {}
 
-    function createGroup(string calldata name, string calldata _description, string calldata mediaUrl, IStoryBlockAware.StoryBlock linkedType, uint256[] calldata linkedItems) external returns(uint256) {
-        uint256 id = _mintBlock(msg.sender, IStoryBlockAware.StoryBlock.GROUP);
+    function createGroup(string calldata name, string calldata _description, string calldata mediaUrl, StoryBlock linkedType, uint256[] calldata linkedItems) external returns(uint256) {
+        uint256 id = _mintBlock(msg.sender, StoryBlock.GROUP);
         _writeStoryBlock(id, name, _description, mediaUrl);
         _groupData[id].linkedType = linkedType;
         groupItems(id, linkedItems);
@@ -45,7 +45,7 @@ abstract contract GroupDAM is IGroupDAM, StoryBlockStorage {
     function groupItems(uint256 id, uint256[] calldata linkedItems) public {
         uint256 length = linkedItems.length;
         if (length > MAX_LINKED_AT_ONCE) revert TooManyLinkedItems();
-        IStoryBlockAware.StoryBlock linkedType = _groupData[id].linkedType;
+        StoryBlock linkedType = _groupData[id].linkedType;
         for(uint256 i = 0; i < linkedItems.length;) {
             if (LibStoryBlockId.storyBlockTypeFor(linkedItems[i]) != linkedType) revert OverridingBlockType();
             _groupData[id].linkedItems.add(linkedItems[i]);
@@ -56,7 +56,7 @@ abstract contract GroupDAM is IGroupDAM, StoryBlockStorage {
         emit GroupedItems(id, linkedType, linkedItems);
     }
 
-    function readGroup(uint256 id) public view returns (StoryBlockData memory blockData, IStoryBlockAware.StoryBlock linkedType, uint256[] memory linkedItems) {
+    function readGroup(uint256 id) public view returns (StoryBlockData memory blockData, StoryBlock linkedType, uint256[] memory linkedItems) {
         blockData = readStoryBlock(id);
         GroupData storage gd = _groupData[id];
         linkedType = gd.linkedType;

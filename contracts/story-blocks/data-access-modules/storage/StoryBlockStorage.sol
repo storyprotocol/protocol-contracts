@@ -5,7 +5,7 @@ import { LibStoryBlockId } from "contracts/story-blocks/LibStoryBlockId.sol";
 import { Unauthorized } from "contracts/errors/General.sol";
 import { IStoryBlockStorage } from "./IStoryBlockStorage.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { IStoryBlockAware } from "contracts/IStoryBlockAware.sol";
+import { StoryBlock } from "contracts/StoryBlock.sol";
 
 abstract contract StoryBlockStorage is Initializable, IStoryBlockStorage {
 
@@ -15,17 +15,17 @@ abstract contract StoryBlockStorage is Initializable, IStoryBlockStorage {
 
     function _canWriteStoryBlock(uint256 storyBlockId) internal virtual view returns (bool);
 
-    function _mintBlock(address to, IStoryBlockAware.StoryBlock sb) internal virtual returns (uint256);
+    function _mintBlock(address to, StoryBlock sb) internal virtual returns (uint256);
     
     function _writeStoryBlock(
         uint256 storyBlockId,
         string calldata name,
         string calldata description,
         string calldata mediaUrl
-    ) internal returns (IStoryBlockAware.StoryBlock) {
+    ) internal returns (StoryBlock) {
         if(!_canWriteStoryBlock(storyBlockId)) revert Unauthorized();
         StoryBlockData storage sbd = _storyBlocks[storyBlockId];
-        if (sbd.blockType == IStoryBlockAware.StoryBlock.UNDEFINED) {
+        if (sbd.blockType == StoryBlock.UNDEFINED) {
             sbd.blockType = LibStoryBlockId.storyBlockTypeFor(storyBlockId);
         }
         sbd.name = name;

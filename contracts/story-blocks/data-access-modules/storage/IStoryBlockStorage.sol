@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import { IStoryBlockAware } from "contracts/IStoryBlockAware.sol";
+import { StoryBlock } from "contracts/StoryBlock.sol";
 
 interface IStoryBlockStorage  {
 
     event StoryBlockWritten(
         uint256 indexed storyBlockId,
-        IStoryBlockAware.StoryBlock indexed blockType,
+        StoryBlock indexed blockType,
         string name,
         string description,
         string mediaUrl
@@ -17,9 +17,22 @@ interface IStoryBlockStorage  {
         string name;
         string description;
         string mediaUrl;
-        IStoryBlockAware.StoryBlock blockType;
+        StoryBlock blockType;
     }
     
     function readStoryBlock(uint256 storyBlockId) external view returns (StoryBlockData memory);
+    function createStoryBlock(
+        StoryBlock sb,
+        string calldata name,
+        string calldata _description,
+        string calldata mediaUrl
+    ) external returns (uint256);
+
+    function editStoryBlock(
+        uint256 storyBlockId,
+        string calldata name,
+        string calldata _description,
+        string calldata mediaUrl
+    ) external;
     
 }

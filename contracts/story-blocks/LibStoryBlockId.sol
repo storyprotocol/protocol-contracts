@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import { IStoryBlockAware } from "contracts/IStoryBlockAware.sol";
+import { StoryBlock } from "contracts/StoryBlock.sol";
 
 library LibStoryBlockId {
+
+    error InvalidStoryBlock(StoryBlock sb);
 
     uint256 private constant _ID_RANGE = 10 ** 12;
     uint256 private constant _ZERO_ID_STORY = 0;
@@ -17,36 +19,36 @@ library LibStoryBlockId {
     uint256 private constant _ZERO_ID_LOCATION = _LAST_ID_GROUP + 1;
     uint256 private constant _LAST_ID_LOCATION = _ID_RANGE - 1 + _ZERO_ID_LOCATION;
 
-    function zeroId(IStoryBlockAware.StoryBlock sb) public pure returns (uint256) {
-        if (sb == IStoryBlockAware.StoryBlock.STORY) return _ZERO_ID_STORY;
-        if (sb == IStoryBlockAware.StoryBlock.CHARACTER) return _ZERO_ID_CHARACTER;
-        if (sb == IStoryBlockAware.StoryBlock.ART) return _ZERO_ID_ART;
-        if (sb == IStoryBlockAware.StoryBlock.GROUP) return _ZERO_ID_GROUP;
-        if (sb == IStoryBlockAware.StoryBlock.LOCATION) return _ZERO_ID_LOCATION;
-        revert IStoryBlockAware.InvalidStoryBlock(sb);
+    function zeroId(StoryBlock sb) public pure returns (uint256) {
+        if (sb == StoryBlock.STORY) return _ZERO_ID_STORY;
+        if (sb == StoryBlock.CHARACTER) return _ZERO_ID_CHARACTER;
+        if (sb == StoryBlock.ART) return _ZERO_ID_ART;
+        if (sb == StoryBlock.GROUP) return _ZERO_ID_GROUP;
+        if (sb == StoryBlock.LOCATION) return _ZERO_ID_LOCATION;
+        revert InvalidStoryBlock(sb);
     }
 
-    function lastId(IStoryBlockAware.StoryBlock sb) public pure returns (uint256) {
-        if (sb == IStoryBlockAware.StoryBlock.STORY) return _LAST_ID_STORY;
-        if (sb == IStoryBlockAware.StoryBlock.CHARACTER) return _LAST_ID_CHARACTER;
-        if (sb == IStoryBlockAware.StoryBlock.ART) return _LAST_ID_ART;
-        if (sb == IStoryBlockAware.StoryBlock.GROUP) return _LAST_ID_GROUP;
-        if (sb == IStoryBlockAware.StoryBlock.LOCATION) return _LAST_ID_LOCATION;
-        revert IStoryBlockAware.InvalidStoryBlock(sb);
+    function lastId(StoryBlock sb) public pure returns (uint256) {
+        if (sb == StoryBlock.STORY) return _LAST_ID_STORY;
+        if (sb == StoryBlock.CHARACTER) return _LAST_ID_CHARACTER;
+        if (sb == StoryBlock.ART) return _LAST_ID_ART;
+        if (sb == StoryBlock.GROUP) return _LAST_ID_GROUP;
+        if (sb == StoryBlock.LOCATION) return _LAST_ID_LOCATION;
+        revert InvalidStoryBlock(sb);
     }
 
-    function storyBlockTypeFor(uint256 id) public pure returns (IStoryBlockAware.StoryBlock) {
+    function storyBlockTypeFor(uint256 id) public pure returns (StoryBlock) {
         if (id > _ZERO_ID_STORY && id < _ZERO_ID_CHARACTER)
-            return IStoryBlockAware.StoryBlock.STORY;
+            return StoryBlock.STORY;
         if (id > _ZERO_ID_CHARACTER && id < _ZERO_ID_ART)
-            return IStoryBlockAware.StoryBlock.CHARACTER;
+            return StoryBlock.CHARACTER;
         if (id > _ZERO_ID_ART && id < _ZERO_ID_GROUP) 
-            return IStoryBlockAware.StoryBlock.ART;
+            return StoryBlock.ART;
         if (id > _ZERO_ID_GROUP && id < _ZERO_ID_LOCATION)
-            return IStoryBlockAware.StoryBlock.GROUP;
+            return StoryBlock.GROUP;
         if (id > _ZERO_ID_LOCATION && id <= _LAST_ID_LOCATION)
-            return IStoryBlockAware.StoryBlock.LOCATION;
-        return IStoryBlockAware.StoryBlock.UNDEFINED;
+            return StoryBlock.LOCATION;
+        return StoryBlock.UNDEFINED;
     }
 
 }

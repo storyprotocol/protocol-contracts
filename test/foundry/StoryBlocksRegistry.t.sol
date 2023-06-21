@@ -3,12 +3,12 @@ pragma solidity ^0.8.13;
 
 import { StoryBlocksRegistry } from "../../contracts/story-blocks/StoryBlocksRegistry.sol";
 import { StoryBlocksRegistryFactory } from "../../contracts/story-blocks/StoryBlocksRegistryFactory.sol";
-import { IStoryBlockAware } from "../../contracts/IStoryBlockAware.sol";
+import { StoryBlock } from "../../contracts/StoryBlock.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { IERC1967 } from "@openzeppelin/contracts/interfaces/IERC1967.sol";
 import "forge-std/Test.sol";
 /*
-contract StoryBlocksRegistryTest is Test, IStoryBlockAware {
+contract StoryBlocksRegistryTest is Test {
     using stdStorage for StdStorage;
 
     event CollectionCreated(address indexed collection, string name, string indexed symbol);

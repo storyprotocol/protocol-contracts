@@ -7,11 +7,11 @@ import '../utils/ProxyHelper.sol';
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/story-blocks/StoryBlocksRegistryFactory.sol";
-import "contracts/IStoryBlockAware.sol";
+import "contracts/StoryBlock.sol";
 import "contracts/dam/StoryBlockStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
-contract E2ETest is Test, ProxyHelper, IStoryBlockAware, ERC721Holder {
+contract E2ETest is Test, ProxyHelperStoryBlock, ERC721Holder {
     StoryBlocksRegistryFactory public factory;
     FranchiseRegistry public franchiseRegistry;
     StoryBlockStorage public ipStorage;
@@ -42,13 +42,13 @@ contract E2ETest is Test, ProxyHelper, IStoryBlockAware, ERC721Holder {
         assertEq(storyBlocks.description(), "Franchise 1 description");
         assertEq(storyBlocks.version(), "0.1.0");
         assertEq(franchiseRegistry.ownerOf(1), address(this));
-        uint256 blockId = storyBlocks.mint(address(this), IStoryBlockAware.StoryBlock.STORY);
-        ipStorage.writeStoryBlock(franchiseId, blockId, IStoryBlockAware.StoryBlock.STORY, "Story 1", "Story 1 description", "https://story1.com");
+        uint256 blockId = storyBlocks.mint(address(this), StoryBlock.STORY);
+        ipStorage.writeStoryBlock(franchiseId, blockId, StoryBlock.STORY, "Story 1", "Story 1 description", "https://story1.com");
         StoryBlockStorage.StoryBlockData memory storyBlock = ipStorage.readStoryBlock(franchiseId, blockId);
         assertEq(storyBlock.name, "Story 1");
         assertEq(storyBlock.description, "Story 1 description");
         assertEq(storyBlock.mediaUrl, "https://story1.com");
-        assertEq(uint8(storyBlock.blockType), uint8(IStoryBlockAware.StoryBlock.STORY));
+        assertEq(uint8(storyBlock.blockType), uint8(StoryBlock.STORY));
 
     } 
 

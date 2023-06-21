@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import { IStoryBlockAware } from "./IStoryBlockAware.sol";
+import { StoryBlock } from "./StoryBlock.sol";
 import { StoryBlocksRegistryFactory } from "./story-blocks/StoryBlocksRegistryFactory.sol";
 import { AccessControlledUpgradeable } from "./access-control/AccessControlledUpgradeable.sol";
 import { UPGRADER_ROLE } from "./access-control/ProtocolRoles.sol";
@@ -9,7 +9,7 @@ import { ZeroAddress } from "./errors/General.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
-contract FranchiseRegistry is UUPSUpgradeable, AccessControlledUpgradeable, ERC721Upgradeable, IStoryBlockAware {
+contract FranchiseRegistry is UUPSUpgradeable, AccessControlledUpgradeable, ERC721Upgradeable {
 
     event FranchiseRegistered(address owner, uint256 id, address storyBlocksContract);
     error AlreadyRegistered();

@@ -3,9 +3,9 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "contracts/story-blocks/LibStoryBlockId.sol";
-import "contracts/IStoryBlockAware.sol";
+import "contracts/StoryBlock.sol";
 
-contract FranchiseRegistryTest is Test, IStoryBlockAware {
+contract FranchiseRegistryTest is Test {
 
     uint256 private constant _ID_RANGE = 10**12;
     uint256 private constant _HALF_ID_RANGE = 5**12;
