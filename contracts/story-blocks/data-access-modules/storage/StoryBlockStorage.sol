@@ -25,28 +25,13 @@ abstract contract StoryBlockStorage is Initializable, IStoryBlockStorage {
         _writeStoryBlock(sbId, name, _description, mediaUrl);
         return sbId;
     }
-
-    function editStoryBlock(
-        uint256 storyBlockId,
-        string calldata name,
-        string calldata _description,
-        string calldata mediaUrl
-    ) public {
-        if (!_exists(storyBlockId)) revert NonExistentID(storyBlockId);
-        _writeStoryBlock(storyBlockId, name, _description, mediaUrl);
-    }
-
-    function _canWriteStoryBlock(uint256 id) internal virtual view returns (bool);
-    function _exists(uint256 id) internal virtual view returns (bool);
-    function _mintBlock(address to, StoryBlock sb) internal virtual returns (uint256);
     
     function _writeStoryBlock(
         uint256 storyBlockId,
         string calldata name,
         string calldata description,
         string calldata mediaUrl
-    ) internal returns (StoryBlock) {
-        if(!_canWriteStoryBlock(storyBlockId)) revert Unauthorized();
+    ) private returns (StoryBlock) {
         StoryBlockData storage sbd = _storyBlocks[storyBlockId];
         if (sbd.blockType == StoryBlock.UNDEFINED) {
             sbd.blockType = LibStoryBlockId.storyBlockTypeFor(storyBlockId);
@@ -61,6 +46,6 @@ abstract contract StoryBlockStorage is Initializable, IStoryBlockStorage {
     function readStoryBlock(uint256 storyBlockId) public view returns (StoryBlockData memory) {
         return _storyBlocks[storyBlockId];
     }
-
     
+    function _mintBlock(address to, StoryBlock sb) internal virtual returns (uint256);
 }

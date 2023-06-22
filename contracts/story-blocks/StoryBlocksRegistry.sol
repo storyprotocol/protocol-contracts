@@ -65,23 +65,9 @@ contract StoryBlocksRegistry is
         return nextId;
     }
 
-    function _canWriteStoryBlock(
-        uint256 storyBlockId
-    ) internal view virtual override returns (bool) {
-        return ownerOf(storyBlockId) == msg.sender;
-    }
-
-    function _exists(uint256 id) internal view virtual override(ERC721Upgradeable, StoryBlockStorage) returns (bool) {
-        return super._exists(id);
-    }
-
     function currentIdFor(StoryBlock sb) public view returns (uint256) {
         uint256 currentId = _ids[sb];
-        // console.log("currentId", currentId);
         if (currentId == 0) {
-            // console.log("zero id");
-            // console.log("story block", uint8(sb));
-            // console.log(LibStoryBlockId.zeroId(sb));
             return LibStoryBlockId.zeroId(sb);
         } else {
             return currentId;

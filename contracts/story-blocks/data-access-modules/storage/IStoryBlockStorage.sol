@@ -28,12 +28,5 @@ interface IStoryBlockStorage  {
         string calldata _description,
         string calldata mediaUrl
     ) external returns (uint256);
-
-    function editStoryBlock(
-        uint256 storyBlockId,
-        string calldata name,
-        string calldata _description,
-        string calldata mediaUrl
-    ) external;
     
 }
