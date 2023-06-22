@@ -8,7 +8,8 @@ enum StoryBlock {
     CHARACTER,
     ART,
     GROUP,
-    LOCATION
+    LOCATION,
+    ITEM
 }
     
     

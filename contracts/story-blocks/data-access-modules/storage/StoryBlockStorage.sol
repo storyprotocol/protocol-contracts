@@ -2,19 +2,42 @@
 pragma solidity ^0.8.19;
 
 import { LibStoryBlockId } from "contracts/story-blocks/LibStoryBlockId.sol";
-import { Unauthorized } from "contracts/errors/General.sol";
+import { Unauthorized, NonExistentID } from "contracts/errors/General.sol";
 import { IStoryBlockStorage } from "./IStoryBlockStorage.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { StoryBlock } from "contracts/StoryBlock.sol";
 
 abstract contract StoryBlockStorage is Initializable, IStoryBlockStorage {
 
-    error OverridingBlockType();
+    error InvalidBlockType();
+
     // storyblockId -> data
     mapping(uint256 => StoryBlockData) private _storyBlocks;
 
-    function _canWriteStoryBlock(uint256 storyBlockId) internal virtual view returns (bool);
+    function createStoryBlock(
+        StoryBlock sb,
+        string calldata name,
+        string calldata _description,
+        string calldata mediaUrl
+    ) public returns (uint256) {
+        if (sb == StoryBlock.UNDEFINED) revert InvalidBlockType();
+        uint256 sbId = _mintBlock(msg.sender, sb);
+        _writeStoryBlock(sbId, name, _description, mediaUrl);
+        return sbId;
+    }
 
+    function editStoryBlock(
+        uint256 storyBlockId,
+        string calldata name,
+        string calldata _description,
+        string calldata mediaUrl
+    ) public {
+        if (!_exists(storyBlockId)) revert NonExistentID(storyBlockId);
+        _writeStoryBlock(storyBlockId, name, _description, mediaUrl);
+    }
+
+    function _canWriteStoryBlock(uint256 id) internal virtual view returns (bool);
+    function _exists(uint256 id) internal virtual view returns (bool);
     function _mintBlock(address to, StoryBlock sb) internal virtual returns (uint256);
     
     function _writeStoryBlock(

@@ -1,16 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
-
+//import "forge-std/console.sol";
 import { IStoryBlocksRegistry } from "./IStoryBlocksRegistry.sol";
 import { LibStoryBlockId } from "./LibStoryBlockId.sol";
-import { Unauthorized, ZeroAddress, NonExistentID } from "../errors/General.sol";
+import { Unauthorized, ZeroAddress } from "../errors/General.sol";
 import { StoryBlockStorage } from "./data-access-modules/storage/StoryBlockStorage.sol";
 import { StoryBlock } from "contracts/StoryBlock.sol";
-import { StoryDAM } from "./data-access-modules/story/StoryDAM.sol";
-import { CharacterDAM } from "./data-access-modules/character/CharacterDAM.sol";
-import { ArtDAM } from "./data-access-modules/art/ArtDAM.sol";
 import { GroupDAM } from "./data-access-modules/group/GroupDAM.sol";
-import { LocationDAM } from "./data-access-modules/location/LocationDAM.sol";
 import { ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { MulticallUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
@@ -19,11 +15,7 @@ contract StoryBlocksRegistry is
     IStoryBlocksRegistry,
     ERC721Upgradeable,
     MulticallUpgradeable,
-    StoryDAM,
-    CharacterDAM,
-    ArtDAM,
-    GroupDAM,
-    LocationDAM
+    GroupDAM
 {
     event StoryBlockMinted(
         address indexed to,
@@ -32,7 +24,7 @@ contract StoryBlocksRegistry is
     );
 
     error IdOverBounds();
-
+    /// @dev storyBlockId => id counter
     mapping(StoryBlock => uint256) private _ids;
     string public description;
     uint256 public franchiseId;
@@ -61,31 +53,13 @@ contract StoryBlocksRegistry is
         // _setBaseURI("https://api.splinterlands.io/asset/");
     }
 
-    function createStoryBlock(
-        StoryBlock sb,
-        string calldata name,
-        string calldata _description,
-        string calldata mediaUrl
-    ) external returns (uint256) {
-        uint256 sbId = _mintBlock(msg.sender, sb);
-        _writeStoryBlock(sbId, name, _description, mediaUrl);
-        return sbId;
-    }
-
-    function editStoryBlock(
-        uint256 storyBlockId,
-        string calldata name,
-        string calldata _description,
-        string calldata mediaUrl
-    ) external {
-        if (!_exists(storyBlockId)) revert NonExistentID(storyBlockId);
-        _writeStoryBlock(storyBlockId, name, _description, mediaUrl);
-    }
-
     function _mintBlock(address to, StoryBlock sb) internal override returns (uint256) {
+        // console.log("mint block", uint8(sb));
         uint256 nextId = currentIdFor(sb) + 1;
+        // console.log("nextId", nextId);
         if (nextId > LibStoryBlockId.lastId(sb)) revert IdOverBounds();
         _ids[sb] = nextId;
+        // console.log("saved", _ids[sb]);
         _safeMint(to, nextId);
         emit StoryBlockMinted(to, sb, nextId);
         return nextId;
@@ -97,11 +71,20 @@ contract StoryBlocksRegistry is
         return ownerOf(storyBlockId) == msg.sender;
     }
 
+    function _exists(uint256 id) internal view virtual override(ERC721Upgradeable, StoryBlockStorage) returns (bool) {
+        return super._exists(id);
+    }
+
     function currentIdFor(StoryBlock sb) public view returns (uint256) {
-        if (_ids[sb] == 0) {
+        uint256 currentId = _ids[sb];
+        // console.log("currentId", currentId);
+        if (currentId == 0) {
+            // console.log("zero id");
+            // console.log("story block", uint8(sb));
+            // console.log(LibStoryBlockId.zeroId(sb));
             return LibStoryBlockId.zeroId(sb);
         } else {
-            return _ids[sb];
+            return currentId;
         }
     }
 

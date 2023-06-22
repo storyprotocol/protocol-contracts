@@ -18,6 +18,8 @@ library LibStoryBlockId {
     uint256 private constant _LAST_ID_GROUP = _ID_RANGE - 1 + _ZERO_ID_GROUP;
     uint256 private constant _ZERO_ID_LOCATION = _LAST_ID_GROUP + 1;
     uint256 private constant _LAST_ID_LOCATION = _ID_RANGE - 1 + _ZERO_ID_LOCATION;
+    uint256 private constant _ZERO_ID_ITEM = _LAST_ID_LOCATION + 1;
+    uint256 private constant _LAST_ID_ITEM = _ID_RANGE - 1 + _ZERO_ID_ITEM;
 
     function zeroId(StoryBlock sb) public pure returns (uint256) {
         if (sb == StoryBlock.STORY) return _ZERO_ID_STORY;
@@ -25,6 +27,7 @@ library LibStoryBlockId {
         if (sb == StoryBlock.ART) return _ZERO_ID_ART;
         if (sb == StoryBlock.GROUP) return _ZERO_ID_GROUP;
         if (sb == StoryBlock.LOCATION) return _ZERO_ID_LOCATION;
+        if (sb == StoryBlock.ITEM) return _ZERO_ID_ITEM;
         revert InvalidStoryBlock(sb);
     }
 
@@ -34,6 +37,7 @@ library LibStoryBlockId {
         if (sb == StoryBlock.ART) return _LAST_ID_ART;
         if (sb == StoryBlock.GROUP) return _LAST_ID_GROUP;
         if (sb == StoryBlock.LOCATION) return _LAST_ID_LOCATION;
+        if (sb == StoryBlock.ITEM) return _LAST_ID_ITEM;
         revert InvalidStoryBlock(sb);
     }
 
@@ -46,8 +50,10 @@ library LibStoryBlockId {
             return StoryBlock.ART;
         if (id > _ZERO_ID_GROUP && id < _ZERO_ID_LOCATION)
             return StoryBlock.GROUP;
-        if (id > _ZERO_ID_LOCATION && id <= _LAST_ID_LOCATION)
+        if (id > _ZERO_ID_LOCATION && id < _ZERO_ID_ITEM)
             return StoryBlock.LOCATION;
+        if (id > _ZERO_ID_ITEM && id <= _LAST_ID_ITEM)
+            return StoryBlock.ITEM;
         return StoryBlock.UNDEFINED;
     }
 

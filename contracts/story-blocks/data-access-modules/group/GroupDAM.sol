@@ -22,6 +22,7 @@ abstract contract GroupDAM is IGroupDAM, StoryBlockStorage {
         uint256[] linkedItems
     );
     error TooManyLinkedItems();
+    error GroupedTypeNotGroupType();
 
     mapping(uint256 => GroupData) private _groupData;
 
@@ -30,15 +31,14 @@ abstract contract GroupDAM is IGroupDAM, StoryBlockStorage {
     function __GroupDAM_init() internal initializer {}
 
     function createGroup(string calldata name, string calldata _description, string calldata mediaUrl, StoryBlock linkedType, uint256[] calldata linkedItems) external returns(uint256) {
-        uint256 id = _mintBlock(msg.sender, StoryBlock.GROUP);
-        _writeStoryBlock(id, name, _description, mediaUrl);
+        uint256 id = createStoryBlock(StoryBlock.GROUP, name, _description, mediaUrl);
         _groupData[id].linkedType = linkedType;
         groupItems(id, linkedItems);
         return id;
     }
 
-    function writeGroup(uint256 id, string calldata name, string calldata _description, string calldata mediaUrl, uint256[] calldata linkedItems) external {
-        _writeStoryBlock(id, name, _description, mediaUrl);
+    function editGroup(uint256 id, string calldata name, string calldata _description, string calldata mediaUrl, uint256[] calldata linkedItems) external {
+        editStoryBlock(id, name, _description, mediaUrl);
         groupItems(id, linkedItems);
     }
 
@@ -47,7 +47,7 @@ abstract contract GroupDAM is IGroupDAM, StoryBlockStorage {
         if (length > MAX_LINKED_AT_ONCE) revert TooManyLinkedItems();
         StoryBlock linkedType = _groupData[id].linkedType;
         for(uint256 i = 0; i < linkedItems.length;) {
-            if (LibStoryBlockId.storyBlockTypeFor(linkedItems[i]) != linkedType) revert OverridingBlockType();
+            if (LibStoryBlockId.storyBlockTypeFor(linkedItems[i]) != linkedType) revert GroupedTypeNotGroupType();
             _groupData[id].linkedItems.add(linkedItems[i]);
             unchecked {
                 i++;
