@@ -14,7 +14,8 @@ contract FranchiseRegistryTest is Test {
     uint256 private constant _ZERO_ID_ART = _ID_RANGE + _ZERO_ID_CHARACTER;
     uint256 private constant _ZERO_ID_GROUP = _ID_RANGE + _ZERO_ID_ART;
     uint256 private constant _ZERO_ID_LOCATION = _ID_RANGE + _ZERO_ID_GROUP;
-    uint256 private constant _LAST_ID = _ID_RANGE + _ZERO_ID_LOCATION - 1;
+    uint256 private constant _ZERO_ID_ITEM = _ID_RANGE + _ZERO_ID_LOCATION;
+    uint256 private constant _LAST_ID_ITEM = _ID_RANGE + _ZERO_ID_ITEM - 1;
 
 
     function test_zeroIds() public {
@@ -23,6 +24,7 @@ contract FranchiseRegistryTest is Test {
         assertEq(LibStoryBlockId.zeroId(StoryBlock.ART), _ZERO_ID_ART);
         assertEq(LibStoryBlockId.zeroId(StoryBlock.GROUP), _ZERO_ID_GROUP);
         assertEq(LibStoryBlockId.zeroId(StoryBlock.LOCATION), _ZERO_ID_LOCATION);
+        assertEq(LibStoryBlockId.zeroId(StoryBlock.ITEM), _ZERO_ID_ITEM);
     }
 
     function test_lastIds() public {
@@ -30,7 +32,8 @@ contract FranchiseRegistryTest is Test {
         assertEq(LibStoryBlockId.lastId(StoryBlock.CHARACTER), _ZERO_ID_ART - 1);
         assertEq(LibStoryBlockId.lastId(StoryBlock.ART), _ZERO_ID_GROUP - 1);
         assertEq(LibStoryBlockId.lastId(StoryBlock.GROUP), _ZERO_ID_LOCATION - 1);
-        assertEq(LibStoryBlockId.lastId(StoryBlock.LOCATION), _LAST_ID);
+        assertEq(LibStoryBlockId.lastId(StoryBlock.LOCATION), _ZERO_ID_ITEM - 1);
+        assertEq(LibStoryBlockId.lastId(StoryBlock.ITEM), _LAST_ID_ITEM);
     }
 
     function test_storyBlockTypes() public {
@@ -57,8 +60,11 @@ contract FranchiseRegistryTest is Test {
         assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_ZERO_ID_LOCATION)), uint8(StoryBlock.UNDEFINED));
         assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_ZERO_ID_LOCATION + 1)), uint8(StoryBlock.LOCATION));
         assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_ZERO_ID_LOCATION + _HALF_ID_RANGE)), uint8(StoryBlock.LOCATION));
-        assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_LAST_ID - 1)), uint8(StoryBlock.LOCATION));
-    }
+        assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_ZERO_ID_ITEM - 1)), uint8(StoryBlock.LOCATION));
 
-   
+        assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_ZERO_ID_ITEM)), uint8(StoryBlock.UNDEFINED));
+        assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_ZERO_ID_ITEM + 1)), uint8(StoryBlock.ITEM));
+        assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_ZERO_ID_ITEM + _HALF_ID_RANGE)), uint8(StoryBlock.ITEM));
+        assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_LAST_ID_ITEM)), uint8(StoryBlock.ITEM));
+    }
 }
