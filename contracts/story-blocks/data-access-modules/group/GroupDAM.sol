@@ -37,11 +37,6 @@ abstract contract GroupDAM is IGroupDAM, StoryBlockStorage {
         return id;
     }
 
-    function editGroup(uint256 id, string calldata name, string calldata _description, string calldata mediaUrl, uint256[] calldata linkedItems) external {
-        editStoryBlock(id, name, _description, mediaUrl);
-        groupItems(id, linkedItems);
-    }
-
     function groupItems(uint256 id, uint256[] calldata linkedItems) public {
         uint256 length = linkedItems.length;
         if (length > MAX_LINKED_AT_ONCE) revert TooManyLinkedItems();

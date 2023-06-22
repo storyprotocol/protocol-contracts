@@ -90,4 +90,22 @@ contract StoryBlocksRegistryTest is Test {
         storyBlocks.createStoryBlock(StoryBlock.UNDEFINED, "name", "description", "mediaUrl");
     }
 
+    function test_storyBlockCreationData() public {
+        vm.prank(mintee);
+        uint256 blockId = storyBlocks.createStoryBlock(StoryBlock.STORY, "name", "description", "mediaUrl");
+        StoryBlocksRegistry.StoryBlockData memory data = storyBlocks.readStoryBlock(blockId);
+        assertEq(uint8(data.blockType), uint8(StoryBlock.STORY));
+        assertEq(data.name, "name");
+        assertEq(data.description, "description");
+        assertEq(data.mediaUrl, "mediaUrl");
+    }
+
+    function test_emptyStoryBlockRead() public {
+        StoryBlocksRegistry.StoryBlockData memory data = storyBlocks.readStoryBlock(12312313);
+        assertEq(uint8(data.blockType), uint8(StoryBlock.UNDEFINED));
+        assertEq(data.name, "");
+        assertEq(data.description, "");
+        assertEq(data.mediaUrl, "");
+    }
+
 }
