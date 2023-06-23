@@ -7,14 +7,6 @@ import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/story-blocks/StoryBlocksRegistryFactory.sol";
 
-contract FranchiseRegistryTestV2 is FranchiseRegistry {
-    constructor(address _factory) FranchiseRegistry(_factory) {}
-
-    function version() public pure override returns (string memory) {
-        return "test";
-    }
-}
-
 contract FranchiseRegistryTest is Test, ProxyHelper {
 
     event FranchiseRegistered(
