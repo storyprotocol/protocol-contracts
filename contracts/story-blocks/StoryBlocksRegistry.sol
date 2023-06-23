@@ -6,6 +6,7 @@ import { LibStoryBlockId } from "./LibStoryBlockId.sol";
 import { Unauthorized, ZeroAddress } from "../errors/General.sol";
 import { StoryBlockStorage } from "./data-access-modules/storage/StoryBlockStorage.sol";
 import { StoryBlock } from "contracts/StoryBlock.sol";
+import { AttributionManager } from "./AttributionManager.sol";
 import { GroupDAM } from "./data-access-modules/group/GroupDAM.sol";
 import { ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
@@ -15,6 +16,7 @@ contract StoryBlocksRegistry is
     IStoryBlocksRegistry,
     ERC721Upgradeable,
     MulticallUpgradeable,
+    AttributionManager,
     GroupDAM
 {
     event StoryBlockMinted(
@@ -45,7 +47,7 @@ contract StoryBlocksRegistry is
         string calldata _symbol,
         string calldata _description
     ) public initializer {
-        __ERC721_init(_name, _symbol);
+        __AttributionManager_init(_name, _symbol);
         __Multicall_init();
         if (_franchiseId == 0) revert ZeroAddress("franchiseId");
         franchiseId = _franchiseId;
@@ -80,7 +82,7 @@ contract StoryBlocksRegistry is
         public
         view
         virtual
-        override(ERC721Upgradeable, IERC165Upgradeable)
+        override(ERC721Upgradeable, IERC165Upgradeable, AttributionManager)
         returns (bool)
     {
         return
