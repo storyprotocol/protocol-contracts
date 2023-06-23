@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: BUSDL-1.1
 pragma solidity ^0.8.13;
 
-import { StoryBlocksRegistry } from "../../contracts/franchises/StoryBlocksRegistry.sol";
-import { StoryBlocksRegistryFactory } from "../../contracts/franchises/StoryBlocksRegistryFactory.sol";
-import { IStoryBlockAware } from "../../contracts/IStoryBlockAware.sol";
+import { StoryBlocksRegistry } from "../../contracts/story-blocks/StoryBlocksRegistry.sol";
+import { StoryBlocksRegistryFactory } from "../../contracts/story-blocks/StoryBlocksRegistryFactory.sol";
+import { StoryBlock } from "../../contracts/StoryBlock.sol";
+import { LibStoryBlockId } from "../../contracts/story-blocks/LibStoryBlockId.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { IERC1967 } from "@openzeppelin/contracts/interfaces/IERC1967.sol";
+
 import "forge-std/Test.sol";
 
-contract StoryBlocksRegistryTest is Test, IStoryBlockAware {
+contract StoryBlocksRegistryTest is Test {
     using stdStorage for StdStorage;
 
     event CollectionCreated(address indexed collection, string name, string indexed symbol);
@@ -17,11 +19,13 @@ contract StoryBlocksRegistryTest is Test, IStoryBlockAware {
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
 
     error IdOverBounds();
+    error InvalidBlockType();
 
     StoryBlocksRegistryFactory public factory;
-    StoryBlocksRegistry public franchise;
+    StoryBlocksRegistry public storyBlocks;
     address owner = address(this);
     address mintee = address(1);
+    address mintee2 = address(2);
 
     uint256 private constant _ID_RANGE = 10**12;
     uint256 private constant _FIRST_ID_STORY = 1;
@@ -33,121 +37,75 @@ contract StoryBlocksRegistryTest is Test, IStoryBlockAware {
 
     function setUp() public {
         factory = new StoryBlocksRegistryFactory();
-        franchise = StoryBlocksRegistry(factory.createFranchise("name", "symbol", "description"));
+        storyBlocks = StoryBlocksRegistry(factory.createFranchiseBlocks(1, "name", "symbol", "description"));
     }
 
     function test_setUp() public {
-        assertEq(franchise.name(), "name");
-        assertEq(franchise.symbol(), "symbol");
-        assertEq(franchise.description(), "description");
-        assertEq(franchise.version(), "0.1.0");
+        assertEq(storyBlocks.name(), "name");
+        assertEq(storyBlocks.symbol(), "symbol");
+        assertEq(storyBlocks.description(), "description");
+        assertEq(storyBlocks.version(), "0.1.0");
     }
 
-    function test_zeroIds() public {
-        assertEq(franchise.zeroId(StoryBlock.STORY), 0);
-        assertEq(franchise.zeroId(StoryBlock.CHARACTER), 10**12);
-        assertEq(franchise.zeroId(StoryBlock.ART), 2*10**12);
-        assertEq(franchise.zeroId(StoryBlock.GROUP), 3*10**12);
-        assertEq(franchise.zeroId(StoryBlock.LOCATION), 4*10**12);
-    }
-
-    function test_lastIds() public {
-        assertEq(franchise.lastId(StoryBlock.STORY), 10**12);
-        assertEq(franchise.lastId(StoryBlock.CHARACTER), 2*10**12);
-        assertEq(franchise.lastId(StoryBlock.ART), 3*10**12);
-        assertEq(franchise.lastId(StoryBlock.GROUP), 4*10**12);
-        assertEq(franchise.lastId(StoryBlock.LOCATION), 5*10**12);
-    }
-
-    function test_mintStory() public {
-        assertEq(franchise.balanceOf(mintee), 0);
-        assertEq(franchise.currentIdFor(StoryBlock.STORY), _FIRST_ID_STORY - 1);
-        vm.expectEmit(true, true, true, true);
-        emit Transfer(address(0), mintee, _FIRST_ID_STORY);
-        franchise.mint(mintee, StoryBlock.STORY);
-        assertEq(franchise.currentIdFor(StoryBlock.STORY), _FIRST_ID_STORY);
-        assertEq(franchise.balanceOf(mintee), 1);
-        assertEq(franchise.ownerOf(_FIRST_ID_STORY), mintee);
-        franchise.mint(mintee, StoryBlock.STORY);
-        assertEq(franchise.currentIdFor(StoryBlock.STORY), _FIRST_ID_STORY + 1);
-        assertEq(franchise.balanceOf(mintee), 2);
-        assertEq(franchise.ownerOf(_FIRST_ID_STORY + 1), mintee);
-    }
-
-    function TODO_test_revertMintOverLastStory() private {
-        /*
-        uint256 slot = stdstore
-            .target(address(franchise))
-            .sig(franchise.currentIdFor.selector)
-            .find();
-        console.log(slot);
+    function test_mintIdAssignment() public {
+        uint8 firstStoryBlockType = uint8(StoryBlock.STORY);
+        uint8 lastStoryBlockTypeId = uint8(StoryBlock.ITEM);
+        for(uint8 i = firstStoryBlockType; i < lastStoryBlockTypeId; i++) {
+            StoryBlock sb = StoryBlock(i);
+            uint256 zero = LibStoryBlockId.zeroId(sb);
+            assertEq(storyBlocks.currentIdFor(sb), zero, "starts with zero");
+            vm.prank(mintee);
+            uint256 blockId1 = storyBlocks.createStoryBlock(sb, "name", "description", "mediaUrl");
+            assertEq(blockId1, zero + 1, "returned blockId is incremented by one");
+            assertEq(storyBlocks.currentIdFor(sb), zero + 1, "mint increments currentIdFor by one");
+            vm.prank(mintee);
+            uint256 blockId2 = storyBlocks.createStoryBlock(sb, "name2", "description2", "mediaUrl2");
+            assertEq(blockId2, zero + 2, "returned blockId is incremented by one again");
+            assertEq(storyBlocks.currentIdFor(sb), zero + 2, "2 mint increments currentIdFor by one again");
+        }
         
-        bytes32 loc = bytes32(slot);
-        bytes32 mockedCurrentTokenId = bytes32(abi.encode(franchise.lastId(StoryBlock.STORY)));
-        vm.store(address(franchise), loc, mockedCurrentTokenId);
-        vm.expectRevert(IdOverBounds.selector);
-        franchise.mint(mintee, StoryBlock.STORY);
-        */
     }
 
-    function test_mintCharacter() public {
-        assertEq(franchise.balanceOf(mintee), 0);
-        assertEq(franchise.currentIdFor(StoryBlock.CHARACTER), _FIRST_ID_CHARACTER - 1);
-        vm.expectEmit(true, true, true, true);
-        emit Transfer(address(0), mintee, _FIRST_ID_CHARACTER);
-        franchise.mint(mintee, StoryBlock.CHARACTER);
-        assertEq(franchise.currentIdFor(StoryBlock.CHARACTER), _FIRST_ID_CHARACTER);
-        assertEq(franchise.balanceOf(mintee), 1);
-        assertEq(franchise.ownerOf(_FIRST_ID_CHARACTER), mintee);
-        franchise.mint(mintee, StoryBlock.CHARACTER);
-        assertEq(franchise.currentIdFor(StoryBlock.CHARACTER), _FIRST_ID_CHARACTER + 1);
-        assertEq(franchise.balanceOf(mintee), 2);
-        assertEq(franchise.ownerOf(_FIRST_ID_CHARACTER + 1), mintee);
+    function test_mintStoryOwnership() public {
+        uint8 firstStoryBlockType = uint8(StoryBlock.STORY);
+        uint8 lastStoryBlockTypeId = uint8(StoryBlock.ITEM);
+        for(uint8 i = firstStoryBlockType; i < lastStoryBlockTypeId; i++) {
+            StoryBlock sb = StoryBlock(i);
+            uint256 loopBalance = storyBlocks.balanceOf(mintee);
+            assertEq(loopBalance, (i - 1) * 2, "balance is zero for block type");
+            vm.prank(mintee);
+            uint256 blockId1 = storyBlocks.createStoryBlock(sb, "name", "description", "mediaUrl");
+            assertEq(storyBlocks.balanceOf(mintee), loopBalance + 1, "balance is incremented by one");
+            assertEq(storyBlocks.ownerOf(blockId1), mintee);
+            vm.prank(mintee);
+            uint256 blockId2 = storyBlocks.createStoryBlock(sb, "name", "description", "mediaUrl");
+            assertEq(storyBlocks.balanceOf(mintee), loopBalance + 2, "balance is incremented by one again");
+            assertEq(storyBlocks.ownerOf(blockId2), mintee);
+        }
     }
 
-    function test_mintArt() public {
-        assertEq(franchise.balanceOf(mintee), 0);
-        assertEq(franchise.currentIdFor(StoryBlock.ART), _FIRST_ID_ART - 1);
-        vm.expectEmit(true, true, true, true);
-        emit Transfer(address(0), mintee, _FIRST_ID_ART);
-        franchise.mint(mintee, StoryBlock.ART);
-        assertEq(franchise.currentIdFor(StoryBlock.ART), _FIRST_ID_ART);
-        assertEq(franchise.balanceOf(mintee), 1);
-        assertEq(franchise.ownerOf(_FIRST_ID_ART), mintee);
-        franchise.mint(mintee, StoryBlock.ART);
-        assertEq(franchise.currentIdFor(StoryBlock.ART), _FIRST_ID_ART + 1);
-        assertEq(franchise.balanceOf(mintee), 2);
-        assertEq(franchise.ownerOf(_FIRST_ID_ART + 1), mintee);
+    function test_revertMintUnknownStoryBlock() public {
+        vm.startPrank(mintee);
+        vm.expectRevert(InvalidBlockType.selector);
+        storyBlocks.createStoryBlock(StoryBlock.UNDEFINED, "name", "description", "mediaUrl");
     }
 
-    function test_mintGroup() public {
-        assertEq(franchise.balanceOf(mintee), 0);
-        assertEq(franchise.currentIdFor(StoryBlock.GROUP), _FIRST_ID_GROUP - 1);
-        vm.expectEmit(true, true, true, true);
-        emit Transfer(address(0), mintee, _FIRST_ID_GROUP);
-        franchise.mint(mintee, StoryBlock.GROUP);
-        assertEq(franchise.currentIdFor(StoryBlock.GROUP), _FIRST_ID_GROUP);
-        assertEq(franchise.balanceOf(mintee), 1);
-        assertEq(franchise.ownerOf(_FIRST_ID_GROUP), mintee);
-        franchise.mint(mintee, StoryBlock.GROUP);
-        assertEq(franchise.currentIdFor(StoryBlock.GROUP), _FIRST_ID_GROUP + 1);
-        assertEq(franchise.balanceOf(mintee), 2);
-        assertEq(franchise.ownerOf(_FIRST_ID_GROUP + 1), mintee);
+    function test_storyBlockCreationData() public {
+        vm.prank(mintee);
+        uint256 blockId = storyBlocks.createStoryBlock(StoryBlock.STORY, "name", "description", "mediaUrl");
+        StoryBlocksRegistry.StoryBlockData memory data = storyBlocks.readStoryBlock(blockId);
+        assertEq(uint8(data.blockType), uint8(StoryBlock.STORY));
+        assertEq(data.name, "name");
+        assertEq(data.description, "description");
+        assertEq(data.mediaUrl, "mediaUrl");
     }
 
-    function test_mintLocation() public {
-        assertEq(franchise.balanceOf(mintee), 0);
-        assertEq(franchise.currentIdFor(StoryBlock.LOCATION), _FIRST_ID_LOCATION - 1);
-        vm.expectEmit(true, true, true, true);
-        emit Transfer(address(0), mintee, _FIRST_ID_LOCATION);
-        franchise.mint(mintee, StoryBlock.LOCATION);
-        assertEq(franchise.currentIdFor(StoryBlock.LOCATION), _FIRST_ID_LOCATION);
-        assertEq(franchise.balanceOf(mintee), 1);
-        assertEq(franchise.ownerOf(_FIRST_ID_LOCATION), mintee);
-        franchise.mint(mintee, StoryBlock.LOCATION);
-        assertEq(franchise.currentIdFor(StoryBlock.LOCATION), _FIRST_ID_LOCATION + 1);
-        assertEq(franchise.balanceOf(mintee), 2);
-        assertEq(franchise.ownerOf(_FIRST_ID_LOCATION + 1), mintee);
+    function test_emptyStoryBlockRead() public {
+        StoryBlocksRegistry.StoryBlockData memory data = storyBlocks.readStoryBlock(12312313);
+        assertEq(uint8(data.blockType), uint8(StoryBlock.UNDEFINED));
+        assertEq(data.name, "");
+        assertEq(data.description, "");
+        assertEq(data.mediaUrl, "");
     }
-    
+
 }

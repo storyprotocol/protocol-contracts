@@ -3,11 +3,12 @@
 pragma solidity ^0.8.9;
 
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import { PROTOCOL_ADMIN_ROLE } from "./ProtocolRoles.sol";
 import { UnsupportedInterface } from "../errors/General.sol";
 
-abstract contract AccessControlled {
+abstract contract AccessControlledUpgradeable is UUPSUpgradeable {
 
     using ERC165CheckerUpgradeable for address;
 
@@ -27,7 +28,11 @@ abstract contract AccessControlled {
         _;
     }
 
-    constructor(address accessControl) {
+    /**
+     * @notice Initializer method, access point to initialize inheritance tree.
+     * @param accessControl address of AccessManager.
+     */
+    function __AccessControlledUpgradeable_init(address accessControl) internal initializer {
         if (!accessControl.supportsInterface(type(IAccessControl).interfaceId)) revert UnsupportedInterface("IAccessControl");
         _accessControl = IAccessControl(accessControl);
         emit AccessControlUpdated(accessControl);
@@ -53,4 +58,11 @@ abstract contract AccessControlled {
         emit AccessControlUpdated(accessControl);
     }
 
+    /**
+     *  50
+     * - 1 _accessControl;
+     * --------------------------
+     *  49 __gap
+     */
+    uint256[49] private __gap;
 }
