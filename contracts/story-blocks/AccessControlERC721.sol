@@ -1,41 +1,25 @@
 // SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v4.8.0) (access/AccessControl.sol)
+
 
 pragma solidity ^0.8.0;
 
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
+/**
+ * @dev RBAC where the main admin role is held by an NFT owner.
+ * Each nft id can define its own hierarchy of roles.
+ * Inspired by OpenZeppelin's AccessControl.sol
+ */
 abstract contract AccessControlERC721 is ERC721Upgradeable {
 
-    /**
-     * @dev Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole`
-     *
-     * `DEFAULT_ADMIN_ROLE` is the starting admin for all roles, despite
-     * {RoleAdminChanged} not being emitted signaling this.
-     *
-     * _Available since v3.1._
-     */
     event RoleAdminChanged(uint256 indexed id, bytes32 indexed role, bytes32 previousAdminRole, bytes32 indexed newAdminRole);
-
-    /**
-     * @dev Emitted when `account` is granted `role`.
-     *
-     * `sender` is the account that originated the contract call, an admin role
-     * bearer except when using {AccessControl-_setupRole}.
-     */
     event RoleGranted(uint256 indexed id, bytes32 indexed role, address indexed account, address sender);
-
-    /**
-     * @dev Emitted when `account` is revoked `role`.
-     *
-     * `sender` is the account that originated the contract call:
-     *   - if using `revokeRole`, it is the admin role bearer
-     *   - if using `renounceRole`, it is the role bearer (i.e. `account`)
-     */
     event RoleRevoked(uint256 indexed id, bytes32 indexed role, address indexed account, address sender);
 
     error MissingRole(uint256 id, bytes32 role, address account);
+    error NotNFTOwnerOrRoleAdmin(uint256 id, bytes32 role, address account);
+    error OnlySelfCanRenounce();
 
     struct RoleData {
         mapping(address => bool) members;
@@ -46,38 +30,28 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
 
     bytes32 public constant _NFT_OWNER_ROLE = 0x00;
 
-    /**
-     * @dev Modifier that checks that an account has a specific role. Reverts
-     * with a standardized message including the required role.
-     *
-     * The format of the revert reason is given by the following regular expression:
-     *
-     *  /^AccessControl: account (0x[0-9a-f]{40}) is missing role (0x[0-9a-f]{64})$/
-     *
-     * _Available since v4.1._
-     */
+
     modifier onlyRole(uint256 id, bytes32 role) {
         _checkRole(id, role);
         _;
     }
 
     modifier onlyRoleAdminOrNFTOwner(uint256 id, bytes32 role) {
-        if (ownerOf(id) != msg.sender && !hasRole(id, role, msg.sender)) {
-            _checkRole(id, role);
+        if (ownerOf(id) != msg.sender && !hasRole(getRoleAdmin(id, role), msg.sender)) {
+            revert NotNFTOwnerOrRoleAdmin(id, role, msg.sender);
         }
         _;
     }
 
-
-    function __AttributableERC721_init(string calldata name, string calldata symbol) internal onlyInitializing {
+    function __AccessControlERC721_init(string calldata name, string calldata symbol) internal onlyInitializing {
         __ERC721_init(name, symbol);
     }
 
-    function __AttributionManater_init_unchained(string calldata name, string calldata symbol) internal onlyInitializing {
+    function __AccessControlERC721_init_unchained(string calldata name, string calldata symbol) internal onlyInitializing {
         __ERC721_init(name, symbol);
     }
 
-    function roleKey(uint256 id, bytes32 role) public pure returns (bytes32) {
+    function getRoleKey(uint256 id, bytes32 role) public pure returns (bytes32) {
         return keccak256(abi.encode(id, role));
     }
 
@@ -85,11 +59,11 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
      * @dev Returns `true` if `account` has been granted `role`.
      */
     function hasRole(uint256 id, bytes32 role, address account) public view   returns (bool) {
-        return _roles[roleKey(id, role)].members[account];
+        return _roles[getRoleKey(id, role)].members[account];
     }
 
-    function isRoleAdmin(uint256 id, bytes32 role, address account) public view returns (bool) {
-        return _roles[roleKey(id, role)].adminRoleKey
+    function hasRole(bytes32 roleKey, address account) public view   returns (bool) {
+        return _roles[roleKey].members[account];
     }
 
     /**
@@ -124,7 +98,7 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
      * To change a role's admin, use {_setRoleAdmin}.
      */
     function getRoleAdmin(uint256 id, bytes32 role) public view returns (bytes32) {
-        return _roles[roleKey(id, role)].adminRoleKey;
+        return _roles[getRoleKey(id, role)].adminRoleKey;
     }
 
     /**
@@ -139,7 +113,7 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
      *
      * May emit a {RoleGranted} event.
      */
-    function grantRole(uint256 id, bytes32 role, address account) public  onlyRole(getRoleAdmin(role)) {
+    function grantRole(uint256 id, bytes32 role, address account) public onlyRoleAdminOrNFTOwner(id, role) {
         _grantRole(id, role, account);
     }
 
@@ -154,7 +128,7 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
      *
      * May emit a {RoleRevoked} event.
      */
-    function revokeRole(uint256 id, bytes32 role, address account) public  onlyRole(getRoleAdmin(role)) {
+    function revokeRole(uint256 id, bytes32 role, address account) public onlyRoleAdminOrNFTOwner(id, role) {
         _revokeRole(id, role, account);
     }
 
@@ -175,7 +149,9 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
      * May emit a {RoleRevoked} event.
      */
     function renounceRole(uint256 id, bytes32 role, address account) public   {
-        require(account == msg.sender, "AccessControl: can only renounce roles for self");
+        if (account != msg.sender) {
+            revert OnlySelfCanRenounce();
+        }
 
         _revokeRole(id, role, account);
     }
@@ -187,8 +163,8 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
      */
     function _setRoleAdmin(uint256 id, bytes32 role, bytes32 adminRole) internal  {
         bytes32 previousAdminRoleKey = getRoleAdmin(id, role);
-        bytes32 newAdminRoleKey = roleKey(id, adminRole); 
-        _roles[roleKey(id, role)].adminRoleKey = newAdminRoleKey;
+        bytes32 newAdminRoleKey = getRoleKey(id, adminRole); 
+        _roles[getRoleKey(id, role)].adminRoleKey = newAdminRoleKey;
         emit RoleAdminChanged(id, role, previousAdminRoleKey, newAdminRoleKey);
     }
 
@@ -201,7 +177,7 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
      */
     function _grantRole(uint256 id, bytes32 role, address account) internal  {
         if (!hasRole(id, role, account)) {
-            bytes32 rk = roleKey(id, role);
+            bytes32 rk = getRoleKey(id, role);
             _roles[rk].members[account] = true;
             emit RoleGranted(id, role, account, msg.sender);
         }
@@ -216,7 +192,7 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
      */
     function _revokeRole(uint256 id, bytes32 role, address account) internal  {
         if (hasRole(id, role, account)) {
-            bytes32 rk = roleKey(id, role);
+            bytes32 rk = getRoleKey(id, role);
             _roles[rk].members[account] = false;
             emit RoleRevoked(id, role, account, msg.sender);
         }
