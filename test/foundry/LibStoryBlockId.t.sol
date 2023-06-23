@@ -38,6 +38,7 @@ contract FranchiseRegistryTest is Test {
 
     function test_storyBlockTypes() public {
         assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_ZERO_ID_STORY)), uint8(StoryBlock.UNDEFINED));
+
         assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_ZERO_ID_STORY + 1)), uint8(StoryBlock.STORY));
         assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_ZERO_ID_STORY + _HALF_ID_RANGE)), uint8(StoryBlock.STORY));
         assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_ZERO_ID_CHARACTER - 1)), uint8(StoryBlock.STORY));
@@ -66,5 +67,7 @@ contract FranchiseRegistryTest is Test {
         assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_ZERO_ID_ITEM + 1)), uint8(StoryBlock.ITEM));
         assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_ZERO_ID_ITEM + _HALF_ID_RANGE)), uint8(StoryBlock.ITEM));
         assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_LAST_ID_ITEM)), uint8(StoryBlock.ITEM));
+
+        assertEq(uint8(LibStoryBlockId.storyBlockTypeFor(_LAST_ID_ITEM + 1)), uint8(StoryBlock.UNDEFINED));
     }
 }
