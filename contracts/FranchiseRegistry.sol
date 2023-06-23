@@ -19,13 +19,13 @@ contract FranchiseRegistry is
     event FranchiseRegistered(
         address owner,
         uint256 id,
-        address storyBlocksContract
+        address storyBlockRegistryForId
     );
     error AlreadyRegistered();
 
     uint256 _franchiseIds;
-    // Franchise id => Collection address
-    mapping(uint256 => address) public _storyBlocks;
+    /// Franchise id => StoryBlockRegistry address
+    mapping(uint256 => address) public _storyBlockRegistries;
 
     StoryBlocksRegistryFactory public immutable FACTORY;
     uint256 public constant PROTOCOL_ROOT_ID = 0;
@@ -59,16 +59,16 @@ contract FranchiseRegistry is
             symbol,
             description
         );
-        _storyBlocks[_franchiseIds] = storyBlocksRegistry;
+        _storyBlockRegistries[_franchiseIds] = storyBlocksRegistry;
         _safeMint(msg.sender, _franchiseIds);
         emit FranchiseRegistered(msg.sender, _franchiseIds, storyBlocksRegistry);
         return (_franchiseIds, storyBlocksRegistry);
     }
 
-    function storyBlocksContract(
+    function storyBlockRegistryForId(
         uint256 franchiseId
     ) public view returns (address) {
-        return _storyBlocks[franchiseId];
+        return _storyBlockRegistries[franchiseId];
     }
 
     function _authorizeUpgrade(

@@ -12,7 +12,7 @@ contract FranchiseRegistryTest is Test, ProxyHelper {
     event FranchiseRegistered(
         address owner,
         uint256 id,
-        address storyBlocksContract
+        address storyBlockRegistryForId
     );
     
     StoryBlocksRegistryFactory public factory;
@@ -64,7 +64,7 @@ contract FranchiseRegistryTest is Test, ProxyHelper {
         (uint256 id, address storyBlocks) = register.registerFranchise("name", "symbol", "description");
         assertEq(id, 1);
         assertFalse(storyBlocks == address(0));
-        assertEq(storyBlocks, register.storyBlocksContract(id));
+        assertEq(storyBlocks, register.storyBlockRegistryForId(id));
         assertEq(register.ownerOf(id), franchiseOwner);
     }
 }
