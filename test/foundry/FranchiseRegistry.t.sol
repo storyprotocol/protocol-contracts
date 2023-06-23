@@ -7,15 +7,35 @@ import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/story-blocks/StoryBlocksRegistryFactory.sol";
 
+contract FranchiseRegistryTestV2 is FranchiseRegistry {
+    constructor(address _factory) FranchiseRegistry(_factory) {}
+
+    function version() public pure override returns (string memory) {
+        return "test";
+    }
+}
+
 contract FranchiseRegistryTest is Test, ProxyHelper {
+
+    event FranchiseRegistered(
+        address owner,
+        uint256 id,
+        address storyBlocksContract
+    );
+    
     StoryBlocksRegistryFactory public factory;
     FranchiseRegistry public register;
 
-    address admin;
+    address admin = address(123);
+    address franchiseOwner = address(456);
+
+    AccessControlSingleton acs;
 
     function setUp() public {
         factory = new StoryBlocksRegistryFactory();
-        address accessControl = address(new AccessControlSingleton());
+        vm.prank(admin);
+        acs = new AccessControlSingleton();
+        address accessControl = address(acs);
         
         FranchiseRegistry impl = new FranchiseRegistry(address(factory));
         register = FranchiseRegistry(
@@ -28,5 +48,31 @@ contract FranchiseRegistryTest is Test, ProxyHelper {
         );
     }
 
-   
+    function test_setUp() public {
+        assertEq(register.version(), "0.1.0");
+        assertEq(register.name(), "Story Protocol");
+        assertEq(register.symbol(), "SP");
+    }
+
+    function test_registerFranchise() public {
+        vm.startPrank(franchiseOwner);
+        vm.expectCall(address(factory),
+            abi.encodeCall(
+                factory.createFranchiseBlocks,
+                (
+                    1,
+                    "name",
+                    "symbol",
+                    "description"
+                )
+            )
+        );
+        vm.expectEmit(false, true, false, false);
+        emit FranchiseRegistered(address(0x123), 1, address(0x234));
+        (uint256 id, address storyBlocks) = register.registerFranchise("name", "symbol", "description");
+        assertEq(id, 1);
+        assertFalse(storyBlocks == address(0));
+        assertEq(storyBlocks, register.storyBlocksContract(id));
+        assertEq(register.ownerOf(id), franchiseOwner);
+    }
 }

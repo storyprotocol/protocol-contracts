@@ -29,14 +29,14 @@ contract StoryBlocksRegistry is
     string public description;
     uint256 public franchiseId;
 
-    string private constant _version = "0.1.0";
+    string private constant _VERSION = "0.1.0";
 
     constructor() {
         _disableInitializers();
     }
 
     function version() external pure virtual override returns (string memory) {
-        return _version;
+        return _VERSION;
     }
 
     function initialize(
