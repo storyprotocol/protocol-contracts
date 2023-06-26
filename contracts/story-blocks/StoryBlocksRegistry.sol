@@ -6,7 +6,7 @@ import { LibStoryBlockId } from "./LibStoryBlockId.sol";
 import { Unauthorized, ZeroAddress } from "../errors/General.sol";
 import { StoryBlockStorage } from "./data-access-modules/storage/StoryBlockStorage.sol";
 import { StoryBlock } from "contracts/StoryBlock.sol";
-import { AccessControlERC721 } from "./AccessControlERC721.sol";
+import { AccessControlERC721 } from "contracts/utils/AccessControlERC721.sol";
 import { GroupDAM } from "./data-access-modules/group/GroupDAM.sol";
 import { ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";

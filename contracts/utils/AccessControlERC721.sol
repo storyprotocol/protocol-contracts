@@ -5,6 +5,8 @@ pragma solidity ^0.8.0;
 
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import { NonExistentID } from "../errors/General.sol";
+
 
 /**
  * @dev RBAC where the main admin role is held by an NFT owner.
@@ -20,6 +22,7 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
     error MissingRole(uint256 id, bytes32 role, address account);
     error NotNFTOwnerOrRoleAdmin(uint256 id, bytes32 role, address account);
     error OnlySelfCanRenounce();
+    error CannotGrantNFTOwner();
 
     struct RoleData {
         mapping(address => bool) members;
@@ -37,7 +40,8 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
     }
 
     modifier onlyRoleAdminOrNFTOwner(uint256 id, bytes32 role) {
-        if (ownerOf(id) != msg.sender && !hasRole(getRoleAdmin(id, role), msg.sender)) {
+        bytes32 roleAdmin = getAdminRolekey(id, role);
+        if ((roleAdmin != _NFT_OWNER_ROLE || ownerOf(id) != msg.sender) && !hasRole(id, roleAdmin, msg.sender)) {
             revert NotNFTOwnerOrRoleAdmin(id, role, msg.sender);
         }
         _;
@@ -58,12 +62,11 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
     /**
      * @dev Returns `true` if `account` has been granted `role`.
      */
-    function hasRole(uint256 id, bytes32 role, address account) public view   returns (bool) {
+    function hasRole(uint256 id, bytes32 role, address account) public view returns (bool) {
+        if (role == _NFT_OWNER_ROLE) {
+            return ownerOf(id) == account;
+        }
         return _roles[getRoleKey(id, role)].members[account];
-    }
-
-    function hasRole(bytes32 roleKey, address account) public view   returns (bool) {
-        return _roles[roleKey].members[account];
     }
 
     /**
@@ -97,7 +100,7 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
      *
      * To change a role's admin, use {_setRoleAdmin}.
      */
-    function getRoleAdmin(uint256 id, bytes32 role) public view returns (bytes32) {
+    function getAdminRolekey(uint256 id, bytes32 role) public view returns (bytes32) {
         return _roles[getRoleKey(id, role)].adminRoleKey;
     }
 
@@ -132,6 +135,10 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
         _revokeRole(id, role, account);
     }
 
+    function setRoleAdmin(uint256 id, bytes32 role, bytes32 adminRole) public onlyRoleAdminOrNFTOwner(id, role) {
+        _setRoleAdmin(id, role, adminRole);
+    }
+
     /**
      * @dev Revokes `role` from the calling account.
      *
@@ -162,7 +169,7 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
      * Emits a {RoleAdminChanged} event.
      */
     function _setRoleAdmin(uint256 id, bytes32 role, bytes32 adminRole) internal  {
-        bytes32 previousAdminRoleKey = getRoleAdmin(id, role);
+        bytes32 previousAdminRoleKey = getAdminRolekey(id, role);
         bytes32 newAdminRoleKey = getRoleKey(id, adminRole); 
         _roles[getRoleKey(id, role)].adminRoleKey = newAdminRoleKey;
         emit RoleAdminChanged(id, role, previousAdminRoleKey, newAdminRoleKey);
@@ -176,7 +183,11 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
      * May emit a {RoleGranted} event.
      */
     function _grantRole(uint256 id, bytes32 role, address account) internal  {
-        if (!hasRole(id, role, account)) {
+        if (role == _NFT_OWNER_ROLE) {
+            revert CannotGrantNFTOwner();
+        }
+        // Note: _exists(id) will revert if id does not exist.
+        if (_exists(id) && !hasRole(id, role, account)) {
             bytes32 rk = getRoleKey(id, role);
             _roles[rk].members[account] = true;
             emit RoleGranted(id, role, account, msg.sender);
