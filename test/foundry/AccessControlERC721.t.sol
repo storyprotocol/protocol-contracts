@@ -74,19 +74,25 @@ contract AccessControlERC721Test is Test, ProxyHelper {
     /*************** Granting roles ***************/
 
     function test_grantRole() public {
+        // ID 1
         vm.expectEmit(true, true, true, true);
         emit RoleGranted(1, ROLE_A, roleAHolder, owner);
         vm.prank(owner);
         access.grantRole(1, ROLE_A, roleAHolder);
+        // Assert ROLE_A is granted to roleAHolder, and owner is role admin
         assertTrue(access.hasRole(1, ROLE_A, roleAHolder));
+        assertTrue(access.isRoleAdmin(1, ROLE_A, owner));
+        // ID 2
         access.mint(owner, 2);
         vm.prank(owner);
         access.grantRole(2, ROLE_A, address(0x727));
-
+        // Assert ROLE_A is granted to id 2, but not for roleAHolder (id 1)
         assertTrue(access.hasRole(2, ROLE_A, address(0x727)));
         assertFalse(access.hasRole(1, ROLE_A, address(0x727)));
         assertTrue(access.hasRole(1, ROLE_A, roleAHolder));
         assertFalse(access.hasRole(2, ROLE_A, roleAHolder));
+        // Assert owner is also default admin role for ID 2
+        assertTrue(access.isRoleAdmin(2, ROLE_A, owner));
     }
 
     function test_revertGrantingNotOwnerOrRoleAdmin() public {
@@ -116,13 +122,48 @@ contract AccessControlERC721Test is Test, ProxyHelper {
 
     /*************** Setting admin roles ***************/
 
-    function test_setAdminRole() public {
+    function test_setAdminRoleAsNFTOWner() public {
         vm.prank(owner);
         vm.expectEmit(true ,true, true, true);
         emit RoleAdminChanged(1, ROLE_B, NFT_OWNER_ROLE, keccak256(abi.encode(1, ROLE_A)));
         access.setRoleAdmin(1, ROLE_B, ROLE_A);
         assertEq(access.getAdminRolekey(1, ROLE_A), NFT_OWNER_ROLE);
         assertEq(access.getAdminRolekey(1, ROLE_B), keccak256(abi.encode(1, ROLE_A)));
+    }
+
+    function test_isAdminRole() public {
+        vm.prank(owner);
+        access.setRoleAdmin(1, ROLE_B, ROLE_A);
+        assertTrue(access.isRoleAdmin(1, ROLE_A, owner));
+        assertTrue(access.isRoleAdminOrNFTOwner(1, ROLE_A, owner));
+        assertFalse(access.isRoleAdmin(1, ROLE_B, owner));
+        assertTrue(access.isRoleAdminOrNFTOwner(1, ROLE_B, owner));
+    }
+
+    function test_setSubAdminRoleFromRoleAdmin() public {
+        vm.prank(owner);
+        console.log("==== setRoleAdmin ROLE_A -> ROLE_B ====");
+        access.setRoleAdmin(1, ROLE_B, ROLE_A);
+        console.log("==== grantRole ROLE_A -> 0x456 ====");
+        vm.prank(owner);
+        access.grantRole(1, ROLE_A, roleAHolder);
+        console.log("==== access.isRoleAdmin(1, ROLE_A, roleAHolder) ====");
+        assertFalse(access.isRoleAdmin(1, ROLE_A, roleAHolder));
+        console.log("==== access.isRoleAdmin(1, ROLE_B, roleAHolder) ====");
+        assertTrue(access.isRoleAdmin(1, ROLE_B, roleAHolder));
+        vm.prank(owner);
+        access.grantRole(1, ROLE_B, roleBHolder);
+        console.log("==== setRoleAdmin ROLE_B -> ROLE_C ====");
+        vm.prank(owner);
+        access.setRoleAdmin(1, keccak256("ROLE_C"), ROLE_B);
+        assertEq(access.getAdminRolekey(1, keccak256("ROLE_C")), keccak256(abi.encode(1, ROLE_B)));
+        assertTrue(access.isRoleAdmin(1, keccak256("ROLE_C"), roleBHolder));
+    }
+
+    function test_revertIfSetAdminRoleFromNotAdminOrOwner() public {
+        vm.expectRevert();
+        access.setRoleAdmin(1, ROLE_B, ROLE_A);
+        
     }
 
 }

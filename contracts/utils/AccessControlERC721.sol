@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { NonExistentID } from "../errors/General.sol";
-
+import "forge-std/console.sol";
 
 /**
  * @dev RBAC where the main admin role is held by an NFT owner.
@@ -40,8 +40,7 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
     }
 
     modifier onlyRoleAdminOrNFTOwner(uint256 id, bytes32 role) {
-        bytes32 roleAdmin = getAdminRolekey(id, role);
-        if ((roleAdmin != _NFT_OWNER_ROLE || ownerOf(id) != msg.sender) && !hasRole(id, roleAdmin, msg.sender)) {
+        if (!isRoleAdminOrNFTOwner(id, role, msg.sender)) {
             revert NotNFTOwnerOrRoleAdmin(id, role, msg.sender);
         }
         _;
@@ -67,6 +66,24 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
             return ownerOf(id) == account;
         }
         return _roles[getRoleKey(id, role)].members[account];
+    }
+
+    function isRoleAdmin(uint256 id, bytes32 role, address account) public view returns (bool) {
+        bytes32 roleAdminKey = getAdminRolekey(id, role);
+        if (roleAdminKey == _NFT_OWNER_ROLE) {
+            return ownerOf(id) == account;
+        } else {
+            return _roles[roleAdminKey].members[account];
+        }
+    }
+
+    function isRoleAdminOrNFTOwner(uint256 id, bytes32 role, address account) public view returns (bool) {
+        console.log("----isRoleAdminOrNFTOwner");
+        console.log("adminRoleKey");
+        console.logBytes32(getAdminRolekey(id, role));
+        console.log("sender", account);
+        console.log("_roles[getAdminRolekey(id, role)].members[account]", _roles[getAdminRolekey(id, role)].members[account]);
+        return _roles[getAdminRolekey(id, role)].members[account] || ownerOf(id) == account;
     }
 
     /**
@@ -171,6 +188,13 @@ abstract contract AccessControlERC721 is ERC721Upgradeable {
     function _setRoleAdmin(uint256 id, bytes32 role, bytes32 adminRole) internal  {
         bytes32 previousAdminRoleKey = getAdminRolekey(id, role);
         bytes32 newAdminRoleKey = getRoleKey(id, adminRole); 
+        console.log("----_setRoleAdmin");
+        console.log("role");
+        console.logBytes32(role);
+        console.log("roleKey");
+        console.logBytes32(getRoleKey(id, role));
+        console.log("newAdminRoleKey");
+        console.logBytes32(newAdminRoleKey);
         _roles[getRoleKey(id, role)].adminRoleKey = newAdminRoleKey;
         emit RoleAdminChanged(id, role, previousAdminRoleKey, newAdminRoleKey);
     }
