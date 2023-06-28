@@ -10,7 +10,8 @@ require("@nomiclabs/hardhat-etherscan");
 require('@openzeppelin/hardhat-upgrades');
 
 const createFranchise = require("./script/hardhat/createFranchise.js");
-
+const createStoryBlock = require("./script/hardhat/createStoryBlock.js");
+const getStoryBlockRegistryAddress = require("./script/hardhat/getStoryBlockRegistryAddress.js");
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -29,6 +30,19 @@ task('sp:create-franchise')
     .setDescription('Mint Franchise NFT and create StoryBlocksRegistry contract')
     .setAction(createFranchise);
 
+task('sp:get-story-block-registry-address')
+    .addPositionalParam('franchiseId', 'Id of the Franchise to create the Story Block in, as given by FranchiseRegistry contract')
+    .setDescription('Get the address of the StoryBlocksRegistry contract for the given Franchise')
+    .setAction(getStoryBlockRegistryAddress);
+
+task('sp:create-block')
+    .addPositionalParam('franchiseId', 'Id of the Franchise to create the Story Block in, as given by FranchiseRegistry contract')
+    .addPositionalParam('storyBlockType', 'STORY, CHARACTER, ART, GROUP, LOCATION or ITEM')
+    .addPositionalParam('name', 'Story Block name')
+    .addPositionalParam('description', 'Story Block description')
+    .addPositionalParam('mediaURL', 'Story Block media URL')
+    .setDescription('Mint Story Block NFT and create StoryBlocksRegistry contract')
+    .setAction(createStoryBlock);
 
 
 // You need to export an object to set up your config
