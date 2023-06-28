@@ -20,7 +20,7 @@ contract Deploy is Script, ProxyHelper {
     address public deployer = address(0x123);
 
     /// @dev To use, run the following command (e.g. for Goerli):
-    /// forge script script/Deploy.sol --sig "run()" --fork-url https://eth-goerli.g.alchemy.com/v2/$GOERLI_ALCHEMY_API_KEY --sender $SENDER_ADDRESS --use 0.8.18 
+    /// forge script script/Deploy.s.sol:Deploy --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv
     function run() public {
         uint256 deployerPrivateKey;
         if (block.chainid == 5) {
@@ -67,7 +67,7 @@ contract Deploy is Script, ProxyHelper {
         string memory finalJson = chainId.serialize(chainId, contractOutput);
         
         if (block.chainid == 5) {
-            vm.writeJson(finalJson, "./deployment.json");
+            vm.writeJson(finalJson, "./deployment-public.json");
             vm.stopBroadcast();
         } else {
             vm.writeJson(finalJson, "./deployment-local.json");
