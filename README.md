@@ -71,6 +71,15 @@ Create a Franchise
 npx hardhat --network <networ name> sp:create-franchise -name="Test" -description="Short description" -symbol="TT"
 ```
 
+Get Franchise Address for ID
+```
+npx hardhat sp:get-story-block-registry-address --network <network> <franchiseId>
+```
+
+Create Story Block
+```
+npx hardhat sp:create-block --network <network> <franchiseId> <StoryBlockType name, like "ART", "STORY"...> <name> <description> "https://www.youtube.com/watch\?v\=dQw4w9WgXcQ"
+```
 
 ### Working with a local network
 
