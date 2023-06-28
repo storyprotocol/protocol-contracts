@@ -3,7 +3,7 @@ pragma solidity ^0.8.18;
 
 import "forge-std/Script.sol";
 import "test/foundry/utils/ProxyHelper.sol";
-import "script/utils/StringUtil.sol";
+import "script/foundry/utils/StringUtil.sol";
 import "contracts/story-blocks/StoryBlocksRegistryFactory.sol";
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";

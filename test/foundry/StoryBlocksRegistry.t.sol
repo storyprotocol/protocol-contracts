@@ -52,7 +52,7 @@ contract StoryBlocksRegistryTest is Test {
         uint8 lastStoryBlockTypeId = uint8(StoryBlock.ITEM);
         for(uint8 i = firstStoryBlockType; i < lastStoryBlockTypeId; i++) {
             StoryBlock sb = StoryBlock(i);
-            uint256 zero = LibStoryBlockId.zeroId(sb);
+            uint256 zero = LibStoryBlockId._zeroId(sb);
             assertEq(storyBlocks.currentIdFor(sb), zero, "starts with zero");
             vm.prank(mintee);
             uint256 blockId1 = storyBlocks.createStoryBlock(sb, "name", "description", "mediaUrl");

@@ -9,6 +9,9 @@ require('@nomiclabs/hardhat-ethers');
 require("@nomiclabs/hardhat-etherscan");
 require('@openzeppelin/hardhat-upgrades');
 
+const createFranchise = require("./script/hardhat/createFranchise.js");
+
+
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
@@ -19,6 +22,15 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
+task('sp:create-franchise')
+    .addPositionalParam('name', 'Franchise name')
+    .addPositionalParam('symbol', 'Franchise symbol')
+    .addPositionalParam('description', 'Franchise description')
+    .setDescription('Mint Franchise NFT and create StoryBlocksRegistry contract')
+    .setAction(createFranchise);
+
+
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
@@ -28,14 +40,21 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 module.exports = {
   networks: {
     mainnet: {
-      url: process.env.MAINNET_URL || "",
+      url: process.env.MAINNET_RPC_URL || "",
       chainId: 1,
       accounts: [process.env.MAINNET_PRIVATEKEY || "0x1234567890123456789012345678901234567890123456789012345678901234"]
     },
     goerli: {
-      url: process.env.GOERLI_URL || "",
+      url: process.env.GOERLI_RPC_URL || "",
       chainId: 5,
       accounts: [process.env.GOERLI_PRIVATEKEY || "0x1234567890123456789012345678901234567890123456789012345678901234"]
+    },
+    local: {
+      url: "http://127.0.0.1:8545",
+      chainId: 31337,
+      accounts: {
+        mnemonic: "test test test test test test test test test test test junk",
+      }
     }
   },
   gasReporter: {
