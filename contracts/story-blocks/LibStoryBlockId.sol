@@ -9,17 +9,17 @@ library LibStoryBlockId {
 
     uint256 private constant _ID_RANGE = 10 ** 12;
 
-    function zeroId(StoryBlock sb) public pure returns (uint256) {
+    function _zeroId(StoryBlock sb) internal pure returns (uint256) {
         if (sb == StoryBlock.UNDEFINED) revert InvalidStoryBlock(sb);
         return _ID_RANGE * (uint256(sb) - 1);
     }
 
-    function lastId(StoryBlock sb) public pure returns (uint256) {
+    function _lastId(StoryBlock sb) internal pure returns (uint256) {
         if (sb == StoryBlock.UNDEFINED) revert InvalidStoryBlock(sb);
         return (_ID_RANGE * uint256(sb)) - 1;
     }
 
-    function storyBlockTypeFor(uint256 id) public pure returns (StoryBlock) {
+    function _storyBlockTypeFor(uint256 id) internal pure returns (StoryBlock) {
         // End of _ID_RANGE is zero (undefined) for each StoryBlock
         // Also, we don't support ids higher than the last StoryBlock enum item
         if (id % _ID_RANGE == 0 || id > _ID_RANGE * (uint256(StoryBlock.ITEM))) return StoryBlock.UNDEFINED;

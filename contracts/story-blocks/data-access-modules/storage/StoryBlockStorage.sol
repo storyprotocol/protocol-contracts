@@ -34,7 +34,7 @@ abstract contract StoryBlockStorage is Initializable, IStoryBlockStorage {
     ) private returns (StoryBlock) {
         StoryBlockData storage sbd = _storyBlocks[storyBlockId];
         if (sbd.blockType == StoryBlock.UNDEFINED) {
-            sbd.blockType = LibStoryBlockId.storyBlockTypeFor(storyBlockId);
+            sbd.blockType = LibStoryBlockId._storyBlockTypeFor(storyBlockId);
         }
         sbd.name = name;
         sbd.description = description;
