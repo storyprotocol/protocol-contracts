@@ -12,6 +12,7 @@ require('@openzeppelin/hardhat-upgrades');
 const createFranchise = require("./script/hardhat/createFranchise.js");
 const createStoryBlock = require("./script/hardhat/createStoryBlock.js");
 const getStoryBlockRegistryAddress = require("./script/hardhat/getStoryBlockRegistryAddress.js");
+const getStoryBlock = require("./script/hardhat/getStoryBlock.js");
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -44,6 +45,11 @@ task('sp:create-block')
     .setDescription('Mint Story Block NFT and create StoryBlocksRegistry contract')
     .setAction(createStoryBlock);
 
+task('sp:read-block')
+    .addPositionalParam('franchiseId', 'Id of the Franchise to create the Story Block in, as given by FranchiseRegistry contract')
+    .addPositionalParam('storyBlockId', 'Id of the Story Block to read')
+    .setDescription('Get the Story Block details')
+    .setAction(getStoryBlock);
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
