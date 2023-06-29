@@ -34,7 +34,7 @@ contract FranchiseRegistry is
 
     constructor(address _factory) {
         _disableInitializers();
-        if (_factory == address(0)) revert ZeroAddress("factory");
+        if (_factory == address(0)) revert ZeroAddress();
         FACTORY = StoryBlocksRegistryFactory(_factory);
     }
 
