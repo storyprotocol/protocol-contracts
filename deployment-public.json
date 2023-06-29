@@ -1,0 +1,8 @@
+{
+  "5": {
+    "accessControlSingleton": "0xbd9eAF2bEe73148C6e21481ade29FD9c73c29B80",
+    "franchiseRegistry-impl": "0xA78068f87f2102ccE894edB704518f27a1283390",
+    "franchiseRegistry-proxy": "0xcDc37d81dAd12A9885Ea979d660588DA4752fa6B",
+    "storyBlocksRegistryFactory": "0xa8164aF085F0D62A1d27a5A92f0E2336C35fE73d"
+  }
+}

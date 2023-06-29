@@ -39,18 +39,52 @@ forge test
 
 You'll need to add the following variables to a `.env` file:
 
--   `MAINNET_URL`
+-   `MAINNET_RPC_URL`
 -   `MAINNET_PRIVATEKEY`
--   `GOERLI_URL`
+-   `GOERLI_RPC_URL`
 -   `GOERLI_PRIVATEKEY`
 -   `ETHERSCAN_API_KEY`
 
 ## Deploying
 
+Deploy local
 ```
-make deploy-goerli
+anvil
+(open other tab)
+forge script script/foundry/Deploy.s.sol:Deploy --fork-url=http://127.0.0.1:8545 
 ```
 
+Deploy to network dry run
+```
+forge script script/Deploy.s.sol:Deploy --fork-url=<network rpc url url> -vvvv
+```
+
+Deploy to network
+```
+forge script script/foundry/Deploy.s.sol:Deploy --fork-url=<network rpc url url> -vvvv --broadcast
+```
+
+## Tasks
+
+Create a Franchise
+```
+npx hardhat --network <networ name> sp:create-franchise -name="Test" -description="Short description" -symbol="TT"
+```
+
+Get Franchise Address for ID
+```
+npx hardhat sp:get-story-block-registry-address --network <network> <franchiseId>
+```
+
+Create Story Block
+```
+npx hardhat sp:create-block --network <network> <franchiseId> <StoryBlockType name, like "ART", "STORY"...> <name> <description> "https://www.youtube.com/watch\?v\=dQw4w9WgXcQ"
+```
+
+Read Story Block
+```
+npx hardhat sp:read-block--network <network> <franchiseId> <storyBlockId>
+```
 
 ### Working with a local network
 

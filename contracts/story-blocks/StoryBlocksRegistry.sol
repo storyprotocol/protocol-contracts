@@ -57,7 +57,7 @@ contract StoryBlocksRegistry is
         // console.log("mint block", uint8(sb));
         uint256 nextId = currentIdFor(sb) + 1;
         // console.log("nextId", nextId);
-        if (nextId > LibStoryBlockId.lastId(sb)) revert IdOverBounds();
+        if (nextId > LibStoryBlockId._lastId(sb)) revert IdOverBounds();
         _ids[sb] = nextId;
         // console.log("saved", _ids[sb]);
         _safeMint(to, nextId);
@@ -68,7 +68,7 @@ contract StoryBlocksRegistry is
     function currentIdFor(StoryBlock sb) public view returns (uint256) {
         uint256 currentId = _ids[sb];
         if (currentId == 0) {
-            return LibStoryBlockId.zeroId(sb);
+            return LibStoryBlockId._zeroId(sb);
         } else {
             return currentId;
         }

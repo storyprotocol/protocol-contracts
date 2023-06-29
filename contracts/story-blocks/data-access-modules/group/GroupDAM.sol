@@ -42,7 +42,7 @@ abstract contract GroupDAM is IGroupDAM, StoryBlockStorage {
         if (length > MAX_LINKED_AT_ONCE) revert TooManyLinkedItems();
         StoryBlock linkedType = _groupData[id].linkedType;
         for(uint256 i = 0; i < linkedItems.length;) {
-            if (LibStoryBlockId.storyBlockTypeFor(linkedItems[i]) != linkedType) revert GroupedTypeNotGroupType();
+            if (LibStoryBlockId._storyBlockTypeFor(linkedItems[i]) != linkedType) revert GroupedTypeNotGroupType();
             _groupData[id].linkedItems.add(linkedItems[i]);
             unchecked {
                 i++;
