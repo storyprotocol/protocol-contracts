@@ -108,4 +108,10 @@ contract StoryBlocksRegistryTest is Test {
         assertEq(data.mediaUrl, "");
     }
 
+    function test_tokenUriReturnsMediaURL() public {
+        vm.prank(mintee);
+        uint256 blockId = storyBlocks.createStoryBlock(StoryBlock.STORY, "name", "description", "https://mediaUrl.xyz");
+        assertEq(storyBlocks.tokenURI(blockId), "https://mediaUrl.xyz");    
+    }
+
 }
