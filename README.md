@@ -81,6 +81,11 @@ Create Story Block
 npx hardhat sp:create-block --network <network> <franchiseId> <StoryBlockType name, like "ART", "STORY"...> <name> <description> "https://www.youtube.com/watch\?v\=dQw4w9WgXcQ"
 ```
 
+Read Story Block
+```
+npx hardhat sp:read-block--network <network> <franchiseId> <storyBlockId>
+```
+
 ### Working with a local network
 
 Foundry comes with local network [anvil](https://book.getfoundry.sh/anvil/index.html) baked in, and allows us to deploy to our local network for quick testing locally.
