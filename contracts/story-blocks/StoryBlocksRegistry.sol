@@ -17,11 +17,6 @@ contract StoryBlocksRegistry is
     MulticallUpgradeable,
     GroupDAM
 {
-    event StoryBlockMinted(
-        address indexed to,
-        StoryBlock indexed sb,
-        uint256 indexed tokenId
-    );
 
     error IdOverBounds();
     /// @dev storyBlockId => id counter
@@ -50,18 +45,13 @@ contract StoryBlocksRegistry is
         if (_franchiseId == 0) revert ZeroAddress("franchiseId");
         franchiseId = _franchiseId;
         description = _description;
-        // _setBaseURI("https://api.splinterlands.io/asset/");
     }
 
     function _mintBlock(address to, StoryBlock sb) internal override returns (uint256) {
-        // console.log("mint block", uint8(sb));
         uint256 nextId = currentIdFor(sb) + 1;
-        // console.log("nextId", nextId);
         if (nextId > LibStoryBlockId._lastId(sb)) revert IdOverBounds();
         _ids[sb] = nextId;
-        // console.log("saved", _ids[sb]);
         _safeMint(to, nextId);
-        emit StoryBlockMinted(to, sb, nextId);
         return nextId;
     }
 
