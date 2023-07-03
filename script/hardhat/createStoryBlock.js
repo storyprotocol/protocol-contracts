@@ -45,3 +45,4 @@ async function main(args, hre) {
 }
 
 module.exports = main;
+module.exports.validateStoryBlockType = validateStoryBlockType;
