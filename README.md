@@ -65,7 +65,7 @@ forge script script/foundry/Deploy.s.sol:Deploy --fork-url=<network rpc url url>
 ```
 
 ## Tasks
-
+NOTE: All task that generate transactions can be called with additional param `--events true ` so they print the tx receipt's events
 Create a Franchise
 ```
 npx hardhat --network <networ name> sp:create-franchise -name="Test" -description="Short description" -symbol="TT"

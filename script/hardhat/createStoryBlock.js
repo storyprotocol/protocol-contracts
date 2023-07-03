@@ -28,7 +28,7 @@ function validateStoryBlockType(storyBlockType) {
 async function main(args, hre) {
     const { ethers } = hre;
     const { chainId, contracts } = await loadDeployment(hre);
-    const { franchiseId, storyBlockType, name, description, mediaURL } = args;
+    const { franchiseId, storyBlockType, name, description, mediaURL, events } = args;
     const sbType = validateStoryBlockType(storyBlockType);
     const { address } = await getStoryBlockRegistryAddress(ethers, franchiseId, contracts);
     
@@ -38,6 +38,10 @@ async function main(args, hre) {
     console.log("tx: ", tx.hash);
     console.log("Waiting for tx to be mined...");
     const receipt = await tx.wait();
+    if (events) {
+        console.log("Events: ");
+        console.log(receipt.events);
+    }
     const id = findId(receipt.events);
     console.log("Story block created: ", id);
     

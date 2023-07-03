@@ -29,6 +29,7 @@ task('sp:create-franchise')
     .addPositionalParam('name', 'Franchise name')
     .addPositionalParam('symbol', 'Franchise symbol')
     .addPositionalParam('description', 'Franchise description')
+    .addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
     .setDescription('Mint Franchise NFT and create StoryBlocksRegistry contract')
     .setAction(createFranchise);
 
@@ -43,6 +44,7 @@ task('sp:create-block')
     .addPositionalParam('name', 'Story Block name')
     .addPositionalParam('description', 'Story Block description')
     .addPositionalParam('mediaURL', 'Story Block media URL')
+    .addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
     .setDescription('Mint Story Block NFT and create StoryBlocksRegistry contract')
     .setAction(createStoryBlock);
 
