@@ -13,6 +13,7 @@ const createFranchise = require("./script/hardhat/createFranchise.js");
 const createStoryBlock = require("./script/hardhat/createStoryBlock.js");
 const getStoryBlockRegistryAddress = require("./script/hardhat/getStoryBlockRegistryAddress.js");
 const getStoryBlock = require("./script/hardhat/getStoryBlock.js");
+const sbUploader = require("./script/hardhat/sbUploader.js");
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -52,6 +53,20 @@ task('sp:read-block')
     .addPositionalParam('storyBlockId', 'Id of the Story Block to read')
     .setDescription('Get the Story Block details')
     .setAction(getStoryBlock);
+
+task('sp:uploader')
+    .addPositionalParam('franchiseId', 'Id of the Franchise to create the Story Blocks in, as given by FranchiseRegistry contract')
+    .addPositionalParam('filePath', 'path to the Json data')
+    .addOptionalParam('batchSize', 'Number of blocks to upload in each batch', 100, types.int)
+    .setDescription('Mass upload Story Blocks from a Json file')
+    .setAction(sbUploader);
+
+task('sp:update-blocks')
+    .addPositionalParam('franchiseId', 'Id of the Franchise to create the Story Blocks in, as given by FranchiseRegistry contract')
+    .addPositionalParam('tx', 'tx hash that created blocks')
+    .addPositionalParam('filePath', 'path to the Json data')
+    .setDescription('Update ids for blocks in the Json file')
+    .setAction(sbUploader.updateIds);
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
