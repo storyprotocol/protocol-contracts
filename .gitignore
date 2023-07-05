@@ -24,3 +24,7 @@ node_modules/
 
 # Local deployment
 deployment-local.json
+
+# Script data
+script/data/
+
