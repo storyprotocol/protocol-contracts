@@ -64,6 +64,18 @@ contract StoryBlocksRegistry is
         }
     }
 
+
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        virtual
+        override(ERC721Upgradeable)
+        returns (string memory)
+    {
+        require(_exists(tokenId), "ERC721: invalid token ID");
+        return readStoryBlock(tokenId).mediaUrl;
+    }
+
     function supportsInterface(
         bytes4 interfaceId
     )
