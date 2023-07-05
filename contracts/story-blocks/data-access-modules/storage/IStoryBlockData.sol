@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { StoryBlock } from "contracts/StoryBlock.sol";
 
-interface IStoryBlockStorage  {
+interface IStoryBlockData  {
 
     event StoryBlockWritten(
         uint256 indexed storyBlockId,

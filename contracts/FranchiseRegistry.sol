@@ -23,11 +23,17 @@ contract FranchiseRegistry is
     );
     error AlreadyRegistered();
 
-    uint256 _franchiseIds;
-    /// Franchise id => StoryBlockRegistry address
-    mapping(uint256 => address) public _storyBlockRegistries;
+    /// @custom:storage-location erc7201:story-protocol.franchise-registry.storage
+    struct FranchiseStorage {
+        uint256 franchiseIds;
+        /// Franchise id => StoryBlockRegistry address
+        mapping(uint256 => address) storyBlockRegistries;
+    }
 
     StoryBlocksRegistryFactory public immutable FACTORY;
+    
+    // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.franchise-registry.storage")) - 1)))
+    bytes32 private constant _STORAGE_LOCATION = 0x5648324915b730d22cca7279385130ad43fd4829d795fb20e9ab398bfe537e8f;
     uint256 public constant PROTOCOL_ROOT_ID = 0;
     address public constant PROTOCOL_ROOT_ADDRESS = address(0);
     string private constant _VERSION = "0.1.0";
@@ -44,6 +50,12 @@ contract FranchiseRegistry is
         __ERC721_init("Story Protocol", "SP");
     }
 
+    function _getFranchiseStorage() private pure returns (FranchiseStorage storage $) {
+        assembly {
+            $.slot := _STORAGE_LOCATION
+        }
+    }
+
     function version() external pure override returns (string memory) {
         return _VERSION;
     }
@@ -53,22 +65,24 @@ contract FranchiseRegistry is
         string calldata symbol,
         string calldata description
     ) external returns (uint256, address) {
+        FranchiseStorage storage $ = _getFranchiseStorage();
         address storyBlocksRegistry = FACTORY.createFranchiseBlocks(
-            ++_franchiseIds,
+            ++$.franchiseIds,
             name,
             symbol,
             description
         );
-        _storyBlockRegistries[_franchiseIds] = storyBlocksRegistry;
-        _safeMint(msg.sender, _franchiseIds);
-        emit FranchiseRegistered(msg.sender, _franchiseIds, storyBlocksRegistry);
-        return (_franchiseIds, storyBlocksRegistry);
+        $.storyBlockRegistries[$.franchiseIds] = storyBlocksRegistry;
+        _safeMint(msg.sender, $.franchiseIds);
+        emit FranchiseRegistered(msg.sender, $.franchiseIds, storyBlocksRegistry);
+        return ($.franchiseIds, storyBlocksRegistry);
     }
 
     function storyBlockRegistryForId(
         uint256 franchiseId
     ) public view returns (address) {
-        return _storyBlockRegistries[franchiseId];
+        FranchiseStorage storage $ = _getFranchiseStorage();
+        return $.storyBlockRegistries[franchiseId];
     }
 
     function _authorizeUpgrade(
