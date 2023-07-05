@@ -17,11 +17,6 @@ contract StoryBlocksRegistry is
     MulticallUpgradeable,
     GroupDAM
 {
-    event StoryBlockMinted(
-        address indexed to,
-        StoryBlock indexed sb,
-        uint256 indexed tokenId
-    );
 
     error IdOverBounds();
 
@@ -53,7 +48,6 @@ contract StoryBlocksRegistry is
         StoryBlockRegistryStorage storage $ = _getStoryBlockRegistryStorage();
         $.franchiseId = _franchiseId;
         $.description = _description;
-        // _setBaseURI("https://api.splinterlands.io/asset/");
     }
 
     function _getStoryBlockRegistryStorage()
@@ -76,7 +70,6 @@ contract StoryBlocksRegistry is
         StoryBlockRegistryStorage storage $ = _getStoryBlockRegistryStorage();
         $.ids[sb] = nextId;
         _safeMint(to, nextId);
-        emit StoryBlockMinted(to, sb, nextId);
         return nextId;
     }
 
@@ -98,6 +91,10 @@ contract StoryBlocksRegistry is
     function franchiseId() external view returns (uint256) {
         StoryBlockRegistryStorage storage $ = _getStoryBlockRegistryStorage();
         return $.franchiseId;
+    }
+
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        return readStoryBlock(tokenId).mediaUrl;
     }
 
     function supportsInterface(
