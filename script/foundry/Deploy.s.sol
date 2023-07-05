@@ -4,7 +4,7 @@ pragma solidity ^0.8.18;
 import "forge-std/Script.sol";
 import "test/foundry/utils/ProxyHelper.sol";
 import "script/foundry/utils/StringUtil.sol";
-import "contracts/story-blocks/StoryBlocksRegistryFactory.sol";
+import "contracts/ip-assets/IPAssetRegistryFactory.sol";
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 
@@ -13,7 +13,7 @@ contract Deploy is Script, ProxyHelper {
     using StringUtil for uint256;
     using stdJson for string;
 
-    StoryBlocksRegistryFactory public factory;
+    IPAssetRegistryFactory public factory;
     FranchiseRegistry public registry;
     AccessControlSingleton public access;
 
@@ -33,11 +33,11 @@ contract Deploy is Script, ProxyHelper {
         string memory chainId = (block.chainid).toString();
         string memory contractGroup;
 
-        /// DEPLOY STORY BLOCKS REGISTRY FACTORY
-        console.log("Deploying Story Blocks Registry Factory...");
-        factory = new StoryBlocksRegistryFactory();
-        string memory contractOutput = vm.serializeAddress(contractGroup, "storyBlocksRegistryFactory", address(factory));
-        console.log("Story blocks registry factory deployed to:", address(factory));
+        /// DEPLOY IP ASSETS REGISTRY FACTORY
+        console.log("Deploying IP Assets Registry Factory...");
+        factory = new IPAssetRegistryFactory();
+        string memory contractOutput = vm.serializeAddress(contractGroup, "IPAssetRegistryFactory", address(factory));
+        console.log("IP Assets registry factory deployed to:", address(factory));
 
         /// DEPLOY ACCESS CONTROL SINGLETON
         console.log("Deploying Access Control Singleton...");

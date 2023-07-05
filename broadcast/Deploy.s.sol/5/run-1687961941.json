@@ -3,7 +3,7 @@
     {
       "hash": "0x3e3807da5c8dea555008863b9b7bd6da2e6c110b6e0b0a24f6463e83b177af31",
       "transactionType": "CREATE",
-      "contractName": "LibStoryBlockId",
+      "contractName": "LibIPAssetId",
       "contractAddress": "0xDefbA4b68Fb683eA2F2e40651408D4DF2BE10ca7",
       "function": null,
       "arguments": null,
@@ -22,7 +22,7 @@
     {
       "hash": "0x72a377ba11242048c0ba545097c2e6e520a2e4aba8f7ef9df80619f7a1337699",
       "transactionType": "CREATE",
-      "contractName": "StoryBlocksRegistryFactory",
+      "contractName": "IPAssetsRegistryFactory",
       "contractAddress": "0xe381609EF4bA8729e875FC84a410976FdA90B175",
       "function": null,
       "arguments": null,
@@ -115,7 +115,7 @@
   ],
   "receipts": [],
   "libraries": [
-    "contracts/story-blocks/LibStoryBlockId.sol:LibStoryBlockId:0xdefba4b68fb683ea2f2e40651408d4df2be10ca7"
+    "contracts/story-blocks/LibIPAssetId.sol:LibIPAssetId:0xdefba4b68fb683ea2f2e40651408d4df2be10ca7"
   ],
   "pending": [
     "0x3e3807da5c8dea555008863b9b7bd6da2e6c110b6e0b0a24f6463e83b177af31",

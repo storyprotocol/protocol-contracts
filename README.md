@@ -65,7 +65,7 @@ forge script script/foundry/Deploy.s.sol:Deploy --fork-url=<network rpc url url>
 ```
 
 ## Tasks
-
+NOTE: All task that generate transactions can be called with additional param `--events true ` so they print the tx receipt's events
 Create a Franchise
 ```
 npx hardhat --network <networ name> sp:create-franchise -name="Test" -description="Short description" -symbol="TT"
@@ -73,17 +73,17 @@ npx hardhat --network <networ name> sp:create-franchise -name="Test" -descriptio
 
 Get Franchise Address for ID
 ```
-npx hardhat sp:get-story-block-registry-address --network <network> <franchiseId>
+npx hardhat sp:get-ip-asset-registry-address --network <network> <franchiseId>
 ```
 
 Create Story Block
 ```
-npx hardhat sp:create-block --network <network> <franchiseId> <StoryBlockType name, like "ART", "STORY"...> <name> <description> "https://www.youtube.com/watch\?v\=dQw4w9WgXcQ"
+npx hardhat sp:create-ip-asset --network <network> <franchiseId> <IPAssetType name, like "ART", "STORY"...> <name> <description> "https://www.youtube.com/watch\?v\=dQw4w9WgXcQ"
 ```
 
 Read Story Block
 ```
-npx hardhat sp:read-block--network <network> <franchiseId> <storyBlockId>
+npx hardhat sp:read-ip-asset--network <network> <franchiseId> <IPAssetId>
 ```
 
 ### Working with a local network
