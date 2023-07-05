@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import { StoryBlock } from "./StoryBlock.sol";
-import { StoryBlocksRegistryFactory } from "./story-blocks/StoryBlocksRegistryFactory.sol";
+import { IPAsset } from "./IPAsset.sol";
+import { IPAssetRegistryFactory } from "./ip-assets/IPAssetRegistryFactory.sol";
 import { AccessControlledUpgradeable } from "./access-control/AccessControlledUpgradeable.sol";
 import { UPGRADER_ROLE } from "./access-control/ProtocolRoles.sol";
 import { ZeroAddress } from "./errors/General.sol";
@@ -19,18 +19,18 @@ contract FranchiseRegistry is
     event FranchiseRegistered(
         address owner,
         uint256 id,
-        address storyBlockRegistryForId
+        address IPAssetRegistryForId
     );
     error AlreadyRegistered();
 
     /// @custom:storage-location erc7201:story-protocol.franchise-registry.storage
     struct FranchiseStorage {
         uint256 franchiseIds;
-        /// Franchise id => StoryBlockRegistry address
-        mapping(uint256 => address) storyBlockRegistries;
+        /// Franchise id => IPAssetRegistry address
+        mapping(uint256 => address) IPAssetRegistries;
     }
 
-    StoryBlocksRegistryFactory public immutable FACTORY;
+    IPAssetRegistryFactory public immutable FACTORY;
     
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.franchise-registry.storage")) - 1)))
     bytes32 private constant _STORAGE_LOCATION = 0x5648324915b730d22cca7279385130ad43fd4829d795fb20e9ab398bfe537e8f;
@@ -41,7 +41,7 @@ contract FranchiseRegistry is
     constructor(address _factory) {
         _disableInitializers();
         if (_factory == address(0)) revert ZeroAddress("factory");
-        FACTORY = StoryBlocksRegistryFactory(_factory);
+        FACTORY = IPAssetRegistryFactory(_factory);
     }
 
     function initialize(address accessControl) public initializer {
@@ -66,23 +66,23 @@ contract FranchiseRegistry is
         string calldata description
     ) external returns (uint256, address) {
         FranchiseStorage storage $ = _getFranchiseStorage();
-        address storyBlocksRegistry = FACTORY.createFranchiseBlocks(
+        address IPAssetRegistry = FACTORY.createFranchiseBlocks(
             ++$.franchiseIds,
             name,
             symbol,
             description
         );
-        $.storyBlockRegistries[$.franchiseIds] = storyBlocksRegistry;
+        $.IPAssetRegistries[$.franchiseIds] = IPAssetRegistry;
         _safeMint(msg.sender, $.franchiseIds);
-        emit FranchiseRegistered(msg.sender, $.franchiseIds, storyBlocksRegistry);
-        return ($.franchiseIds, storyBlocksRegistry);
+        emit FranchiseRegistered(msg.sender, $.franchiseIds, IPAssetRegistry);
+        return ($.franchiseIds, IPAssetRegistry);
     }
 
-    function storyBlockRegistryForId(
+    function IPAssetRegistryForId(
         uint256 franchiseId
     ) public view returns (address) {
         FranchiseStorage storage $ = _getFranchiseStorage();
-        return $.storyBlockRegistries[franchiseId];
+        return $.IPAssetRegistries[franchiseId];
     }
 
     function _authorizeUpgrade(

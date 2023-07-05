@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 
-enum StoryBlock {
+enum IPAsset {
     UNDEFINED,
     STORY,
     CHARACTER,

@@ -10,9 +10,9 @@ require("@nomiclabs/hardhat-etherscan");
 require('@openzeppelin/hardhat-upgrades');
 
 const createFranchise = require("./script/hardhat/createFranchise.js");
-const createStoryBlock = require("./script/hardhat/createStoryBlock.js");
-const getStoryBlockRegistryAddress = require("./script/hardhat/getStoryBlockRegistryAddress.js");
-const getStoryBlock = require("./script/hardhat/getStoryBlock.js");
+const createIPAsset = require("./script/hardhat/createIPAsset.js");
+const getIPAssetRegistryAddress = require("./script/hardhat/getIPAssetRegistryAddress.js");
+const getIPAsset = require("./script/hardhat/getIPAsset.js");
 const sbUploader = require("./script/hardhat/sbUploader.js");
 const namespacedStorageKey = require("./script/hardhat/namespacedStorageKey.js");
 const { task } = require("hardhat/config");
@@ -32,39 +32,39 @@ task('sp:create-franchise')
     .addPositionalParam('symbol', 'Franchise symbol')
     .addPositionalParam('description', 'Franchise description')
     .addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
-    .setDescription('Mint Franchise NFT and create StoryBlocksRegistry contract')
+    .setDescription('Mint Franchise NFT and create IPAssetsRegistry contract')
     .setAction(createFranchise);
 
-task('sp:get-story-block-registry-address')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the Story Block in, as given by FranchiseRegistry contract')
-    .setDescription('Get the address of the StoryBlocksRegistry contract for the given Franchise')
-    .setAction(getStoryBlockRegistryAddress);
+task('sp:get-ip-asset-registry-address')
+    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Asset in, as given by FranchiseRegistry contract')
+    .setDescription('Get the address of the IPAssetsRegistry contract for the given Franchise')
+    .setAction(getIPAssetRegistryAddress);
 
-task('sp:create-block')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the Story Block in, as given by FranchiseRegistry contract')
-    .addPositionalParam('storyBlockType', 'STORY, CHARACTER, ART, GROUP, LOCATION or ITEM')
-    .addPositionalParam('name', 'Story Block name')
-    .addPositionalParam('description', 'Story Block description')
-    .addPositionalParam('mediaURL', 'Story Block media URL')
+task('sp:create-ip-asset')
+    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Asset in, as given by FranchiseRegistry contract')
+    .addPositionalParam('ipAssetType', 'STORY, CHARACTER, ART, GROUP, LOCATION or ITEM')
+    .addPositionalParam('name', 'IP Asset name')
+    .addPositionalParam('description', 'IP Asset description')
+    .addPositionalParam('mediaURL', 'IP Asset media URL')
     .addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
-    .setDescription('Mint Story Block NFT and create StoryBlocksRegistry contract')
-    .setAction(createStoryBlock);
+    .setDescription('Mint IP Asset NFT and create IPAssetsRegistry contract')
+    .setAction(createIPAsset);
 
-task('sp:read-block')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the Story Block in, as given by FranchiseRegistry contract')
-    .addPositionalParam('storyBlockId', 'Id of the Story Block to read')
-    .setDescription('Get the Story Block details')
-    .setAction(getStoryBlock);
+task('sp:read-ip-asset')
+    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Asset in, as given by FranchiseRegistry contract')
+    .addPositionalParam('ipAssetId', 'Id of the IP Asset to read')
+    .setDescription('Get the IP Asset details')
+    .setAction(getIPAsset);
 
 task('sp:uploader')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the Story Blocks in, as given by FranchiseRegistry contract')
+    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Assets in, as given by FranchiseRegistry contract')
     .addPositionalParam('filePath', 'path to the Json data')
     .addOptionalParam('batchSize', 'Number of blocks to upload in each batch', 100, types.int)
-    .setDescription('Mass upload Story Blocks from a Json file')
+    .setDescription('Mass upload IP Assets from a Json file')
     .setAction(sbUploader);
 
-task('sp:update-blocks')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the Story Blocks in, as given by FranchiseRegistry contract')
+task('sp:update-ip-assets')
+    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Assets in, as given by FranchiseRegistry contract')
     .addPositionalParam('tx', 'tx hash that created blocks')
     .addPositionalParam('filePath', 'path to the Json data')
     .setDescription('Update ids for blocks in the Json file')

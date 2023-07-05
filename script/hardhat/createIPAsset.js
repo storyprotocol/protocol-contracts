@@ -1,13 +1,13 @@
 const loadDeployment = require('./loadDeployment.js');
-const { getStoryBlockRegistryAddress } = require('./getStoryBlockRegistryAddress.js');
+const { getIPAssetRegistryAddress } = require('./getIPAssetRegistryAddress.js');
 
 function findId(events) {
     const event = events.find((e) => e.event === "Transfer");
     return event.args.tokenId.toString()
 }
 
-function validateStoryBlockType(storyBlockType) {
-    switch (storyBlockType) {
+function validateIPAssetType(IPAssetType) {
+    switch (IPAssetType) {
         case "STORY":
             return 1;
         case "CHARACTER":
@@ -21,20 +21,20 @@ function validateStoryBlockType(storyBlockType) {
         case "ITEM":
             return 6;
         default:
-            throw new Error("Invalid story block type: " + storyBlockType);
+            throw new Error("Invalid story block type: " + IPAssetType);
     }
 }
 
 async function main(args, hre) {
     const { ethers } = hre;
     const { chainId, contracts } = await loadDeployment(hre);
-    const { franchiseId, storyBlockType, name, description, mediaURL, events } = args;
-    const sbType = validateStoryBlockType(storyBlockType);
-    const { address } = await getStoryBlockRegistryAddress(ethers, franchiseId, contracts);
+    const { franchiseId, IPAssetType, name, description, mediaURL, events } = args;
+    const sbType = validateIPAssetType(IPAssetType);
+    const { address } = await getIPAssetRegistryAddress(ethers, franchiseId, contracts);
     
-    const storyBlockRegistry = await contracts.StoryBlocksRegistry.attach(address);
-    console.log("Creating story block: ", storyBlockType, name, description, mediaURL);
-    const tx = await storyBlockRegistry.createStoryBlock(sbType, name, description, mediaURL);
+    const IPAssetRegistry = await contracts.IPAssetsRegistry.attach(address);
+    console.log("Creating story block: ", IPAssetType, name, description, mediaURL);
+    const tx = await IPAssetRegistry.createIPAsset(sbType, name, description, mediaURL);
     console.log("tx: ", tx.hash);
     console.log("Waiting for tx to be mined...");
     const receipt = await tx.wait();
@@ -49,4 +49,4 @@ async function main(args, hre) {
 }
 
 module.exports = main;
-module.exports.validateStoryBlockType = validateStoryBlockType;
+module.exports.validateIPAssetType = validateIPAssetType;

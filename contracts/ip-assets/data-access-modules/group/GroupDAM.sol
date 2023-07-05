@@ -2,18 +2,18 @@
 pragma solidity ^0.8.19;
 
 import { IGroupDAM } from "./IGroupDAM.sol";
-import { StoryBlockData } from "../storage/StoryBlockData.sol";
-import { LibStoryBlockId } from "contracts/story-blocks/LibStoryBlockId.sol";
+import { IPAssetData } from "../storage/IPAssetData.sol";
+import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import { StoryBlock } from "contracts/StoryBlock.sol";
+import { IPAsset } from "contracts/IPAsset.sol";
 
-abstract contract GroupDAM is IGroupDAM, StoryBlockData {
+abstract contract GroupDAM is IGroupDAM, IPAssetData {
 
     using EnumerableSet for EnumerableSet.UintSet;
 
     event GroupedItems(
         uint256 indexed id,
-        StoryBlock linkedType,
+        IPAsset linkedType,
         uint256[] linkedItems
     );
     
@@ -21,7 +21,7 @@ abstract contract GroupDAM is IGroupDAM, StoryBlockData {
     error GroupedTypeNotGroupType();
 
     struct GroupData {
-        StoryBlock linkedType;
+        IPAsset linkedType;
         EnumerableSet.UintSet linkedItems;
     }
     /// @custom:storage-location erc7201:story-protocol.group-dam.storage
@@ -41,8 +41,8 @@ abstract contract GroupDAM is IGroupDAM, StoryBlockData {
         }
     }
 
-    function createGroup(string calldata name, string calldata _description, string calldata mediaUrl, StoryBlock linkedType, uint256[] calldata linkedItems) external returns(uint256) {
-        uint256 id = createStoryBlock(StoryBlock.GROUP, name, _description, mediaUrl);
+    function createGroup(string calldata name, string calldata _description, string calldata mediaUrl, IPAsset linkedType, uint256[] calldata linkedItems) external returns(uint256) {
+        uint256 id = createIPAsset(IPAsset.GROUP, name, _description, mediaUrl);
         GroupDAMStorage storage $ = _getGroupDAMStorage();
         $.groupData[id].linkedType = linkedType;
         groupItems(id, linkedItems);
@@ -53,9 +53,9 @@ abstract contract GroupDAM is IGroupDAM, StoryBlockData {
         uint256 length = linkedItems.length;
         if (length > MAX_LINKED_AT_ONCE) revert TooManyLinkedItems();
         GroupDAMStorage storage $ = _getGroupDAMStorage();
-        StoryBlock linkedType = $.groupData[id].linkedType;
+        IPAsset linkedType = $.groupData[id].linkedType;
         for(uint256 i = 0; i < linkedItems.length;) {
-            if (LibStoryBlockId._storyBlockTypeFor(linkedItems[i]) != linkedType) revert GroupedTypeNotGroupType();
+            if (LibIPAssetId._IPAssetTypeFor(linkedItems[i]) != linkedType) revert GroupedTypeNotGroupType();
             $.groupData[id].linkedItems.add(linkedItems[i]);
             unchecked {
                 i++;
@@ -64,8 +64,8 @@ abstract contract GroupDAM is IGroupDAM, StoryBlockData {
         emit GroupedItems(id, linkedType, linkedItems);
     }
 
-    function readGroup(uint256 id) public view returns (StoryBlockData memory blockData, StoryBlock linkedType, uint256[] memory linkedItems) {
-        blockData = readStoryBlock(id);
+    function readGroup(uint256 id) public view returns (IPAssetData memory blockData, IPAsset linkedType, uint256[] memory linkedItems) {
+        blockData = readIPAsset(id);
         GroupDAMStorage storage $ = _getGroupDAMStorage();
         GroupData storage gd = $.groupData[id];
         linkedType = gd.linkedType;
