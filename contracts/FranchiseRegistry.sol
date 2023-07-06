@@ -19,7 +19,7 @@ contract FranchiseRegistry is
     event FranchiseRegistered(
         address owner,
         uint256 id,
-        address IPAssetRegistryForId
+        address ipAssetRegistryForId
     );
     error AlreadyRegistered();
 
@@ -27,7 +27,7 @@ contract FranchiseRegistry is
     struct FranchiseStorage {
         uint256 franchiseIds;
         /// Franchise id => IPAssetRegistry address
-        mapping(uint256 => address) IPAssetRegistries;
+        mapping(uint256 => address) ipAssetRegistries;
     }
 
     IPAssetRegistryFactory public immutable FACTORY;
@@ -66,23 +66,23 @@ contract FranchiseRegistry is
         string calldata description
     ) external returns (uint256, address) {
         FranchiseStorage storage $ = _getFranchiseStorage();
-        address IPAssetRegistry = FACTORY.createFranchiseBlocks(
+        address ipAssetRegistry = FACTORY.createFranchiseBlocks(
             ++$.franchiseIds,
             name,
             symbol,
             description
         );
-        $.IPAssetRegistries[$.franchiseIds] = IPAssetRegistry;
+        $.ipAssetRegistries[$.franchiseIds] = ipAssetRegistry;
         _safeMint(msg.sender, $.franchiseIds);
-        emit FranchiseRegistered(msg.sender, $.franchiseIds, IPAssetRegistry);
-        return ($.franchiseIds, IPAssetRegistry);
+        emit FranchiseRegistered(msg.sender, $.franchiseIds, ipAssetRegistry);
+        return ($.franchiseIds, ipAssetRegistry);
     }
 
-    function IPAssetRegistryForId(
+    function ipAssetRegistryForId(
         uint256 franchiseId
     ) public view returns (address) {
         FranchiseStorage storage $ = _getFranchiseStorage();
-        return $.IPAssetRegistries[franchiseId];
+        return $.ipAssetRegistries[franchiseId];
     }
 
     function _authorizeUpgrade(

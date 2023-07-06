@@ -12,7 +12,7 @@ contract FranchiseRegistryTest is Test, ProxyHelper {
     event FranchiseRegistered(
         address owner,
         uint256 id,
-        address IPAssetRegistryForId
+        address ipAssetRegistryForId
     );
     
     IPAssetRegistryFactory public factory;
@@ -64,7 +64,7 @@ contract FranchiseRegistryTest is Test, ProxyHelper {
         (uint256 id, address ipAsset) = register.registerFranchise("name", "symbol", "description");
         assertEq(id, 1);
         assertFalse(ipAsset == address(0));
-        assertEq(ipAsset, register.IPAssetRegistryForId(id));
+        assertEq(ipAsset, register.ipAssetRegistryForId(id));
         assertEq(register.ownerOf(id), franchiseOwner);
     }
 }

@@ -3,7 +3,7 @@ const loadDeployment = require('./loadDeployment.js');
 async function getIPAssetRegistryAddress(ethers, franchiseId, contracts) {
     console.log("Getting story block registry for franchise id: ", franchiseId);
 
-    const address = await contracts.franchiseRegistry.callStatic.IPAssetRegistryForId(franchiseId)
+    const address = await contracts.franchiseRegistry.callStatic.ipAssetRegistryForId(franchiseId)
     if (address === ethers.constants.AddressZero) {
         throw new Error("Story block registry not found for franchise id: " + franchiseId);
     }

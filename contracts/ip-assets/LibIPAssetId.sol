@@ -19,7 +19,7 @@ library LibIPAssetId {
         return (_ID_RANGE * uint256(sb)) - 1;
     }
 
-    function _IPAssetTypeFor(uint256 id) internal pure returns (IPAsset) {
+    function _ipAssetTypeFor(uint256 id) internal pure returns (IPAsset) {
         // End of _ID_RANGE is zero (undefined) for each IPAsset
         // Also, we don't support ids higher than the last IPAsset enum item
         if (id % _ID_RANGE == 0 || id > _ID_RANGE * (uint256(IPAsset.ITEM))) return IPAsset.UNDEFINED;
