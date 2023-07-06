@@ -42,5 +42,4 @@ contract AccessControlSingleton is AccessControlUpgradeable, UUPSUpgradeable, Mu
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyRole(UPGRADER_ROLE) {
     }
 
-    uint256[50] private __gap;
 }

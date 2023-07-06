@@ -14,6 +14,8 @@ const createStoryBlock = require("./script/hardhat/createStoryBlock.js");
 const getStoryBlockRegistryAddress = require("./script/hardhat/getStoryBlockRegistryAddress.js");
 const getStoryBlock = require("./script/hardhat/getStoryBlock.js");
 const sbUploader = require("./script/hardhat/sbUploader.js");
+const namespacedStorageKey = require("./script/hardhat/namespacedStorageKey.js");
+const { task } = require("hardhat/config");
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -67,6 +69,11 @@ task('sp:update-blocks')
     .addPositionalParam('filePath', 'path to the Json data')
     .setDescription('Update ids for blocks in the Json file')
     .setAction(sbUploader.updateIds);
+
+task('sp:eip7201-key')
+    .addPositionalParam('namespace', 'Namespace, for example erc7201:example.main')
+    .setDescription('Get the namespaced storage key for https://eips.ethereum.org/EIPS/eip-7201')
+    .setAction(namespacedStorageKey);
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
