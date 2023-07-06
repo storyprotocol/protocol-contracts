@@ -9,17 +9,17 @@ import { UPGRADER_ROLE, LINK_MANAGER_ROLE } from "contracts/access-control/Proto
 contract LinkingModule is AccessControlledUpgradeable {
     
     event Linked(
-        address col1,
-        uint256 id1,
-        address col2,
-        uint256 id2,
+        address sourceContract,
+        uint256 sourceId,
+        address destContract,
+        uint256 destId,
         bytes32 intent
     );
     event Unlinked(
-        address col1,
-        uint256 id1,
-        address col2,
-        uint256 id2,
+        address sourceContract,
+        uint256 sourceId,
+        address destContract,
+        uint256 destId,
         bytes32 intent
     );
     event AddedIntentRole(bytes32 intent, bytes32 role);
@@ -27,7 +27,7 @@ contract LinkingModule is AccessControlledUpgradeable {
 
     error LinkingNonExistentToken();
     error IntentAlreadyRegistered();
-    error NonExistentIntent();
+    error UndefinedIntent();
 
     mapping(bytes32 => bool) public links;
     mapping(bytes32 => bytes32) public intentRoles;
@@ -45,27 +45,27 @@ contract LinkingModule is AccessControlledUpgradeable {
     }
 
     function link(
-        address col1,
-        uint256 id1,
-        address col2,
-        uint256 id2,
+        address sourceContract,
+        uint256 sourceId,
+        address destContract,
+        uint256 destId,
         bytes32 intent
     ) external {
-        _verifyLink(col1, id1, col2, id2);
-
+        _verifyLink(sourceContract, sourceId, destContract, destId, intent);
         bytes32 intentRole = intentRoles[intent];
+        if (intentRole == bytes32(0)) revert UndefinedIntent();
         if (intentRole != PERMISSIONLESS_INTENT) {
             if (!hasRole(intentRole, msg.sender)) revert Unauthorized();
         }
-        links[keccak256(abi.encode(col1, id1, col2, id2, intent))] = true;
-        emit Linked(col1, id1, col2, id2, intent);
+        links[keccak256(abi.encode(sourceContract, sourceId, destContract, destId, intent))] = true;
+        emit Linked(sourceContract, sourceId, destContract, destId, intent);
     }
 
     function unlink(
-        address col1,
-        uint256 id1,
-        address col2,
-        uint256 id2,
+        address sourceContract,
+        uint256 sourceId,
+        address destContract,
+        uint256 destId,
         bytes32 intent
     ) external {
         // Whoever has the role of intent can unlink...does this make sense?
@@ -73,28 +73,30 @@ contract LinkingModule is AccessControlledUpgradeable {
         if (intentRole != PERMISSIONLESS_INTENT) {
             if (!hasRole(intentRole, msg.sender)) revert Unauthorized();
         }
-        delete links[keccak256(abi.encode(col1, id1, col2, id2, intent))];
-        emit Unlinked(col1, id1, col2, id2, intent);
+        delete links[keccak256(abi.encode(sourceContract, sourceId, destContract, destId, intent))];
+        emit Unlinked(sourceContract, sourceId, destContract, destId, intent);
     }
 
     function _verifyLink(
-        address col1,
-        uint256 id1,
-        address col2,
-        uint256 id2
+        address sourceContract,
+        uint256 sourceId,
+        address destContract,
+        uint256 destId,
+        bytes32 intent
     ) internal view {
-        if (IERC721(col1).ownerOf(id1) == address(0)) revert LinkingNonExistentToken();
-        if (IERC721(col2).ownerOf(id2) == address(0)) revert LinkingNonExistentToken();       
+        if (IERC721(sourceContract).ownerOf(sourceId) == address(0)) revert LinkingNonExistentToken();
+        if (IERC721(destContract).ownerOf(destId) == address(0)) revert LinkingNonExistentToken();
+
     }
 
     function areTheyLinked(
-        address col1,
-        uint256 id1,
-        address col2,
-        uint256 id2,
+        address sourceContract,
+        uint256 sourceId,
+        address destContract,
+        uint256 destId,
         bytes32 intent
     ) external view returns (bool) {
-        return links[keccak256(abi.encode(col1, id1, col2, id2, intent))];
+        return links[keccak256(abi.encode(sourceContract, sourceId, destContract, destId, intent))];
     }
 
     function addIntentRole(bytes32 intent, bytes32 role) external onlyRole(LINK_MANAGER_ROLE) {
@@ -104,7 +106,7 @@ contract LinkingModule is AccessControlledUpgradeable {
     }
 
     function removeIntentRole(bytes32 intent) external onlyRole(LINK_MANAGER_ROLE) {
-        if (intentRoles[intent] == bytes32(0)) revert NonExistentIntent();
+        if (intentRoles[intent] == bytes32(0)) revert UndefinedIntent();
         delete intentRoles[intent];
         emit RemovedIntentRole(intent, intentRoles[intent]);
     }
