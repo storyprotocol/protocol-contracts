@@ -37,37 +37,37 @@ contract FranchiseRegistryTest is Test {
     }
 
     function test_IPAssetTypes() public {
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_STORY)), uint8(IPAsset.UNDEFINED));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_STORY)), uint8(IPAsset.UNDEFINED));
 
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_STORY + 1)), uint8(IPAsset.STORY));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_STORY + _HALF_ID_RANGE)), uint8(IPAsset.STORY));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_CHARACTER - 1)), uint8(IPAsset.STORY));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_STORY + 1)), uint8(IPAsset.STORY));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_STORY + _HALF_ID_RANGE)), uint8(IPAsset.STORY));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_CHARACTER - 1)), uint8(IPAsset.STORY));
         
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_CHARACTER)), uint8(IPAsset.UNDEFINED));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_CHARACTER + 1)), uint8(IPAsset.CHARACTER));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_CHARACTER + _HALF_ID_RANGE)), uint8(IPAsset.CHARACTER));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_ART - 1)), uint8(IPAsset.CHARACTER));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_CHARACTER)), uint8(IPAsset.UNDEFINED));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_CHARACTER + 1)), uint8(IPAsset.CHARACTER));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_CHARACTER + _HALF_ID_RANGE)), uint8(IPAsset.CHARACTER));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_ART - 1)), uint8(IPAsset.CHARACTER));
 
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_ART)), uint8(IPAsset.UNDEFINED));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_ART + 1)), uint8(IPAsset.ART));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_ART + _HALF_ID_RANGE)), uint8(IPAsset.ART));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_GROUP - 1)), uint8(IPAsset.ART));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_ART)), uint8(IPAsset.UNDEFINED));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_ART + 1)), uint8(IPAsset.ART));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_ART + _HALF_ID_RANGE)), uint8(IPAsset.ART));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_GROUP - 1)), uint8(IPAsset.ART));
 
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_GROUP)), uint8(IPAsset.UNDEFINED));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_GROUP + 1)), uint8(IPAsset.GROUP));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_GROUP + _HALF_ID_RANGE)), uint8(IPAsset.GROUP));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_LOCATION - 1)), uint8(IPAsset.GROUP));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_GROUP)), uint8(IPAsset.UNDEFINED));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_GROUP + 1)), uint8(IPAsset.GROUP));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_GROUP + _HALF_ID_RANGE)), uint8(IPAsset.GROUP));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_LOCATION - 1)), uint8(IPAsset.GROUP));
 
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_LOCATION)), uint8(IPAsset.UNDEFINED));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_LOCATION + 1)), uint8(IPAsset.LOCATION));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_LOCATION + _HALF_ID_RANGE)), uint8(IPAsset.LOCATION));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_ITEM - 1)), uint8(IPAsset.LOCATION));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_LOCATION)), uint8(IPAsset.UNDEFINED));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_LOCATION + 1)), uint8(IPAsset.LOCATION));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_LOCATION + _HALF_ID_RANGE)), uint8(IPAsset.LOCATION));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_ITEM - 1)), uint8(IPAsset.LOCATION));
 
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_ITEM)), uint8(IPAsset.UNDEFINED));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_ITEM + 1)), uint8(IPAsset.ITEM));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_ZERO_ID_ITEM + _HALF_ID_RANGE)), uint8(IPAsset.ITEM));
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_LAST_ID_ITEM)), uint8(IPAsset.ITEM));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_ITEM)), uint8(IPAsset.UNDEFINED));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_ITEM + 1)), uint8(IPAsset.ITEM));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_ZERO_ID_ITEM + _HALF_ID_RANGE)), uint8(IPAsset.ITEM));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_LAST_ID_ITEM)), uint8(IPAsset.ITEM));
 
-        assertEq(uint8(LibIPAssetId._IPAssetTypeFor(_LAST_ID_ITEM + 1)), uint8(IPAsset.UNDEFINED));
+        assertEq(uint8(LibIPAssetId._ipAssetTypeFor(_LAST_ID_ITEM + 1)), uint8(IPAsset.UNDEFINED));
     }
 }

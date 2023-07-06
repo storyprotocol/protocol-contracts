@@ -48,7 +48,7 @@ abstract contract IPAssetData is Initializable, IIPAssetData {
         IPAssetDataStorage storage $ = _getIPAssetDataStorage();
         IPAssetData storage sbd = $.IPAsset[IPAssetId];
         if (sbd.blockType == IPAsset.UNDEFINED) {
-            sbd.blockType = LibIPAssetId._IPAssetTypeFor(IPAssetId);
+            sbd.blockType = LibIPAssetId._ipAssetTypeFor(IPAssetId);
         }
         sbd.name = name;
         sbd.description = description;

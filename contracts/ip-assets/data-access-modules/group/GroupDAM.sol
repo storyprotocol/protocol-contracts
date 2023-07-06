@@ -55,7 +55,7 @@ abstract contract GroupDAM is IGroupDAM, IPAssetData {
         GroupDAMStorage storage $ = _getGroupDAMStorage();
         IPAsset linkedType = $.groupData[id].linkedType;
         for(uint256 i = 0; i < linkedItems.length;) {
-            if (LibIPAssetId._IPAssetTypeFor(linkedItems[i]) != linkedType) revert GroupedTypeNotGroupType();
+            if (LibIPAssetId._ipAssetTypeFor(linkedItems[i]) != linkedType) revert GroupedTypeNotGroupType();
             $.groupData[id].linkedItems.add(linkedItems[i]);
             unchecked {
                 i++;
