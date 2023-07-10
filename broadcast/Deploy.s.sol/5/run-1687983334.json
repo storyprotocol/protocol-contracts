@@ -3,7 +3,7 @@
     {
       "hash": "0x0c5f8b856b03ddbadf2fa18eb738a9a44b0726b3b1f8745a43d0ec67d8b450db",
       "transactionType": "CREATE",
-      "contractName": "StoryBlocksRegistryFactory",
+      "contractName": "IPAssetsRegistryFactory",
       "contractAddress": "0xa8164aF085F0D62A1d27a5A92f0E2336C35fE73d",
       "function": null,
       "arguments": null,

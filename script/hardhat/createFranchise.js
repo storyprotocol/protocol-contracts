@@ -5,7 +5,7 @@ function findIdAndAddress(events) {
     const event = events.find((e) => e.event === "FranchiseRegistered");
     return {
         id: event.args.id.toString(),
-        address: event.args.storyBlockRegistryForId,
+        address: event.args.ipAssetRegistryForId,
     };
 }
 

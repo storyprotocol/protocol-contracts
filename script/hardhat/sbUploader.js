@@ -1,6 +1,6 @@
 const loadDeployment = require('./loadDeployment.js');
-const { getStoryBlockRegistryAddress } = require('./getStoryBlockRegistryAddress.js');
-const { createStoryBlock, validateStoryBlockType } = require('./createStoryBlock.js');
+const { getIPAssetRegistryAddress } = require('./getIPAssetRegistryAddress.js');
+const { createIPAsset, validateIPAssetType } = require('./createIPAsset.js');
 const { readFileSync, writeFileSync } = require('fs');
 
 Array.range = function (n) {
@@ -13,13 +13,13 @@ Array.prototype.chunk = function (size) {
     return Array.range(Math.ceil(this.length / size)).map((i) => this.slice(i * size, i * size + size));
 };
 
-function getCreatedBlocks(receipt, storyBlockRegistry) {
+function getCreatedBlocks(receipt, IPAssetRegistry) {
     if (receipt.events) {
-        return events.filter((e) => e.event === "StoryBlockWritten").map((e) => e.args);
+        return events.filter((e) => e.event === "IPAssetWritten").map((e) => e.args);
     } else {
         const events = receipt.logs.map((log) => {
-            return storyBlockRegistry.interface.parseLog(log);
-        }).filter((e) => e.name === "StoryBlockWritten")
+            return IPAssetRegistry.interface.parseLog(log);
+        }).filter((e) => e.name === "IPAssetWritten")
         .map((e) => {
             const ev = Object.keys(e.args).reduce((acc, key) => {
                 acc[key] = e.args[key];
@@ -28,18 +28,18 @@ function getCreatedBlocks(receipt, storyBlockRegistry) {
             return ev;
         })
         .map((e) => {
-            e.id = e.storyBlockId.toNumber();
+            e.id = e.IPAssetId.toNumber();
             return e;
         });
         return events;
     }
 }
 
-async function updateIds(ethers, txHash, data, filePath, storyBlockRegistry) {
+async function updateIds(ethers, txHash, data, filePath, IPAssetRegistry) {
     const provider = ethers.provider;
     const receipt = await provider.getTransactionReceipt(txHash);
 
-    const createdBlocks = getCreatedBlocks(receipt, storyBlockRegistry);
+    const createdBlocks = getCreatedBlocks(receipt, IPAssetRegistry);
 
     const mapBlocks = (blocks, createdBlocks) => {
         return blocks.map((b) => {
@@ -85,18 +85,18 @@ async function main(args, hre) {
     const { chainId, contracts } = await loadDeployment(hre);
     const { franchiseId, filePath, batchSize  } = args;
     const data = JSON.parse(readFileSync(filePath, 'utf8'));
-    const { address } = await getStoryBlockRegistryAddress(ethers, franchiseId, contracts);
+    const { address } = await getIPAssetRegistryAddress(ethers, franchiseId, contracts);
 
     const blocks = Object.keys(data.blocks)
         .map((key) => data.blocks[key])
         .reduce((acc, val) => acc.concat(val), [])
-        .map((block) => { return { ...block, numBlockType: validateStoryBlockType(block.blockType) }})
+        .map((block) => { return { ...block, numBlockType: validateIPAssetType(block.blockType) }})
         .filter((block) => block.id === null);
     console.log("Will upload: ", blocks.length, "story blocks");
 
-    const storyBlockRegistry = await contracts.StoryBlocksRegistry.attach(address);
+    const IPAssetRegistry = await contracts.IPAssetsRegistry.attach(address);
     const calls = blocks.map((block) => {
-        return storyBlockRegistry.interface.encodeFunctionData('createStoryBlock', [block.numBlockType, block.name, block.description, block.mediaURL ?? ''])
+        return IPAssetRegistry.interface.encodeFunctionData('createIPAsset', [block.numBlockType, block.name, block.description, block.mediaURL ?? ''])
     });
 
     console.log('Batches: ', Math.ceil(calls.length / batchSize));
@@ -106,7 +106,7 @@ async function main(args, hre) {
             console.log('Uploading batch of ', callChunk.length, ' story blocks');
             let tx;
             try {
-                tx = await storyBlockRegistry.multicall(callChunk);
+                tx = await IPAssetRegistry.multicall(callChunk);
             } catch (e) {
                 console.log('ERROR sbUploader');
                 console.log('chainId', chainId);
@@ -115,7 +115,7 @@ async function main(args, hre) {
             console.log('tx: ', tx.hash);
             console.log('Waiting for tx to be mined...');
             const receipt = await tx.wait();
-            return updateIds(ethers, tx.hash, data, filePath, storyBlockRegistry);
+            return updateIds(ethers, tx.hash, data, filePath, IPAssetRegistry);
         })
     ).then(() => console.log('Blocks created!'));
 
@@ -126,9 +126,9 @@ async function updateIdsTask(args, hre) {
     const { franchiseId, tx, filePath } = args;
     const data = JSON.parse(readFileSync(filePath, 'utf8'));
     const { chainId, contracts } = await loadDeployment(hre);
-    const { address } = await getStoryBlockRegistryAddress(ethers, franchiseId, contracts);
-    const storyBlockRegistry = await contracts.StoryBlocksRegistry.attach(address);
-    await updateIds(ethers, tx, data, filePath, storyBlockRegistry);
+    const { address } = await getIPAssetRegistryAddress(ethers, franchiseId, contracts);
+    const IPAssetRegistry = await contracts.IPAssetsRegistry.attach(address);
+    await updateIds(ethers, tx, data, filePath, IPAssetRegistry);
 }
 
 

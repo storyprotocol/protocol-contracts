@@ -5,17 +5,17 @@ import "forge-std/Test.sol";
 import './utils/ProxyHelper.sol';
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/story-blocks/StoryBlocksRegistryFactory.sol";
+import "contracts/ip-assets/IPAssetRegistryFactory.sol";
 
 contract FranchiseRegistryTest is Test, ProxyHelper {
 
     event FranchiseRegistered(
         address owner,
         uint256 id,
-        address storyBlockRegistryForId
+        address ipAssetRegistryForId
     );
     
-    StoryBlocksRegistryFactory public factory;
+    IPAssetRegistryFactory public factory;
     FranchiseRegistry public register;
 
     address admin = address(123);
@@ -24,7 +24,7 @@ contract FranchiseRegistryTest is Test, ProxyHelper {
     AccessControlSingleton acs;
 
     function setUp() public {
-        factory = new StoryBlocksRegistryFactory();
+        factory = new IPAssetRegistryFactory();
         vm.prank(admin);
         acs = new AccessControlSingleton();
         address accessControl = address(acs);
@@ -61,10 +61,10 @@ contract FranchiseRegistryTest is Test, ProxyHelper {
         );
         vm.expectEmit(false, true, false, false);
         emit FranchiseRegistered(address(0x123), 1, address(0x234));
-        (uint256 id, address storyBlocks) = register.registerFranchise("name", "symbol", "description");
+        (uint256 id, address ipAsset) = register.registerFranchise("name", "symbol", "description");
         assertEq(id, 1);
-        assertFalse(storyBlocks == address(0));
-        assertEq(storyBlocks, register.storyBlockRegistryForId(id));
+        assertFalse(ipAsset == address(0));
+        assertEq(ipAsset, register.ipAssetRegistryForId(id));
         assertEq(register.ownerOf(id), franchiseOwner);
     }
 }

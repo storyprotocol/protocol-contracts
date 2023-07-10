@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.13;
 
-import { IStoryBlocksRegistry } from "./IStoryBlocksRegistry.sol";
-import { StoryBlocksRegistry } from "./StoryBlocksRegistry.sol";
+import { IIPAssetRegistry } from "./IIPAssetRegistry.sol";
+import { IPAssetRegistry } from "./IPAssetRegistry.sol";
 import { ZeroAddress } from "../errors/General.sol";
 import { IVersioned } from "../utils/IVersioned.sol";
 import { UnsupportedInterface } from "../errors/General.sol";
@@ -13,7 +13,7 @@ import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC16
 import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
 
-contract StoryBlocksRegistryFactory is Ownable {
+contract IPAssetRegistryFactory is Ownable {
     using ERC165Checker for address;
 
     event FranchiseCreated(address indexed collection, string name, string indexed symbol);
@@ -22,7 +22,7 @@ contract StoryBlocksRegistryFactory is Ownable {
     UpgradeableBeacon public immutable BEACON;
 
     constructor() {
-        BEACON = new UpgradeableBeacon(address(new StoryBlocksRegistry()));
+        BEACON = new UpgradeableBeacon(address(new IPAssetRegistry()));
     }
 
     function createFranchiseBlocks(
@@ -44,7 +44,7 @@ contract StoryBlocksRegistryFactory is Ownable {
     }
 
     function upgradeFranchises(address newImplementation) external onlyOwner {
-        if (!newImplementation.supportsInterface(type(IStoryBlocksRegistry).interfaceId)) revert UnsupportedInterface("IStoryBlocksRegistry");
+        if (!newImplementation.supportsInterface(type(IIPAssetRegistry).interfaceId)) revert UnsupportedInterface("IIPAssetRegistry");
         BEACON.upgradeTo(newImplementation);
         emit FranchisesUpgraded(address(newImplementation), IVersioned(newImplementation).version());
     }
