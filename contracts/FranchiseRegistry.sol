@@ -66,7 +66,7 @@ contract FranchiseRegistry is
         string calldata description
     ) external returns (uint256, address) {
         FranchiseStorage storage $ = _getFranchiseStorage();
-        address ipAssetRegistry = FACTORY.createFranchiseBlocks(
+        address ipAssetRegistry = FACTORY.createFranchiseIPAssets(
             ++$.franchiseIds,
             name,
             symbol,

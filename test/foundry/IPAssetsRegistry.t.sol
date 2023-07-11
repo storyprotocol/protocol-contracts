@@ -37,7 +37,7 @@ contract IPAssetRegistryTest is Test {
 
     function setUp() public {
         factory = new IPAssetRegistryFactory();
-        ipAssetRegistry = IPAssetRegistry(factory.createFranchiseBlocks(1, "name", "symbol", "description"));
+        ipAssetRegistry = IPAssetRegistry(factory.createFranchiseIPAssets(1, "name", "symbol", "description"));
     }
 
     function test_setUp() public {

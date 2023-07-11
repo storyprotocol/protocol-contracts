@@ -50,7 +50,7 @@ contract FranchiseRegistryTest is Test, ProxyHelper {
         vm.startPrank(franchiseOwner);
         vm.expectCall(address(factory),
             abi.encodeCall(
-                factory.createFranchiseBlocks,
+                factory.createFranchiseIPAssets,
                 (
                     1,
                     "name",
