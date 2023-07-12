@@ -13,13 +13,13 @@ assignees: ''
 - **Source**: Which (address, id) pair can be the source of the link
 
 | External | STORY | CHARACTER | ART | GROUP | LOCATION | ITEM |
-| --- | --- | --- | --- | --- | --- | --- |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 |  |  |  |  |  |  |  |
 
 - **Destination**: Which (address, id) can be the destination of the link
 
 | External | STORY | CHARACTER | ART | GROUP | LOCATION | ITEM |
-| --- | --- | --- | --- | --- | --- | --- |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 |  |  |  |  |  |  |  |
 
 - **Can link other franchises**: True or False.
