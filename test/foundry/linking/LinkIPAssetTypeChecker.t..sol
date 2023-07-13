@@ -7,6 +7,8 @@ import { IPAssetRegistryFactory } from "contracts/ip-assets/IPAssetRegistryFacto
 import { LinkIPAssetTypeChecker } from "contracts/modules/linking/LinkIPAssetTypeChecker.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
+import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
 
 contract LinkIPAssetTypeCheckerHarness is LinkIPAssetTypeChecker {
 
@@ -30,6 +32,14 @@ contract LinkIPAssetTypeCheckerHarness is LinkIPAssetTypeChecker {
 
     function supportsIPAssetType(uint256 mask, uint8 assetType) pure external returns (bool) {
         return _supportsIPAssetType(mask, assetType);
+    }
+}
+
+contract MockERC721 is ERC721 {
+    constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
+
+    function mint(address to, uint256 tokenId) external {
+        _mint(to, tokenId);
     }
 }
 
@@ -121,13 +131,46 @@ contract LinkIPAssetTypeCheckerSupportsAssetTypeTest is Test {
 contract LinkIPAssetTypeCheckerCheckLinkEndeTest is Test {
 
     LinkIPAssetTypeCheckerHarness public checker;
+    MockERC721 public collection;
+    address public owner = address(0x1);
 
     error InvalidIPAssetArray();
 
     function setUp() public {
         checker = new LinkIPAssetTypeCheckerHarness();
+        collection = new MockERC721("Test", "TEST");
     }
 
+    function test_checkLinkEnd_ipAsset_true() public {
+        uint256 tokenId = LibIPAssetId._zeroId(IPAsset(1)) + 1;
+        collection.mint(owner, tokenId);
+        checker.setIsAssetRegistry(true);
+        assertTrue(checker.checkLinkEnd(address(collection), tokenId, uint256(IPAsset(1))));
+    }
+
+    function test_checkLinkEnd_ipAsset_false() public {
+        uint256 tokenId = LibIPAssetId._zeroId(IPAsset(1)) + 1;
+        collection.mint(owner, tokenId);
+        checker.setIsAssetRegistry(true);
+        assertFalse(checker.checkLinkEnd(address(collection), tokenId, uint256(IPAsset(2))));
+    }
+
+    function test_checkLinkEnd_external_true() public {
+        uint256 tokenId = LibIPAssetId._zeroId(IPAsset(1)) + 1;
+        collection.mint(owner, tokenId);
+        checker.setIsAssetRegistry(false);
+        assertTrue(checker.checkLinkEnd(address(collection), tokenId, uint256(type(uint8).max)));
+    }
+
+    function test_revert_nonExistingToken() public {
+        vm.expectRevert("ERC721: invalid token ID");
+        checker.checkLinkEnd(address(collection), 1, uint256(type(uint8).max));
+    }
+
+    function test_revert_notERC721() public {
+        vm.expectRevert();
+        checker.checkLinkEnd(owner, 1, uint256(type(uint8).max));
+    }
 
     
 }

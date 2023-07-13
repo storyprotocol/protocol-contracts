@@ -16,9 +16,9 @@ abstract contract LinkIPAssetTypeChecker {
     function _checkLinkEnd(address collection, uint256 id, uint256 assetTypeMask) internal view returns (bool) {
         if (IERC721(collection).ownerOf(id) == address(0)) return false;
         if (_isAssetRegistry(collection)) {
-            return _supportsIPAssetType(assetTypeMask, _EXTERNAL_ASSET_TYPE);
-        } else {
             return _supportsIPAssetType(assetTypeMask, uint8(LibIPAssetId._ipAssetTypeFor(id)));
+        } else {
+            return _supportsIPAssetType(assetTypeMask, _EXTERNAL_ASSET_TYPE);
         }
     }
 
