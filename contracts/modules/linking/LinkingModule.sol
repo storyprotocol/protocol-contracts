@@ -20,25 +20,25 @@ contract LinkingModule is AccessControlledUpgradeable {
         uint256 sourceId,
         address destContract,
         uint256 destId,
-        bytes32 intent
+        bytes32 linkId
     );
     event Unlinked(
         address sourceContract,
         uint256 sourceId,
         address destContract,
         uint256 destId,
-        bytes32 intent
+        bytes32 linkId
     );
 
-    event AddedProtocolIntentRole(bytes32 intent, bytes32 role);
-    event RemovedProtocolIntentRole(bytes32 intent, bytes32 role);
+    event AddedProtocolLink(bytes32 linkId, bytes32 role);
+    event RemovedProtocolLink(bytes32 linkId, bytes32 role);
 
     error LinkingNonExistentToken();
     error IntentAlreadyRegistered();
     error UndefinedIntent();
 
     mapping(bytes32 => bool) public links;
-    mapping(bytes32 => bytes32) public protocolIntentRoles;
+    mapping(bytes32 => bytes32) public protocolLinks;
 
     /*
     struct LinkParams {
@@ -65,10 +65,10 @@ contract LinkingModule is AccessControlledUpgradeable {
         uint256 sourceId,
         address destContract,
         uint256 destId,
-        bytes32 intent
+        bytes32 linkId
     ) external {
-        links[keccak256(abi.encode(sourceContract, sourceId, destContract, destId, intent))] = true;
-        emit Linked(sourceContract, sourceId, destContract, destId, intent);
+        links[keccak256(abi.encode(sourceContract, sourceId, destContract, destId, linkId))] = true;
+        emit Linked(sourceContract, sourceId, destContract, destId, linkId);
     }
 
     function unlink(
@@ -76,10 +76,10 @@ contract LinkingModule is AccessControlledUpgradeable {
         uint256 sourceId,
         address destContract,
         uint256 destId,
-        bytes32 intent
+        bytes32 linkId
     ) external {
-        delete links[keccak256(abi.encode(sourceContract, sourceId, destContract, destId, intent))];
-        emit Unlinked(sourceContract, sourceId, destContract, destId, intent);
+        delete links[keccak256(abi.encode(sourceContract, sourceId, destContract, destId, linkId))];
+        emit Unlinked(sourceContract, sourceId, destContract, destId, linkId);
     }
 
     function areTheyLinked(
@@ -87,9 +87,9 @@ contract LinkingModule is AccessControlledUpgradeable {
         uint256 sourceId,
         address destContract,
         uint256 destId,
-        bytes32 intent
+        bytes32 linkId
     ) external view returns (bool) {
-        return links[keccak256(abi.encode(sourceContract, sourceId, destContract, destId, intent))];
+        return links[keccak256(abi.encode(sourceContract, sourceId, destContract, destId, linkId))];
     }
 
 
@@ -100,18 +100,18 @@ contract LinkingModule is AccessControlledUpgradeable {
         if (FRANCHISE_REGISTRY.ownerOf(franchiseId) != franchiseOwner) revert Unauthorized();
     }
 
-    /********* Protocol level intents *********/
+    /********* Protocol level linkIds *********/
 
-    function addProtocolIntentRole(bytes32 intent, bytes32 role) external onlyRole(LINK_MANAGER_ROLE) {
-        if (protocolIntentRoles[intent] != bytes32(0)) revert IntentAlreadyRegistered();
-        protocolIntentRoles[intent] = role;
-        emit AddedProtocolIntentRole(intent, role);
+    function addProtocolLink(bytes32 linkId, bytes32 role) external onlyRole(LINK_MANAGER_ROLE) {
+        if (protocolLinks[linkId] != bytes32(0)) revert IntentAlreadyRegistered();
+        protocolLinks[linkId] = role;
+        emit AddedProtocolLink(linkId, role);
     }
 
-    function removeProtocolIntentRole(bytes32 intent) external onlyRole(LINK_MANAGER_ROLE) {
-        if (protocolIntentRoles[intent] == bytes32(0)) revert UndefinedIntent();
-        delete protocolIntentRoles[intent];
-        emit RemovedProtocolIntentRole(intent, protocolIntentRoles[intent]);
+    function removeProtocolLink(bytes32 linkId) external onlyRole(LINK_MANAGER_ROLE) {
+        if (protocolLinks[linkId] == bytes32(0)) revert UndefinedIntent();
+        delete protocolLinks[linkId];
+        emit RemovedProtocolLink(linkId, protocolLinks[linkId]);
     }
 
     function _authorizeUpgrade(address newImplementation) internal virtual override onlyRole(UPGRADER_ROLE) {}
