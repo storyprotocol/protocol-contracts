@@ -2,19 +2,15 @@
 pragma solidity ^0.8.13;
 
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
-import { ZeroAddress, Unauthorized, UnsupportedInterface } from "contracts/errors/General.sol";
-import { UPGRADER_ROLE, LINK_MANAGER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
+import { ZeroAddress } from "contracts/errors/General.sol";
+import { UPGRADER_ROLE, LINK_MANAGER_ROLE, LINK_DISPUTER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
+import { IPAsset } from "contracts/IPAsset.sol";
+import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
+import { LinkIPAssetTypeChecker } from "./LinkIPAssetTypeChecker.sol";
 
-contract LinkingModule is AccessControlledUpgradeable {
-
-    using ERC165Checker for address;
-    using EnumerableSet for EnumerableSet.Bytes32Set;
-    
+contract LinkingModule is AccessControlledUpgradeable, LinkIPAssetTypeChecker {
     event Linked(
         address sourceContract,
         uint256 sourceId,
@@ -30,29 +26,42 @@ contract LinkingModule is AccessControlledUpgradeable {
         bytes32 linkId
     );
 
-    event AddedProtocolLink(bytes32 linkId, bytes32 role);
-    event RemovedProtocolLink(bytes32 linkId, bytes32 role);
+    event AddedProtocolLink(
+        bytes32 linkId,
+        uint256 sourceIPAssetTypeMask,
+        uint256 destIPAssetTypeMask,
+        bool linkOnlySameFranchise
+    );
+    event RemovedProtocolLink(bytes32 linkId);
 
-    error LinkingNonExistentToken();
+    error NonExistingLink();
     error IntentAlreadyRegistered();
-    error UndefinedIntent();
+    error UndefinedLink();
+    error UnsupportedLinkSource();
+    error UnsupportedLinkDestination();
+
+    struct LinkConfig {
+        uint256 sourceIPAssetTypeMask;
+        uint256 destIPAssetTypeMask;
+        bool linkOnlySameFranchise;
+    }
+
+    struct AddLinkParams {
+        IPAsset[] sourceIPAssets;
+        bool allowedExternalSource;
+        IPAsset[] destIPAssets;
+        bool allowedExternalDest;
+        bool linkOnlySameFranchise;
+    }
 
     mapping(bytes32 => bool) public links;
-    mapping(bytes32 => bytes32) public protocolLinks;
-
-    /*
-    struct LinkParams {
-        BitMaps.BitMap sourceIPAssetTypeMask;
-        BitMaps.BitMap destIPAssetTypeMask;
-        bool sameFranchiseOnly;
-        address permissionChecker;
-    }*/
+    mapping(bytes32 => LinkConfig) public protocolLinks;
 
     FranchiseRegistry public immutable FRANCHISE_REGISTRY;
 
-    constructor(address franchiseRegistry) {
-        if (franchiseRegistry == address(0)) revert ZeroAddress();
-        FRANCHISE_REGISTRY = FranchiseRegistry(franchiseRegistry);
+    constructor(address _franchiseRegistry) {
+        if (_franchiseRegistry == address(0)) revert ZeroAddress();
+        FRANCHISE_REGISTRY = FranchiseRegistry(_franchiseRegistry);
         _disableInitializers();
     }
 
@@ -67,7 +76,25 @@ contract LinkingModule is AccessControlledUpgradeable {
         uint256 destId,
         bytes32 linkId
     ) external {
-        links[keccak256(abi.encode(sourceContract, sourceId, destContract, destId, linkId))] = true;
+        LinkConfig storage config = protocolLinks[linkId];
+        if (_checkLinkEnd(
+                sourceContract,
+                sourceId,
+                config.sourceIPAssetTypeMask
+        )) revert UnsupportedLinkSource();
+        if (_checkLinkEnd(destContract, destId, config.destIPAssetTypeMask))
+            revert UnsupportedLinkDestination();
+        links[
+            keccak256(
+                abi.encode(
+                    sourceContract,
+                    sourceId,
+                    destContract,
+                    destId,
+                    linkId
+                )
+            )
+        ] = true;
         emit Linked(sourceContract, sourceId, destContract, destId, linkId);
     }
 
@@ -77,8 +104,12 @@ contract LinkingModule is AccessControlledUpgradeable {
         address destContract,
         uint256 destId,
         bytes32 linkId
-    ) external {
-        delete links[keccak256(abi.encode(sourceContract, sourceId, destContract, destId, linkId))];
+    ) external onlyRole(LINK_DISPUTER_ROLE) {
+        bytes32 key = keccak256(
+            abi.encode(sourceContract, sourceId, destContract, destId, linkId)
+        );
+        if (!links[key]) revert NonExistingLink();
+        delete links[key];
         emit Unlinked(sourceContract, sourceId, destContract, destId, linkId);
     }
 
@@ -89,30 +120,57 @@ contract LinkingModule is AccessControlledUpgradeable {
         uint256 destId,
         bytes32 linkId
     ) external view returns (bool) {
-        return links[keccak256(abi.encode(sourceContract, sourceId, destContract, destId, linkId))];
+        return
+            links[
+                keccak256(
+                    abi.encode(
+                        sourceContract,
+                        sourceId,
+                        destContract,
+                        destId,
+                        linkId
+                    )
+                )
+            ];
     }
 
-
-    function _verifyIPAssetRegistry(address ipAssetRegistry, address franchiseOwner) private view {
-        if (!ipAssetRegistry.supportsInterface(type(IIPAssetRegistry).interfaceId)) revert UnsupportedInterface("IIPAssetRegistry");
+    function _isAssetRegistry(address ipAssetRegistry) internal virtual override view returns(bool) {
         uint256 franchiseId = IIPAssetRegistry(ipAssetRegistry).franchiseId();
-        if (FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId) != ipAssetRegistry) revert Unauthorized();
-        if (FRANCHISE_REGISTRY.ownerOf(franchiseId) != franchiseOwner) revert Unauthorized();
+        return FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId) != ipAssetRegistry;
     }
 
     /********* Protocol level linkIds *********/
-
-    function addProtocolLink(bytes32 linkId, bytes32 role) external onlyRole(LINK_MANAGER_ROLE) {
-        if (protocolLinks[linkId] != bytes32(0)) revert IntentAlreadyRegistered();
-        protocolLinks[linkId] = role;
-        emit AddedProtocolLink(linkId, role);
+    function addProtocolLink(
+        bytes32 linkId,
+        AddLinkParams calldata params
+    ) external onlyRole(LINK_MANAGER_ROLE) {
+        LinkConfig memory config = LinkConfig(
+            _convertToMask(params.sourceIPAssets, params.allowedExternalSource),
+            _convertToMask(params.destIPAssets, params.allowedExternalDest),
+            params.linkOnlySameFranchise
+        );
+        protocolLinks[linkId] = config;
+        emit AddedProtocolLink(
+            linkId,
+            config.sourceIPAssetTypeMask,
+            config.destIPAssetTypeMask,
+            config.linkOnlySameFranchise
+        );
     }
 
-    function removeProtocolLink(bytes32 linkId) external onlyRole(LINK_MANAGER_ROLE) {
-        if (protocolLinks[linkId] == bytes32(0)) revert UndefinedIntent();
+    function removeProtocolLink(
+        bytes32 linkId
+    ) external onlyRole(LINK_MANAGER_ROLE) {
+        if (
+            protocolLinks[linkId].sourceIPAssetTypeMask == 0 &&
+            protocolLinks[linkId].destIPAssetTypeMask == 0
+        ) revert UndefinedLink();
         delete protocolLinks[linkId];
-        emit RemovedProtocolLink(linkId, protocolLinks[linkId]);
+        emit RemovedProtocolLink(linkId);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal virtual override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal virtual override onlyRole(UPGRADER_ROLE) {}
+
 }
