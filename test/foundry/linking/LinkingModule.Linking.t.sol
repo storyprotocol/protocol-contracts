@@ -123,6 +123,11 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
         );
     }
 
+    function test_revert_unknown_link() public {
+        vm.expectRevert(LinkingModule.NonExistingLink.selector);
+        linkingModule.link(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], keccak256("WRONG_LINK"));
+    }
+
     function test_revert_linkingNotSameFranchise() public {
         vm.prank(franchiseOwner);
         (uint256 id, address otherIPAssets) = register.registerFranchise("name2", "symbol2", "description2");

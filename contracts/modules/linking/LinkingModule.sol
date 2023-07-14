@@ -37,7 +37,6 @@ contract LinkingModule is AccessControlledUpgradeable, LinkIPAssetTypeChecker {
 
     error NonExistingLink();
     error IntentAlreadyRegistered();
-    error UndefinedLink();
     error UnsupportedLinkSource();
     error UnsupportedLinkDestination();
     error CannotLinkToAnotherFranchise();
@@ -95,14 +94,10 @@ contract LinkingModule is AccessControlledUpgradeable, LinkIPAssetTypeChecker {
     ) external {
         LinkingModuleStorage storage $ = _getLinkingModuleStorage();
         LinkConfig storage config = $.protocolLinks[linkId];
+        if (config.sourceIPAssetTypeMask == 0) revert NonExistingLink();
         (bool sourceResult, bool sourceIsAssetRegistry) = _checkLinkEnd(sourceContract, sourceId, config.sourceIPAssetTypeMask);
         if (!sourceResult) revert UnsupportedLinkSource();
-        console.log("destContract", destContract);
-        console.log("destId", destId);
-        console.log("config.destIPAssetTypeMask", config.destIPAssetTypeMask);
         (bool destResult, bool destIsAssetRegistry) = _checkLinkEnd(destContract, destId, config.destIPAssetTypeMask);
-        console.log("destResult", destResult);
-        console.log("destIsAssetRegistry", destIsAssetRegistry);
         if (!destResult) revert UnsupportedLinkDestination();
         if(sourceIsAssetRegistry && destIsAssetRegistry && sourceContract != destContract && config.linkOnlySameFranchise) revert CannotLinkToAnotherFranchise();
         $.links[
@@ -191,7 +186,7 @@ contract LinkingModule is AccessControlledUpgradeable, LinkIPAssetTypeChecker {
         LinkingModuleStorage storage $ = _getLinkingModuleStorage();
         if (
             $.protocolLinks[linkId].sourceIPAssetTypeMask == 0
-        ) revert UndefinedLink();
+        ) revert NonExistingLink();
         delete $.protocolLinks[linkId];
         emit ProtocolLinkUnset(linkId);
     }

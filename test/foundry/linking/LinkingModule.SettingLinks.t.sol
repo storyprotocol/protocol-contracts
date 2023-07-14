@@ -209,9 +209,9 @@ contract LinkingModuleUnsetLinksTest is Test, ProxyHelper {
         linkingModule.unsetProtocolLink(protocolLink);
     }
 
-    function test_revert_unsetProtocolLinkUndefinedLink() public {
+    function test_revert_unsetProtocolLinkNonExistingLink() public {
         vm.prank(linkManager);
-        vm.expectRevert(LinkingModule.UndefinedLink.selector);
+        vm.expectRevert(LinkingModule.NonExistingLink.selector);
         linkingModule.unsetProtocolLink(keccak256("UNDEFINED_LINK"));
     }
 
