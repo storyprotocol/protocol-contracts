@@ -35,7 +35,7 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
     address franchiseOwner = address(456);
     address ipAssetOwner = address(567);
 
-    bytes32 protocolLink = keccak256("PROTOCOL_LINK");
+    bytes32 relationship = keccak256("RELATIONSHIP");
 
     mapping(uint8 => uint256) public ipAssetIds;
 
@@ -92,7 +92,7 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
             linkProcessor: address(linkProcessor)
         });
         vm.prank(linkManager);
-        linkingModule.setProtocolLink(protocolLink, params);
+        linkingModule.setLinkConfig(relationship, params);
         vm.startPrank(ipAssetOwner);
 
         ipAssetIds[uint8(IPAsset.STORY)] = ipAssetRegistry.createIPAsset(IPAsset.STORY, "name", "description", "mediaUrl");
@@ -108,54 +108,54 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
     function test_link() public {
         linkingModule.link(
             ILinkingModule.LinkParams(
-                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], protocolLink
+                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], relationship
             ),
             ""
         );
         assertTrue(
             linkingModule.areTheyLinked(
                 ILinkingModule.LinkParams(
-                    address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], protocolLink
+                    address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], relationship
                 )
             )
         );
 
         linkingModule.link(
             ILinkingModule.LinkParams(
-                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.ART)], protocolLink
+                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.ART)], relationship
             ),
             ""
         );
         assertTrue(
             linkingModule.areTheyLinked(
                 ILinkingModule.LinkParams(
-                    address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.ART)], protocolLink
+                    address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.ART)], relationship
                 )
             )
         );
         linkingModule.link(
             ILinkingModule.LinkParams(
-                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET], protocolLink
+                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET], relationship
             ),
             ""
         );
         assertTrue(
             linkingModule.areTheyLinked(
                 ILinkingModule.LinkParams(
-                    address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET], protocolLink
+                    address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET], relationship
                 )
             )
         );
         // TODO check for event
         assertFalse(
             linkingModule.areTheyLinked(
-                ILinkingModule.LinkParams(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(1), 2, protocolLink)
+                ILinkingModule.LinkParams(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(1), 2, relationship)
             )
         );
         assertFalse(
             linkingModule.areTheyLinked(
                 ILinkingModule.LinkParams(
-                    address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET],  keccak256("WRONG_LINK")
+                    address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET],  keccak256("WRONG")
                 )
             )
         );
@@ -165,7 +165,7 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
         vm.expectRevert(ILinkingModule.NonExistingLink.selector);
         linkingModule.link(
             ILinkingModule.LinkParams(
-                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], keccak256("WRONG_LINK")
+                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], keccak256("WRONG")
             ),
             ""
         );
@@ -180,7 +180,7 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
         vm.expectRevert(ILinkingModule.CannotLinkToAnotherFranchise.selector);
         linkingModule.link(
             ILinkingModule.LinkParams(
-                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], otherIPAssets, otherId, protocolLink
+                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], otherIPAssets, otherId, relationship
             ),
             ""
         );
@@ -192,7 +192,7 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
         vm.expectRevert(ILinkingModule.UnsupportedLinkSource.selector);
         linkingModule.link(
             ILinkingModule.LinkParams(
-                address(ipAssetRegistry), wrongId, address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], protocolLink
+                address(ipAssetRegistry), wrongId, address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], relationship
             ),
             ""
         );
@@ -204,7 +204,7 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
         vm.expectRevert(ILinkingModule.UnsupportedLinkDestination.selector);
         linkingModule.link(
             ILinkingModule.LinkParams(
-                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), wrongId, protocolLink
+                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), wrongId, relationship
             ),
             ""
         );

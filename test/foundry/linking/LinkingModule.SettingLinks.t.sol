@@ -25,7 +25,7 @@ contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
     address linkManager = address(234);
     address franchiseOwner = address(456);
 
-    bytes32 protocolLink = keccak256("PROTOCOL_LINK");
+    bytes32 relationship = keccak256("RELATIONSHIP");
 
     function setUp() public {
         factory = new IPAssetRegistryFactory();
@@ -83,9 +83,9 @@ contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
         });
         assertTrue(acs.hasRole(LINK_MANAGER_ROLE, linkManager));
         vm.prank(linkManager);
-        linkingModule.setProtocolLink(protocolLink, params);
+        linkingModule.setLinkConfig(relationship, params);
 
-        LinkingModule.LinkConfig memory config = linkingModule.protocolLinks(protocolLink);
+        LinkingModule.LinkConfig memory config = linkingModule.linkConfig(relationship);
         assertEq(config.sourceIPAssetTypeMask, 1 << (uint256(IPAsset.STORY) & 0xff));
         assertEq(config.destIPAssetTypeMask, 1 << (uint256(IPAsset.CHARACTER) & 0xff) | 1 << (uint256(IPAsset.ART) & 0xff) | (uint256(EXTERNAL_ASSET) << 248));
         assertTrue(config.linkOnlySameFranchise);
@@ -110,7 +110,7 @@ contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
         });
         vm.expectRevert();
         vm.prank(franchiseOwner);
-        linkingModule.setProtocolLink(protocolLink, params);
+        linkingModule.setLinkConfig(relationship, params);
     }
 
     function test_revert_IfMasksNotConfigured() public {
@@ -128,7 +128,7 @@ contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
         });
         vm.startPrank(linkManager);
         vm.expectRevert();
-        linkingModule.setProtocolLink(protocolLink, params);
+        linkingModule.setLinkConfig(relationship, params);
     }
 
 }
@@ -146,7 +146,7 @@ contract LinkingModuleUnsetLinksTest is Test, ProxyHelper {
     address linkManager = address(234);
     address franchiseOwner = address(456);
 
-    bytes32 protocolLink = keccak256("PROTOCOL_LINK");
+    bytes32 relationship = keccak256("PROTOCOL_LINK");
 
     function setUp() public {
         factory = new IPAssetRegistryFactory();
@@ -198,30 +198,30 @@ contract LinkingModuleUnsetLinksTest is Test, ProxyHelper {
             linkProcessor: address(linkProcessor)
         });
         vm.prank(linkManager);
-        linkingModule.setProtocolLink(protocolLink, params);
+        linkingModule.setLinkConfig(relationship, params);
         
     }
 
-    function test_unsetProtocolLink() public {
+    function test_unsetLinkConfig() public {
         vm.prank(linkManager);
-        linkingModule.unsetProtocolLink(protocolLink);
+        linkingModule.unsetLinkConfig(relationship);
 
-        LinkingModule.LinkConfig memory config = linkingModule.protocolLinks(protocolLink);
+        LinkingModule.LinkConfig memory config = linkingModule.linkConfig(relationship);
         assertEq(config.sourceIPAssetTypeMask, 0);
         assertEq(config.destIPAssetTypeMask, 0);
         assertFalse(config.linkOnlySameFranchise);
         // TODO: test for event
     }
 
-    function test_revert_unsetProtocolLinkNotAuthorized() public {
+    function test_revert_unsetLinkConfigNotAuthorized() public {
         vm.expectRevert();
-        linkingModule.unsetProtocolLink(protocolLink);
+        linkingModule.unsetLinkConfig(relationship);
     }
 
-    function test_revert_unsetProtocolLinkNonExistingLink() public {
+    function test_revert_unsetLinkConfigNonExistingLink() public {
         vm.prank(linkManager);
         vm.expectRevert(ILinkingModule.NonExistingLink.selector);
-        linkingModule.unsetProtocolLink(keccak256("UNDEFINED_LINK"));
+        linkingModule.unsetLinkConfig(keccak256("UNDEFINED_LINK"));
     }
 
 }

@@ -21,14 +21,14 @@ interface ILinkingModule {
         bytes32 linkId
     );
 
-    event ProtocolLinkSet(
+    event LinkConfigSet(
         bytes32 linkId,
         uint256 sourceIPAssetTypeMask,
         uint256 destIPAssetTypeMask,
         bool linkOnlySameFranchise,
         address linkProcessor
     );
-    event ProtocolLinkUnset(bytes32 linkId);
+    event LinkConfigUnset(bytes32 linkId);
 
     error NonExistingLink();
     error IntentAlreadyRegistered();
@@ -63,7 +63,7 @@ interface ILinkingModule {
     function link(LinkParams calldata params, bytes calldata data) external;
     function unlink(LinkParams calldata params) external;
     function areTheyLinked(LinkParams calldata params) external view returns (bool);
-    function setProtocolLink(bytes32 linkId, SetLinkParams calldata params) external;
-    function unsetProtocolLink(bytes32 linkId) external;
-    function protocolLinks(bytes32 linkId) external view returns (LinkConfig memory);
+    function setLinkConfig(bytes32 linkId, SetLinkParams calldata params) external;
+    function unsetLinkConfig(bytes32 linkId) external;
+    function linkConfig(bytes32 linkId) external view returns (LinkConfig memory);
 }

@@ -19,7 +19,7 @@ contract LinkingModule is ILinkingModule, AccessControlledUpgradeable, LinkIPAss
     /// @custom:storage-location erc7201:story-protocol.linking-module.storage
     struct LinkingModuleStorage {
         mapping(bytes32 => bool) links;
-        mapping(bytes32 => LinkConfig) protocolLinks;
+        mapping(bytes32 => LinkConfig) linkConfigs;
     }
 
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.linking-module.storage")) - 1)))
@@ -48,7 +48,7 @@ contract LinkingModule is ILinkingModule, AccessControlledUpgradeable, LinkIPAss
 
     function link(LinkParams calldata params, bytes calldata data) external {
         LinkingModuleStorage storage $ = _getLinkingModuleStorage();
-        LinkConfig storage config = $.protocolLinks[params.linkId];
+        LinkConfig storage config = $.linkConfigs[params.linkId];
         _verifyLinkParams(params, config);
         
         config.processor.processLink(params, data, msg.sender);
@@ -100,7 +100,7 @@ contract LinkingModule is ILinkingModule, AccessControlledUpgradeable, LinkIPAss
     }
 
     /********* Setting Links *********/
-    function setProtocolLink(bytes32 linkId, SetLinkParams calldata params) external onlyRole(LINK_MANAGER_ROLE) {
+    function setLinkConfig(bytes32 linkId, SetLinkParams calldata params) external onlyRole(LINK_MANAGER_ROLE) {
         if (!params.linkProcessor.supportsInterface(type(ILinkProcessor).interfaceId)) revert UnsupportedInterface("ILinkProcessor");
         LinkConfig memory config = LinkConfig(
             _convertToMask(params.sourceIPAssets, params.allowedExternalSource),
@@ -109,8 +109,8 @@ contract LinkingModule is ILinkingModule, AccessControlledUpgradeable, LinkIPAss
             ILinkProcessor(params.linkProcessor)
         );
         LinkingModuleStorage storage $ = _getLinkingModuleStorage();
-        $.protocolLinks[linkId] = config;
-        emit ProtocolLinkSet(
+        $.linkConfigs[linkId] = config;
+        emit LinkConfigSet(
             linkId,
             config.sourceIPAssetTypeMask,
             config.destIPAssetTypeMask,
@@ -119,18 +119,18 @@ contract LinkingModule is ILinkingModule, AccessControlledUpgradeable, LinkIPAss
         );
     }
 
-    function unsetProtocolLink(bytes32 linkId) external onlyRole(LINK_MANAGER_ROLE) {
+    function unsetLinkConfig(bytes32 linkId) external onlyRole(LINK_MANAGER_ROLE) {
         LinkingModuleStorage storage $ = _getLinkingModuleStorage();
         if (
-            $.protocolLinks[linkId].sourceIPAssetTypeMask == 0
+            $.linkConfigs[linkId].sourceIPAssetTypeMask == 0
         ) revert NonExistingLink();
-        delete $.protocolLinks[linkId];
-        emit ProtocolLinkUnset(linkId);
+        delete $.linkConfigs[linkId];
+        emit LinkConfigUnset(linkId);
     }
 
-    function protocolLinks(bytes32 linkId) external view returns (LinkConfig memory) {
+    function linkConfig(bytes32 linkId) external view returns (LinkConfig memory) {
         LinkingModuleStorage storage $ = _getLinkingModuleStorage();
-        return $.protocolLinks[linkId];
+        return $.linkConfigs[linkId];
     }
 
     function _authorizeUpgrade(
