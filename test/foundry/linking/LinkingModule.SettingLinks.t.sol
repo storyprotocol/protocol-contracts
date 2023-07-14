@@ -73,7 +73,7 @@ contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
         destIPAssets[0] = IPAsset.CHARACTER;
         destIPAssets[1] = IPAsset.ART;
         
-        LinkingModule.SetLinkParams memory params = LinkingModule.SetLinkParams({
+        LinkingModule.SetLinkParams memory params = ILinkingModule.SetLinkParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
@@ -100,7 +100,7 @@ contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
         destIPAssets[0] = IPAsset.CHARACTER;
         destIPAssets[1] = IPAsset.ART;
 
-        LinkingModule.SetLinkParams memory params = LinkingModule.SetLinkParams({
+        LinkingModule.SetLinkParams memory params = ILinkingModule.SetLinkParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
@@ -118,7 +118,7 @@ contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
         sourceIPAssets[0] = IPAsset.UNDEFINED;
         IPAsset[] memory destIPAssets = new IPAsset[](2);
 
-        LinkingModule.SetLinkParams memory params = LinkingModule.SetLinkParams({
+        LinkingModule.SetLinkParams memory params = ILinkingModule.SetLinkParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
@@ -189,7 +189,7 @@ contract LinkingModuleUnsetLinksTest is Test, ProxyHelper {
         sourceIPAssets[0] = IPAsset.STORY;
         IPAsset[] memory destIPAssets = new IPAsset[](1);
         destIPAssets[0] = IPAsset.CHARACTER;
-        LinkingModule.SetLinkParams memory params = LinkingModule.SetLinkParams({
+        LinkingModule.SetLinkParams memory params = ILinkingModule.SetLinkParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
@@ -220,10 +220,8 @@ contract LinkingModuleUnsetLinksTest is Test, ProxyHelper {
 
     function test_revert_unsetProtocolLinkNonExistingLink() public {
         vm.prank(linkManager);
-        vm.expectRevert(LinkingModule.NonExistingLink.selector);
+        vm.expectRevert(ILinkingModule.NonExistingLink.selector);
         linkingModule.unsetProtocolLink(keccak256("UNDEFINED_LINK"));
     }
-
-
 
 }

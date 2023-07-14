@@ -11,6 +11,7 @@ import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
 import { LinkIPAssetTypeChecker } from "./LinkIPAssetTypeChecker.sol";
 import { ILinkingModule } from "./ILinkingModule.sol";
 import { ILinkProcessor } from "./LinkProcessors/ILinkProcessor.sol";
+import "forge-std/console.sol";
 
 contract LinkingModule is ILinkingModule, AccessControlledUpgradeable, LinkIPAssetTypeChecker {
     using ERC165CheckerUpgradeable for address;
@@ -69,7 +70,7 @@ contract LinkingModule is ILinkingModule, AccessControlledUpgradeable, LinkIPAss
         return $.links[_getLinkKey(params)];
     }
 
-    function _verifyLinkParams(LinkParams calldata params, LinkConfig memory config) private {
+    function _verifyLinkParams(LinkParams calldata params, LinkConfig memory config) private view {
         if (config.sourceIPAssetTypeMask == 0) revert NonExistingLink();
         (bool sourceResult, bool sourceIsAssetRegistry) = _checkLinkEnd(params.sourceContract, params.sourceId, config.sourceIPAssetTypeMask);
         if (!sourceResult) revert UnsupportedLinkSource();
