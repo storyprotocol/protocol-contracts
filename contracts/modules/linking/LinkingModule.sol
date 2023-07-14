@@ -9,6 +9,7 @@ import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
 import { LinkIPAssetTypeChecker } from "./LinkIPAssetTypeChecker.sol";
+import "forge-std/console.sol";
 
 contract LinkingModule is AccessControlledUpgradeable, LinkIPAssetTypeChecker {
     event Linked(
@@ -26,19 +27,20 @@ contract LinkingModule is AccessControlledUpgradeable, LinkIPAssetTypeChecker {
         bytes32 linkId
     );
 
-    event AddedProtocolLink(
+    event ProtocolLinkSet(
         bytes32 linkId,
         uint256 sourceIPAssetTypeMask,
         uint256 destIPAssetTypeMask,
         bool linkOnlySameFranchise
     );
-    event RemovedProtocolLink(bytes32 linkId);
+    event ProtocolLinkUnset(bytes32 linkId);
 
     error NonExistingLink();
     error IntentAlreadyRegistered();
     error UndefinedLink();
     error UnsupportedLinkSource();
     error UnsupportedLinkDestination();
+    error CannotLinkToAnotherFranchise();
 
     struct LinkConfig {
         uint256 sourceIPAssetTypeMask;
@@ -46,7 +48,7 @@ contract LinkingModule is AccessControlledUpgradeable, LinkIPAssetTypeChecker {
         bool linkOnlySameFranchise;
     }
 
-    struct AddLinkParams {
+    struct SetLinkParams {
         IPAsset[] sourceIPAssets;
         bool allowedExternalSource;
         IPAsset[] destIPAssets;
@@ -54,9 +56,14 @@ contract LinkingModule is AccessControlledUpgradeable, LinkIPAssetTypeChecker {
         bool linkOnlySameFranchise;
     }
 
-    mapping(bytes32 => bool) public links;
-    mapping(bytes32 => LinkConfig) public protocolLinks;
+    /// @custom:storage-location erc7201:story-protocol.linking-module.storage
+    struct LinkingModuleStorage {
+        mapping(bytes32 => bool) links;
+        mapping(bytes32 => LinkConfig) protocolLinks;
+    }
 
+    // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.linking-module.storage")) - 1)))
+    bytes32 private constant _STORAGE_LOCATION = 0x9c884c7910549c48b2f059441cfee4a973c8102bda86741fa2535981e323cf9e;
     FranchiseRegistry public immutable FRANCHISE_REGISTRY;
 
     constructor(address _franchiseRegistry) {
@@ -69,6 +76,16 @@ contract LinkingModule is AccessControlledUpgradeable, LinkIPAssetTypeChecker {
         __AccessControlledUpgradeable_init(accessControl);
     }
 
+    function _getLinkingModuleStorage()
+        private
+        pure
+        returns (LinkingModuleStorage storage $)
+    {
+        assembly {
+            $.slot := _STORAGE_LOCATION
+        }
+    }
+
     function link(
         address sourceContract,
         uint256 sourceId,
@@ -76,15 +93,19 @@ contract LinkingModule is AccessControlledUpgradeable, LinkIPAssetTypeChecker {
         uint256 destId,
         bytes32 linkId
     ) external {
-        LinkConfig storage config = protocolLinks[linkId];
-        if (_checkLinkEnd(
-                sourceContract,
-                sourceId,
-                config.sourceIPAssetTypeMask
-        )) revert UnsupportedLinkSource();
-        if (_checkLinkEnd(destContract, destId, config.destIPAssetTypeMask))
-            revert UnsupportedLinkDestination();
-        links[
+        LinkingModuleStorage storage $ = _getLinkingModuleStorage();
+        LinkConfig storage config = $.protocolLinks[linkId];
+        (bool sourceResult, bool sourceIsAssetRegistry) = _checkLinkEnd(sourceContract, sourceId, config.sourceIPAssetTypeMask);
+        if (!sourceResult) revert UnsupportedLinkSource();
+        console.log("destContract", destContract);
+        console.log("destId", destId);
+        console.log("config.destIPAssetTypeMask", config.destIPAssetTypeMask);
+        (bool destResult, bool destIsAssetRegistry) = _checkLinkEnd(destContract, destId, config.destIPAssetTypeMask);
+        console.log("destResult", destResult);
+        console.log("destIsAssetRegistry", destIsAssetRegistry);
+        if (!destResult) revert UnsupportedLinkDestination();
+        if(sourceIsAssetRegistry && destIsAssetRegistry && sourceContract != destContract && config.linkOnlySameFranchise) revert CannotLinkToAnotherFranchise();
+        $.links[
             keccak256(
                 abi.encode(
                     sourceContract,
@@ -105,11 +126,12 @@ contract LinkingModule is AccessControlledUpgradeable, LinkIPAssetTypeChecker {
         uint256 destId,
         bytes32 linkId
     ) external onlyRole(LINK_DISPUTER_ROLE) {
+        LinkingModuleStorage storage $ = _getLinkingModuleStorage();
         bytes32 key = keccak256(
             abi.encode(sourceContract, sourceId, destContract, destId, linkId)
         );
-        if (!links[key]) revert NonExistingLink();
-        delete links[key];
+        if (!$.links[key]) revert NonExistingLink();
+        delete $.links[key];
         emit Unlinked(sourceContract, sourceId, destContract, destId, linkId);
     }
 
@@ -120,8 +142,9 @@ contract LinkingModule is AccessControlledUpgradeable, LinkIPAssetTypeChecker {
         uint256 destId,
         bytes32 linkId
     ) external view returns (bool) {
+        LinkingModuleStorage storage $ = _getLinkingModuleStorage();
         return
-            links[
+            $.links[
                 keccak256(
                     abi.encode(
                         sourceContract,
@@ -135,22 +158,26 @@ contract LinkingModule is AccessControlledUpgradeable, LinkIPAssetTypeChecker {
     }
 
     function _isAssetRegistry(address ipAssetRegistry) internal virtual override view returns(bool) {
-        uint256 franchiseId = IIPAssetRegistry(ipAssetRegistry).franchiseId();
-        return FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId) != ipAssetRegistry;
+        try IIPAssetRegistry(ipAssetRegistry).franchiseId() returns (uint256 franchiseId) {
+            return FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId) == ipAssetRegistry;
+        } catch {
+            return false;
+        }
     }
 
-    /********* Protocol level linkIds *********/
-    function addProtocolLink(
+    /********* Setting Links *********/
+    function setProtocolLink(
         bytes32 linkId,
-        AddLinkParams calldata params
+        SetLinkParams calldata params
     ) external onlyRole(LINK_MANAGER_ROLE) {
         LinkConfig memory config = LinkConfig(
             _convertToMask(params.sourceIPAssets, params.allowedExternalSource),
             _convertToMask(params.destIPAssets, params.allowedExternalDest),
             params.linkOnlySameFranchise
         );
-        protocolLinks[linkId] = config;
-        emit AddedProtocolLink(
+        LinkingModuleStorage storage $ = _getLinkingModuleStorage();
+        $.protocolLinks[linkId] = config;
+        emit ProtocolLinkSet(
             linkId,
             config.sourceIPAssetTypeMask,
             config.destIPAssetTypeMask,
@@ -158,15 +185,20 @@ contract LinkingModule is AccessControlledUpgradeable, LinkIPAssetTypeChecker {
         );
     }
 
-    function removeProtocolLink(
+    function unsetProtocolLink(
         bytes32 linkId
     ) external onlyRole(LINK_MANAGER_ROLE) {
+        LinkingModuleStorage storage $ = _getLinkingModuleStorage();
         if (
-            protocolLinks[linkId].sourceIPAssetTypeMask == 0 &&
-            protocolLinks[linkId].destIPAssetTypeMask == 0
+            $.protocolLinks[linkId].sourceIPAssetTypeMask == 0
         ) revert UndefinedLink();
-        delete protocolLinks[linkId];
-        emit RemovedProtocolLink(linkId);
+        delete $.protocolLinks[linkId];
+        emit ProtocolLinkUnset(linkId);
+    }
+
+    function protocolLinks(bytes32 linkId) external view returns (LinkConfig memory) {
+        LinkingModuleStorage storage $ = _getLinkingModuleStorage();
+        return $.protocolLinks[linkId];
     }
 
     function _authorizeUpgrade(

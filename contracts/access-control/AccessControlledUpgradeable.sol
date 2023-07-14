@@ -73,4 +73,9 @@ abstract contract AccessControlledUpgradeable is UUPSUpgradeable {
         emit AccessControlUpdated(accessControl);
     }
 
+    function getAccessControl() public view returns (address) {
+        AccessControlledStorage storage $ = _getAccessControlledUpgradeable();
+        return address($.accessControl);
+    }
+
 }

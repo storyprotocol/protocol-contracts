@@ -25,8 +25,14 @@ contract FranchiseRegistryTest is Test, ProxyHelper {
 
     function setUp() public {
         factory = new IPAssetRegistryFactory();
-        vm.prank(admin);
-        acs = new AccessControlSingleton();
+        acs = AccessControlSingleton(
+            _deployUUPSProxy(
+                address(new AccessControlSingleton()),
+                abi.encodeWithSelector(
+                    bytes4(keccak256(bytes("initialize(address)"))), admin
+                )
+            )
+        );
         address accessControl = address(acs);
         
         FranchiseRegistry impl = new FranchiseRegistry(address(factory));

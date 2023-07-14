@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 
 import { IPAssetRegistryFactory } from "contracts/ip-assets/IPAssetRegistryFactory.sol";
 import { LinkIPAssetTypeChecker } from "contracts/modules/linking/LinkIPAssetTypeChecker.sol";
-import { IPAsset } from "contracts/IPAsset.sol";
+import { IPAsset, EXTERNAL_ASSET } from "contracts/IPAsset.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
@@ -22,7 +22,7 @@ contract LinkIPAssetTypeCheckerHarness is LinkIPAssetTypeChecker {
         return _returnIsAssetRegistry;
     }
 
-    function checkLinkEnd(address collection, uint256 id, uint256 assetTypeMask) view external returns (bool) {
+    function checkLinkEnd(address collection, uint256 id, uint256 assetTypeMask) view external returns (bool result, bool isAssetRegistry) {
         return _checkLinkEnd(collection, id, assetTypeMask);
     }
 
@@ -60,7 +60,7 @@ contract LinkIPAssetTypeCheckerConvertToMaskTest is Test {
             uint256 resultMask;
             for (uint8 j = 1; j <= i; j++) {
                 ipAssets[j-1] = IPAsset(j);
-                resultMask |= uint256(IPAsset(j));
+                resultMask |= 1 << (uint256(IPAsset(j)) & 0xff);
             }
             uint256 mask = checker.convertToMask(ipAssets, false);
             assertEq(mask, resultMask);
@@ -73,9 +73,9 @@ contract LinkIPAssetTypeCheckerConvertToMaskTest is Test {
             uint256 resultMask;
             for (uint8 j = 1; j <= i; j++) {
                 ipAssets[j-1] = IPAsset(j);
-                resultMask |= uint256(IPAsset(j));
+                resultMask |= 1 << (uint256(IPAsset(j)) & 0xff);
             }
-            resultMask |= uint256(type(uint8).max);
+            resultMask |= uint256(EXTERNAL_ASSET) << 248;
             uint256 mask = checker.convertToMask(ipAssets, true);
             assertEq(mask, resultMask);
         }
@@ -109,9 +109,9 @@ contract LinkIPAssetTypeCheckerSupportsAssetTypeTest is Test {
     function test_supportsIPAssetType_true() public {
         uint256 mask = 0;
         for (uint8 i = 1; i <= uint8(IPAsset.ITEM); i++) {
-            mask |= uint256(IPAsset(i));
+            mask |= 1 << (uint256(IPAsset(i)) & 0xff);
         }
-        mask |= uint256(type(uint8).max);
+        mask |= uint256(EXTERNAL_ASSET) << 248;
         for (uint8 i = 1; i <= uint8(IPAsset.ITEM); i++) {
             assertTrue(checker.supportsIPAssetType(mask, i));
         }
@@ -128,7 +128,7 @@ contract LinkIPAssetTypeCheckerSupportsAssetTypeTest is Test {
     
 }
 
-contract LinkIPAssetTypeCheckerCheckLinkEndeTest is Test {
+contract LinkIPAssetTypeCheckerCheckLinkEndTest is Test {
 
     LinkIPAssetTypeCheckerHarness public checker;
     MockERC721 public collection;
@@ -143,23 +143,33 @@ contract LinkIPAssetTypeCheckerCheckLinkEndeTest is Test {
 
     function test_checkLinkEnd_ipAsset_true() public {
         uint256 tokenId = LibIPAssetId._zeroId(IPAsset(1)) + 1;
+        console.log(tokenId);
         collection.mint(owner, tokenId);
         checker.setIsAssetRegistry(true);
-        assertTrue(checker.checkLinkEnd(address(collection), tokenId, uint256(IPAsset(1))));
+        uint256 mask = 1 << (uint256(IPAsset(1)) & 0xff);
+        (bool result, bool isAssetRegistry) = checker.checkLinkEnd(address(collection), tokenId, mask);
+        assertTrue(result);
+        assertTrue(isAssetRegistry);
     }
 
     function test_checkLinkEnd_ipAsset_false() public {
         uint256 tokenId = LibIPAssetId._zeroId(IPAsset(1)) + 1;
         collection.mint(owner, tokenId);
         checker.setIsAssetRegistry(true);
-        assertFalse(checker.checkLinkEnd(address(collection), tokenId, uint256(IPAsset(2))));
+        uint256 mask = 1 << (uint256(IPAsset(2)) & 0xff);
+        (bool result, bool isAssetRegistry) = checker.checkLinkEnd(address(collection), tokenId, mask);
+        assertFalse(result);
+        assertTrue(isAssetRegistry);
     }
 
     function test_checkLinkEnd_external_true() public {
         uint256 tokenId = LibIPAssetId._zeroId(IPAsset(1)) + 1;
         collection.mint(owner, tokenId);
         checker.setIsAssetRegistry(false);
-        assertTrue(checker.checkLinkEnd(address(collection), tokenId, uint256(type(uint8).max)));
+        uint256 mask = 1 << (uint256(EXTERNAL_ASSET) & 0xff);
+        (bool result, bool isAssetRegistry) = checker.checkLinkEnd(address(collection), tokenId, mask);
+        assertTrue(result);
+        assertFalse(isAssetRegistry);
     }
 
     function test_revert_nonExistingToken() public {
