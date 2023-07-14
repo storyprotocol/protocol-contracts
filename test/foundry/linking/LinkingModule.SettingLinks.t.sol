@@ -10,6 +10,7 @@ import "contracts/ip-assets/IPAssetRegistryFactory.sol";
 import "contracts/modules/linking/LinkingModule.sol";
 import "contracts/IPAsset.sol";
 import "contracts/errors/General.sol";
+import "contracts/modules/linking/LinkProcessors/PermissionlessLinkProcessor.sol";
 
 contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
 
@@ -18,6 +19,7 @@ contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
     FranchiseRegistry public register;
     LinkingModule public linkingModule;
     AccessControlSingleton acs;
+    PermissionlessLinkProcessor public linkProcessor;
 
     address admin = address(123);
     address linkManager = address(234);
@@ -61,6 +63,7 @@ contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
                 )
             )
         );
+        linkProcessor = new PermissionlessLinkProcessor(address(linkingModule));
     }
 
     function test_setProtocolLevelLink() public {
@@ -69,13 +72,14 @@ contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
         IPAsset[] memory destIPAssets = new IPAsset[](2);
         destIPAssets[0] = IPAsset.CHARACTER;
         destIPAssets[1] = IPAsset.ART;
-
+        
         LinkingModule.SetLinkParams memory params = LinkingModule.SetLinkParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
-            linkOnlySameFranchise: true
+            linkOnlySameFranchise: true,
+            linkProcessor: address(linkProcessor)
         });
         assertTrue(acs.hasRole(LINK_MANAGER_ROLE, linkManager));
         vm.prank(linkManager);
@@ -101,7 +105,8 @@ contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
-            linkOnlySameFranchise: true
+            linkOnlySameFranchise: true,
+            linkProcessor: address(linkProcessor)
         });
         vm.expectRevert();
         vm.prank(franchiseOwner);
@@ -118,7 +123,8 @@ contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
-            linkOnlySameFranchise: true
+            linkOnlySameFranchise: true,
+            linkProcessor: address(linkProcessor)
         });
         vm.startPrank(linkManager);
         vm.expectRevert();
@@ -134,6 +140,7 @@ contract LinkingModuleUnsetLinksTest is Test, ProxyHelper {
     FranchiseRegistry public register;
     LinkingModule public linkingModule;
     AccessControlSingleton acs;
+    PermissionlessLinkProcessor public linkProcessor;
 
     address admin = address(123);
     address linkManager = address(234);
@@ -177,6 +184,7 @@ contract LinkingModuleUnsetLinksTest is Test, ProxyHelper {
                 )
             )
         );
+        linkProcessor = new PermissionlessLinkProcessor(address(linkingModule));
         IPAsset[] memory sourceIPAssets = new IPAsset[](1);
         sourceIPAssets[0] = IPAsset.STORY;
         IPAsset[] memory destIPAssets = new IPAsset[](1);
@@ -186,7 +194,8 @@ contract LinkingModuleUnsetLinksTest is Test, ProxyHelper {
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
-            linkOnlySameFranchise: true
+            linkOnlySameFranchise: true,
+            linkProcessor: address(linkProcessor)
         });
         vm.prank(linkManager);
         linkingModule.setProtocolLink(protocolLink, params);

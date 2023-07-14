@@ -10,6 +10,7 @@ import "contracts/ip-assets/IPAssetRegistryFactory.sol";
 import "contracts/modules/linking/LinkingModule.sol";
 import "contracts/IPAsset.sol";
 import "contracts/errors/General.sol";
+import "contracts/modules/linking/LinkProcessors/PermissionlessLinkProcessor.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 contract MockExternalAsset is ERC721 {
@@ -27,6 +28,7 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
     FranchiseRegistry public register;
     LinkingModule public linkingModule;
     AccessControlSingleton acs;
+    PermissionlessLinkProcessor public linkProcessor;
 
     address admin = address(123);
     address linkManager = address(234);
@@ -80,12 +82,14 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
         destIPAssets[0] = IPAsset.CHARACTER;
         destIPAssets[1] = IPAsset.ART;
 
+        linkProcessor = new PermissionlessLinkProcessor(address(linkingModule));
         LinkingModule.SetLinkParams memory params = LinkingModule.SetLinkParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
-            linkOnlySameFranchise: true
+            linkOnlySameFranchise: true,
+            linkProcessor: address(linkProcessor)
         });
         vm.prank(linkManager);
         linkingModule.setProtocolLink(protocolLink, params);
@@ -102,15 +106,15 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
     }
 
     function test_link() public {
-        linkingModule.link(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], protocolLink);
+        linkingModule.link(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], protocolLink, "");
         assertTrue(
             linkingModule.areTheyLinked(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], protocolLink)
         );
-        linkingModule.link(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.ART)], protocolLink);
+        linkingModule.link(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.ART)], protocolLink, "");
         assertTrue(
             linkingModule.areTheyLinked(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.ART)], protocolLink)
         );
-        linkingModule.link(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET], protocolLink);
+        linkingModule.link(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET], protocolLink, "");
         assertTrue(
             linkingModule.areTheyLinked(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET], protocolLink)
         );
@@ -125,7 +129,7 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
 
     function test_revert_unknown_link() public {
         vm.expectRevert(LinkingModule.NonExistingLink.selector);
-        linkingModule.link(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], keccak256("WRONG_LINK"));
+        linkingModule.link(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], keccak256("WRONG_LINK"), "");
     }
 
     function test_revert_linkingNotSameFranchise() public {
@@ -135,21 +139,21 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
         vm.prank(ipAssetOwner);
         uint256 otherId = otherIPAssetRegistry.createIPAsset(IPAsset.CHARACTER, "name", "description", "mediaUrl");
         vm.expectRevert(LinkingModule.CannotLinkToAnotherFranchise.selector);
-        linkingModule.link(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], otherIPAssets, otherId, protocolLink);
+        linkingModule.link(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], otherIPAssets, otherId, protocolLink, "");
     }
 
     function test_revert_linkUnsupportedSource() public {
         vm.prank(ipAssetOwner);
         uint256 wrongId = ipAssetRegistry.createIPAsset(IPAsset.GROUP, "name", "description", "mediaUrl");
         vm.expectRevert(LinkingModule.UnsupportedLinkSource.selector);
-        linkingModule.link(address(ipAssetRegistry), wrongId, address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], protocolLink);
+        linkingModule.link(address(ipAssetRegistry), wrongId, address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], protocolLink, "");
     }
 
     function test_revert_linkUnsupportedDestination() public {
         vm.prank(ipAssetOwner);
         uint256 wrongId = ipAssetRegistry.createIPAsset(IPAsset.GROUP, "name", "description", "mediaUrl");
         vm.expectRevert(LinkingModule.UnsupportedLinkDestination.selector);
-        linkingModule.link(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), wrongId, protocolLink);
+        linkingModule.link(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), wrongId, protocolLink, "");
     }
 
 
