@@ -13,6 +13,13 @@ interface IRelationshipModule {
         uint256 destId,
         bytes32 relationshipId
     );
+    event RelationPendingProcessor(
+        address sourceContract,
+        uint256 sourceId,
+        address destContract,
+        uint256 destId,
+        bytes32 relationshipId
+    );
     event RelationUnset(
         address sourceContract,
         uint256 sourceId,
@@ -28,6 +35,7 @@ interface IRelationshipModule {
         bool onlySameFranchise,
         address processor
     );
+
     event RelationshipConfigUnset(bytes32 relationshipId);
 
     error NonExistingRelationship();

@@ -8,7 +8,7 @@ contract PermissionlessRelationshipProcessor is BaseRelationshipProcessor {
 
     constructor(address relationshipModule) BaseRelationshipProcessor(relationshipModule) {}
 
-    function _processRelationship(IRelationshipModule.RelationshipParams memory, bytes calldata, address) internal virtual override {
-        // do nothing
+    function _processRelationship(IRelationshipModule.RelationshipParams memory, bytes calldata, address) internal virtual override returns(bool) {
+        return true;
     }
 }

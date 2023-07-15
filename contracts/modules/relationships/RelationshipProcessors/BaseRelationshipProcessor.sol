@@ -16,12 +16,12 @@ abstract contract BaseRelationshipProcessor is IRelationshipProcessor, ERC165 {
         _RELATIONSHIP_MODULE = _relationshipModule;
     }
 
-    function processRelationship(IRelationshipModule.RelationshipParams memory params, bytes calldata data, address caller) external override {
+    function processRelationship(IRelationshipModule.RelationshipParams memory params, bytes calldata data, address caller) external override returns(bool) {
         if(msg.sender != _RELATIONSHIP_MODULE) revert OnlyRelationshipModule();
-        _processRelationship(params, data, caller);
+        return _processRelationship(params, data, caller);
     }
 
-    function _processRelationship(IRelationshipModule.RelationshipParams memory params, bytes calldata data, address caller) internal virtual;    
+    function _processRelationship(IRelationshipModule.RelationshipParams memory params, bytes calldata data, address caller) internal virtual returns(bool);    
 
     function supportsInterface(
         bytes4 interfaceId

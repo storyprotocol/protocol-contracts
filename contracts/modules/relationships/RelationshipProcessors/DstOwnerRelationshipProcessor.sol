@@ -10,10 +10,11 @@ contract DstRelationshipProcessor is BaseRelationshipProcessor {
 
     constructor(address relationshipModule) BaseRelationshipProcessor(relationshipModule) {}
 
-    function _processRelationship(IRelationshipModule.RelationshipParams memory params, bytes calldata, address caller) internal view virtual override {
+    function _processRelationship(IRelationshipModule.RelationshipParams memory params, bytes calldata, address caller) internal view virtual override returns(bool) {
         if (IERC721(params.destContract).ownerOf(params.destId) != caller) {
             revert Unauthorized();
         }
+        return true;
     }
 
 }

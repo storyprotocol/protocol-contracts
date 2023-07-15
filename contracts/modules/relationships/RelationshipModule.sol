@@ -47,13 +47,15 @@ contract RelationshipModule is IRelationshipModule, AccessControlledUpgradeable,
 
     function relate(RelationshipParams calldata params, bytes calldata data) external {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
-        RelationshipConfig storage config = $.relConfigs[params.relationshipId];
-        _verifyRelationshipParams(params, config);
+        RelationshipConfig storage relConfig = $.relConfigs[params.relationshipId];
+        _verifyRelationshipParams(params, relConfig);
         
-        config.processor.processRelationship(params, data, msg.sender);
-
-        $.relationships[_getRelationshipKey(params)] = true;
-        emit RelationSet(params.sourceContract, params.sourceId, params.destContract, params.destId, params.relationshipId);
+        if (!relConfig.processor.processRelationship(params, data, msg.sender)) {
+            emit RelationPendingProcessor(params.sourceContract, params.sourceId, params.destContract, params.destId, params.relationshipId);
+        } else {
+            $.relationships[_getRelationshipKey(params)] = true;
+            emit RelationSet(params.sourceContract, params.sourceId, params.destContract, params.destId, params.relationshipId);
+        }
     }
 
     function unrelate(RelationshipParams calldata params) external onlyRole(RELATIONSHIP_DISPUTER_ROLE) {
@@ -101,19 +103,19 @@ contract RelationshipModule is IRelationshipModule, AccessControlledUpgradeable,
     /********* Setting Relationships *********/
     function setRelationshipConfig(bytes32 relationshipId, SetRelationshipParams calldata params) external onlyRole(RELATIONSHIP_MANAGER_ROLE) {
         if (!params.processor.supportsInterface(type(IRelationshipProcessor).interfaceId)) revert UnsupportedInterface("IRelationshipProcessor");
-        RelationshipConfig memory config = RelationshipConfig(
+        RelationshipConfig memory relConfig = RelationshipConfig(
             _convertToMask(params.sourceIPAssets, params.allowedExternalSource),
             _convertToMask(params.destIPAssets, params.allowedExternalDest),
             params.onlySameFranchise,
             IRelationshipProcessor(params.processor)
         );
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
-        $.relConfigs[relationshipId] = config;
+        $.relConfigs[relationshipId] = relConfig;
         emit RelationshipConfigSet(
             relationshipId,
-            config.sourceIPAssetTypeMask,
-            config.destIPAssetTypeMask,
-            config.onlySameFranchise,
+            relConfig.sourceIPAssetTypeMask,
+            relConfig.destIPAssetTypeMask,
+            relConfig.onlySameFranchise,
             params.processor
         );
     }
