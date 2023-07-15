@@ -73,13 +73,18 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
         destIPAssets[0] = IPAsset.CHARACTER;
         destIPAssets[1] = IPAsset.ART;
         
-        RelationshipModule.SetRelationshipParams memory params = IRelationshipModule.SetRelationshipParams({
+        RelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
             onlySameFranchise: true,
-            processor: address(RelationshipProcessor)
+            processor: address(RelationshipProcessor),
+            timeConfig: IRelationshipModule.TimeConfig({
+                minTTL: 0,
+                maxTTL: 0,
+                renewable: false
+            })
         });
         assertTrue(acs.hasRole(RELATIONSHIP_MANAGER_ROLE, relationshipManager));
         vm.prank(relationshipManager);
@@ -100,13 +105,18 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
         destIPAssets[0] = IPAsset.CHARACTER;
         destIPAssets[1] = IPAsset.ART;
 
-        RelationshipModule.SetRelationshipParams memory params = IRelationshipModule.SetRelationshipParams({
+        RelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
             onlySameFranchise: true,
-            processor: address(RelationshipProcessor)
+            processor: address(RelationshipProcessor),
+            timeConfig: IRelationshipModule.TimeConfig({
+                minTTL: 0,
+                maxTTL: 0,
+                renewable: false
+            })
         });
         vm.expectRevert();
         vm.prank(franchiseOwner);
@@ -118,13 +128,18 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
         sourceIPAssets[0] = IPAsset.UNDEFINED;
         IPAsset[] memory destIPAssets = new IPAsset[](2);
 
-        RelationshipModule.SetRelationshipParams memory params = IRelationshipModule.SetRelationshipParams({
+        RelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
             onlySameFranchise: true,
-            processor: address(RelationshipProcessor)
+            processor: address(RelationshipProcessor),
+            timeConfig: IRelationshipModule.TimeConfig({
+                minTTL: 0,
+                maxTTL: 0,
+                renewable: false
+            })
         });
         vm.startPrank(relationshipManager);
         vm.expectRevert();
@@ -189,13 +204,18 @@ contract RelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
         sourceIPAssets[0] = IPAsset.STORY;
         IPAsset[] memory destIPAssets = new IPAsset[](1);
         destIPAssets[0] = IPAsset.CHARACTER;
-        RelationshipModule.SetRelationshipParams memory params = IRelationshipModule.SetRelationshipParams({
+        RelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
             onlySameFranchise: true,
-            processor: address(RelationshipProcessor)
+            processor: address(RelationshipProcessor),
+            timeConfig: IRelationshipModule.TimeConfig({
+                minTTL: 0,
+                maxTTL: 0,
+                renewable: false
+            })
         });
         vm.prank(relationshipManager);
         relationshipModule.setRelationshipConfig(relationship, params);

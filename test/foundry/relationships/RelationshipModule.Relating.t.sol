@@ -83,13 +83,14 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
         destIPAssets[1] = IPAsset.ART;
 
         processor = new PermissionlessRelationshipProcessor(address(relationshipModule));
-        RelationshipModule.SetRelationshipParams memory params = IRelationshipModule.SetRelationshipParams({
+        RelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
             onlySameFranchise: true,
-            processor: address(processor)
+            processor: address(processor),
+            timeConfig: IRelationshipModule.TimeConfig(0, 0, false)
         });
         vm.prank(relationshipManager);
         relationshipModule.setRelationshipConfig(relationship, params);
@@ -108,54 +109,54 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
     function test_relate() public {
         relationshipModule.relate(
             IRelationshipModule.RelationshipParams(
-                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], relationship
+                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], relationship, 0
             ),
             ""
         );
         assertTrue(
             relationshipModule.areTheyRelated(
                 IRelationshipModule.RelationshipParams(
-                    address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], relationship
+                    address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], relationship, 0
                 )
             )
         );
 
         relationshipModule.relate(
             IRelationshipModule.RelationshipParams(
-                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.ART)], relationship
+                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.ART)], relationship, 0
             ),
             ""
         );
         assertTrue(
             relationshipModule.areTheyRelated(
                 IRelationshipModule.RelationshipParams(
-                    address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.ART)], relationship
+                    address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.ART)], relationship, 0
                 )
             )
         );
         relationshipModule.relate(
             IRelationshipModule.RelationshipParams(
-                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET], relationship
+                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET], relationship, 0
             ),
             ""
         );
         assertTrue(
             relationshipModule.areTheyRelated(
                 IRelationshipModule.RelationshipParams(
-                    address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET], relationship
+                    address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET], relationship, 0
                 )
             )
         );
         // TODO check for event
         assertFalse(
             relationshipModule.areTheyRelated(
-                IRelationshipModule.RelationshipParams(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(1), 2, relationship)
+                IRelationshipModule.RelationshipParams(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(1), 2, relationship, 0)
             )
         );
         assertFalse(
             relationshipModule.areTheyRelated(
                 IRelationshipModule.RelationshipParams(
-                    address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET],  keccak256("WRONG")
+                    address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET],  keccak256("WRONG"), 0
                 )
             )
         );
@@ -165,7 +166,7 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
         vm.expectRevert(IRelationshipModule.NonExistingRelationship.selector);
         relationshipModule.relate(
             IRelationshipModule.RelationshipParams(
-                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], keccak256("WRONG")
+                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], keccak256("WRONG"), 0
             ),
             ""
         );
@@ -180,7 +181,7 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
         vm.expectRevert(IRelationshipModule.CannotRelationshipToAnotherFranchise.selector);
         relationshipModule.relate(
             IRelationshipModule.RelationshipParams(
-                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], otherIPAssets, otherId, relationship
+                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], otherIPAssets, otherId, relationship, 0
             ),
             ""
         );
@@ -192,7 +193,7 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
         vm.expectRevert(IRelationshipModule.UnsupportedRelationshipSource.selector);
         relationshipModule.relate(
             IRelationshipModule.RelationshipParams(
-                address(ipAssetRegistry), wrongId, address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], relationship
+                address(ipAssetRegistry), wrongId, address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], relationship, 0
             ),
             ""
         );
@@ -204,7 +205,7 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
         vm.expectRevert(IRelationshipModule.UnsupportedRelationshipDestination.selector);
         relationshipModule.relate(
             IRelationshipModule.RelationshipParams(
-                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), wrongId, relationship
+                address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), wrongId, relationship, 0
             ),
             ""
         );

@@ -18,12 +18,21 @@ contract RelationshipModule is IRelationshipModule, AccessControlledUpgradeable,
     /// @custom:storage-location erc7201:story-protocol.relationship-module.storage
     struct RelationshipModuleStorage {
         mapping(bytes32 => bool) relationships;
+        mapping(bytes32 => uint256) relationshipEnds;
         mapping(bytes32 => RelationshipConfig) relConfigs;
     }
 
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.relationship-module.storage")) - 1)))
     bytes32 private constant _STORAGE_LOCATION = 0xd16687d5cf786234491b4cc484b2a64f24855aadee9b1b73824db1ed2840fd0b;
     FranchiseRegistry public immutable FRANCHISE_REGISTRY;
+
+    modifier onlyValidTTL(RelationshipParams calldata params) {
+        RelationshipConfig storage relConfig = _getRelationshipModuleStorage().relConfigs[params.relationshipId];
+        if (relConfig.timeConfig.maxTTL != 0 && params.ttl != 0) {
+            if (params.ttl > relConfig.timeConfig.maxTTL || params.ttl < relConfig.timeConfig.minTTL) revert InvalidEndTimestamp();
+        }
+        _;
+    }
 
     constructor(address _franchiseRegistry) {
         if (_franchiseRegistry == address(0)) revert ZeroAddress();
@@ -45,7 +54,7 @@ contract RelationshipModule is IRelationshipModule, AccessControlledUpgradeable,
         }
     }
 
-    function relate(RelationshipParams calldata params, bytes calldata data) external {
+    function relate(RelationshipParams calldata params, bytes calldata data) external onlyValidTTL(params) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         RelationshipConfig storage relConfig = $.relConfigs[params.relationshipId];
         _verifyRelationshipParams(params, relConfig);
@@ -53,9 +62,24 @@ contract RelationshipModule is IRelationshipModule, AccessControlledUpgradeable,
         if (!relConfig.processor.processRelationship(params, data, msg.sender)) {
             emit RelationPendingProcessor(params.sourceContract, params.sourceId, params.destContract, params.destId, params.relationshipId);
         } else {
-            $.relationships[_getRelationshipKey(params)] = true;
-            emit RelationSet(params.sourceContract, params.sourceId, params.destContract, params.destId, params.relationshipId);
+            bytes32 relKey = _getRelationshipKey(params);
+            $.relationships[relKey] = true;
+            uint256 endTime = _updateEndTime(relKey, relConfig.timeConfig, params.ttl);
+            emit RelationSet(params.sourceContract, params.sourceId, params.destContract, params.destId, params.relationshipId, endTime);
         }
+    }
+
+    function _updateEndTime(bytes32 relKey, TimeConfig memory timeConfig, uint256 ttl) private returns (uint256) {
+        RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
+        if (timeConfig.maxTTL != 0) {
+            uint256 endTime = $.relationshipEnds[relKey];
+            if (endTime == 0 || timeConfig.renewable) {
+                endTime = block.timestamp + ttl;
+                $.relationshipEnds[relKey] = endTime;
+                return endTime;
+            }
+        }
+        return 0;
     }
 
     function unrelate(RelationshipParams calldata params) external onlyRole(RELATIONSHIP_DISPUTER_ROLE) {
@@ -101,14 +125,8 @@ contract RelationshipModule is IRelationshipModule, AccessControlledUpgradeable,
     }
 
     /********* Setting Relationships *********/
-    function setRelationshipConfig(bytes32 relationshipId, SetRelationshipParams calldata params) external onlyRole(RELATIONSHIP_MANAGER_ROLE) {
-        if (!params.processor.supportsInterface(type(IRelationshipProcessor).interfaceId)) revert UnsupportedInterface("IRelationshipProcessor");
-        RelationshipConfig memory relConfig = RelationshipConfig(
-            _convertToMask(params.sourceIPAssets, params.allowedExternalSource),
-            _convertToMask(params.destIPAssets, params.allowedExternalDest),
-            params.onlySameFranchise,
-            IRelationshipProcessor(params.processor)
-        );
+    function setRelationshipConfig(bytes32 relationshipId, SetRelationshipConfigParams calldata params) external onlyRole(RELATIONSHIP_MANAGER_ROLE) {
+        RelationshipConfig memory relConfig = _convertRelParams(params);
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         $.relConfigs[relationshipId] = relConfig;
         emit RelationshipConfigSet(
@@ -116,7 +134,21 @@ contract RelationshipModule is IRelationshipModule, AccessControlledUpgradeable,
             relConfig.sourceIPAssetTypeMask,
             relConfig.destIPAssetTypeMask,
             relConfig.onlySameFranchise,
-            params.processor
+            params.processor,
+            relConfig.timeConfig.maxTTL,
+            relConfig.timeConfig.minTTL
+        );
+    }
+
+    function _convertRelParams(SetRelationshipConfigParams calldata params) private view returns(RelationshipConfig memory) {
+        if (!params.processor.supportsInterface(type(IRelationshipProcessor).interfaceId)) revert UnsupportedInterface("IRelationshipProcessor");
+        if (params.timeConfig.maxTTL < params.timeConfig.minTTL) revert InvalidTTL();
+        return RelationshipConfig(
+            _convertToMask(params.sourceIPAssets, params.allowedExternalSource),
+            _convertToMask(params.destIPAssets, params.allowedExternalDest),
+            params.onlySameFranchise,
+            IRelationshipProcessor(params.processor),
+            params.timeConfig
         );
     }
 
