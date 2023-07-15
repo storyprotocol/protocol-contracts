@@ -120,7 +120,7 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
                 )
             )
         );
-
+        
         relationshipModule.relate(
             IRelationshipModule.RelationshipParams(
                 address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.ART)], relationship, 0
@@ -134,6 +134,7 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
                 )
             )
         );
+
         relationshipModule.relate(
             IRelationshipModule.RelationshipParams(
                 address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET], relationship, 0
@@ -148,6 +149,10 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
             )
         );
         // TODO check for event
+        
+    }
+
+    function test_not_related() public {
         assertFalse(
             relationshipModule.areTheyRelated(
                 IRelationshipModule.RelationshipParams(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(1), 2, relationship, 0)

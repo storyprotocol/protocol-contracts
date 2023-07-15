@@ -92,7 +92,13 @@ contract RelationshipModule is IRelationshipModule, AccessControlledUpgradeable,
 
     function areTheyRelated(RelationshipParams calldata params) external view returns (bool) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
-        return $.relationships[_getRelationshipKey(params)];
+        return $.relationships[_getRelationshipKey(params)] && !isLinkExpired(params);
+    }
+
+    function isLinkExpired(RelationshipParams calldata params) public view returns (bool) {
+        RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
+        uint256 endTime = $.relationshipEnds[_getRelationshipKey(params)];
+        return endTime != 0 && endTime < block.timestamp;
     }
 
     function _verifyRelationshipParams(RelationshipParams calldata params, RelationshipConfig memory relConfig) private view {

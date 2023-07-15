@@ -85,6 +85,7 @@ interface IRelationshipModule {
     function relate(RelationshipParams calldata params, bytes calldata data) external;
     function unrelate(RelationshipParams calldata params) external;
     function areTheyRelated(RelationshipParams calldata params) external view returns (bool);
+    function isLinkExpired(RelationshipParams calldata params) external view returns (bool);
     function setRelationshipConfig(bytes32 relationshipId, SetRelationshipConfigParams calldata params) external;
     function unsetConfig(bytes32 relationshipId) external;
     function config(bytes32 relationshipId) external view returns (RelationshipConfig memory);
