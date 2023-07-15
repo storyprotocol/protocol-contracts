@@ -71,13 +71,13 @@ contract RelationshipModule is IRelationshipModule, AccessControlledUpgradeable,
         return $.relationships[_getRelationshipKey(params)];
     }
 
-    function _verifyRelationshipParams(RelationshipParams calldata params, RelationshipConfig memory config) private view {
-        if (config.sourceIPAssetTypeMask == 0) revert NonExistingRelationship();
-        (bool sourceResult, bool sourceIsAssetRegistry) = _checkRelationshipNode(params.sourceContract, params.sourceId, config.sourceIPAssetTypeMask);
+    function _verifyRelationshipParams(RelationshipParams calldata params, RelationshipConfig memory relConfig) private view {
+        if (relConfig.sourceIPAssetTypeMask == 0) revert NonExistingRelationship();
+        (bool sourceResult, bool sourceIsAssetRegistry) = _checkRelationshipNode(params.sourceContract, params.sourceId, relConfig.sourceIPAssetTypeMask);
         if (!sourceResult) revert UnsupportedRelationshipSource();
-        (bool destResult, bool destIsAssetRegistry) = _checkRelationshipNode(params.destContract, params.destId, config.destIPAssetTypeMask);
+        (bool destResult, bool destIsAssetRegistry) = _checkRelationshipNode(params.destContract, params.destId, relConfig.destIPAssetTypeMask);
         if (!destResult) revert UnsupportedRelationshipDestination();
-        if(sourceIsAssetRegistry && destIsAssetRegistry && params.sourceContract != params.destContract && config.onlySameFranchise) revert CannotRelationshipToAnotherFranchise();
+        if(sourceIsAssetRegistry && destIsAssetRegistry && params.sourceContract != params.destContract && relConfig.onlySameFranchise) revert CannotRelationshipToAnotherFranchise();
     }
 
     function _isAssetRegistry(address ipAssetRegistry) internal virtual override view returns(bool) {
