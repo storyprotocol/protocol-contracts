@@ -6,11 +6,11 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
 import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
 
-abstract contract LinkIPAssetTypeChecker {
+abstract contract RelationshipTypeChecker {
 
     error InvalidIPAssetArray();
 
-    function _checkLinkEnd(address collection, uint256 id, uint256 assetTypeMask) internal view returns (bool result, bool isAssetRegistry) {
+    function _checkRelationshipNode(address collection, uint256 id, uint256 assetTypeMask) internal view returns (bool result, bool isAssetRegistry) {
         if (IERC721(collection).ownerOf(id) == address(0)) return (false, false);
         isAssetRegistry = _isAssetRegistry(collection);
         if (isAssetRegistry) {

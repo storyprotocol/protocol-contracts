@@ -4,13 +4,13 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 
 import { IPAssetRegistryFactory } from "contracts/ip-assets/IPAssetRegistryFactory.sol";
-import { LinkIPAssetTypeChecker } from "contracts/modules/linking/LinkIPAssetTypeChecker.sol";
+import { RelationshipTypeChecker } from "contracts/modules/relationships/RelationshipTypeChecker.sol";
 import { IPAsset, EXTERNAL_ASSET } from "contracts/IPAsset.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
 
-contract LinkIPAssetTypeCheckerHarness is LinkIPAssetTypeChecker {
+contract RelationshipTypeCheckerHarness is RelationshipTypeChecker {
 
     bool private _returnIsAssetRegistry;
 
@@ -22,8 +22,8 @@ contract LinkIPAssetTypeCheckerHarness is LinkIPAssetTypeChecker {
         return _returnIsAssetRegistry;
     }
 
-    function checkLinkEnd(address collection, uint256 id, uint256 assetTypeMask) view external returns (bool result, bool isAssetRegistry) {
-        return _checkLinkEnd(collection, id, assetTypeMask);
+    function checkRelationshipNode(address collection, uint256 id, uint256 assetTypeMask) view external returns (bool result, bool isAssetRegistry) {
+        return _checkRelationshipNode(collection, id, assetTypeMask);
     }
 
     function convertToMask(IPAsset[] calldata ipAssets, bool allowsExternal) pure external returns (uint256) {
@@ -44,14 +44,14 @@ contract MockERC721 is ERC721 {
 }
 
 
-contract LinkIPAssetTypeCheckerConvertToMaskTest is Test {
+contract RelationshipTypeCheckerConvertToMaskTest is Test {
 
-    LinkIPAssetTypeCheckerHarness public checker;
+    RelationshipTypeCheckerHarness public checker;
 
     error InvalidIPAssetArray();
 
     function setUp() public {
-        checker = new LinkIPAssetTypeCheckerHarness();
+        checker = new RelationshipTypeCheckerHarness();
     }
 
     function test_convertToMaskWithoutExternal() public {
@@ -96,14 +96,14 @@ contract LinkIPAssetTypeCheckerConvertToMaskTest is Test {
     
 }
 
-contract LinkIPAssetTypeCheckerSupportsAssetTypeTest is Test {
+contract RelationshipTypeCheckerSupportsAssetTypeTest is Test {
 
-    LinkIPAssetTypeCheckerHarness public checker;
+    RelationshipTypeCheckerHarness public checker;
 
     error InvalidIPAssetArray();
 
     function setUp() public {
-        checker = new LinkIPAssetTypeCheckerHarness();
+        checker = new RelationshipTypeCheckerHarness();
     }
 
     function test_supportsIPAssetType_true() public {
@@ -128,58 +128,58 @@ contract LinkIPAssetTypeCheckerSupportsAssetTypeTest is Test {
     
 }
 
-contract LinkIPAssetTypeCheckerCheckLinkEndTest is Test {
+contract RelationshipTypeCheckerNodesTest is Test {
 
-    LinkIPAssetTypeCheckerHarness public checker;
+    RelationshipTypeCheckerHarness public checker;
     MockERC721 public collection;
     address public owner = address(0x1);
 
     error InvalidIPAssetArray();
 
     function setUp() public {
-        checker = new LinkIPAssetTypeCheckerHarness();
+        checker = new RelationshipTypeCheckerHarness();
         collection = new MockERC721("Test", "TEST");
     }
 
-    function test_checkLinkEnd_ipAsset_true() public {
+    function test_checkRelationshipNode_ipAsset_true() public {
         uint256 tokenId = LibIPAssetId._zeroId(IPAsset(1)) + 1;
         console.log(tokenId);
         collection.mint(owner, tokenId);
         checker.setIsAssetRegistry(true);
         uint256 mask = 1 << (uint256(IPAsset(1)) & 0xff);
-        (bool result, bool isAssetRegistry) = checker.checkLinkEnd(address(collection), tokenId, mask);
+        (bool result, bool isAssetRegistry) = checker.checkRelationshipNode(address(collection), tokenId, mask);
         assertTrue(result);
         assertTrue(isAssetRegistry);
     }
 
-    function test_checkLinkEnd_ipAsset_false() public {
+    function test_checkRelationshipNode_ipAsset_false() public {
         uint256 tokenId = LibIPAssetId._zeroId(IPAsset(1)) + 1;
         collection.mint(owner, tokenId);
         checker.setIsAssetRegistry(true);
         uint256 mask = 1 << (uint256(IPAsset(2)) & 0xff);
-        (bool result, bool isAssetRegistry) = checker.checkLinkEnd(address(collection), tokenId, mask);
+        (bool result, bool isAssetRegistry) = checker.checkRelationshipNode(address(collection), tokenId, mask);
         assertFalse(result);
         assertTrue(isAssetRegistry);
     }
 
-    function test_checkLinkEnd_external_true() public {
+    function test_checkRelationshipNode_external_true() public {
         uint256 tokenId = LibIPAssetId._zeroId(IPAsset(1)) + 1;
         collection.mint(owner, tokenId);
         checker.setIsAssetRegistry(false);
         uint256 mask = 1 << (uint256(EXTERNAL_ASSET) & 0xff);
-        (bool result, bool isAssetRegistry) = checker.checkLinkEnd(address(collection), tokenId, mask);
+        (bool result, bool isAssetRegistry) = checker.checkRelationshipNode(address(collection), tokenId, mask);
         assertTrue(result);
         assertFalse(isAssetRegistry);
     }
 
     function test_revert_nonExistingToken() public {
         vm.expectRevert("ERC721: invalid token ID");
-        checker.checkLinkEnd(address(collection), 1, uint256(type(uint8).max));
+        checker.checkRelationshipNode(address(collection), 1, uint256(type(uint8).max));
     }
 
     function test_revert_notERC721() public {
         vm.expectRevert();
-        checker.checkLinkEnd(owner, 1, uint256(type(uint8).max));
+        checker.checkRelationshipNode(owner, 1, uint256(type(uint8).max));
     }
 
     

@@ -7,10 +7,10 @@ import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/access-control/ProtocolRoles.sol";
 import "contracts/ip-assets/IPAssetRegistryFactory.sol";
-import "contracts/modules/linking/LinkingModule.sol";
+import "contracts/modules/relationships/RelationshipModule.sol";
 import "contracts/IPAsset.sol";
 import "contracts/errors/General.sol";
-import "contracts/modules/linking/LinkProcessors/PermissionlessLinkProcessor.sol";
+import "contracts/modules/relationships/RelationshipProcessors/PermissionlessRelationshipProcessor.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 contract MockExternalAsset is ERC721 {
@@ -21,17 +21,17 @@ contract MockExternalAsset is ERC721 {
     }
 }
 
-contract LinkingModuleLinkingTest is Test, ProxyHelper {
+contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
 
     IPAssetRegistryFactory public factory;
     IPAssetRegistry public ipAssetRegistry;
     FranchiseRegistry public register;
-    LinkingModule public linkingModule;
+    RelationshipModule public relationshipModule;
     AccessControlSingleton acs;
-    PermissionlessLinkProcessor public linkProcessor;
+    PermissionlessRelationshipProcessor public processor;
 
     address admin = address(123);
-    address linkManager = address(234);
+    address relationshipManager = address(234);
     address franchiseOwner = address(456);
     address ipAssetOwner = address(567);
 
@@ -53,7 +53,7 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
             )
         );
         vm.prank(admin);
-        acs.grantRole(LINK_MANAGER_ROLE, linkManager);
+        acs.grantRole(RELATIONSHIP_MANAGER_ROLE, relationshipManager);
         
         FranchiseRegistry impl = new FranchiseRegistry(address(factory));
         register = FranchiseRegistry(
@@ -68,9 +68,9 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
         (uint256 id, address ipAssets) = register.registerFranchise("name", "symbol", "description");
         ipAssetRegistry = IPAssetRegistry(ipAssets);
 
-        linkingModule = LinkingModule(
+        relationshipModule = RelationshipModule(
             _deployUUPSProxy(
-                address(new LinkingModule(address(register))),
+                address(new RelationshipModule(address(register))),
                 abi.encodeWithSelector(
                     bytes4(keccak256(bytes("initialize(address)"))), address(acs)
                 )
@@ -82,17 +82,17 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
         destIPAssets[0] = IPAsset.CHARACTER;
         destIPAssets[1] = IPAsset.ART;
 
-        linkProcessor = new PermissionlessLinkProcessor(address(linkingModule));
-        LinkingModule.SetLinkParams memory params = ILinkingModule.SetLinkParams({
+        processor = new PermissionlessRelationshipProcessor(address(relationshipModule));
+        RelationshipModule.SetRelationshipParams memory params = IRelationshipModule.SetRelationshipParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
-            linkOnlySameFranchise: true,
-            linkProcessor: address(linkProcessor)
+            onlySameFranchise: true,
+            processor: address(processor)
         });
-        vm.prank(linkManager);
-        linkingModule.setLinkConfig(relationship, params);
+        vm.prank(relationshipManager);
+        relationshipModule.setRelationshipConfig(relationship, params);
         vm.startPrank(ipAssetOwner);
 
         ipAssetIds[uint8(IPAsset.STORY)] = ipAssetRegistry.createIPAsset(IPAsset.STORY, "name", "description", "mediaUrl");
@@ -105,105 +105,105 @@ contract LinkingModuleLinkingTest is Test, ProxyHelper {
         vm.stopPrank();
     }
 
-    function test_link() public {
-        linkingModule.link(
-            ILinkingModule.LinkParams(
+    function test_relate() public {
+        relationshipModule.relate(
+            IRelationshipModule.RelationshipParams(
                 address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], relationship
             ),
             ""
         );
         assertTrue(
-            linkingModule.areTheyLinked(
-                ILinkingModule.LinkParams(
+            relationshipModule.areTheyRelated(
+                IRelationshipModule.RelationshipParams(
                     address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], relationship
                 )
             )
         );
 
-        linkingModule.link(
-            ILinkingModule.LinkParams(
+        relationshipModule.relate(
+            IRelationshipModule.RelationshipParams(
                 address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.ART)], relationship
             ),
             ""
         );
         assertTrue(
-            linkingModule.areTheyLinked(
-                ILinkingModule.LinkParams(
+            relationshipModule.areTheyRelated(
+                IRelationshipModule.RelationshipParams(
                     address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.ART)], relationship
                 )
             )
         );
-        linkingModule.link(
-            ILinkingModule.LinkParams(
+        relationshipModule.relate(
+            IRelationshipModule.RelationshipParams(
                 address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET], relationship
             ),
             ""
         );
         assertTrue(
-            linkingModule.areTheyLinked(
-                ILinkingModule.LinkParams(
+            relationshipModule.areTheyRelated(
+                IRelationshipModule.RelationshipParams(
                     address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET], relationship
                 )
             )
         );
         // TODO check for event
         assertFalse(
-            linkingModule.areTheyLinked(
-                ILinkingModule.LinkParams(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(1), 2, relationship)
+            relationshipModule.areTheyRelated(
+                IRelationshipModule.RelationshipParams(address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(1), 2, relationship)
             )
         );
         assertFalse(
-            linkingModule.areTheyLinked(
-                ILinkingModule.LinkParams(
+            relationshipModule.areTheyRelated(
+                IRelationshipModule.RelationshipParams(
                     address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(externalAsset), ipAssetIds[EXTERNAL_ASSET],  keccak256("WRONG")
                 )
             )
         );
     }
 
-    function test_revert_unknown_link() public {
-        vm.expectRevert(ILinkingModule.NonExistingLink.selector);
-        linkingModule.link(
-            ILinkingModule.LinkParams(
+    function test_revert_unknown_relationship() public {
+        vm.expectRevert(IRelationshipModule.NonExistingRelationship.selector);
+        relationshipModule.relate(
+            IRelationshipModule.RelationshipParams(
                 address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], keccak256("WRONG")
             ),
             ""
         );
     }
 
-    function test_revert_linkingNotSameFranchise() public {
+    function test_revert_relationshipsNotSameFranchise() public {
         vm.prank(franchiseOwner);
         (uint256 id, address otherIPAssets) = register.registerFranchise("name2", "symbol2", "description2");
         IPAssetRegistry otherIPAssetRegistry = IPAssetRegistry(otherIPAssets);
         vm.prank(ipAssetOwner);
         uint256 otherId = otherIPAssetRegistry.createIPAsset(IPAsset.CHARACTER, "name", "description", "mediaUrl");
-        vm.expectRevert(ILinkingModule.CannotLinkToAnotherFranchise.selector);
-        linkingModule.link(
-            ILinkingModule.LinkParams(
+        vm.expectRevert(IRelationshipModule.CannotRelationshipToAnotherFranchise.selector);
+        relationshipModule.relate(
+            IRelationshipModule.RelationshipParams(
                 address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], otherIPAssets, otherId, relationship
             ),
             ""
         );
     }
 
-    function test_revert_linkUnsupportedSource() public {
+    function test_revert_relateUnsupportedSource() public {
         vm.prank(ipAssetOwner);
         uint256 wrongId = ipAssetRegistry.createIPAsset(IPAsset.GROUP, "name", "description", "mediaUrl");
-        vm.expectRevert(ILinkingModule.UnsupportedLinkSource.selector);
-        linkingModule.link(
-            ILinkingModule.LinkParams(
+        vm.expectRevert(IRelationshipModule.UnsupportedRelationshipSource.selector);
+        relationshipModule.relate(
+            IRelationshipModule.RelationshipParams(
                 address(ipAssetRegistry), wrongId, address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], relationship
             ),
             ""
         );
     }
 
-    function test_revert_linkUnsupportedDestination() public {
+    function test_revert_relateUnsupportedDestination() public {
         vm.prank(ipAssetOwner);
         uint256 wrongId = ipAssetRegistry.createIPAsset(IPAsset.GROUP, "name", "description", "mediaUrl");
-        vm.expectRevert(ILinkingModule.UnsupportedLinkDestination.selector);
-        linkingModule.link(
-            ILinkingModule.LinkParams(
+        vm.expectRevert(IRelationshipModule.UnsupportedRelationshipDestination.selector);
+        relationshipModule.relate(
+            IRelationshipModule.RelationshipParams(
                 address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), wrongId, relationship
             ),
             ""

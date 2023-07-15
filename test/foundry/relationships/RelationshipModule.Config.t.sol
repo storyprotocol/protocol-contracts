@@ -7,22 +7,22 @@ import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/access-control/ProtocolRoles.sol";
 import "contracts/ip-assets/IPAssetRegistryFactory.sol";
-import "contracts/modules/linking/LinkingModule.sol";
+import "contracts/modules/relationships/RelationshipModule.sol";
 import "contracts/IPAsset.sol";
 import "contracts/errors/General.sol";
-import "contracts/modules/linking/LinkProcessors/PermissionlessLinkProcessor.sol";
+import "contracts/modules/relationships/RelationshipProcessors/PermissionlessRelationshipProcessor.sol";
 
-contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
+contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
 
     IPAssetRegistryFactory public factory;
     IPAssetRegistry public ipAssetRegistry;
     FranchiseRegistry public register;
-    LinkingModule public linkingModule;
+    RelationshipModule public relationshipModule;
     AccessControlSingleton acs;
-    PermissionlessLinkProcessor public linkProcessor;
+    PermissionlessRelationshipProcessor public RelationshipProcessor;
 
     address admin = address(123);
-    address linkManager = address(234);
+    address relationshipManager = address(234);
     address franchiseOwner = address(456);
 
     bytes32 relationship = keccak256("RELATIONSHIP");
@@ -38,7 +38,7 @@ contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
             )
         );
         vm.prank(admin);
-        acs.grantRole(LINK_MANAGER_ROLE, linkManager);
+        acs.grantRole(RELATIONSHIP_MANAGER_ROLE, relationshipManager);
 
         address accessControl = address(acs);
         
@@ -55,62 +55,62 @@ contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
         (uint256 id, address ipAssets) = register.registerFranchise("name", "symbol", "description");
         ipAssetRegistry = IPAssetRegistry(ipAssets);
         vm.stopPrank();
-        linkingModule = LinkingModule(
+        relationshipModule = RelationshipModule(
             _deployUUPSProxy(
-                address(new LinkingModule(address(register))),
+                address(new RelationshipModule(address(register))),
                 abi.encodeWithSelector(
                     bytes4(keccak256(bytes("initialize(address)"))), address(acs)
                 )
             )
         );
-        linkProcessor = new PermissionlessLinkProcessor(address(linkingModule));
+        RelationshipProcessor = new PermissionlessRelationshipProcessor(address(relationshipModule));
     }
 
-    function test_setProtocolLevelLink() public {
+    function test_setProtocolLevelRelationship() public {
         IPAsset[] memory sourceIPAssets = new IPAsset[](1);
         sourceIPAssets[0] = IPAsset.STORY;
         IPAsset[] memory destIPAssets = new IPAsset[](2);
         destIPAssets[0] = IPAsset.CHARACTER;
         destIPAssets[1] = IPAsset.ART;
         
-        LinkingModule.SetLinkParams memory params = ILinkingModule.SetLinkParams({
+        RelationshipModule.SetRelationshipParams memory params = IRelationshipModule.SetRelationshipParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
-            linkOnlySameFranchise: true,
-            linkProcessor: address(linkProcessor)
+            onlySameFranchise: true,
+            processor: address(RelationshipProcessor)
         });
-        assertTrue(acs.hasRole(LINK_MANAGER_ROLE, linkManager));
-        vm.prank(linkManager);
-        linkingModule.setLinkConfig(relationship, params);
+        assertTrue(acs.hasRole(RELATIONSHIP_MANAGER_ROLE, relationshipManager));
+        vm.prank(relationshipManager);
+        relationshipModule.setRelationshipConfig(relationship, params);
 
-        LinkingModule.LinkConfig memory config = linkingModule.linkConfig(relationship);
+        RelationshipModule.RelationshipConfig memory config = relationshipModule.config(relationship);
         assertEq(config.sourceIPAssetTypeMask, 1 << (uint256(IPAsset.STORY) & 0xff));
         assertEq(config.destIPAssetTypeMask, 1 << (uint256(IPAsset.CHARACTER) & 0xff) | 1 << (uint256(IPAsset.ART) & 0xff) | (uint256(EXTERNAL_ASSET) << 248));
-        assertTrue(config.linkOnlySameFranchise);
+        assertTrue(config.onlySameFranchise);
         // TODO: test for event
 
     }
 
-    function test_revert_IfSettingProtocolLevelLinkUnauthorized() public {
+    function test_revert_IfSettingProtocolLevelRelationshipUnauthorized() public {
         IPAsset[] memory sourceIPAssets = new IPAsset[](1);
         sourceIPAssets[0] = IPAsset.STORY;
         IPAsset[] memory destIPAssets = new IPAsset[](2);
         destIPAssets[0] = IPAsset.CHARACTER;
         destIPAssets[1] = IPAsset.ART;
 
-        LinkingModule.SetLinkParams memory params = ILinkingModule.SetLinkParams({
+        RelationshipModule.SetRelationshipParams memory params = IRelationshipModule.SetRelationshipParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
-            linkOnlySameFranchise: true,
-            linkProcessor: address(linkProcessor)
+            onlySameFranchise: true,
+            processor: address(RelationshipProcessor)
         });
         vm.expectRevert();
         vm.prank(franchiseOwner);
-        linkingModule.setLinkConfig(relationship, params);
+        relationshipModule.setRelationshipConfig(relationship, params);
     }
 
     function test_revert_IfMasksNotConfigured() public {
@@ -118,35 +118,35 @@ contract LinkingModuleSetupLinksTest is Test, ProxyHelper {
         sourceIPAssets[0] = IPAsset.UNDEFINED;
         IPAsset[] memory destIPAssets = new IPAsset[](2);
 
-        LinkingModule.SetLinkParams memory params = ILinkingModule.SetLinkParams({
+        RelationshipModule.SetRelationshipParams memory params = IRelationshipModule.SetRelationshipParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
-            linkOnlySameFranchise: true,
-            linkProcessor: address(linkProcessor)
+            onlySameFranchise: true,
+            processor: address(RelationshipProcessor)
         });
-        vm.startPrank(linkManager);
+        vm.startPrank(relationshipManager);
         vm.expectRevert();
-        linkingModule.setLinkConfig(relationship, params);
+        relationshipModule.setRelationshipConfig(relationship, params);
     }
 
 }
 
-contract LinkingModuleUnsetLinksTest is Test, ProxyHelper {
+contract RelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
 
     IPAssetRegistryFactory public factory;
     IPAssetRegistry public ipAssetRegistry;
     FranchiseRegistry public register;
-    LinkingModule public linkingModule;
+    RelationshipModule public relationshipModule;
     AccessControlSingleton acs;
-    PermissionlessLinkProcessor public linkProcessor;
+    PermissionlessRelationshipProcessor public RelationshipProcessor;
 
     address admin = address(123);
-    address linkManager = address(234);
+    address relationshipManager = address(234);
     address franchiseOwner = address(456);
 
-    bytes32 relationship = keccak256("PROTOCOL_LINK");
+    bytes32 relationship = keccak256("PROTOCOL_Relationship");
 
     function setUp() public {
         factory = new IPAssetRegistryFactory();
@@ -159,7 +159,7 @@ contract LinkingModuleUnsetLinksTest is Test, ProxyHelper {
             )
         );
         vm.prank(admin);
-        acs.grantRole(LINK_MANAGER_ROLE, linkManager);
+        acs.grantRole(RELATIONSHIP_MANAGER_ROLE, relationshipManager);
 
         address accessControl = address(acs);
         
@@ -176,52 +176,52 @@ contract LinkingModuleUnsetLinksTest is Test, ProxyHelper {
         (uint256 id, address ipAssets) = register.registerFranchise("name", "symbol", "description");
         ipAssetRegistry = IPAssetRegistry(ipAssets);
         vm.stopPrank();
-        linkingModule = LinkingModule(
+        relationshipModule = RelationshipModule(
             _deployUUPSProxy(
-                address(new LinkingModule(address(register))),
+                address(new RelationshipModule(address(register))),
                 abi.encodeWithSelector(
                     bytes4(keccak256(bytes("initialize(address)"))), address(acs)
                 )
             )
         );
-        linkProcessor = new PermissionlessLinkProcessor(address(linkingModule));
+        RelationshipProcessor = new PermissionlessRelationshipProcessor(address(relationshipModule));
         IPAsset[] memory sourceIPAssets = new IPAsset[](1);
         sourceIPAssets[0] = IPAsset.STORY;
         IPAsset[] memory destIPAssets = new IPAsset[](1);
         destIPAssets[0] = IPAsset.CHARACTER;
-        LinkingModule.SetLinkParams memory params = ILinkingModule.SetLinkParams({
+        RelationshipModule.SetRelationshipParams memory params = IRelationshipModule.SetRelationshipParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
-            linkOnlySameFranchise: true,
-            linkProcessor: address(linkProcessor)
+            onlySameFranchise: true,
+            processor: address(RelationshipProcessor)
         });
-        vm.prank(linkManager);
-        linkingModule.setLinkConfig(relationship, params);
+        vm.prank(relationshipManager);
+        relationshipModule.setRelationshipConfig(relationship, params);
         
     }
 
-    function test_unsetLinkConfig() public {
-        vm.prank(linkManager);
-        linkingModule.unsetLinkConfig(relationship);
+    function test_unsetConfig() public {
+        vm.prank(relationshipManager);
+        relationshipModule.unsetConfig(relationship);
 
-        LinkingModule.LinkConfig memory config = linkingModule.linkConfig(relationship);
+        RelationshipModule.RelationshipConfig memory config = relationshipModule.config(relationship);
         assertEq(config.sourceIPAssetTypeMask, 0);
         assertEq(config.destIPAssetTypeMask, 0);
-        assertFalse(config.linkOnlySameFranchise);
+        assertFalse(config.onlySameFranchise);
         // TODO: test for event
     }
 
-    function test_revert_unsetLinkConfigNotAuthorized() public {
+    function test_revert_unsetRelationshipConfigNotAuthorized() public {
         vm.expectRevert();
-        linkingModule.unsetLinkConfig(relationship);
+        relationshipModule.unsetConfig(relationship);
     }
 
-    function test_revert_unsetLinkConfigNonExistingLink() public {
-        vm.prank(linkManager);
-        vm.expectRevert(ILinkingModule.NonExistingLink.selector);
-        linkingModule.unsetLinkConfig(keccak256("UNDEFINED_LINK"));
+    function test_revert_unsetRelationshipConfigNonExistingRelationship() public {
+        vm.prank(relationshipManager);
+        vm.expectRevert(IRelationshipModule.NonExistingRelationship.selector);
+        relationshipModule.unsetConfig(keccak256("UNDEFINED_Relationship"));
     }
 
 }
