@@ -15,7 +15,7 @@ async function main(hre) {
     }
     const contracts = {}
     contracts.FranchiseRegistry = await ethers.getContractFactory("FranchiseRegistry");
-    contracts.franchiseRegistry = await contracts.FranchiseRegistry.attach(deployment["franchiseRegistry-proxy"]);
+    contracts.franchiseRegistry = await contracts.FranchiseRegistry.attach(deployment["FranchiseRegistry-Proxy"]);
     contracts.IPAssetsRegistry = await ethers.getContractFactory("IPAssetsRegistry");
     
     return { chainId, contracts };
