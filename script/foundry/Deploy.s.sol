@@ -4,20 +4,26 @@ pragma solidity ^0.8.18;
 import "forge-std/Script.sol";
 import "test/foundry/utils/ProxyHelper.sol";
 import "script/foundry/utils/StringUtil.sol";
+import "script/foundry/utils/JsonDeploymentHandler.sol";
 import "contracts/ip-assets/IPAssetRegistryFactory.sol";
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
+import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 
-contract Deploy is Script, ProxyHelper {
+contract Deploy is Script, JsonDeploymentHandler, ProxyHelper {
 
     using StringUtil for uint256;
     using stdJson for string;
 
-    IPAssetRegistryFactory public factory;
-    FranchiseRegistry public registry;
-    AccessControlSingleton public access;
-
     address public deployer = address(0x123);
+    address public admin = address(0x456);
+
+    address ipAssetsFactory;
+    address accessControl;
+    address franchiseRegistry;
+
+    constructor() JsonDeploymentHandler("") {
+    }
 
     /// @dev To use, run the following command (e.g. for Goerli):
     /// forge script script/Deploy.s.sol:Deploy --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv
@@ -25,52 +31,119 @@ contract Deploy is Script, ProxyHelper {
         uint256 deployerPrivateKey;
         if (block.chainid == 5) {
             deployerPrivateKey = vm.envUint("GOERLI_PRIVATEKEY");
+            admin = vm.envAddress("GOERLI_ADMIN_ADDRESS");
             vm.startBroadcast(deployerPrivateKey);
         } else {
             vm.startPrank(deployer);
         }
+        _readDeployment();
+        string memory contractKey;
+        address previousAddress;
+        address newAddress;
         
-        string memory chainId = (block.chainid).toString();
-        string memory contractGroup;
+        /// IP ASSETS REGISTRY FACTORY
+        contractKey = "IPAssetRegistryFactory";
+        previousAddress = _readAddress(contractKey);        
+        if (previousAddress != address(0)) {
+            console.log(string.concat(contractKey," already deployed to:"), previousAddress);
+        } else {
+            console.log(string.concat("Deploying ", contractKey, "..."));
+            newAddress = address(new IPAssetRegistryFactory());
+            contractOutput = vm.serializeAddress("", contractKey, newAddress);
+            console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        }
+        ipAssetsFactory = newAddress;
 
-        /// DEPLOY IP ASSETS REGISTRY FACTORY
-        console.log("Deploying IP Assets Registry Factory...");
-        factory = new IPAssetRegistryFactory();
-        string memory contractOutput = vm.serializeAddress(contractGroup, "IPAssetRegistryFactory", address(factory));
-        console.log("IP Assets registry factory deployed to:", address(factory));
+        /// ACCESS CONTROL SINGLETON
+        contractKey = "AccessControlSingleton-Impl";
+        previousAddress = _readAddress(contractKey);        
+        if (previousAddress != address(0)) {
+            console.log(string.concat(contractKey," already deployed to:"), previousAddress);
+        } else {
+            console.log(string.concat("Deploying ", contractKey, "..."));
+            newAddress = address(new AccessControlSingleton());
+            contractOutput = vm.serializeAddress("", contractKey, newAddress);
+            console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        }
 
-        /// DEPLOY ACCESS CONTROL SINGLETON
-        console.log("Deploying Access Control Singleton...");
-        access = new AccessControlSingleton();
-        address accessControl = address(access);
-        contractOutput = vm.serializeAddress(contractGroup, "accessControlSingleton", accessControl);
-        console.log("Access control singleton deployed to:", accessControl);
+        contractKey = "AccessControlSingleton-Proxy";
+        previousAddress = _readAddress(contractKey);        
+        if (previousAddress != address(0)) {
+            console.log(string.concat(contractKey," already deployed to:"), previousAddress);
+        } else {
+            console.log(string.concat("Deploying ", contractKey, "..."));
+            newAddress = _deployUUPSProxy(
+                newAddress,
+                abi.encodeWithSelector(
+                    bytes4(keccak256(bytes("initialize(address)"))), admin
+                )
+            );
+            contractOutput = vm.serializeAddress("", contractKey, newAddress);
+            console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        }
+        accessControl = newAddress;
 
-        /// DEPLOY FRANCHISE REGISTRY
-        console.log("Deploying Franchise Registry Impl...");
-        FranchiseRegistry impl = new FranchiseRegistry(address(factory));
-        contractOutput = vm.serializeAddress(contractGroup, "franchiseRegistry-impl", address(impl));
-        console.log("Franchise registry implementation deployed to:", address(impl));
+        /// FRANCHISE REGISTRY
+        contractKey = "FranchiseRegistry-Impl";
+        previousAddress = _readAddress(contractKey);        
+        if (previousAddress != address(0)) {
+            console.log(string.concat(contractKey," already deployed to:"), previousAddress);
+        } else {
+            console.log(string.concat("Deploying ", contractKey, "..."));
+            newAddress = address(new FranchiseRegistry(ipAssetsFactory));
+            contractOutput = vm.serializeAddress("", contractKey, newAddress);
+            console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        }
 
-        console.log("Deploying Franchise Registry Proxy...");
-        registry = FranchiseRegistry(
-            _deployUUPSProxy(
-                address(impl),
+        contractKey = "FranchiseRegistry-Proxy";
+        previousAddress = _readAddress(contractKey);        
+        if (previousAddress != address(0)) {
+            console.log(string.concat(contractKey," already deployed to:"), previousAddress);
+        } else {
+            console.log(string.concat("Deploying ", contractKey, "..."));
+            newAddress = _deployUUPSProxy(
+                newAddress,
                 abi.encodeWithSelector(
                     bytes4(keccak256(bytes("initialize(address)"))), accessControl
                 )
-            )
-        );
-        contractOutput = vm.serializeAddress(contractGroup, "franchiseRegistry-proxy", address(registry));
-        console.log("Franchise registry proxy deployed to:", address(registry));
+            );
+            contractOutput = vm.serializeAddress("", contractKey, newAddress);
+            console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        }
+        franchiseRegistry = newAddress;
 
-        string memory finalJson = chainId.serialize(chainId, contractOutput);
-        
+        /// PROTOCOL RELATIONSHIP MODULE
+        contractKey = "ProtocolRelationshipModule-Impl";
+        previousAddress = _readAddress(contractKey);        
+        if (previousAddress != address(0)) {
+            console.log(string.concat(contractKey," already deployed to:"), previousAddress);
+        } else {
+            console.log(string.concat("Deploying ", contractKey, "..."));
+            newAddress = address(new ProtocolRelationshipModule(franchiseRegistry));
+            contractOutput = vm.serializeAddress("", contractKey, newAddress);
+            console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        }
+
+        contractKey = "ProtocolRelationshipModule-Proxy";
+        previousAddress = _readAddress(contractKey);        
+        if (previousAddress != address(0)) {
+            console.log(string.concat(contractKey," already deployed to:"), previousAddress);
+        } else {
+            console.log(string.concat("Deploying ", contractKey, "..."));
+            newAddress = _deployUUPSProxy(
+                newAddress,
+                abi.encodeWithSelector(
+                    bytes4(keccak256(bytes("initialize(address)"))), accessControl
+                )
+            );
+            contractOutput = vm.serializeAddress("", contractKey, newAddress);
+            console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        }
+
+        _writeDeployment(); 
         if (block.chainid == 5) {
-            vm.writeJson(finalJson, "./deployment-public.json");
             vm.stopBroadcast();
         } else {
-            vm.writeJson(finalJson, "./deployment-local.json");
             vm.stopPrank();
         }
     }
