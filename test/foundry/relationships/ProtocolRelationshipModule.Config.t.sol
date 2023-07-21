@@ -7,17 +7,17 @@ import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/access-control/ProtocolRoles.sol";
 import "contracts/ip-assets/IPAssetRegistryFactory.sol";
-import "./RelationshipModuleHarness.sol";
+import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/IPAsset.sol";
 import "contracts/errors/General.sol";
 import "contracts/modules/relationships/RelationshipProcessors/PermissionlessRelationshipProcessor.sol";
 
-contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
+contract ProtocolRelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
 
     IPAssetRegistryFactory public factory;
     IPAssetRegistry public ipAssetRegistry;
     FranchiseRegistry public register;
-    RelationshipModuleHarness public relationshipModule;
+    ProtocolRelationshipModule public relationshipModule;
     AccessControlSingleton acs;
     PermissionlessRelationshipProcessor public RelationshipProcessor;
 
@@ -38,6 +38,8 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
             )
         );
         vm.prank(admin);
+        acs.grantRole(RELATIONSHIP_MANAGER_ROLE, relationshipManager);
+
         address accessControl = address(acs);
         
         FranchiseRegistry impl = new FranchiseRegistry(address(factory));
@@ -53,9 +55,9 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
         (uint256 id, address ipAssets) = register.registerFranchise("name", "symbol", "description");
         ipAssetRegistry = IPAssetRegistry(ipAssets);
         vm.stopPrank();
-        relationshipModule = RelationshipModuleHarness(
+        relationshipModule = ProtocolRelationshipModule(
             _deployUUPSProxy(
-                address(new RelationshipModuleHarness(address(register))),
+                address(new ProtocolRelationshipModule(address(register))),
                 abi.encodeWithSelector(
                     bytes4(keccak256(bytes("initialize(address)"))), address(acs)
                 )
@@ -96,10 +98,12 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
 
     }
 
-    function test_revert_IfMasksNotConfigured() public {
+    function test_revert_IfSettingProtocolLevelRelationshipUnauthorized() public {
         IPAsset[] memory sourceIPAssets = new IPAsset[](1);
-        sourceIPAssets[0] = IPAsset.UNDEFINED;
+        sourceIPAssets[0] = IPAsset.STORY;
         IPAsset[] memory destIPAssets = new IPAsset[](2);
+        destIPAssets[0] = IPAsset.CHARACTER;
+        destIPAssets[1] = IPAsset.ART;
 
         IRelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
             sourceIPAssets: sourceIPAssets,
@@ -115,19 +119,19 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
                 renewable: false
             })
         });
-        vm.startPrank(relationshipManager);
         vm.expectRevert();
+        vm.prank(franchiseOwner);
         relationshipModule.setRelationshipConfig(relationship, params);
     }
 
 }
 
-contract RelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
+contract ProtocolRelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
 
     IPAssetRegistryFactory public factory;
     IPAssetRegistry public ipAssetRegistry;
     FranchiseRegistry public register;
-    RelationshipModuleHarness public relationshipModule;
+    ProtocolRelationshipModule public relationshipModule;
     AccessControlSingleton acs;
     PermissionlessRelationshipProcessor public RelationshipProcessor;
 
@@ -148,7 +152,7 @@ contract RelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
             )
         );
         vm.prank(admin);
-
+        acs.grantRole(RELATIONSHIP_MANAGER_ROLE, relationshipManager);
         address accessControl = address(acs);
         
         FranchiseRegistry impl = new FranchiseRegistry(address(factory));
@@ -164,9 +168,9 @@ contract RelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
         (uint256 id, address ipAssets) = register.registerFranchise("name", "symbol", "description");
         ipAssetRegistry = IPAssetRegistry(ipAssets);
         vm.stopPrank();
-        relationshipModule = RelationshipModuleHarness(
+        relationshipModule = ProtocolRelationshipModule(
             _deployUUPSProxy(
-                address(new RelationshipModuleHarness(address(register))),
+                address(new ProtocolRelationshipModule(address(register))),
                 abi.encodeWithSelector(
                     bytes4(keccak256(bytes("initialize(address)"))), address(acs)
                 )
@@ -207,10 +211,10 @@ contract RelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
         // TODO: test for event
     }
 
-    function test_revert_unsetRelationshipConfigNonExistingRelationship() public {
-        vm.prank(relationshipManager);
-        vm.expectRevert(IRelationshipModule.NonExistingRelationship.selector);
-        relationshipModule.unsetConfig(keccak256("UNDEFINED_Relationship"));
+    function test_revert_unsetRelationshipConfigNotAuthorized() public {
+        vm.expectRevert();
+        vm.prank(franchiseOwner);
+        relationshipModule.unsetConfig(relationship);
     }
 
 }

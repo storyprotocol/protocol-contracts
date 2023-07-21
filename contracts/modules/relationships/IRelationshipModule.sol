@@ -60,6 +60,7 @@ interface IRelationshipModule {
         uint256 destIPAssetTypeMask;
         bool onlySameFranchise;
         IRelationshipProcessor processor;
+        address disputer;
         TimeConfig timeConfig;
     }
 
@@ -70,6 +71,7 @@ interface IRelationshipModule {
         bool allowedExternalDest;
         bool onlySameFranchise;
         address processor;
+        address disputer;
         TimeConfig timeConfig;
     }
 

@@ -4,15 +4,14 @@ pragma solidity ^0.8.13;
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
-import { ZeroAddress, UnsupportedInterface } from "contracts/errors/General.sol";
-import { UPGRADER_ROLE, RELATIONSHIP_MANAGER_ROLE, RELATIONSHIP_DISPUTER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
+import { ZeroAddress, UnsupportedInterface, Unauthorized } from "contracts/errors/General.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
 import { RelationshipTypeChecker } from "./RelationshipTypeChecker.sol";
 import { IRelationshipModule } from "./IRelationshipModule.sol";
 import { IRelationshipProcessor } from "./RelationshipProcessors/IRelationshipProcessor.sol";
 
-contract RelationshipModule is IRelationshipModule, AccessControlledUpgradeable, RelationshipTypeChecker {
+abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlledUpgradeable, RelationshipTypeChecker {
     using ERC165CheckerUpgradeable for address;
 
     /// @custom:storage-location erc7201:story-protocol.relationship-module.storage
@@ -40,7 +39,7 @@ contract RelationshipModule is IRelationshipModule, AccessControlledUpgradeable,
         _disableInitializers();
     }
 
-    function initialize(address accessControl) public initializer {
+    function __RelationshipModuleBase_init(address accessControl) public initializer {
         __AccessControlledUpgradeable_init(accessControl);
     }
 
@@ -82,8 +81,9 @@ contract RelationshipModule is IRelationshipModule, AccessControlledUpgradeable,
         return 0;
     }
 
-    function unrelate(RelationshipParams calldata params) external onlyRole(RELATIONSHIP_DISPUTER_ROLE) {
+    function unrelate(RelationshipParams calldata params) external {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
+        if ($.relConfigs[params.relationshipId].disputer != msg.sender) revert Unauthorized();
         bytes32 key = _getRelationshipKey(params);
         if (!$.relationships[key]) revert NonExistingRelationship();
         delete $.relationships[key];
@@ -118,7 +118,7 @@ contract RelationshipModule is IRelationshipModule, AccessControlledUpgradeable,
         }
     }
 
-    function _getRelationshipKey(RelationshipParams calldata params) private pure returns (bytes32) {
+    function _getRelationshipKey(RelationshipParams calldata params) internal pure returns (bytes32) {
         return keccak256(
             abi.encode(
                 params.sourceContract,
@@ -131,7 +131,7 @@ contract RelationshipModule is IRelationshipModule, AccessControlledUpgradeable,
     }
 
     /********* Setting Relationships *********/
-    function setRelationshipConfig(bytes32 relationshipId, SetRelationshipConfigParams calldata params) external onlyRole(RELATIONSHIP_MANAGER_ROLE) {
+    function _setRelationshipConfig(bytes32 relationshipId, SetRelationshipConfigParams calldata params) internal {
         RelationshipConfig memory relConfig = _convertRelParams(params);
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         $.relConfigs[relationshipId] = relConfig;
@@ -146,19 +146,7 @@ contract RelationshipModule is IRelationshipModule, AccessControlledUpgradeable,
         );
     }
 
-    function _convertRelParams(SetRelationshipConfigParams calldata params) private view returns(RelationshipConfig memory) {
-        if (!params.processor.supportsInterface(type(IRelationshipProcessor).interfaceId)) revert UnsupportedInterface("IRelationshipProcessor");
-        if (params.timeConfig.maxTTL < params.timeConfig.minTTL) revert InvalidTTL();
-        return RelationshipConfig(
-            _convertToMask(params.sourceIPAssets, params.allowedExternalSource),
-            _convertToMask(params.destIPAssets, params.allowedExternalDest),
-            params.onlySameFranchise,
-            IRelationshipProcessor(params.processor),
-            params.timeConfig
-        );
-    }
-
-    function unsetConfig(bytes32 relationshipId) external onlyRole(RELATIONSHIP_MANAGER_ROLE) {
+    function _unsetConfig(bytes32 relationshipId) internal {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         if (
             $.relConfigs[relationshipId].sourceIPAssetTypeMask == 0
@@ -167,13 +155,23 @@ contract RelationshipModule is IRelationshipModule, AccessControlledUpgradeable,
         emit RelationshipConfigUnset(relationshipId);
     }
 
+    function _convertRelParams(SetRelationshipConfigParams calldata params) private view returns(RelationshipConfig memory) {
+        if (!params.processor.supportsInterface(type(IRelationshipProcessor).interfaceId)) revert UnsupportedInterface("IRelationshipProcessor");
+        if (params.timeConfig.maxTTL < params.timeConfig.minTTL) revert InvalidTTL();
+        if (params.disputer == address(0)) revert ZeroAddress();
+        return RelationshipConfig(
+            _convertToMask(params.sourceIPAssets, params.allowedExternalSource),
+            _convertToMask(params.destIPAssets, params.allowedExternalDest),
+            params.onlySameFranchise,
+            IRelationshipProcessor(params.processor),
+            params.disputer,
+            params.timeConfig
+        );
+    }
+
     function config(bytes32 relationshipId) external view returns (RelationshipConfig memory) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         return $.relConfigs[relationshipId];
     }
-
-    function _authorizeUpgrade(
-        address newImplementation
-    ) internal virtual override onlyRole(UPGRADER_ROLE) {}
 
 }

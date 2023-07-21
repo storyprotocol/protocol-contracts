@@ -7,7 +7,7 @@ import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/access-control/ProtocolRoles.sol";
 import "contracts/ip-assets/IPAssetRegistryFactory.sol";
-import "contracts/modules/relationships/RelationshipModule.sol";
+import "./RelationshipModuleHarness.sol";
 import "contracts/IPAsset.sol";
 import "contracts/errors/General.sol";
 import "contracts/modules/relationships/RelationshipProcessors/PermissionlessRelationshipProcessor.sol";
@@ -26,7 +26,7 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
     IPAssetRegistryFactory public factory;
     IPAssetRegistry public ipAssetRegistry;
     FranchiseRegistry public register;
-    RelationshipModule public relationshipModule;
+    RelationshipModuleHarness public relationshipModule;
     AccessControlSingleton acs;
     PermissionlessRelationshipProcessor public processor;
 
@@ -53,7 +53,6 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
             )
         );
         vm.prank(admin);
-        acs.grantRole(RELATIONSHIP_MANAGER_ROLE, relationshipManager);
         
         FranchiseRegistry impl = new FranchiseRegistry(address(factory));
         register = FranchiseRegistry(
@@ -68,9 +67,9 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
         (uint256 id, address ipAssets) = register.registerFranchise("name", "symbol", "description");
         ipAssetRegistry = IPAssetRegistry(ipAssets);
 
-        relationshipModule = RelationshipModule(
+        relationshipModule = RelationshipModuleHarness(
             _deployUUPSProxy(
-                address(new RelationshipModule(address(register))),
+                address(new RelationshipModuleHarness(address(register))),
                 abi.encodeWithSelector(
                     bytes4(keccak256(bytes("initialize(address)"))), address(acs)
                 )
@@ -83,13 +82,14 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
         destIPAssets[1] = IPAsset.ART;
 
         processor = new PermissionlessRelationshipProcessor(address(relationshipModule));
-        RelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
+        IRelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
             onlySameFranchise: true,
             processor: address(processor),
+            disputer: address(this),
             timeConfig: IRelationshipModule.TimeConfig(0, 0, false)
         });
         vm.prank(relationshipManager);
