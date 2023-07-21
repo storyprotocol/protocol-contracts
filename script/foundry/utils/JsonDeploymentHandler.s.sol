@@ -11,8 +11,8 @@ contract JsonDeploymentHandler is Script {
     using stdJson for string;
 
     string contractOutput;
-    bool printFinalJson;
     string chainId = (block.chainid).toString();
+    uint256 contracts;
 
     constructor(string memory _initialContractOutput) {
         contractOutput = _initialContractOutput;
@@ -30,20 +30,20 @@ contract JsonDeploymentHandler is Script {
         contractOutput = vm.readFile(path);
     }
 
-    function _readAddress(string memory contractName) internal returns(address) {
-        try vm.parseJsonAddress(contractOutput, string.concat("$.", chainId,".", contractName)) returns (address addr) {
-            return addr;
-        } catch  {
-            return address(0);
-        }
+
+    function _writeAddress(string memory contractKey, address newAddress) internal {
+        contractOutput = vm.serializeAddress("", contractKey, newAddress);
+        contracts++;
     }
 
     function _writeDeployment() internal {
-        string memory finalJson = chainId.serialize(chainId, contractOutput);
+        contractOutput = vm.serializeUint("", "contracts", contracts);
+        string memory output = vm.serializeString(contractOutput, chainId, contractOutput);
+        
         if (block.chainid == 5) {
-            vm.writeJson(finalJson, "./deployment-public.json");
+            vm.writeJson(output, "./deployment-public.json");
         } else {
-            vm.writeJson(finalJson, "./deployment-local.json");
+            vm.writeJson(output, "./deployment-local.json");
         }
     }
 

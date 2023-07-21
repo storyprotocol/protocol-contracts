@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
-
+/*
 import "forge-std/Script.sol";
 import "test/foundry/utils/ProxyHelper.sol";
 import "script/foundry/utils/StringUtil.sol";
-import "script/foundry/utils/Deployer.s.sol";
-import "script/foundry/utils/JsonDeploymentHandler.s.sol";
-import "contracts/ip-assets/IPAssetRegistryFactory.sol";
-import "contracts/FranchiseRegistry.sol";
-import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
+import "script/foundry/utils/JsonDeploymentHandler.sol";
 
-contract Deploy is Script, Deployer, JsonDeploymentHandler, ProxyHelper {
+
+contract DeployRelationshipProcessors is Script, JsonDeploymentHandler, ProxyHelper {
 
     using StringUtil for uint256;
     using stdJson for string;
+
+    address public deployer = address(0x123);
+    address public admin = address(0x456);
 
     address ipAssetsFactory;
     address accessControl;
@@ -26,7 +25,14 @@ contract Deploy is Script, Deployer, JsonDeploymentHandler, ProxyHelper {
     /// @dev To use, run the following command (e.g. for Goerli):
     /// forge script script/Deploy.s.sol:Deploy --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv
     function run() public {
-        _beginDeployment();
+        uint256 deployerPrivateKey;
+        if (block.chainid == 5) {
+            deployerPrivateKey = vm.envUint("GOERLI_PRIVATEKEY");
+            admin = vm.envAddress("GOERLI_ADMIN_ADDRESS");
+            vm.startBroadcast(deployerPrivateKey);
+        } else {
+            vm.startPrank(deployer);
+        }
         _readDeployment();
         string memory contractKey;
         address previousAddress;
@@ -37,7 +43,6 @@ contract Deploy is Script, Deployer, JsonDeploymentHandler, ProxyHelper {
         previousAddress = _readAddress(contractKey);        
         if (previousAddress != address(0)) {
             console.log(string.concat(contractKey," already deployed to:"), previousAddress);
-            _writeAddress(contractKey, previousAddress);
         } else {
             console.log(string.concat("Deploying ", contractKey, "..."));
             newAddress = address(new IPAssetRegistryFactory());
@@ -51,7 +56,6 @@ contract Deploy is Script, Deployer, JsonDeploymentHandler, ProxyHelper {
         previousAddress = _readAddress(contractKey);        
         if (previousAddress != address(0)) {
             console.log(string.concat(contractKey," already deployed to:"), previousAddress);
-            _writeAddress(contractKey, previousAddress);
         } else {
             console.log(string.concat("Deploying ", contractKey, "..."));
             newAddress = address(new AccessControlSingleton());
@@ -63,7 +67,6 @@ contract Deploy is Script, Deployer, JsonDeploymentHandler, ProxyHelper {
         previousAddress = _readAddress(contractKey);        
         if (previousAddress != address(0)) {
             console.log(string.concat(contractKey," already deployed to:"), previousAddress);
-            _writeAddress(contractKey, previousAddress);
         } else {
             console.log(string.concat("Deploying ", contractKey, "..."));
             newAddress = _deployUUPSProxy(
@@ -82,7 +85,6 @@ contract Deploy is Script, Deployer, JsonDeploymentHandler, ProxyHelper {
         previousAddress = _readAddress(contractKey);        
         if (previousAddress != address(0)) {
             console.log(string.concat(contractKey," already deployed to:"), previousAddress);
-            _writeAddress(contractKey, previousAddress);
         } else {
             console.log(string.concat("Deploying ", contractKey, "..."));
             newAddress = address(new FranchiseRegistry(ipAssetsFactory));
@@ -94,7 +96,6 @@ contract Deploy is Script, Deployer, JsonDeploymentHandler, ProxyHelper {
         previousAddress = _readAddress(contractKey);        
         if (previousAddress != address(0)) {
             console.log(string.concat(contractKey," already deployed to:"), previousAddress);
-            _writeAddress(contractKey, previousAddress);
         } else {
             console.log(string.concat("Deploying ", contractKey, "..."));
             newAddress = _deployUUPSProxy(
@@ -113,7 +114,6 @@ contract Deploy is Script, Deployer, JsonDeploymentHandler, ProxyHelper {
         previousAddress = _readAddress(contractKey);        
         if (previousAddress != address(0)) {
             console.log(string.concat(contractKey," already deployed to:"), previousAddress);
-            _writeAddress(contractKey, previousAddress);
         } else {
             console.log(string.concat("Deploying ", contractKey, "..."));
             newAddress = address(new ProtocolRelationshipModule(franchiseRegistry));
@@ -125,7 +125,6 @@ contract Deploy is Script, Deployer, JsonDeploymentHandler, ProxyHelper {
         previousAddress = _readAddress(contractKey);        
         if (previousAddress != address(0)) {
             console.log(string.concat(contractKey," already deployed to:"), previousAddress);
-            _writeAddress(contractKey, previousAddress);
         } else {
             console.log(string.concat("Deploying ", contractKey, "..."));
             newAddress = _deployUUPSProxy(
@@ -139,7 +138,12 @@ contract Deploy is Script, Deployer, JsonDeploymentHandler, ProxyHelper {
         }
 
         _writeDeployment(); 
-        _endDeployment();
+        if (block.chainid == 5) {
+            vm.stopBroadcast();
+        } else {
+            vm.stopPrank();
+        }
     }
 
 }
+*/
