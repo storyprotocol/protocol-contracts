@@ -18,19 +18,6 @@ contract JsonDeploymentHandler is Script {
         contractOutput = _initialContractOutput;
     }
 
-    function _readDeployment() internal {
-        string memory root = vm.projectRoot();
-        string memory filePath;
-        if (block.chainid == 5) {
-            filePath = "/deployment-public.json";
-        } else {
-            filePath = "/deployment-local.json";
-        }
-        string memory path = string.concat(root, filePath);
-        contractOutput = vm.readFile(path);
-    }
-
-
     function _writeAddress(string memory contractKey, address newAddress) internal {
         contractOutput = vm.serializeAddress("", contractKey, newAddress);
         contracts++;

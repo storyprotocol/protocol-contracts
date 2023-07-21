@@ -27,117 +27,86 @@ contract Deploy is Script, Deployer, JsonDeploymentHandler, ProxyHelper {
     /// forge script script/Deploy.s.sol:Deploy --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv
     function run() public {
         _beginDeployment();
-        _readDeployment();
         string memory contractKey;
-        address previousAddress;
         address newAddress;
         
         /// IP ASSETS REGISTRY FACTORY
         contractKey = "IPAssetRegistryFactory";
-        previousAddress = _readAddress(contractKey);        
-        if (previousAddress != address(0)) {
-            console.log(string.concat(contractKey," already deployed to:"), previousAddress);
-            _writeAddress(contractKey, previousAddress);
-        } else {
-            console.log(string.concat("Deploying ", contractKey, "..."));
-            newAddress = address(new IPAssetRegistryFactory());
-            _writeAddress(contractKey, newAddress);
-            console.log(string.concat(contractKey, " deployed to:"), newAddress);
-        }
+
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new IPAssetRegistryFactory());
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        
         ipAssetsFactory = newAddress;
 
         /// ACCESS CONTROL SINGLETON
         contractKey = "AccessControlSingleton-Impl";
-        previousAddress = _readAddress(contractKey);        
-        if (previousAddress != address(0)) {
-            console.log(string.concat(contractKey," already deployed to:"), previousAddress);
-            _writeAddress(contractKey, previousAddress);
-        } else {
-            console.log(string.concat("Deploying ", contractKey, "..."));
-            newAddress = address(new AccessControlSingleton());
-            _writeAddress(contractKey, newAddress);
-            console.log(string.concat(contractKey, " deployed to:"), newAddress);
-        }
+
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new AccessControlSingleton());
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        
 
         contractKey = "AccessControlSingleton-Proxy";
-        previousAddress = _readAddress(contractKey);        
-        if (previousAddress != address(0)) {
-            console.log(string.concat(contractKey," already deployed to:"), previousAddress);
-            _writeAddress(contractKey, previousAddress);
-        } else {
-            console.log(string.concat("Deploying ", contractKey, "..."));
-            newAddress = _deployUUPSProxy(
-                newAddress,
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), admin
-                )
-            );
-            _writeAddress(contractKey, newAddress);
-            console.log(string.concat(contractKey, " deployed to:"), newAddress);
-        }
+
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = _deployUUPSProxy(
+            newAddress,
+            abi.encodeWithSelector(
+                bytes4(keccak256(bytes("initialize(address)"))), admin
+            )
+        );
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+
         accessControl = newAddress;
 
         /// FRANCHISE REGISTRY
         contractKey = "FranchiseRegistry-Impl";
-        previousAddress = _readAddress(contractKey);        
-        if (previousAddress != address(0)) {
-            console.log(string.concat(contractKey," already deployed to:"), previousAddress);
-            _writeAddress(contractKey, previousAddress);
-        } else {
-            console.log(string.concat("Deploying ", contractKey, "..."));
-            newAddress = address(new FranchiseRegistry(ipAssetsFactory));
-            _writeAddress(contractKey, newAddress);
-            console.log(string.concat(contractKey, " deployed to:"), newAddress);
-        }
+
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new FranchiseRegistry(ipAssetsFactory));
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+
 
         contractKey = "FranchiseRegistry-Proxy";
-        previousAddress = _readAddress(contractKey);        
-        if (previousAddress != address(0)) {
-            console.log(string.concat(contractKey," already deployed to:"), previousAddress);
-            _writeAddress(contractKey, previousAddress);
-        } else {
-            console.log(string.concat("Deploying ", contractKey, "..."));
-            newAddress = _deployUUPSProxy(
-                newAddress,
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), accessControl
-                )
-            );
-            _writeAddress(contractKey, newAddress);
-            console.log(string.concat(contractKey, " deployed to:"), newAddress);
-        }
+
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = _deployUUPSProxy(
+            newAddress,
+            abi.encodeWithSelector(
+                bytes4(keccak256(bytes("initialize(address)"))), accessControl
+            )
+        );
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+
         franchiseRegistry = newAddress;
 
         /// PROTOCOL RELATIONSHIP MODULE
         contractKey = "ProtocolRelationshipModule-Impl";
-        previousAddress = _readAddress(contractKey);        
-        if (previousAddress != address(0)) {
-            console.log(string.concat(contractKey," already deployed to:"), previousAddress);
-            _writeAddress(contractKey, previousAddress);
-        } else {
-            console.log(string.concat("Deploying ", contractKey, "..."));
-            newAddress = address(new ProtocolRelationshipModule(franchiseRegistry));
-            _writeAddress(contractKey, newAddress);
-            console.log(string.concat(contractKey, " deployed to:"), newAddress);
-        }
+       
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new ProtocolRelationshipModule(franchiseRegistry));
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        
 
         contractKey = "ProtocolRelationshipModule-Proxy";
-        previousAddress = _readAddress(contractKey);        
-        if (previousAddress != address(0)) {
-            console.log(string.concat(contractKey," already deployed to:"), previousAddress);
-            _writeAddress(contractKey, previousAddress);
-        } else {
-            console.log(string.concat("Deploying ", contractKey, "..."));
-            newAddress = _deployUUPSProxy(
-                newAddress,
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), accessControl
-                )
-            );
-            _writeAddress(contractKey, newAddress);
-            console.log(string.concat(contractKey, " deployed to:"), newAddress);
-        }
 
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = _deployUUPSProxy(
+            newAddress,
+            abi.encodeWithSelector(
+                bytes4(keccak256(bytes("initialize(address)"))), accessControl
+            )
+        );
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        
         _writeDeployment(); 
         _endDeployment();
     }
