@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
+import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { ZeroAddress, UnsupportedInterface, Unauthorized } from "contracts/errors/General.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
@@ -11,7 +12,8 @@ import { RelationshipTypeChecker } from "./RelationshipTypeChecker.sol";
 import { IRelationshipModule } from "./IRelationshipModule.sol";
 import { IRelationshipProcessor } from "./RelationshipProcessors/IRelationshipProcessor.sol";
 
-abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlledUpgradeable, RelationshipTypeChecker {
+
+abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlledUpgradeable, RelationshipTypeChecker, Multicall {
     using ERC165CheckerUpgradeable for address;
 
     /// @custom:storage-location erc7201:story-protocol.relationship-module.storage
