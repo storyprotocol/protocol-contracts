@@ -11,6 +11,7 @@ import "contracts/ip-assets/IPAssetRegistryFactory.sol";
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
+import "contracts/access-control/ProtocolRoles.sol";
 
 contract Deploy is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
@@ -112,6 +113,11 @@ contract Deploy is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper 
         DeployRelationshipProcessors deployRelationshipProcessors = new DeployRelationshipProcessors(contractOutput);
         vm.allowCheatcodes(address(deployRelationshipProcessors));
         contractOutput = deployRelationshipProcessors.run();
+
+        /// GRANT ROLEs
+        AccessControlSingleton accessControlSingleton = AccessControlSingleton(accessControl);
+        accessControlSingleton.grantRole(UPGRADER_ROLE, admin);
+        accessControlSingleton.grantRole(RELATIONSHIP_MANAGER_ROLE, admin);
         
         _writeDeployment(); 
         _endBroadcast();
