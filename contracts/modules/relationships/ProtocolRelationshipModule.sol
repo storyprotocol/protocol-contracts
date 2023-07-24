@@ -17,8 +17,8 @@ contract ProtocolRelationshipModule is RelationshipModuleBase {
         _setRelationshipConfig(relationshipId, params);
     }
 
-    function unsetConfig(bytes32 relationshipId) external onlyRole(RELATIONSHIP_MANAGER_ROLE) {
-        _unsetConfig(relationshipId);
+    function unsetRelationshipConfig(bytes32 relationshipId) external onlyRole(RELATIONSHIP_MANAGER_ROLE) {
+        _unsetRelationshipConfig(relationshipId);
     }
 
 

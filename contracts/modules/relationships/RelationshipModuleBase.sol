@@ -148,7 +148,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
         );
     }
 
-    function _unsetConfig(bytes32 relationshipId) internal {
+    function _unsetRelationshipConfig(bytes32 relationshipId) internal {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         if (
             $.relConfigs[relationshipId].sourceIPAssetTypeMask == 0
@@ -171,7 +171,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
         );
     }
 
-    function config(bytes32 relationshipId) external view returns (RelationshipConfig memory) {
+    function relationshipConfig(bytes32 relationshipId) external view returns (RelationshipConfig memory) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         return $.relConfigs[relationshipId];
     }
