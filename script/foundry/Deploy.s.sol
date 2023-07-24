@@ -109,10 +109,6 @@ contract Deploy is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper 
         _writeAddress(contractKey, newAddress);
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-        /// RELATIONSHIP PROCESSORS
-        DeployRelationshipProcessors deployRelationshipProcessors = new DeployRelationshipProcessors(contractOutput);
-        vm.allowCheatcodes(address(deployRelationshipProcessors));
-        contractOutput = deployRelationshipProcessors.run();
 
         /// GRANT ROLEs
         AccessControlSingleton accessControlSingleton = AccessControlSingleton(accessControl);
