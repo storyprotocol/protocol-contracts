@@ -4,12 +4,12 @@ pragma solidity ^0.8.18;
 import "forge-std/Script.sol";
 import "script/foundry/utils/StringUtil.sol";
 
-contract Deployer is Script {
+contract BroadcastManager is Script {
 
     address public deployer = address(0x123);
     address public admin = address(0x456);
 
-    function _beginDeployment() internal {
+    function _beginBroadcast() internal {
         uint256 deployerPrivateKey;
         if (block.chainid == 5) {
             deployerPrivateKey = vm.envUint("GOERLI_PRIVATEKEY");
@@ -20,7 +20,7 @@ contract Deployer is Script {
         }
     }
 
-    function _endDeployment() internal {
+    function _endBroadcast() internal {
         if (block.chainid == 5) {
             vm.stopBroadcast();
         } else {

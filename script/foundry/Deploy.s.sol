@@ -4,7 +4,7 @@ pragma solidity ^0.8.18;
 import "forge-std/Script.sol";
 import "test/foundry/utils/ProxyHelper.sol";
 import "script/foundry/utils/StringUtil.sol";
-import "script/foundry/utils/Deployer.s.sol";
+import "script/foundry/utils/BroadcastManager.s.sol";
 import "script/foundry/utils/JsonDeploymentHandler.s.sol";
 import "script/foundry/DeployRelationshipProcessors.s.sol";
 import "contracts/ip-assets/IPAssetRegistryFactory.sol";
@@ -12,7 +12,7 @@ import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 
-contract Deploy is Script, Deployer, JsonDeploymentHandler, ProxyHelper {
+contract Deploy is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
     using StringUtil for uint256;
     using stdJson for string;
@@ -27,7 +27,7 @@ contract Deploy is Script, Deployer, JsonDeploymentHandler, ProxyHelper {
     /// @dev To use, run the following command (e.g. for Goerli):
     /// forge script script/Deploy.s.sol:Deploy --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv
     function run() public {
-        _beginDeployment();
+        _beginBroadcast();
         string memory contractKey;
         address newAddress;
         
@@ -114,7 +114,7 @@ contract Deploy is Script, Deployer, JsonDeploymentHandler, ProxyHelper {
         contractOutput = deployRelationshipProcessors.run();
         
         _writeDeployment(); 
-        _endDeployment();
+        _endBroadcast();
     }
 
 }

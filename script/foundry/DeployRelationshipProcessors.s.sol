@@ -4,14 +4,14 @@ pragma solidity ^0.8.18;
 import "forge-std/Script.sol";
 import "test/foundry/utils/ProxyHelper.sol";
 import "script/foundry/utils/StringUtil.sol";
-import "script/foundry/utils/Deployer.s.sol";
+import "script/foundry/utils/BroadcastManager.s.sol";
 import "script/foundry/utils/JsonDeploymentHandler.s.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "contracts/modules/relationships/processors/DstOwnerRelationshipProcessor.sol";
 import "contracts/modules/relationships/processors/SrcOwnerRelationshipProcessor.sol";
 import "contracts/modules/relationships/processors/SrcDstOwnerRelationshipProcessor.sol";
 
-contract DeployRelationshipProcessors is Script, Deployer, JsonDeploymentHandler, ProxyHelper {
+contract DeployRelationshipProcessors is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
     using StringUtil for uint256;
     using stdJson for string;
@@ -27,7 +27,7 @@ contract DeployRelationshipProcessors is Script, Deployer, JsonDeploymentHandler
 
     function run() public returns(string memory)  {
         if (standaloneDeployment) {
-            _beginDeployment();
+            _beginBroadcast();
         }
         _readDeployment();
         relationshipModule = _readAddress("ProtocolRelationshipModule-Proxy");
@@ -73,7 +73,7 @@ contract DeployRelationshipProcessors is Script, Deployer, JsonDeploymentHandler
 
         if (standaloneDeployment) {
             _writeDeployment(); 
-            _endDeployment();
+            _endBroadcast();
         }
         return contractOutput;
     }
