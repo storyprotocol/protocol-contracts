@@ -11,7 +11,6 @@ contract JsonDeploymentHandler is Script {
     using stdJson for string;
 
     string contractOutput;
-    string chainId = (block.chainid).toString();
     uint256 contracts;
 
     constructor(string memory _initialContractOutput) {
@@ -24,14 +23,9 @@ contract JsonDeploymentHandler is Script {
     }
 
     function _writeDeployment() internal {
+        string memory chainId = (block.chainid).toString();
         contractOutput = vm.serializeUint("", "contracts", contracts);
-        string memory output = vm.serializeString(contractOutput, chainId, contractOutput);
-        
-        if (block.chainid == 5) {
-            vm.writeJson(output, "./deployment-public.json");
-        } else {
-            vm.writeJson(output, "./deployment-local.json");
-        }
+        vm.writeJson(contractOutput, string.concat("./deployment-", chainId, ".json"));
     }
 
 }

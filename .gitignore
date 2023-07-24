@@ -23,7 +23,7 @@ node_modules/
 .DS_Store
 
 # Local deployment
-deployment-local.json
+deployment-31337.json
 
 # Script data
 script/data/
