@@ -19,7 +19,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     /// @custom:storage-location erc7201:story-protocol.relationship-module.storage
     struct RelationshipModuleStorage {
         mapping(bytes32 => bool) relationships;
-        mapping(bytes32 => uint256) relationshipEnds;
+        mapping(bytes32 => uint256) relationshipExpirations;
         mapping(bytes32 => RelationshipConfig) relConfigs;
     }
 
@@ -73,10 +73,10 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     function _updateEndTime(bytes32 relKey, TimeConfig memory timeConfig, uint256 ttl) private returns (uint256) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         if (timeConfig.maxTTL != 0) {
-            uint256 endTime = $.relationshipEnds[relKey];
+            uint256 endTime = $.relationshipExpirations[relKey];
             if (endTime == 0 || timeConfig.renewable) {
                 endTime = block.timestamp + ttl;
-                $.relationshipEnds[relKey] = endTime;
+                $.relationshipExpirations[relKey] = endTime;
                 return endTime;
             }
         }
@@ -99,7 +99,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
 
     function isLinkExpired(RelationshipParams calldata params) public view returns (bool) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
-        uint256 endTime = $.relationshipEnds[_getRelationshipKey(params)];
+        uint256 endTime = $.relationshipExpirations[_getRelationshipKey(params)];
         return endTime != 0 && endTime < block.timestamp;
     }
 
