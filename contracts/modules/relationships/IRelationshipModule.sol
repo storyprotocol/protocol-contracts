@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import { IRelationshipProcessor } from "./RelationshipProcessors/IRelationshipProcessor.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 
+
 interface IRelationshipModule {
 
     event RelationSet(
@@ -43,9 +44,9 @@ interface IRelationshipModule {
 
     error NonExistingRelationship();
     error IntentAlreadyRegistered();
-    error UnsupportedRelationshipSource();
-    error UnsupportedRelationshipDestination();
-    error CannotRelationshipToAnotherFranchise();
+    error UnsupportedRelationshipSrc();
+    error UnsupportedRelationshipDst();
+    error CannotRelateToOtherFranchise();
     error InvalidTTL();
     error InvalidEndTimestamp();
 
