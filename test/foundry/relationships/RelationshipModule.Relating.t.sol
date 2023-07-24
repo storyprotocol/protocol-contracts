@@ -183,7 +183,7 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
         IPAssetRegistry otherIPAssetRegistry = IPAssetRegistry(otherIPAssets);
         vm.prank(ipAssetOwner);
         uint256 otherId = otherIPAssetRegistry.createIPAsset(IPAsset.CHARACTER, "name", "description", "mediaUrl");
-        vm.expectRevert(IRelationshipModule.CannotRelationshipToAnotherFranchise.selector);
+        vm.expectRevert(IRelationshipModule.CannotRelateToOtherFranchise.selector);
         relationshipModule.relate(
             IRelationshipModule.RelationshipParams(
                 address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], otherIPAssets, otherId, relationship, 0
@@ -195,7 +195,7 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
     function test_revert_relateUnsupportedSource() public {
         vm.prank(ipAssetOwner);
         uint256 wrongId = ipAssetRegistry.createIPAsset(IPAsset.GROUP, "name", "description", "mediaUrl");
-        vm.expectRevert(IRelationshipModule.UnsupportedRelationshipSource.selector);
+        vm.expectRevert(IRelationshipModule.UnsupportedRelationshipSrc.selector);
         relationshipModule.relate(
             IRelationshipModule.RelationshipParams(
                 address(ipAssetRegistry), wrongId, address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], relationship, 0
@@ -207,7 +207,7 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
     function test_revert_relateUnsupportedDestination() public {
         vm.prank(ipAssetOwner);
         uint256 wrongId = ipAssetRegistry.createIPAsset(IPAsset.GROUP, "name", "description", "mediaUrl");
-        vm.expectRevert(IRelationshipModule.UnsupportedRelationshipDestination.selector);
+        vm.expectRevert(IRelationshipModule.UnsupportedRelationshipDst.selector);
         relationshipModule.relate(
             IRelationshipModule.RelationshipParams(
                 address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.STORY)], address(ipAssetRegistry), wrongId, relationship, 0

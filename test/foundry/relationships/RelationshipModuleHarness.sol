@@ -15,8 +15,8 @@ contract RelationshipModuleHarness is RelationshipModuleBase {
         _setRelationshipConfig(relationshipId, params);
     }
 
-    function unsetConfig(bytes32 relationshipId) external {
-        _unsetConfig(relationshipId);
+    function unsetRelationshipConfig(bytes32 relationshipId) external {
+        _unsetRelationshipConfig(relationshipId);
     }
 
     function _authorizeUpgrade(

@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import { IRelationshipProcessor } from "./processors/IRelationshipProcessor.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 
+
 interface IRelationshipModule {
 
     event RelationSet(
@@ -43,9 +44,9 @@ interface IRelationshipModule {
 
     error NonExistingRelationship();
     error IntentAlreadyRegistered();
-    error UnsupportedRelationshipSource();
-    error UnsupportedRelationshipDestination();
-    error CannotRelationshipToAnotherFranchise();
+    error UnsupportedRelationshipSrc();
+    error UnsupportedRelationshipDst();
+    error CannotRelateToOtherFranchise();
     error InvalidTTL();
     error InvalidEndTimestamp();
 
@@ -89,6 +90,6 @@ interface IRelationshipModule {
     function areTheyRelated(RelationshipParams calldata params) external view returns (bool);
     function isLinkExpired(RelationshipParams calldata params) external view returns (bool);
     function setRelationshipConfig(bytes32 relationshipId, SetRelationshipConfigParams calldata params) external;
-    function unsetConfig(bytes32 relationshipId) external;
-    function config(bytes32 relationshipId) external view returns (RelationshipConfig memory);
+    function unsetRelationshipConfig(bytes32 relationshipId) external;
+    function relationshipConfig(bytes32 relationshipId) external view returns (RelationshipConfig memory);
 }

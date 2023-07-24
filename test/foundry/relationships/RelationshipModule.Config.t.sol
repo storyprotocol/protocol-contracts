@@ -88,7 +88,7 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
         vm.prank(relationshipManager);
         relationshipModule.setRelationshipConfig(relationship, params);
 
-        IRelationshipModule.RelationshipConfig memory config = relationshipModule.config(relationship);
+        IRelationshipModule.RelationshipConfig memory config = relationshipModule.relationshipConfig(relationship);
         assertEq(config.sourceIPAssetTypeMask, 1 << (uint256(IPAsset.STORY) & 0xff));
         assertEq(config.destIPAssetTypeMask, 1 << (uint256(IPAsset.CHARACTER) & 0xff) | 1 << (uint256(IPAsset.ART) & 0xff) | (uint256(EXTERNAL_ASSET) << 248));
         assertTrue(config.onlySameFranchise);
@@ -196,11 +196,11 @@ contract RelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
         
     }
 
-    function test_unsetConfig() public {
+    function test_unsetRelationshipConfig() public {
         vm.prank(relationshipManager);
-        relationshipModule.unsetConfig(relationship);
+        relationshipModule.unsetRelationshipConfig(relationship);
 
-        IRelationshipModule.RelationshipConfig memory config = relationshipModule.config(relationship);
+        IRelationshipModule.RelationshipConfig memory config = relationshipModule.relationshipConfig(relationship);
         assertEq(config.sourceIPAssetTypeMask, 0);
         assertEq(config.destIPAssetTypeMask, 0);
         assertFalse(config.onlySameFranchise);
@@ -210,7 +210,7 @@ contract RelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
     function test_revert_unsetRelationshipConfigNonExistingRelationship() public {
         vm.prank(relationshipManager);
         vm.expectRevert(IRelationshipModule.NonExistingRelationship.selector);
-        relationshipModule.unsetConfig(keccak256("UNDEFINED_Relationship"));
+        relationshipModule.unsetRelationshipConfig(keccak256("UNDEFINED_Relationship"));
     }
 
 }

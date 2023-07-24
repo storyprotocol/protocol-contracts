@@ -6,6 +6,14 @@ import { ZeroAddress } from "contracts/errors/General.sol";
 import { IRelationshipModule } from "../IRelationshipModule.sol";
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
+/**
+ * @title BaseRelationshipProcessor
+ * @dev Base contract for relationship processors.
+ * Relationship processors are used to process relationships between IP Assets before they are set.
+ * They are set per relationship config in a IRelationshipModule
+ * This base contracts implements ERC165 and checks if the caller is the relationship module.
+ * All relationship processors must inherit from this contract.
+ */
 abstract contract BaseRelationshipProcessor is IRelationshipProcessor, ERC165 {
     
     address internal immutable _RELATIONSHIP_MODULE;
@@ -16,10 +24,15 @@ abstract contract BaseRelationshipProcessor is IRelationshipProcessor, ERC165 {
         _RELATIONSHIP_MODULE = _relationshipModule;
     }
 
+    /**
+     * @inheritdoc IRelationshipProcessor
+     * @dev Checks if the caller is the relationship module and calls implementation.
+     */
     function processRelationship(IRelationshipModule.RelationshipParams memory params, bytes calldata data, address caller) external override returns(bool) {
         if(msg.sender != _RELATIONSHIP_MODULE) revert OnlyRelationshipModule();
         return _processRelationship(params, data, caller);
     }
+
 
     function _processRelationship(IRelationshipModule.RelationshipParams memory params, bytes calldata data, address caller) internal virtual returns(bool);    
 
