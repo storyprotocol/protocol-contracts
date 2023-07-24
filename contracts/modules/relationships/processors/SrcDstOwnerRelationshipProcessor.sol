@@ -6,7 +6,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { Unauthorized } from "contracts/errors/General.sol";
 import { IRelationshipModule } from "../IRelationshipModule.sol";
 
-contract SrcDstRelationshipProcessor is BaseRelationshipProcessor {
+contract SrcDstOwnerRelationshipProcessor is BaseRelationshipProcessor {
 
     constructor(address relationshipModule) BaseRelationshipProcessor(relationshipModule) {}
 

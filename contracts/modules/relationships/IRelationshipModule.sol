@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import { IRelationshipProcessor } from "./RelationshipProcessors/IRelationshipProcessor.sol";
+import { IRelationshipProcessor } from "./processors/IRelationshipProcessor.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 
 interface IRelationshipModule {

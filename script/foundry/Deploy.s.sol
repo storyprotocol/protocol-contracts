@@ -6,6 +6,7 @@ import "test/foundry/utils/ProxyHelper.sol";
 import "script/foundry/utils/StringUtil.sol";
 import "script/foundry/utils/Deployer.s.sol";
 import "script/foundry/utils/JsonDeploymentHandler.s.sol";
+import "script/foundry/DeployRelationshipProcessors.s.sol";
 import "contracts/ip-assets/IPAssetRegistryFactory.sol";
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
@@ -106,6 +107,11 @@ contract Deploy is Script, Deployer, JsonDeploymentHandler, ProxyHelper {
         );
         _writeAddress(contractKey, newAddress);
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
+
+        /// RELATIONSHIP PROCESSORS
+        DeployRelationshipProcessors deployRelationshipProcessors = new DeployRelationshipProcessors(contractOutput);
+        vm.allowCheatcodes(address(deployRelationshipProcessors));
+        contractOutput = deployRelationshipProcessors.run();
         
         _writeDeployment(); 
         _endDeployment();
