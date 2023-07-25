@@ -139,7 +139,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
      */
     function areTheyRelated(RelationshipParams calldata params) external view returns (bool) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
-        return $.relationships[_getRelationshipKey(params)] && !isLinkExpired(params);
+        return $.relationships[_getRelationshipKey(params)] && !isRelationshipExpired(params);
     }
 
     /**
@@ -147,7 +147,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
      * @param params the relationship params
      * @return true if the relationship has expired, false if not expired or if it has no expiration
      */
-    function isLinkExpired(RelationshipParams calldata params) public view returns (bool) {
+    function isRelationshipExpired(RelationshipParams calldata params) public view returns (bool) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         uint256 endTime = $.relationshipExpirations[_getRelationshipKey(params)];
         return endTime != 0 && endTime < block.timestamp;
