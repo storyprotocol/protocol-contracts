@@ -16,7 +16,7 @@ contract SetTestRelationship is Script, BroadcastManager, JsonDeploymentHandler 
 
     ProtocolRelationshipModule protocolRelationshipModule;
 
-    constructor() JsonDeploymentHandler("") {}
+    constructor() JsonDeploymentHandler() {}
 
     function run() public {
         _readDeployment();
@@ -29,9 +29,9 @@ contract SetTestRelationship is Script, BroadcastManager, JsonDeploymentHandler 
 
         bytes32 relationshipId = keccak256("TEST_RELATIONSHIP");
 
-        IPAsset[] memory allIPAssets = new IPAsset[](7);
-        for (uint8 i = 1; i <= 6; i++) {
-            allIPAssets[i] = IPAsset(i);
+        IPAsset[] memory allIPAssets = new IPAsset[](6);
+        for (uint8 i = 0; i < 6; i++) {
+            allIPAssets[i] = IPAsset(i + 1);
         }
 
         address processor = _readAddress("PermissionlessRelationshipProcessor");

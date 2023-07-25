@@ -14,8 +14,7 @@ contract JsonDeploymentHandler is Script {
     uint256 contracts;
     string chainId;
 
-    constructor(string memory _initialContractOutput) {
-        contractOutput = _initialContractOutput;
+    constructor() {
         chainId = (block.chainid).toString();
     }
 
@@ -33,12 +32,10 @@ contract JsonDeploymentHandler is Script {
     }
 
     function _readDeployment() internal {
-        if (bytes(contractOutput).length == 0) {
-            string memory root = vm.projectRoot();
-            string memory filePath = string.concat("/deployment-", (block.chainid).toString(), ".json");
-            string memory path = string.concat(root, filePath);
-            contractOutput = vm.readFile(path);
-        }
+        string memory root = vm.projectRoot();
+        string memory filePath = string.concat("/deployment-", (block.chainid).toString(), ".json");
+        string memory path = string.concat(root, filePath);
+        contractOutput = vm.readFile(path);
         contracts = vm.parseJsonUint(contractOutput, "$.contracts");
     }
 

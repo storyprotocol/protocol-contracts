@@ -22,7 +22,7 @@ contract Deploy is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper 
     address accessControl;
     address franchiseRegistry;
 
-    constructor() JsonDeploymentHandler("") {
+    constructor() JsonDeploymentHandler() {
     }
 
     /// @dev To use, run the following command (e.g. for Goerli):

@@ -15,21 +15,15 @@ contract DeployRelationshipProcessors is Script, BroadcastManager, JsonDeploymen
 
     using StringUtil for uint256;
     using stdJson for string;
-    bool public standaloneDeployment;
     address relationshipModule;
 
-    constructor(string memory _contracts) JsonDeploymentHandler(_contracts) {
-        if (bytes(_contracts).length == 0) {
-            standaloneDeployment = true;
-            
-        }
+    constructor() JsonDeploymentHandler() {
     }
 
-    function run() public returns(string memory)  {
-        if (standaloneDeployment) {
-            _beginBroadcast();
-        }
+    function run() public {
+        _beginBroadcast();
         _readDeployment();
+        
         relationshipModule = _readAddress("ProtocolRelationshipModule-Proxy");
         if (relationshipModule == address(0)) {
             revert("ProtocolRelationshipModule-Proxy not found");
@@ -71,11 +65,8 @@ contract DeployRelationshipProcessors is Script, BroadcastManager, JsonDeploymen
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
 
-        if (standaloneDeployment) {
-            _writeDeployment(); 
-            _endBroadcast();
-        }
-        return contractOutput;
+        _writeDeployment(); 
+        _endBroadcast();
     }
 
 }
