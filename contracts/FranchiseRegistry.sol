@@ -7,6 +7,7 @@ import { AccessControlledUpgradeable } from "./access-control/AccessControlledUp
 import { UPGRADER_ROLE } from "./access-control/ProtocolRoles.sol";
 import { ZeroAddress } from "./errors/General.sol";
 import { IVersioned } from "./utils/IVersioned.sol";
+import { IIPAssetRegistry } from "./ip-assets/IIPAssetRegistry.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
@@ -83,6 +84,19 @@ contract FranchiseRegistry is
     ) public view returns (address) {
         FranchiseStorage storage $ = _getFranchiseStorage();
         return $.ipAssetRegistries[franchiseId];
+    }
+
+    /**
+     * @notice checks if an address is a valid SP IPAssetRegistry.
+     * @param ipAssetRegistry the address to check
+     * @return true if it's a valid SP IPAssetRegistry, false otherwise
+     */
+    function isIpAssetRegistry(address ipAssetRegistry) external view returns(bool) {
+        try IIPAssetRegistry(ipAssetRegistry).franchiseId() returns (uint256 franchiseId) {
+            return ipAssetRegistryForId(franchiseId) == ipAssetRegistry;
+        } catch {
+            return false;
+        }
     }
 
     function _authorizeUpgrade(

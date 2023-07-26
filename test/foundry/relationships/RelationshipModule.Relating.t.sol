@@ -216,5 +216,24 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
         );
     }
 
+    function test_revert_nonExistingToken() public {
+        vm.expectRevert("ERC721: invalid token ID");
+        relationshipModule.relate(
+            IRelationshipModule.RelationshipParams(
+                address(ipAssetRegistry), 420, address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], relationship, 0
+            ),
+            ""
+        );
+    }
+
+    function test_revert_notERC721() public {
+        vm.expectRevert();
+        relationshipModule.relate(
+            IRelationshipModule.RelationshipParams(
+                address(0x999), 420, address(ipAssetRegistry), ipAssetIds[uint8(IPAsset.CHARACTER)], relationship, 0
+            ),
+            ""
+        );
+    }
 
 }

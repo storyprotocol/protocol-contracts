@@ -7,34 +7,12 @@ import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
 import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
 
 /**
- * @title RelationshipTypeChecker
+ * @title LibIPAssetMask
  * @dev Gives tools to check if the "endpoints" of a relationship are valid, according to the allowed asset types set in the relationship config.
  */
-abstract contract RelationshipTypeChecker {
+library LibIPAssetMask {
 
     error InvalidIPAssetArray();
-
-    /**
-     * @dev Checks if the source or destination type of a relationship is allowed by the relationship config.
-     * @param collection The address of the collection of the relationship endpoint
-     * @param id The id of the relationship endpoint
-     * @param assetTypeMask The asset type mask of the relationship config, which contains the allowed asset types and the external asset flag
-     * @return result Whether the relationship endpoint is valid
-     * @return isAssetRegistry Whether the relationship endpoint is a Story Protocol IP Asset Registry
-     */
-    function _checkRelationshipNode(address collection, uint256 id, uint256 assetTypeMask) internal view returns (bool result, bool isAssetRegistry) {
-        if (IERC721(collection).ownerOf(id) == address(0)) return (false, false);
-        isAssetRegistry = _isAssetRegistry(collection);
-        if (isAssetRegistry) {
-            result = _supportsIPAssetType(assetTypeMask, uint8(LibIPAssetId._ipAssetTypeFor(id)));
-        } else {
-            result = _supportsIPAssetType(assetTypeMask, EXTERNAL_ASSET);
-        }
-        return (result, isAssetRegistry);
-    }
-
-    /// must return true if the address is a Story Protocol IP Asset Registry
-    function _isAssetRegistry(address ipAssetRegistry) internal virtual view returns(bool);
 
     /**
      * @dev converts an array of IPAssets types and the allows external flag to a mask, by setting the bits corresponding
@@ -59,9 +37,46 @@ abstract contract RelationshipTypeChecker {
         return mask;
     }
 
+    /**
+     * @dev converts a mask to an array of IPAsset types and the allows external flag, by checking the bits corresponding
+     * to the uint8 equivalent of the IPAsset types.
+     * @param mask The mask representing the IPAsset types and the allows external flag
+     * @return ipAssets The array of IPAsset types
+     * @return allowsExternal Whether the relationship config allows external (non SP ERC721) assets
+     */
+    function _convertFromMask(uint256 mask) internal pure returns (IPAsset[] memory ipAssets, bool allowsExternal) {
+        ipAssets = new IPAsset[](8);
+        uint256 index = 0;
+        for (uint256 i = 1; i < 8; i++) {
+            if (mask & (1 << i) != 0) {
+                ipAssets[index] = IPAsset(i);
+                index++;
+            }
+        }
+        allowsExternal = mask & (1 << 248) != 0;
+        return (ipAssets, allowsExternal);
+    }
+
+    
     /// returns true if the asset type is supported by the mask, false otherwise
     function _supportsIPAssetType(uint256 mask, uint8 assetType) internal pure returns (bool) {
         return mask & (1 << (uint256(assetType) & 0xff)) != 0;
+    }
+
+    /**
+     * @dev checks if the asset type of the asset is supported by the mask
+     * @param isAssetRegistry Whether the asset is an SP asset registry or an external asset
+     * @param assetId The asset id
+     * @param assetTypeMask The mask representing the IPAsset types and the allows external flag
+     * @return result true if mask test passes, false otherwise
+     */
+    function _checkRelationshipNode(bool isAssetRegistry, uint256 assetId, uint256 assetTypeMask) internal pure returns (bool result) {
+        if (isAssetRegistry) {
+            result = LibIPAssetMask._supportsIPAssetType(assetTypeMask, uint8(LibIPAssetId._ipAssetTypeFor(assetId)));
+        } else {
+            result = LibIPAssetMask._supportsIPAssetType(assetTypeMask, EXTERNAL_ASSET);
+        }
+        return result;
     }
 
 }
