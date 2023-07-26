@@ -173,7 +173,6 @@ contract LibIPAssetMaskNodesTest is Test {
 
     function test_checkRelationshipNode_ipAsset_true() public {
         uint256 tokenId = LibIPAssetId._zeroId(IPAsset(1)) + 1;
-        console.log(tokenId);
         collection.mint(owner, tokenId);
         uint256 mask = 1 << (uint256(IPAsset(1)) & 0xff);
         bool result = checker.checkRelationshipNode(true, tokenId, mask);
