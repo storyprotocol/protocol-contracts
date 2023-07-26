@@ -201,14 +201,16 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
 
     /**
      * @notice Sets a relationship config for a relationship ID.
-     * @param relationshipId the relationship ID
+     * @param name the relationship name
      * @param params the relationship config params
      */
-    function _setRelationshipConfig(bytes32 relationshipId, SetRelationshipConfigParams calldata params) internal {
+    function _setRelationshipConfig(string calldata name, SetRelationshipConfigParams calldata params) internal returns(bytes32 relationshipId) {
+        relationshipId = getRelationshipId(name);
         RelationshipConfig memory relConfig = _convertRelParams(params);
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         $.relConfigs[relationshipId] = relConfig;
         emit RelationshipConfigSet(
+            name,
             relationshipId,
             relConfig.sourceIPAssetTypeMask,
             relConfig.destIPAssetTypeMask,
@@ -218,6 +220,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
             relConfig.timeConfig.minTTL,
             relConfig.timeConfig.renewable
         );
+        return relationshipId;
     }
 
     /**
@@ -258,7 +261,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     }
 
     /// returns a RelationshipConfig for the given relationshipId, or an empty one if it doesn't exist
-    function relationshipConfig(bytes32 relationshipId) public view returns (RelationshipConfig memory) {
+    function getRelationshipConfig(bytes32 relationshipId) public view returns (RelationshipConfig memory) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         return $.relConfigs[relationshipId];
     }
@@ -269,8 +272,8 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
      * @param relationshipId the relationship ID
      * @return params the SetRelationshipConfigParams
      */ 
-    function relationshipConfigDecoded(bytes32 relationshipId) external view returns(SetRelationshipConfigParams memory) {
-        RelationshipConfig memory relConfig = relationshipConfig(relationshipId);
+    function getRelationshipConfigDecoded(bytes32 relationshipId) external view returns(SetRelationshipConfigParams memory) {
+        RelationshipConfig memory relConfig = getRelationshipConfig(relationshipId);
         (IPAsset[] memory sourceIPAssets, bool sourceSupportsExternal) = LibIPAssetMask._convertFromMask(relConfig.sourceIPAssetTypeMask);
         (IPAsset[] memory destIPAssets, bool destSupportsExternal) = LibIPAssetMask._convertFromMask(relConfig.destIPAssetTypeMask);
         return SetRelationshipConfigParams(
@@ -283,6 +286,10 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
             relConfig.disputer,
             relConfig.timeConfig
         );
+    }
+
+    function getRelationshipId(string calldata name) public pure returns (bytes32) {
+        return keccak256(abi.encode(name));
     }
     
 

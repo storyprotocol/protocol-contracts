@@ -21,8 +21,8 @@ contract ProtocolRelationshipModule is RelationshipModuleBase {
     }
 
     /********* Setting Relationships *********/
-    function setRelationshipConfig(bytes32 relationshipId, SetRelationshipConfigParams calldata params) external onlyRole(RELATIONSHIP_MANAGER_ROLE) {
-        _setRelationshipConfig(relationshipId, params);
+    function setRelationshipConfig(string calldata name, SetRelationshipConfigParams calldata params) external onlyRole(RELATIONSHIP_MANAGER_ROLE) returns (bytes32 relationshipId) {
+        return _setRelationshipConfig(name, params);
     }
 
     function unsetRelationshipConfig(bytes32 relationshipId) external onlyRole(RELATIONSHIP_MANAGER_ROLE) {

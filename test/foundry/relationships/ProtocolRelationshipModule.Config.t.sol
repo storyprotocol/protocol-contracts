@@ -25,8 +25,6 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
     address relationshipManager = address(234);
     address franchiseOwner = address(456);
 
-    bytes32 relationship = keccak256("RELATIONSHIP");
-
     function setUp() public {
         factory = new IPAssetRegistryFactory();
         acs = AccessControlSingleton(
@@ -88,9 +86,9 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
             })
         });
         vm.prank(relationshipManager);
-        relationshipModule.setRelationshipConfig(relationship, params);
+        bytes32 relId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
 
-        IRelationshipModule.RelationshipConfig memory config = relationshipModule.relationshipConfig(relationship);
+        IRelationshipModule.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relId);
         assertEq(config.sourceIPAssetTypeMask, 1 << (uint256(IPAsset.STORY) & 0xff));
         assertEq(config.destIPAssetTypeMask, 1 << (uint256(IPAsset.CHARACTER) & 0xff) | 1 << (uint256(IPAsset.ART) & 0xff) | (uint256(EXTERNAL_ASSET) << 248));
         assertTrue(config.onlySameFranchise);
@@ -121,7 +119,7 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
         });
         vm.expectRevert();
         vm.prank(franchiseOwner);
-        relationshipModule.setRelationshipConfig(relationship, params);
+        relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
     }
 
 }
@@ -139,7 +137,7 @@ contract ProtocolRelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
     address relationshipManager = address(234);
     address franchiseOwner = address(456);
 
-    bytes32 relationship = keccak256("PROTOCOL_Relationship");
+    bytes32 relId;
 
     function setUp() public {
         factory = new IPAssetRegistryFactory();
@@ -196,15 +194,15 @@ contract ProtocolRelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
             })
         });
         vm.prank(relationshipManager);
-        relationshipModule.setRelationshipConfig(relationship, params);
+        relId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
         
     }
 
     function test_unsetRelationshipConfig() public {
         vm.prank(relationshipManager);
-        relationshipModule.unsetRelationshipConfig(relationship);
+        relationshipModule.unsetRelationshipConfig(relId);
 
-        IRelationshipModule.RelationshipConfig memory config = relationshipModule.relationshipConfig(relationship);
+        IRelationshipModule.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relId);
         assertEq(config.sourceIPAssetTypeMask, 0);
         assertEq(config.destIPAssetTypeMask, 0);
         assertFalse(config.onlySameFranchise);
@@ -214,7 +212,7 @@ contract ProtocolRelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
     function test_revert_unsetRelationshipConfigNotAuthorized() public {
         vm.expectRevert();
         vm.prank(franchiseOwner);
-        relationshipModule.unsetRelationshipConfig(relationship);
+        relationshipModule.unsetRelationshipConfig(relId);
     }
 
 }
