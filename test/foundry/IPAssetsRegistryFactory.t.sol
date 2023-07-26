@@ -38,7 +38,7 @@ contract IPAssetRegistryFactoryTest is Test {
         // TODO: figure why this is not matching correctly, the event is emitted according to traces
         // vm.expectEmit();
         // emit BeaconUpgraded(address(0x123));
-        address collection = factory.createFranchiseBlocks(1, "name", "symbol", "description");
+        address collection = factory.createFranchiseIPAssets(1, "name", "symbol", "description");
         assertTrue(collection != address(0));
         assertEq(IPAssetRegistry(collection).name(), "name");
         assertEq(IPAssetRegistry(collection).symbol(), "symbol");

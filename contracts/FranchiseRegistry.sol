@@ -40,7 +40,7 @@ contract FranchiseRegistry is
 
     constructor(address _factory) {
         _disableInitializers();
-        if (_factory == address(0)) revert ZeroAddress("factory");
+        if (_factory == address(0)) revert ZeroAddress();
         FACTORY = IPAssetRegistryFactory(_factory);
     }
 
@@ -66,7 +66,7 @@ contract FranchiseRegistry is
         string calldata description
     ) external returns (uint256, address) {
         FranchiseStorage storage $ = _getFranchiseStorage();
-        address ipAssetRegistry = FACTORY.createFranchiseBlocks(
+        address ipAssetRegistry = FACTORY.createFranchiseIPAssets(
             ++$.franchiseIds,
             name,
             symbol,

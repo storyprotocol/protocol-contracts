@@ -13,4 +13,6 @@ interface IIPAssetRegistry is
     IERC721Upgradeable,
     IIPAssetData,
     IGroupDAM
-    { }
+    { 
+    function franchiseId() external view returns (uint256);
+    }

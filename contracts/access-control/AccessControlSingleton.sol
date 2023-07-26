@@ -20,7 +20,7 @@ contract AccessControlSingleton is AccessControlUpgradeable, UUPSUpgradeable, Mu
      * @param _admin address to be the PROTOCOL_ADMIN_ROLE.
      */
     function initialize(address _admin) external initializer {
-        if (_admin == address(0)) revert ZeroAddress("_admin");
+        if (_admin == address(0)) revert ZeroAddress();
         __AccessControl_init();
         __UUPSUpgradeable_init();
         _grantRole(PROTOCOL_ADMIN_ROLE, _admin);

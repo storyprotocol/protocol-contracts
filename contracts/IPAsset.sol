@@ -12,4 +12,4 @@ enum IPAsset {
     ITEM
 }
     
-    
+uint8 constant EXTERNAL_ASSET = type(uint8).max; 
