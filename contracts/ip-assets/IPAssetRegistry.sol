@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 //import "forge-std/console.sol";
 import { IIPAssetRegistry } from "./IIPAssetRegistry.sol";
 import { LibIPAssetId } from "./LibIPAssetId.sol";
-import { Unauthorized, ZeroAddress } from "../errors/General.sol";
+import { Unauthorized, ZeroAmount } from "../errors/General.sol";
 import { IPAssetData } from "./data-access-modules/storage/IPAssetData.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 import { GroupDAM } from "./data-access-modules/group/GroupDAM.sol";
@@ -44,7 +44,7 @@ contract IPAssetRegistry is
     ) public initializer {
         __ERC721_init(_name, _symbol);
         __Multicall_init();
-        if (_franchiseId == 0) revert ZeroAddress();
+        if (_franchiseId == 0) revert ZeroAmount();
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
         $.franchiseId = _franchiseId;
         $.description = _description;

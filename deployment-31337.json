@@ -1,0 +1,14 @@
+{
+  "AccessControlSingleton-Impl": "0xc4B957Cd61beB9b9afD76204b30683EDAaaB51Ec",
+  "AccessControlSingleton-Proxy": "0xFa2f6c96C30e7F652C9BD6fA4f1EF1D47a88C18f",
+  "DstOwnerRelationshipProcessor": "0x571F4b96Abc69429e1F112232BDe599160360b6B",
+  "FranchiseRegistry-Impl": "0x75e7d780d4Fd26f1787192d8939a9f69D723E79a",
+  "FranchiseRegistry-Proxy": "0xb84132FbB7a1f19987CE8536c9885392B932b05a",
+  "IPAssetRegistryFactory": "0x6cdBd1b486b8FBD4140e8cd6daAED05bE13eD914",
+  "PermissionlessRelationshipProcessor": "0x1705a2D33C95E22F627486d1151c034a851c14e0",
+  "ProtocolRelationshipModule-Impl": "0xE7c415001162206eF27d7cA29cc871f3c9eE6cf4",
+  "ProtocolRelationshipModule-Proxy": "0xC8751DBe333604f45b98f96125BAd88bedC5a021",
+  "SrcDstOwnerRelationshipProcessor": "0xdBBC352fF1aefB16be2a5982508fDE2070B20828",
+  "SrcOwnerRelationshipProcessor": "0x16Af8E10E1FcDdA9dF1935839bdED3Cf8C1b8A44",
+  "contracts": 9
+}
