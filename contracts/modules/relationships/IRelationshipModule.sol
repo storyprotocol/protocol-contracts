@@ -37,7 +37,8 @@ interface IRelationshipModule {
         bool onlySameFranchise,
         address processor,
         uint256 maxTTL,
-        uint256 minTTL
+        uint256 minTTL,
+        bool renewable
     );
 
     event RelationshipConfigUnset(bytes32 indexed relationshipId);

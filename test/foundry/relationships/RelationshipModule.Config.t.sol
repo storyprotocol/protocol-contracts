@@ -120,6 +120,55 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
         relationshipModule.setRelationshipConfig(relationship, params);
     }
 
+    function test_relationshipConfigDecoded() public {
+        IPAsset[] memory sourceIPAssets = new IPAsset[](1);
+        sourceIPAssets[0] = IPAsset.STORY;
+        IPAsset[] memory destIPAssets = new IPAsset[](2);
+        destIPAssets[0] = IPAsset.CHARACTER;
+        destIPAssets[1] = IPAsset.ART;
+        
+        IRelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
+            sourceIPAssets: sourceIPAssets,
+            allowedExternalSource: false,
+            destIPAssets: destIPAssets,
+            allowedExternalDest: true,
+            onlySameFranchise: true,
+            processor: address(RelationshipProcessor),
+            disputer: address(this),
+            timeConfig: IRelationshipModule.TimeConfig({
+                minTTL: 0,
+                maxTTL: 0,
+                renewable: false
+            })
+        });
+        vm.prank(relationshipManager);
+        relationshipModule.setRelationshipConfig(relationship, params);
+
+        IRelationshipModule.SetRelationshipConfigParams memory result = relationshipModule.relationshipConfigDecoded(relationship);
+
+        _assertEqIPAssetArray(result.sourceIPAssets, params.sourceIPAssets);
+        _assertEqIPAssetArray(result.destIPAssets, params.destIPAssets);
+        assertEq(result.allowedExternalSource, params.allowedExternalSource);
+        assertEq(result.allowedExternalDest, params.allowedExternalDest);
+        assertEq(result.onlySameFranchise, params.onlySameFranchise);
+        assertEq(result.processor, params.processor);
+        assertEq(result.disputer, params.disputer);
+        assertEq(result.timeConfig.minTTL, params.timeConfig.minTTL);
+        assertEq(result.timeConfig.maxTTL, params.timeConfig.maxTTL);
+        assertEq(result.timeConfig.renewable, params.timeConfig.renewable);
+
+    }
+
+    function _assertEqIPAssetArray(IPAsset[] memory result, IPAsset[] memory expected) internal {
+        for (uint256 i = 0; i < result.length; i++) {
+            if (i < expected.length) {
+                assertEq(uint256(result[i]), uint256(expected[i]));
+            } else {
+                assertEq(uint256(result[i]), 0);
+            }
+        }
+    }
+
 }
 
 contract RelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {

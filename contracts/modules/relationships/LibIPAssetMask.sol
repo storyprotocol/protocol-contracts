@@ -40,8 +40,9 @@ library LibIPAssetMask {
     /**
      * @dev converts a mask to an array of IPAsset types and the allows external flag, by checking the bits corresponding
      * to the uint8 equivalent of the IPAsset types.
+     * NOTE: Caller must ignore the array elements of value 0
      * @param mask The mask representing the IPAsset types and the allows external flag
-     * @return ipAssets The array of IPAsset types
+     * @return ipAssets The array of IPAsset types. NOTE: Ignore the array elements of value 0
      * @return allowsExternal Whether the relationship config allows external (non SP ERC721) assets
      */
     function _convertFromMask(uint256 mask) internal pure returns (IPAsset[] memory ipAssets, bool allowsExternal) {

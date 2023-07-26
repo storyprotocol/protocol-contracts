@@ -215,7 +215,8 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
             relConfig.onlySameFranchise,
             params.processor,
             relConfig.timeConfig.maxTTL,
-            relConfig.timeConfig.minTTL
+            relConfig.timeConfig.minTTL,
+            relConfig.timeConfig.renewable
         );
     }
 
@@ -262,7 +263,12 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
         return $.relConfigs[relationshipId];
     }
 
-    /// convenience method to return a SetRelationshipConfigParams from a relationshipId, or an empty one if it doesn't exist
+    /**
+     * @dev convenience method to return a SetRelationshipConfigParams from a relationshipId, or an empty one if it doesn't exist
+     * NOTE: Caller must ignore the array elements of value 0 in the IPAsset arrays
+     * @param relationshipId the relationship ID
+     * @return params the SetRelationshipConfigParams
+     */ 
     function relationshipConfigDecoded(bytes32 relationshipId) external view returns(SetRelationshipConfigParams memory) {
         RelationshipConfig memory relConfig = relationshipConfig(relationshipId);
         (IPAsset[] memory sourceIPAssets, bool sourceSupportsExternal) = LibIPAssetMask._convertFromMask(relConfig.sourceIPAssetTypeMask);
