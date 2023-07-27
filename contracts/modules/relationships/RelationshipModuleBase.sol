@@ -10,9 +10,7 @@ import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
 import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
 import { IRelationshipModule } from "./IRelationshipModule.sol";
-import { LibIPAssetMask } from "./LibIPAssetMask.sol";
 import { IRelationshipProcessor } from "./processors/IRelationshipProcessor.sol";
-import { IPAsset, EXTERNAL_ASSET } from "contracts/IPAsset.sol";
 
 
 /**
