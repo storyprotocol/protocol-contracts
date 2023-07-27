@@ -10,7 +10,7 @@ import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
 import { RelationshipTypeChecker } from "./RelationshipTypeChecker.sol";
 import { IRelationshipModule } from "./IRelationshipModule.sol";
-import { IRelationshipProcessor } from "./RelationshipProcessors/IRelationshipProcessor.sol";
+import { IRelationshipProcessor } from "./processors/IRelationshipProcessor.sol";
 
 
 /**

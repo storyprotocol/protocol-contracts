@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import { RelationshipModuleBase } from "./RelationshipModuleBase.sol";
-import { UPGRADER_ROLE, RELATIONSHIP_MANAGER_ROLE, RELATIONSHIP_DISPUTER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
+import { UPGRADER_ROLE, RELATIONSHIP_MANAGER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
 
 /**
  * @title ProtocolRelationshipModule

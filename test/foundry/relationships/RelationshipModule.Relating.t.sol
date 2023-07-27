@@ -10,7 +10,7 @@ import "contracts/ip-assets/IPAssetRegistryFactory.sol";
 import "./RelationshipModuleHarness.sol";
 import "contracts/IPAsset.sol";
 import "contracts/errors/General.sol";
-import "contracts/modules/relationships/RelationshipProcessors/PermissionlessRelationshipProcessor.sol";
+import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 contract MockExternalAsset is ERC721 {
