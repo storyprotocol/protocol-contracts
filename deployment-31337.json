@@ -1,0 +1,17 @@
+{
+  "main": {
+    "AccessControlSingleton-Impl": "0x6E447CeC286dbaBe885fDbD9723DD63Cc2DE0Bd2",
+    "AccessControlSingleton-Proxy": "0xC06CBc0B7A136bda48865BE24228396Dea4094Ec",
+    "FranchiseRegistry-Impl": "0x446ce25bff9fe7049Aaf3339124F51F301e9c220",
+    "FranchiseRegistry-Proxy": "0x687E4e5a4471c259a8f56F1f06b0E5c5FEa808c8",
+    "IPAssetRegistryFactory": "0x7B4f9313d7a12aa902462860eeBD97ab2B68176F",
+    "ProtocolRelationshipModule-Impl": "0xa1833d78f09e2198774E612ca3d9879597ACc859",
+    "ProtocolRelationshipModule-Proxy": "0xd8562c2C2f7497D96C7Cf2f9E15392fe4c31c84f"
+  },
+  "relationship-processors": {
+    "DstOwnerRelationshipProcessor": "0x6E447CeC286dbaBe885fDbD9723DD63Cc2DE0Bd2",
+    "PermissionlessRelationshipProcessor": "0x7B4f9313d7a12aa902462860eeBD97ab2B68176F",
+    "SrcDstOwnerRelationshipProcessor": "0x446ce25bff9fe7049Aaf3339124F51F301e9c220",
+    "SrcOwnerRelationshipProcessor": "0xC06CBc0B7A136bda48865BE24228396Dea4094Ec"
+  }
+}
