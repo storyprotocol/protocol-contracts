@@ -6,7 +6,7 @@
     "FranchiseRegistry-Proxy": "0xf157916d184598105FE4681eC93Be0f799599003",
     "IPAssetRegistryFactory": "0x461DF243955aD5493cFa33434c2B7CfF2C583dc7",
     "ProtocolRelationshipModule-Impl": "0xf3b1129B0b2920968CBf089a88c7E6266FaE64aE",
-    "ProtocolRelationshipModule-Proxy": "0xb146cB898E95953f353bf5A50Fb8f129eC0D5AAb",
+    "ProtocolRelationshipModule-Proxy": "0xb146cB898E95953f353bf5A50Fb8f129eC0D5AAb"
   },
   "relationship-processors": {
     "DstOwnerRelationshipProcessor": "0x2890a4263BA12c6d6241CfC5c8D762B828041b86",
