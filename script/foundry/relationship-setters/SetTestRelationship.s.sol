@@ -16,12 +16,12 @@ contract SetTestRelationship is Script, BroadcastManager, JsonDeploymentHandler 
 
     ProtocolRelationshipModule protocolRelationshipModule;
 
-    constructor() JsonDeploymentHandler() {}
+    constructor() JsonDeploymentHandler("") {}
 
     function run() public {
         _readDeployment();
         _beginBroadcast();
-        address relModule = _readAddress("ProtocolRelationshipModule-Proxy");
+        address relModule = _readAddress(".main.ProtocolRelationshipModule-Proxy");
         if (relModule == address(0)) {
             revert("ProtocolRelationshipModule-Proxy not found");
         }
@@ -32,7 +32,7 @@ contract SetTestRelationship is Script, BroadcastManager, JsonDeploymentHandler 
             allIPAssets[i] = IPAsset(i + 1);
         }
 
-        address processor = _readAddress("PermissionlessRelationshipProcessor");
+        address processor = _readAddress(".relationship-processors.PermissionlessRelationshipProcessor");
         if (processor == address(0)) {
             revert("PermissionlessRelationshipProcessor");
         }

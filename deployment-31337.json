@@ -1,14 +1,17 @@
 {
-  "AccessControlSingleton-Impl": "0xc4B957Cd61beB9b9afD76204b30683EDAaaB51Ec",
-  "AccessControlSingleton-Proxy": "0xFa2f6c96C30e7F652C9BD6fA4f1EF1D47a88C18f",
-  "DstOwnerRelationshipProcessor": "0x571F4b96Abc69429e1F112232BDe599160360b6B",
-  "FranchiseRegistry-Impl": "0x75e7d780d4Fd26f1787192d8939a9f69D723E79a",
-  "FranchiseRegistry-Proxy": "0xb84132FbB7a1f19987CE8536c9885392B932b05a",
-  "IPAssetRegistryFactory": "0x6cdBd1b486b8FBD4140e8cd6daAED05bE13eD914",
-  "PermissionlessRelationshipProcessor": "0x1705a2D33C95E22F627486d1151c034a851c14e0",
-  "ProtocolRelationshipModule-Impl": "0xE7c415001162206eF27d7cA29cc871f3c9eE6cf4",
-  "ProtocolRelationshipModule-Proxy": "0xC8751DBe333604f45b98f96125BAd88bedC5a021",
-  "SrcDstOwnerRelationshipProcessor": "0xdBBC352fF1aefB16be2a5982508fDE2070B20828",
-  "SrcOwnerRelationshipProcessor": "0x16Af8E10E1FcDdA9dF1935839bdED3Cf8C1b8A44",
-  "contracts": 9
+  "main": {
+    "AccessControlSingleton-Impl": "0x6E447CeC286dbaBe885fDbD9723DD63Cc2DE0Bd2",
+    "AccessControlSingleton-Proxy": "0xC06CBc0B7A136bda48865BE24228396Dea4094Ec",
+    "FranchiseRegistry-Impl": "0x446ce25bff9fe7049Aaf3339124F51F301e9c220",
+    "FranchiseRegistry-Proxy": "0x687E4e5a4471c259a8f56F1f06b0E5c5FEa808c8",
+    "IPAssetRegistryFactory": "0x7B4f9313d7a12aa902462860eeBD97ab2B68176F",
+    "ProtocolRelationshipModule-Impl": "0xa1833d78f09e2198774E612ca3d9879597ACc859",
+    "ProtocolRelationshipModule-Proxy": "0xd8562c2C2f7497D96C7Cf2f9E15392fe4c31c84f"
+  },
+  "relationship-processors": {
+    "DstOwnerRelationshipProcessor": "0x6E447CeC286dbaBe885fDbD9723DD63Cc2DE0Bd2",
+    "PermissionlessRelationshipProcessor": "0x7B4f9313d7a12aa902462860eeBD97ab2B68176F",
+    "SrcDstOwnerRelationshipProcessor": "0x446ce25bff9fe7049Aaf3339124F51F301e9c220",
+    "SrcOwnerRelationshipProcessor": "0xC06CBc0B7A136bda48865BE24228396Dea4094Ec"
+  }
 }

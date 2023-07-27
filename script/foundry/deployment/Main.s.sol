@@ -6,14 +6,13 @@ import "test/foundry/utils/ProxyHelper.sol";
 import "script/foundry/utils/StringUtil.sol";
 import "script/foundry/utils/BroadcastManager.s.sol";
 import "script/foundry/utils/JsonDeploymentHandler.s.sol";
-import "script/foundry/DeployRelationshipProcessors.s.sol";
 import "contracts/ip-assets/IPAssetRegistryFactory.sol";
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/access-control/ProtocolRoles.sol";
 
-contract Deploy is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
+contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
     using StringUtil for uint256;
     using stdJson for string;
@@ -22,7 +21,7 @@ contract Deploy is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper 
     address accessControl;
     address franchiseRegistry;
 
-    constructor() JsonDeploymentHandler() {
+    constructor() JsonDeploymentHandler("main") {
     }
 
     /// @dev To use, run the following command (e.g. for Goerli):

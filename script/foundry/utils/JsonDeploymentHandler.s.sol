@@ -10,21 +10,24 @@ contract JsonDeploymentHandler is Script {
     using StringUtil for uint256;
     using stdJson for string;
 
-    string contractOutput;
-    uint256 contracts;
+    string output;
+    string readJson;
     string chainId;
+    string key;
+    string internalKey = "key";
 
-    constructor() {
+    constructor(string memory _key) {
         chainId = (block.chainid).toString();
+        key = _key;
     }
 
     function _writeAddress(string memory contractKey, address newAddress) internal {
-        contractOutput = vm.serializeAddress("", contractKey, newAddress);
-        contractOutput = vm.serializeUint("", "contracts", contracts++);
+        output = vm.serializeAddress(internalKey, contractKey, newAddress);
+        
     }
 
-    function _readAddress(string memory contractName) internal returns(address) {
-        try vm.parseJsonAddress(contractOutput, string.concat("$.", contractName)) returns (address addr) {
+    function _readAddress(string memory readPath) internal returns(address) {
+        try vm.parseJsonAddress(readJson, readPath) returns (address addr) {
             return addr;
         } catch  {
             return address(0);
@@ -35,12 +38,15 @@ contract JsonDeploymentHandler is Script {
         string memory root = vm.projectRoot();
         string memory filePath = string.concat("/deployment-", (block.chainid).toString(), ".json");
         string memory path = string.concat(root, filePath);
-        contractOutput = vm.readFile(path);
-        contracts = vm.parseJsonUint(contractOutput, "$.contracts");
+        readJson = vm.readFile(path);
+    }
+
+    function _writeToJson(string memory contractKey, string memory value) internal {
+        vm.writeJson(value, string.concat("./deployment-", chainId, ".json"), contractKey);
     }
 
     function _writeDeployment() internal {
-        vm.writeJson(contractOutput, string.concat("./deployment-", chainId, ".json"));
+        vm.writeJson(output, string.concat("./deployment-", chainId, ".json"), string.concat(".", key));
     }
 
 }
