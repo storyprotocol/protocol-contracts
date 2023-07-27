@@ -8,7 +8,7 @@
     "ProtocolRelationshipModule-Impl": "0xf3b1129B0b2920968CBf089a88c7E6266FaE64aE",
     "ProtocolRelationshipModule-Proxy": "0xb146cB898E95953f353bf5A50Fb8f129eC0D5AAb",
   },
-  "rel-processors": {
+  "relationship-processors": {
     "DstOwnerRelationshipProcessor": "0x2890a4263BA12c6d6241CfC5c8D762B828041b86",
     "PermissionlessRelationshipProcessor": "0xA5ee53c74f75bB4A149c55d8A24E5dF563897B0f",
     "SrcDstOwnerRelationshipProcessor": "0xc6e3e7844E103116E3CA06aae3a02fde908F7c1a",
