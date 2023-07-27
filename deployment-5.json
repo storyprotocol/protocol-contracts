@@ -2,10 +2,10 @@
   "main": {
     "AccessControlSingleton-Impl": "0xD933e6768a0C86ca11DDf802932FeBD50509Ba4D",
     "AccessControlSingleton-Proxy": "0x58eda9b5b0983f75fa887B598d7164E82791Ba21",
-    "FranchiseRegistry-Impl": "0x4626Bc62A598afA131C9051917f470d7F3787A4f",
+    "FranchiseRegistry-Impl": "0x070E97bEA1DBEF56585bA5fB2CD7632A23F54bd3",
     "FranchiseRegistry-Proxy": "0xf157916d184598105FE4681eC93Be0f799599003",
     "IPAssetRegistryFactory": "0x461DF243955aD5493cFa33434c2B7CfF2C583dc7",
-    "ProtocolRelationshipModule-Impl": "0xf3b1129B0b2920968CBf089a88c7E6266FaE64aE",
+    "ProtocolRelationshipModule-Impl": "0x0c34223fc772aeC0514B5fbf5614b9ab85EdaAe1",
     "ProtocolRelationshipModule-Proxy": "0xb146cB898E95953f353bf5A50Fb8f129eC0D5AAb"
   },
   "relationship-processors": {

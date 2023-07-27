@@ -5,54 +5,62 @@ import "forge-std/Script.sol";
 import "script/foundry/utils/StringUtil.sol";
 import "script/foundry/utils/JsonDeploymentHandler.s.sol";
 import "script/foundry/utils/BroadcastManager.s.sol";
-import "contracts/IPAsset.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
-import "contracts/modules/relationships/IRelationshipModule.sol";
-
-contract SetTestRelationship is Script, BroadcastManager, JsonDeploymentHandler {
+import "contracts/modules/relationships/RelationshipModuleBase.sol";
+import "contracts/FranchiseRegistry.sol";
+import "contracts/access-control/AccessControlSingleton.sol";
+import "contracts/access-control/ProtocolRoles.sol";
+/**
+ * Use to upgrade contracts during development, in testnets. Expect things to break.
+ */
+contract UpgradeRelationships is Script, BroadcastManager, JsonDeploymentHandler {
 
     using StringUtil for uint256;
     using stdJson for string;
 
-    ProtocolRelationshipModule protocolRelationshipModule;
-
-    constructor() JsonDeploymentHandler("") {}
+    constructor() JsonDeploymentHandler("main") {}
 
     function run() public {
         _readDeployment();
         _beginBroadcast();
-        address relModule = _readAddress(".main.ProtocolRelationshipModule-Proxy");
-        if (relModule == address(0)) {
+        
+        ProtocolRelationshipModule relModule = ProtocolRelationshipModule(_readAddress(".main.ProtocolRelationshipModule-Proxy"));
+        if (address(relModule) == address(0)) {
             revert("ProtocolRelationshipModule-Proxy not found");
         }
-        protocolRelationshipModule = ProtocolRelationshipModule(relModule);
+        address franchiseRegistryProxy = _readAddress(".main.FranchiseRegistry-Proxy");
 
-        IPAsset[] memory allIPAssets = new IPAsset[](6);
-        for (uint8 i = 0; i < 6; i++) {
-            allIPAssets[i] = IPAsset(i + 1);
-        }
-
-        address processor = _readAddress(".relationship-processors.PermissionlessRelationshipProcessor");
-        if (processor == address(0)) {
-            revert("PermissionlessRelationshipProcessor");
-        }
-
-        IRelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
-            sourceIPAssets: allIPAssets,
-            allowedExternalSource: true,
-            destIPAssets: allIPAssets,
-            allowedExternalDest: true,
-            onlySameFranchise: true,
-            processor: processor,
-            disputer: admin,
-            timeConfig: IRelationshipModule.TimeConfig({
-                maxTTL: 0,
-                minTTL: 0,
-                renewable: false
-            })
-        });
+         
+        address newProtocolRelationship = address(new ProtocolRelationshipModule(franchiseRegistryProxy));
+        console.log("Upgrading ProtocolRelationshipModule to ", newProtocolRelationship);
+        relModule.upgradeTo(newProtocolRelationship);
+        console.log("Upgraded");
         
-        protocolRelationshipModule.setRelationshipConfig("TEST_RELATIONSHIP", params);
+    }
+
+}
+
+contract UpgradeFranchise is Script, BroadcastManager, JsonDeploymentHandler {
+
+    using StringUtil for uint256;
+    using stdJson for string;
+
+    constructor() JsonDeploymentHandler("main") {}
+
+    function run() public {
+        _readDeployment();
+        _beginBroadcast();
+
+        address franchiseRegistryProxy = _readAddress(".main.FranchiseRegistry-Proxy");
+        address ipAssetRegistryFactory = _readAddress(".main.IPAssetRegistryFactory");
+        if (address(ipAssetRegistryFactory) == address(0)) {
+            revert("ipAssetRegistryFactory not found");
+        }
+
+        FranchiseRegistry franchiseRegistry = FranchiseRegistry(franchiseRegistryProxy);
+        address newFranchiseRegistry = address(new FranchiseRegistry(ipAssetRegistryFactory));
+        console.log("Upgrading FranchiseRegistry to ", newFranchiseRegistry);
+        franchiseRegistry.upgradeTo(newFranchiseRegistry);
         
     }
 
