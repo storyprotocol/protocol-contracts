@@ -9,6 +9,8 @@ import { ZeroAddress, UnsupportedInterface, Unauthorized } from "contracts/error
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
 import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
+import { IPAsset } from "contracts/IPAsset.sol";
+import { LibIPAssetMask } from "./LibIPAssetMask.sol";
 import { IRelationshipModule } from "./IRelationshipModule.sol";
 import { IRelationshipProcessor } from "./processors/IRelationshipProcessor.sol";
 
