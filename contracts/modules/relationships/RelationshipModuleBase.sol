@@ -8,7 +8,9 @@ import { AccessControlledUpgradeable } from "contracts/access-control/AccessCont
 import { ZeroAddress, UnsupportedInterface, Unauthorized } from "contracts/errors/General.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
-import { RelationshipTypeChecker } from "./RelationshipTypeChecker.sol";
+import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
+import { IPAsset } from "contracts/IPAsset.sol";
+import { LibIPAssetMask } from "./LibIPAssetMask.sol";
 import { IRelationshipModule } from "./IRelationshipModule.sol";
 import { IRelationshipProcessor } from "./processors/IRelationshipProcessor.sol";
 
@@ -29,7 +31,7 @@ import { IRelationshipProcessor } from "./processors/IRelationshipProcessor.sol"
  * 
  * It's up to subclasses to define which addresses can set relationship configs.
  */
-abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlledUpgradeable, RelationshipTypeChecker, Multicall {
+abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlledUpgradeable, Multicall {
     using ERC165CheckerUpgradeable for address;
 
     /// @custom:storage-location erc7201:story-protocol.relationship-module.storage
@@ -167,17 +169,19 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
         if(sourceIsAssetRegistry && destIsAssetRegistry && params.sourceContract != params.destContract && relConfig.onlySameFranchise) revert CannotRelateToOtherFranchise();
     }
 
+
     /**
-     * @notice checks if an address is a valid SP IPAssetRegistry.
-     * @param ipAssetRegistry the address to check
-     * @return true if it's a valid SP IPAssetRegistry, false otherwise
+     * @dev Checks if the source or destination type of a relationship is allowed by the relationship config.
+     * @param collection The address of the collection of the relationship endpoint
+     * @param id The id of the relationship endpoint
+     * @param assetTypeMask The asset type mask of the relationship config, which contains the allowed asset types and the external asset flag
+     * @return result Whether the relationship endpoint is valid
+     * @return isAssetRegistry Whether the relationship endpoint is a Story Protocol IP Asset Registry
      */
-    function _isAssetRegistry(address ipAssetRegistry) internal virtual override view returns(bool) {
-        try IIPAssetRegistry(ipAssetRegistry).franchiseId() returns (uint256 franchiseId) {
-            return FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId) == ipAssetRegistry;
-        } catch {
-            return false;
-        }
+    function _checkRelationshipNode(address collection, uint256 id, uint256 assetTypeMask) private view returns (bool result, bool isAssetRegistry) {
+        if (IERC721(collection).ownerOf(id) == address(0)) return (false, false);
+        isAssetRegistry = FRANCHISE_REGISTRY.isIpAssetRegistry(collection);
+        return (LibIPAssetMask._checkRelationshipNode(isAssetRegistry, id, assetTypeMask), isAssetRegistry);
     }
 
     /// calculates the relationship key by keccak256 hashing srcContract, srcId, dstContract, dstId and relationshipId
@@ -197,22 +201,26 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
 
     /**
      * @notice Sets a relationship config for a relationship ID.
-     * @param relationshipId the relationship ID
+     * @param name the relationship name
      * @param params the relationship config params
      */
-    function _setRelationshipConfig(bytes32 relationshipId, SetRelationshipConfigParams calldata params) internal {
+    function _setRelationshipConfig(string calldata name, SetRelationshipConfigParams calldata params) internal returns(bytes32 relationshipId) {
+        relationshipId = getRelationshipId(name);
         RelationshipConfig memory relConfig = _convertRelParams(params);
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         $.relConfigs[relationshipId] = relConfig;
         emit RelationshipConfigSet(
+            name,
             relationshipId,
             relConfig.sourceIPAssetTypeMask,
             relConfig.destIPAssetTypeMask,
             relConfig.onlySameFranchise,
             params.processor,
             relConfig.timeConfig.maxTTL,
-            relConfig.timeConfig.minTTL
+            relConfig.timeConfig.minTTL,
+            relConfig.timeConfig.renewable
         );
+        return relationshipId;
     }
 
     /**
@@ -243,8 +251,8 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
         if (params.timeConfig.maxTTL < params.timeConfig.minTTL) revert InvalidTTL();
         if (params.disputer == address(0)) revert ZeroAddress();
         return RelationshipConfig(
-            _convertToMask(params.sourceIPAssets, params.allowedExternalSource),
-            _convertToMask(params.destIPAssets, params.allowedExternalDest),
+            LibIPAssetMask._convertToMask(params.sourceIPAssets, params.allowedExternalSource),
+            LibIPAssetMask._convertToMask(params.destIPAssets, params.allowedExternalDest),
             params.onlySameFranchise,
             IRelationshipProcessor(params.processor),
             params.disputer,
@@ -253,9 +261,64 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     }
 
     /// returns a RelationshipConfig for the given relationshipId, or an empty one if it doesn't exist
-    function relationshipConfig(bytes32 relationshipId) external view returns (RelationshipConfig memory) {
+    function getRelationshipConfig(bytes32 relationshipId) public view returns (RelationshipConfig memory) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         return $.relConfigs[relationshipId];
+    }
+
+    /**
+     * @dev convenience method to return a SetRelationshipConfigParams from a relationshipId, or an empty one if it doesn't exist
+     * NOTE: Caller must ignore the array elements of value 0 in the IPAsset arrays
+     * @param relationshipId the relationship ID
+     * @return params the SetRelationshipConfigParams
+     */ 
+    function getRelationshipConfigDecoded(bytes32 relationshipId) external view returns(SetRelationshipConfigParams memory) {
+        RelationshipConfig memory relConfig = getRelationshipConfig(relationshipId);
+        (IPAsset[] memory sourceIPAssets, bool sourceSupportsExternal) = LibIPAssetMask._convertFromMask(relConfig.sourceIPAssetTypeMask);
+        (IPAsset[] memory destIPAssets, bool destSupportsExternal) = LibIPAssetMask._convertFromMask(relConfig.destIPAssetTypeMask);
+        return SetRelationshipConfigParams(
+            sourceIPAssets,
+            sourceSupportsExternal,
+            destIPAssets,
+            destSupportsExternal,
+            relConfig.onlySameFranchise,
+            address(relConfig.processor),
+            relConfig.disputer,
+            relConfig.timeConfig
+        );
+    }
+
+    function getRelationshipId(string calldata name) public pure returns (bytes32) {
+        return keccak256(abi.encode(name));
+    }
+    
+
+    /********* Mask Helpers *********/
+    /**
+     * @dev converts an array of IPAssets types and the allows external flag to a mask, by setting the bits corresponding
+     * to the uint8 equivalent of the IPAsset types to 1.
+     * @param ipAssets The array of IPAsset types
+     * @param allowsExternal Whether the relationship config allows external (non SP ERC721) assets
+     * @return mask The mask representing the IPAsset types and the allows external flag
+     */
+    function convertToMask(IPAsset[] calldata ipAssets, bool allowsExternal) external pure returns (uint256) {
+        return LibIPAssetMask._convertToMask(ipAssets, allowsExternal);
+    }
+
+    /**
+     * @dev converts a mask to an array of IPAsset types and the allows external flag, by checking the bits corresponding
+     * to the uint8 equivalent of the IPAsset types.
+     * @param mask The mask representing the IPAsset types and the allows external flag
+     * @return ipAssets The array of IPAsset types
+     * @return allowsExternal Whether the relationship config allows external (non SP ERC721) assets
+     */
+    function convertFromMask(uint256 mask) external pure returns (IPAsset[] memory ipAssets, bool allowsExternal) {
+        return LibIPAssetMask._convertFromMask(mask);
+    }
+
+    /// returns true if the asset type is supported by the mask, false otherwise
+    function supportsIPAssetType(uint256 mask, uint8 assetType) external pure returns (bool) {
+        return LibIPAssetMask._supportsIPAssetType(mask, assetType);
     }
 
 }

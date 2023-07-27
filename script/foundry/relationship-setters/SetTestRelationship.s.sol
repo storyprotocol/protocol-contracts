@@ -16,25 +16,23 @@ contract SetTestRelationship is Script, BroadcastManager, JsonDeploymentHandler 
 
     ProtocolRelationshipModule protocolRelationshipModule;
 
-    constructor() JsonDeploymentHandler() {}
+    constructor() JsonDeploymentHandler("") {}
 
     function run() public {
         _readDeployment();
         _beginBroadcast();
-        address relModule = _readAddress("ProtocolRelationshipModule-Proxy");
+        address relModule = _readAddress(".main.ProtocolRelationshipModule-Proxy");
         if (relModule == address(0)) {
             revert("ProtocolRelationshipModule-Proxy not found");
         }
         protocolRelationshipModule = ProtocolRelationshipModule(relModule);
-
-        bytes32 relationshipId = keccak256("TEST_RELATIONSHIP");
 
         IPAsset[] memory allIPAssets = new IPAsset[](6);
         for (uint8 i = 0; i < 6; i++) {
             allIPAssets[i] = IPAsset(i + 1);
         }
 
-        address processor = _readAddress("PermissionlessRelationshipProcessor");
+        address processor = _readAddress(".relationship-processors.PermissionlessRelationshipProcessor");
         if (processor == address(0)) {
             revert("PermissionlessRelationshipProcessor");
         }
@@ -54,7 +52,7 @@ contract SetTestRelationship is Script, BroadcastManager, JsonDeploymentHandler 
             })
         });
         
-        protocolRelationshipModule.setRelationshipConfig(relationshipId, params);
+        protocolRelationshipModule.setRelationshipConfig("TEST_RELATIONSHIP", params);
         
     }
 

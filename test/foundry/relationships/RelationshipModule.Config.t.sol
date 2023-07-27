@@ -25,8 +25,6 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
     address relationshipManager = address(234);
     address franchiseOwner = address(456);
 
-    bytes32 relationship = keccak256("RELATIONSHIP");
-
     function setUp() public {
         factory = new IPAssetRegistryFactory();
         acs = AccessControlSingleton(
@@ -64,7 +62,7 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
         RelationshipProcessor = new PermissionlessRelationshipProcessor(address(relationshipModule));
     }
 
-    function test_setProtocolLevelRelationship() public {
+    function test_setRelationship() public {
         IPAsset[] memory sourceIPAssets = new IPAsset[](1);
         sourceIPAssets[0] = IPAsset.STORY;
         IPAsset[] memory destIPAssets = new IPAsset[](2);
@@ -86,9 +84,10 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
             })
         });
         vm.prank(relationshipManager);
-        relationshipModule.setRelationshipConfig(relationship, params);
+        bytes32 relId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
+        assertEq(relId, keccak256(abi.encode("RELATIONSHIP")));
 
-        IRelationshipModule.RelationshipConfig memory config = relationshipModule.relationshipConfig(relationship);
+        IRelationshipModule.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relId);
         assertEq(config.sourceIPAssetTypeMask, 1 << (uint256(IPAsset.STORY) & 0xff));
         assertEq(config.destIPAssetTypeMask, 1 << (uint256(IPAsset.CHARACTER) & 0xff) | 1 << (uint256(IPAsset.ART) & 0xff) | (uint256(EXTERNAL_ASSET) << 248));
         assertTrue(config.onlySameFranchise);
@@ -117,7 +116,56 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
         });
         vm.startPrank(relationshipManager);
         vm.expectRevert();
-        relationshipModule.setRelationshipConfig(relationship, params);
+        relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
+    }
+
+    function test_relationshipConfigDecoded() public {
+        IPAsset[] memory sourceIPAssets = new IPAsset[](1);
+        sourceIPAssets[0] = IPAsset.STORY;
+        IPAsset[] memory destIPAssets = new IPAsset[](2);
+        destIPAssets[0] = IPAsset.CHARACTER;
+        destIPAssets[1] = IPAsset.ART;
+        
+        IRelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
+            sourceIPAssets: sourceIPAssets,
+            allowedExternalSource: false,
+            destIPAssets: destIPAssets,
+            allowedExternalDest: true,
+            onlySameFranchise: true,
+            processor: address(RelationshipProcessor),
+            disputer: address(this),
+            timeConfig: IRelationshipModule.TimeConfig({
+                minTTL: 0,
+                maxTTL: 0,
+                renewable: false
+            })
+        });
+        vm.prank(relationshipManager);
+        bytes32 relId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
+
+        IRelationshipModule.SetRelationshipConfigParams memory result = relationshipModule.getRelationshipConfigDecoded(relId);
+
+        _assertEqIPAssetArray(result.sourceIPAssets, params.sourceIPAssets);
+        _assertEqIPAssetArray(result.destIPAssets, params.destIPAssets);
+        assertEq(result.allowedExternalSource, params.allowedExternalSource);
+        assertEq(result.allowedExternalDest, params.allowedExternalDest);
+        assertEq(result.onlySameFranchise, params.onlySameFranchise);
+        assertEq(result.processor, params.processor);
+        assertEq(result.disputer, params.disputer);
+        assertEq(result.timeConfig.minTTL, params.timeConfig.minTTL);
+        assertEq(result.timeConfig.maxTTL, params.timeConfig.maxTTL);
+        assertEq(result.timeConfig.renewable, params.timeConfig.renewable);
+
+    }
+
+    function _assertEqIPAssetArray(IPAsset[] memory result, IPAsset[] memory expected) internal {
+        for (uint256 i = 0; i < result.length; i++) {
+            if (i < expected.length) {
+                assertEq(uint256(result[i]), uint256(expected[i]));
+            } else {
+                assertEq(uint256(result[i]), 0);
+            }
+        }
     }
 
 }
@@ -135,7 +183,7 @@ contract RelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
     address relationshipManager = address(234);
     address franchiseOwner = address(456);
 
-    bytes32 relationship = keccak256("PROTOCOL_Relationship");
+    bytes32 relationshipId;
 
     function setUp() public {
         factory = new IPAssetRegistryFactory();
@@ -192,15 +240,15 @@ contract RelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
             })
         });
         vm.prank(relationshipManager);
-        relationshipModule.setRelationshipConfig(relationship, params);
+        relationshipId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
         
     }
 
     function test_unsetRelationshipConfig() public {
         vm.prank(relationshipManager);
-        relationshipModule.unsetRelationshipConfig(relationship);
+        relationshipModule.unsetRelationshipConfig(relationshipId);
 
-        IRelationshipModule.RelationshipConfig memory config = relationshipModule.relationshipConfig(relationship);
+        IRelationshipModule.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relationshipId);
         assertEq(config.sourceIPAssetTypeMask, 0);
         assertEq(config.destIPAssetTypeMask, 0);
         assertFalse(config.onlySameFranchise);
@@ -209,8 +257,9 @@ contract RelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
 
     function test_revert_unsetRelationshipConfigNonExistingRelationship() public {
         vm.prank(relationshipManager);
+        bytes32 id = relationshipModule.getRelationshipId("UNDEFINED_Relationship");
         vm.expectRevert(IRelationshipModule.NonExistingRelationship.selector);
-        relationshipModule.unsetRelationshipConfig(keccak256("UNDEFINED_Relationship"));
+        relationshipModule.unsetRelationshipConfig(id);
     }
 
 }

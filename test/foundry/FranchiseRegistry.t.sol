@@ -72,5 +72,16 @@ contract FranchiseRegistryTest is Test, ProxyHelper {
         assertFalse(ipAsset == address(0));
         assertEq(ipAsset, register.ipAssetRegistryForId(id));
         assertEq(register.ownerOf(id), franchiseOwner);
+        vm.stopPrank();
+    }
+
+    function test_isIpAssetRegistry() public {
+        vm.prank(franchiseOwner);   
+        (uint256 id, address ipAsset) = register.registerFranchise("name", "symbol", "description");
+        assertTrue(register.isIpAssetRegistry(ipAsset));
+    }
+
+    function test_isNotIpAssetRegistry() public {
+        assertFalse(register.isIpAssetRegistry(address(register)));
     }
 }

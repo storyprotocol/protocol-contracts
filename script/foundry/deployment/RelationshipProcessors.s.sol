@@ -11,20 +11,20 @@ import "contracts/modules/relationships/processors/DstOwnerRelationshipProcessor
 import "contracts/modules/relationships/processors/SrcOwnerRelationshipProcessor.sol";
 import "contracts/modules/relationships/processors/SrcDstOwnerRelationshipProcessor.sol";
 
-contract DeployRelationshipProcessors is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
+contract RelationshipProcessors is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
     using StringUtil for uint256;
     using stdJson for string;
     address relationshipModule;
 
-    constructor() JsonDeploymentHandler() {
+    constructor() JsonDeploymentHandler("relationships-processors") {
     }
 
     function run() public {
         _beginBroadcast();
         _readDeployment();
         
-        relationshipModule = _readAddress("ProtocolRelationshipModule-Proxy");
+        relationshipModule = _readAddress("$.main.ProtocolRelationshipModule-Proxy");
         if (relationshipModule == address(0)) {
             revert("ProtocolRelationshipModule-Proxy not found");
         }

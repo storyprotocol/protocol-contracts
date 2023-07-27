@@ -11,8 +11,8 @@ contract RelationshipModuleHarness is RelationshipModuleBase {
         __RelationshipModuleBase_init(accessControl);
     }
 
-    function setRelationshipConfig(bytes32 relationshipId, SetRelationshipConfigParams calldata params) external {
-        _setRelationshipConfig(relationshipId, params);
+    function setRelationshipConfig(string calldata name, SetRelationshipConfigParams calldata params) external returns(bytes32 relationshipId) {
+        return _setRelationshipConfig(name, params);
     }
 
     function unsetRelationshipConfig(bytes32 relationshipId) external {

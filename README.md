@@ -65,6 +65,11 @@ forge script script/foundry/Deploy.s.sol:Deploy --fork-url=<network rpc url url>
 ```
 
 ## Tasks
+Before using any task, make sure you have run
+```
+npx hardhat compile
+```
+
 NOTE: All task that generate transactions can be called with additional param `--events true ` so they print the tx receipt's events
 Create a Franchise
 ```

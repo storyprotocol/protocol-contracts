@@ -31,13 +31,15 @@ interface IRelationshipModule {
     );
 
     event RelationshipConfigSet(
+        string name,
         bytes32 indexed relationshipId,
         uint256 sourceIPAssetTypeMask,
         uint256 destIPAssetTypeMask,
         bool onlySameFranchise,
         address processor,
         uint256 maxTTL,
-        uint256 minTTL
+        uint256 minTTL,
+        bool renewable
     );
 
     event RelationshipConfigUnset(bytes32 indexed relationshipId);
@@ -89,7 +91,9 @@ interface IRelationshipModule {
     function unrelate(RelationshipParams calldata params) external;
     function areTheyRelated(RelationshipParams calldata params) external view returns (bool);
     function isRelationshipExpired(RelationshipParams calldata params) external view returns (bool);
-    function setRelationshipConfig(bytes32 relationshipId, SetRelationshipConfigParams calldata params) external;
+    function setRelationshipConfig(string calldata name, SetRelationshipConfigParams calldata params) external returns(bytes32 relationshipId);
+    function getRelationshipId(string calldata name) external view returns (bytes32);
     function unsetRelationshipConfig(bytes32 relationshipId) external;
-    function relationshipConfig(bytes32 relationshipId) external view returns (RelationshipConfig memory);
+    function getRelationshipConfig(bytes32 relationshipId) external view returns (RelationshipConfig memory);
+    function getRelationshipConfigDecoded(bytes32 relationshipId) external view returns (SetRelationshipConfigParams memory);
 }
