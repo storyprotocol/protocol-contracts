@@ -7,6 +7,7 @@ function findId(events) {
 }
 
 function validateIPAssetType(IPAssetType) {
+    console.log("IPAssetType: ", IPAssetType);
     switch (IPAssetType) {
         case "STORY":
             return 1;
@@ -28,12 +29,15 @@ function validateIPAssetType(IPAssetType) {
 async function main(args, hre) {
     const { ethers } = hre;
     const { chainId, contracts } = await loadDeployment(hre);
-    const { franchiseId, IPAssetType, name, description, mediaURL, events } = args;
-    const sbType = validateIPAssetType(IPAssetType);
+    const { franchiseId, ipAssetType, name, description, mediaURL, events } = args;
+    console.log(args)
+    console.log(ipAssetType)
+    const sbType = validateIPAssetType(ipAssetType);
+    console.log("sbType: ", sbType);
     const { address } = await getIPAssetRegistryAddress(ethers, franchiseId, contracts);
     
     const IPAssetRegistry = await contracts.IPAssetsRegistry.attach(address);
-    console.log("Creating story block: ", IPAssetType, name, description, mediaURL);
+    console.log("Creating story block: ", ipAssetType, name, description, mediaURL);
     const tx = await IPAssetRegistry.createIPAsset(sbType, name, description, mediaURL);
     console.log("tx: ", tx.hash);
     console.log("Waiting for tx to be mined...");
