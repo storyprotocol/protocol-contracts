@@ -7,6 +7,8 @@ import "script/foundry/utils/StringUtil.sol";
 import "script/foundry/utils/BroadcastManager.s.sol";
 import "script/foundry/utils/JsonDeploymentHandler.s.sol";
 import "contracts/ip-assets/IPAssetRegistryFactory.sol";
+import "contracts/ip-assets/IPAssetRegistry.sol";
+import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
@@ -20,6 +22,7 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
     address ipAssetsFactory;
     address accessControl;
     address franchiseRegistry;
+    address commonIPAssetEventEmitter;
 
     constructor() JsonDeploymentHandler("main") {
     }
@@ -72,7 +75,6 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         _writeAddress(contractKey, newAddress);
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-
         contractKey = "FranchiseRegistry-Proxy";
 
         console.log(string.concat("Deploying ", contractKey, "..."));
@@ -86,6 +88,30 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
         franchiseRegistry = newAddress;
+
+        /// COMMON EVENT EMITTER
+        contractKey = "CommonEventEmitter";
+
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new CommonIPAssetEventEmitter(franchiseRegistry));
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+
+        commonIPAssetEventEmitter = newAddress;
+
+        /// UPDATE BEACON
+
+        contractKey = "IPAssetRegistry-Impl";
+
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new IPAssetRegistry(commonIPAssetEventEmitter));
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+
+        console.log(string.concat("Updating ", contractKey, " beacon..."));
+        IPAssetRegistryFactory(ipAssetsFactory).upgradeFranchises(newAddress);
+        console.log(string.concat(contractKey, " beacon updated to:"), newAddress);
+
 
         /// PROTOCOL RELATIONSHIP MODULE
         contractKey = "ProtocolRelationshipModule-Impl";

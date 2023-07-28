@@ -6,6 +6,7 @@ import './utils/ProxyHelper.sol';
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/ip-assets/IPAssetRegistryFactory.sol";
+import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
 
 contract FranchiseRegistryTest is Test, ProxyHelper {
 
@@ -44,6 +45,11 @@ contract FranchiseRegistryTest is Test, ProxyHelper {
                 )
             )
         );
+
+        address eventEmitter = address(new CommonIPAssetEventEmitter(address(register)));
+        address ipAssetRegistry = address(new IPAssetRegistry(eventEmitter));
+
+        factory.upgradeFranchises(ipAssetRegistry);
     }
 
     function test_setUp() public {

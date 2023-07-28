@@ -2,12 +2,12 @@
 pragma solidity ^0.8.19;
 
 import { IGroupDAM } from "./IGroupDAM.sol";
-import { IPAssetData } from "../storage/IPAssetData.sol";
+import { IPAssetDataManager } from "../storage/IPAssetDataManager.sol";
 import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 
-abstract contract GroupDAM is IGroupDAM, IPAssetData {
+abstract contract GroupDAM is IGroupDAM, IPAssetDataManager {
 
     using EnumerableSet for EnumerableSet.UintSet;
 

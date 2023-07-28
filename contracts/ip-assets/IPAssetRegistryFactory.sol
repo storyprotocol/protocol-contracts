@@ -7,11 +7,11 @@ import { IPAssetRegistry } from "./IPAssetRegistry.sol";
 import { ZeroAddress } from "../errors/General.sol";
 import { IVersioned } from "../utils/IVersioned.sol";
 import { UnsupportedInterface } from "../errors/General.sol";
+import { RevertingIPAssetRegistry } from "contracts/utils/RevertingIPAssetRegistry.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol"; 
 import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
-
 
 contract IPAssetRegistryFactory is Ownable {
     using ERC165Checker for address;
@@ -22,7 +22,8 @@ contract IPAssetRegistryFactory is Ownable {
     UpgradeableBeacon public immutable BEACON;
 
     constructor() {
-        BEACON = new UpgradeableBeacon(address(new IPAssetRegistry()));
+        // NOTE: Franchise creation won't work until the beacon is upgraded
+        BEACON = new UpgradeableBeacon(address(new RevertingIPAssetRegistry()));
     }
 
     function createFranchiseIPAssets(

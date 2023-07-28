@@ -7,7 +7,7 @@ import { IPAsset } from "../../contracts/IPAsset.sol";
 import { LibIPAssetId } from "../../contracts/ip-assets/LibIPAssetId.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { IERC1967 } from "@openzeppelin/contracts/interfaces/IERC1967.sol";
-
+import { MockIPAssetEventEmitter } from "./mocks/MockIPAssetEventEmitter.sol";
 import "forge-std/Test.sol";
 
 contract IPAssetRegistryTest is Test {
@@ -37,6 +37,8 @@ contract IPAssetRegistryTest is Test {
 
     function setUp() public {
         factory = new IPAssetRegistryFactory();
+        address mockEventEmitter = address(new MockIPAssetEventEmitter());
+        factory.upgradeFranchises(address(new IPAssetRegistry(mockEventEmitter)));
         ipAssetRegistry = IPAssetRegistry(factory.createFranchiseIPAssets(1, "name", "symbol", "description"));
     }
 

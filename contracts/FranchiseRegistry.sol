@@ -5,9 +5,10 @@ import { IPAsset } from "./IPAsset.sol";
 import { IPAssetRegistryFactory } from "./ip-assets/IPAssetRegistryFactory.sol";
 import { AccessControlledUpgradeable } from "./access-control/AccessControlledUpgradeable.sol";
 import { UPGRADER_ROLE } from "./access-control/ProtocolRoles.sol";
-import { ZeroAddress } from "./errors/General.sol";
+import { ZeroAddress, Unauthorized } from "./errors/General.sol";
 import { IVersioned } from "./utils/IVersioned.sol";
 import { IIPAssetRegistry } from "./ip-assets/IIPAssetRegistry.sol";
+import { LibIPAssetId } from "./ip-assets/LibIPAssetId.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
@@ -32,17 +33,17 @@ contract FranchiseRegistry is
     }
 
     IPAssetRegistryFactory public immutable FACTORY;
-    
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.franchise-registry.storage")) - 1)))
     bytes32 private constant _STORAGE_LOCATION = 0x5648324915b730d22cca7279385130ad43fd4829d795fb20e9ab398bfe537e8f;
     uint256 public constant PROTOCOL_ROOT_ID = 0;
     address public constant PROTOCOL_ROOT_ADDRESS = address(0);
     string private constant _VERSION = "0.1.0";
+    
 
     constructor(address _factory) {
-        _disableInitializers();
         if (_factory == address(0)) revert ZeroAddress();
         FACTORY = IPAssetRegistryFactory(_factory);
+        _disableInitializers();
     }
 
     function initialize(address accessControl) public initializer {
@@ -98,6 +99,7 @@ contract FranchiseRegistry is
             return false;
         }
     }
+
 
     function _authorizeUpgrade(
         address newImplementation

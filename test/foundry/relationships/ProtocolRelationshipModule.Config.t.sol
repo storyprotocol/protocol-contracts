@@ -11,6 +11,8 @@ import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/IPAsset.sol";
 import "contracts/errors/General.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
+import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
+import "contracts/ip-assets/IPAssetRegistry.sol";
 
 contract ProtocolRelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
 
@@ -49,6 +51,9 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
                 )
             )
         );
+        address eventEmitter = address(new CommonIPAssetEventEmitter(address(register)));
+        factory.upgradeFranchises(address(new IPAssetRegistry(eventEmitter)));
+
         vm.startPrank(franchiseOwner);
         (uint256 id, address ipAssets) = register.registerFranchise("name", "symbol", "description");
         ipAssetRegistry = IPAssetRegistry(ipAssets);
@@ -162,6 +167,9 @@ contract ProtocolRelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
                 )
             )
         );
+        address eventEmitter = address(new CommonIPAssetEventEmitter(address(register)));
+        factory.upgradeFranchises(address(new IPAssetRegistry(eventEmitter)));
+        
         vm.startPrank(franchiseOwner);
         (uint256 id, address ipAssets) = register.registerFranchise("name", "symbol", "description");
         ipAssetRegistry = IPAssetRegistry(ipAssets);
