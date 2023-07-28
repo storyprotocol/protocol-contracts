@@ -10,6 +10,7 @@ import "contracts/modules/relationships/processors/PermissionlessRelationshipPro
 import "contracts/modules/relationships/processors/DstOwnerRelationshipProcessor.sol";
 import "contracts/modules/relationships/processors/SrcOwnerRelationshipProcessor.sol";
 import "contracts/modules/relationships/processors/SrcDstOwnerRelationshipProcessor.sol";
+import "contracts/modules/relationships/processors/SrcRequestOrDstOwnerRelationshipProcessor.sol";
 
 contract RelationshipProcessors is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
@@ -31,7 +32,7 @@ contract RelationshipProcessors is Script, BroadcastManager, JsonDeploymentHandl
 
         string memory contractKey;
         address newAddress;
-        
+        /*
         /// PERMISSIONLESS
         contractKey = "PermissionlessRelationshipProcessor";
 
@@ -61,6 +62,14 @@ contract RelationshipProcessors is Script, BroadcastManager, JsonDeploymentHandl
 
         console.log(string.concat("Deploying ", contractKey, "..."));
         newAddress = address(new SrcDstOwnerRelationshipProcessor(relationshipModule));
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        */
+        /// SRC REQUEST OR DST OWNER
+        contractKey = "SrcRequestOrDstOwnerRelationshipProcessor";
+
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new SrcRequestOrDstOwnerRelationshipProcessor(relationshipModule));
         _writeAddress(contractKey, newAddress);
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
