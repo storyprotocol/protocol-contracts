@@ -90,7 +90,7 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         franchiseRegistry = newAddress;
 
         /// COMMON EVENT EMITTER
-        contractKey = "CommonEventEmitter";
+        contractKey = "CommonIPAssetEventEmitter";
 
         console.log(string.concat("Deploying ", contractKey, "..."));
         newAddress = address(new CommonIPAssetEventEmitter(franchiseRegistry));
@@ -101,7 +101,7 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
         /// UPDATE BEACON
 
-        contractKey = "IPAssetRegistry-Impl";
+        contractKey = "IPAssetRegistry-Template";
 
         console.log(string.concat("Deploying ", contractKey, "..."));
         newAddress = address(new IPAssetRegistry(commonIPAssetEventEmitter));
