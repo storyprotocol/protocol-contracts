@@ -14,9 +14,7 @@ contract SrcRequestOrDstOwnerRelationshipProcessor is BaseRelationshipProcessor 
 
     constructor(address relationshipModule) BaseRelationshipProcessor(relationshipModule) {}
 
-    /**
-     * Returns true.
-     */
+    /// Returns true if destination owner, false if source owner (to signal a link request), reverts otherwise.
     function _processRelationship(IRelationshipModule.RelationshipParams memory params, bytes calldata, address caller) internal virtual override returns(bool) {
         if (IERC721(params.destContract).ownerOf(params.destId) == caller) {
             return true;
