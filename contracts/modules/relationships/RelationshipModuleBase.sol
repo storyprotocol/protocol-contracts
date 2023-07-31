@@ -93,7 +93,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
         if (!relConfig.processor.processRelationship(params, data, msg.sender)) {
             emit RelationPendingProcessor(params.sourceContract, params.sourceId, params.destContract, params.destId, params.relationshipId);
         } else {
-            bytes32 relKey = _getRelationshipKey(params);
+            bytes32 relKey = getRelationshipKey(params);
             $.relationships[relKey] = true;
             uint256 endTime = _updateEndTime(relKey, relConfig.timeConfig, params.ttl);
             emit RelationSet(params.sourceContract, params.sourceId, params.destContract, params.destId, params.relationshipId, endTime);
@@ -102,7 +102,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
 
     /**
      * @notice Updates the end time of a relationship, if TimeConfig allows it.
-     * @param relKey the relationship key, given by _getRelationshipKey(params)
+     * @param relKey the relationship key, given by getRelationshipKey(params)
      * @param timeConfig the relationship time config
      * @param ttl the new ttl
      * @return the new end time
@@ -128,7 +128,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     function unrelate(RelationshipParams calldata params) external {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         if ($.relConfigs[params.relationshipId].disputer != msg.sender) revert Unauthorized();
-        bytes32 key = _getRelationshipKey(params);
+        bytes32 key = getRelationshipKey(params);
         if (!$.relationships[key]) revert NonExistingRelationship();
         delete $.relationships[key];
         emit RelationUnset(params.sourceContract, params.sourceId, params.destContract, params.destId, params.relationshipId);
@@ -141,7 +141,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
      */
     function areTheyRelated(RelationshipParams calldata params) external view returns (bool) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
-        return $.relationships[_getRelationshipKey(params)] && !isRelationshipExpired(params);
+        return $.relationships[getRelationshipKey(params)] && !isRelationshipExpired(params);
     }
 
     /**
@@ -151,7 +151,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
      */
     function isRelationshipExpired(RelationshipParams calldata params) public view returns (bool) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
-        uint256 endTime = $.relationshipExpirations[_getRelationshipKey(params)];
+        uint256 endTime = $.relationshipExpirations[getRelationshipKey(params)];
         return endTime != 0 && endTime < block.timestamp;
     }
 
@@ -185,7 +185,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     }
 
     /// calculates the relationship key by keccak256 hashing srcContract, srcId, dstContract, dstId and relationshipId
-    function _getRelationshipKey(RelationshipParams calldata params) internal pure returns (bytes32) {
+    function getRelationshipKey(RelationshipParams calldata params) public pure returns (bytes32) {
         return keccak256(
             abi.encode(
                 params.sourceContract,

@@ -12,6 +12,7 @@
     "DstOwnerRelationshipProcessor": "0x2890a4263BA12c6d6241CfC5c8D762B828041b86",
     "PermissionlessRelationshipProcessor": "0xA5ee53c74f75bB4A149c55d8A24E5dF563897B0f",
     "SrcDstOwnerRelationshipProcessor": "0xc6e3e7844E103116E3CA06aae3a02fde908F7c1a",
-    "SrcOwnerRelationshipProcessor": "0x5183ac89c1C9DeAADF856eED897fCd138C3083e2"
+    "SrcOwnerRelationshipProcessor": "0x5183ac89c1C9DeAADF856eED897fCd138C3083e2",
+    "SrcRequestOrDstOwnerRelationshipProcessor": "0x5C10cC663aE967877dE42572a5FD9B823321F0F4"
   }
 }
