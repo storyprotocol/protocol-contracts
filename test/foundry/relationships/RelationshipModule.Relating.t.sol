@@ -3,12 +3,11 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import '../utils/ProxyHelper.sol';
+import '../utils/BaseTest.sol';
 import "contracts/IPAsset.sol";
 import "contracts/errors/General.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import '../utils/BaseTest.sol';
-
 
 contract MockExternalAsset is ERC721 {
     constructor() ERC721("MockExternalAsset", "MEA") {}
@@ -20,7 +19,6 @@ contract MockExternalAsset is ERC721 {
 
 contract RelationshipModuleRelationshipTest is BaseTest {
 
-    PermissionlessRelationshipProcessor public processor;
 
     bytes32 relationshipId;
     address ipAssetOwner = address(567);
@@ -28,8 +26,8 @@ contract RelationshipModuleRelationshipTest is BaseTest {
 
     MockExternalAsset public externalAsset;
 
-
     function setUp() override public {
+        deployProcessors = true;
         super.setUp();
       
         IPAsset[] memory sourceIPAssets = new IPAsset[](1);
@@ -38,18 +36,17 @@ contract RelationshipModuleRelationshipTest is BaseTest {
         destIPAssets[0] = IPAsset.CHARACTER;
         destIPAssets[1] = IPAsset.ART;
 
-        processor = new PermissionlessRelationshipProcessor(address(relationshipModule));
         IRelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
             onlySameFranchise: true,
-            processor: address(processor),
+            processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: IRelationshipModule.TimeConfig(0, 0, false)
         });
-        vm.prank(relationshipManager);
+        
         relationshipId = relationshipModule.setRelationshipConfig("RELATIONSHIP_ID", params);
         vm.startPrank(ipAssetOwner);
 
@@ -136,7 +133,7 @@ contract RelationshipModuleRelationshipTest is BaseTest {
 
     function test_revert_relationshipsNotSameFranchise() public {
         vm.prank(franchiseOwner);
-        (uint256 id, address otherIPAssets) = register.registerFranchise("name2", "symbol2", "description2");
+        (uint256 id, address otherIPAssets) = franchiseRegistry.registerFranchise("name2", "symbol2", "description2");
         IPAssetRegistry otherIPAssetRegistry = IPAssetRegistry(otherIPAssets);
         vm.prank(ipAssetOwner);
         uint256 otherId = otherIPAssetRegistry.createIPAsset(IPAsset.CHARACTER, "name", "description", "mediaUrl");

@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: BUSDL-1.1
 pragma solidity ^0.8.13;
 
-import "forge-std/Test.sol";
 import '../utils/BaseTest.sol';
 
-contract RelationshipModuleSetupRelationshipsTest is Test, BaseTest {
+contract RelationshipModuleSetupRelationshipsTest is BaseTest {
+
+    function setUp() virtual override public {
+        deployProcessors = true;
+        super.setUp();
+    }
 
     function test_setRelationship() public {
         IPAsset[] memory sourceIPAssets = new IPAsset[](1);
@@ -27,7 +31,7 @@ contract RelationshipModuleSetupRelationshipsTest is Test, BaseTest {
                 renewable: false
             })
         });
-        vm.prank(relationshipManager);
+
         bytes32 relId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
         assertEq(relId, keccak256(abi.encode("RELATIONSHIP")));
 
@@ -58,7 +62,7 @@ contract RelationshipModuleSetupRelationshipsTest is Test, BaseTest {
                 renewable: false
             })
         });
-        vm.startPrank(relationshipManager);
+
         vm.expectRevert();
         relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
     }
@@ -84,7 +88,6 @@ contract RelationshipModuleSetupRelationshipsTest is Test, BaseTest {
                 renewable: false
             })
         });
-        vm.prank(relationshipManager);
         bytes32 relId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
 
         IRelationshipModule.SetRelationshipConfigParams memory result = relationshipModule.getRelationshipConfigDecoded(relId);
@@ -114,14 +117,14 @@ contract RelationshipModuleSetupRelationshipsTest is Test, BaseTest {
 
 }
 
-contract RelationshipModuleUnsetRelationshipsTest is Test, BaseTest {
+contract RelationshipModuleUnsetRelationshipsTest is BaseTest {
 
 
     bytes32 relationshipId;
 
     function setUp() virtual override public {
+        deployProcessors = true;
         super.setUp();
-        relationshipProcessor = new PermissionlessRelationshipProcessor(address(relationshipModule));
         IPAsset[] memory sourceIPAssets = new IPAsset[](1);
         sourceIPAssets[0] = IPAsset.STORY;
         IPAsset[] memory destIPAssets = new IPAsset[](1);
@@ -140,13 +143,10 @@ contract RelationshipModuleUnsetRelationshipsTest is Test, BaseTest {
                 renewable: false
             })
         });
-        vm.prank(relationshipManager);
         relationshipId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
-        
     }
 
     function test_unsetRelationshipConfig() public {
-        vm.prank(relationshipManager);
         relationshipModule.unsetRelationshipConfig(relationshipId);
 
         IRelationshipModule.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relationshipId);
@@ -157,7 +157,6 @@ contract RelationshipModuleUnsetRelationshipsTest is Test, BaseTest {
     }
 
     function test_revert_unsetRelationshipConfigNonExistingRelationship() public {
-        vm.prank(relationshipManager);
         bytes32 id = relationshipModule.getRelationshipId("UNDEFINED_Relationship");
         vm.expectRevert(IRelationshipModule.NonExistingRelationship.selector);
         relationshipModule.unsetRelationshipConfig(id);
