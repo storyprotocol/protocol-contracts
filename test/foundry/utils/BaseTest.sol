@@ -14,7 +14,7 @@ import "contracts/modules/relationships/processors/PermissionlessRelationshipPro
 import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
 import "contracts/ip-assets/IPAssetRegistry.sol";
 
-contract EnvSetup is Test, ProxyHelper {
+contract BaseTest is Test, ProxyHelper {
 
     IPAssetRegistryFactory public factory;
     IPAssetRegistry public ipAssetRegistry;

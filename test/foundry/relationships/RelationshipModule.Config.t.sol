@@ -2,9 +2,9 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import '../utils/EnvSetup.sol';
+import '../utils/BaseTest.sol';
 
-contract RelationshipModuleSetupRelationshipsTest is Test, EnvSetup {
+contract RelationshipModuleSetupRelationshipsTest is Test, BaseTest {
 
     function test_setRelationship() public {
         IPAsset[] memory sourceIPAssets = new IPAsset[](1);
@@ -114,7 +114,7 @@ contract RelationshipModuleSetupRelationshipsTest is Test, EnvSetup {
 
 }
 
-contract RelationshipModuleUnsetRelationshipsTest is Test, EnvSetup {
+contract RelationshipModuleUnsetRelationshipsTest is Test, BaseTest {
 
 
     bytes32 relationshipId;

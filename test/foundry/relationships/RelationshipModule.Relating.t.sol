@@ -3,16 +3,11 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import '../utils/ProxyHelper.sol';
-import "contracts/FranchiseRegistry.sol";
-import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/access-control/ProtocolRoles.sol";
-import "contracts/ip-assets/IPAssetRegistryFactory.sol";
-import "test/foundry/mocks/RelationshipModuleHarness.sol";
 import "contracts/IPAsset.sol";
 import "contracts/errors/General.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import '../utils/EnvSetup.sol';
+import '../utils/BaseTest.sol';
 
 
 contract MockExternalAsset is ERC721 {
@@ -23,7 +18,7 @@ contract MockExternalAsset is ERC721 {
     }
 }
 
-contract RelationshipModuleRelationshipTest is EnvSetup {
+contract RelationshipModuleRelationshipTest is BaseTest {
 
     PermissionlessRelationshipProcessor public processor;
 
