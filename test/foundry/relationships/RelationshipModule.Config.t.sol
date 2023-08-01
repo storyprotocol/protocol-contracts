@@ -2,70 +2,9 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import '../utils/ProxyHelper.sol';
-import "contracts/FranchiseRegistry.sol";
-import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/access-control/ProtocolRoles.sol";
-import "contracts/ip-assets/IPAssetRegistryFactory.sol";
-import "./RelationshipModuleHarness.sol";
-import "contracts/IPAsset.sol";
-import "contracts/errors/General.sol";
-import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
-import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
-import "contracts/ip-assets/IPAssetRegistry.sol";
+import '../utils/EnvSetup.sol';
 
-contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
-
-    IPAssetRegistryFactory public factory;
-    IPAssetRegistry public ipAssetRegistry;
-    FranchiseRegistry public register;
-    RelationshipModuleHarness public relationshipModule;
-    AccessControlSingleton acs;
-    PermissionlessRelationshipProcessor public RelationshipProcessor;
-
-    address admin = address(123);
-    address relationshipManager = address(234);
-    address franchiseOwner = address(456);
-
-    function setUp() public {
-        factory = new IPAssetRegistryFactory();
-        acs = AccessControlSingleton(
-            _deployUUPSProxy(
-                address(new AccessControlSingleton()),
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), admin
-                )
-            )
-        );
-        vm.prank(admin);
-        address accessControl = address(acs);
-        
-        FranchiseRegistry impl = new FranchiseRegistry(address(factory));
-        register = FranchiseRegistry(
-            _deployUUPSProxy(
-                address(impl),
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), accessControl
-                )
-            )
-        );
-        address eventEmitter = address(new CommonIPAssetEventEmitter(address(register)));
-        factory.upgradeFranchises(address(new IPAssetRegistry(eventEmitter)));
-
-        vm.startPrank(franchiseOwner);
-        (uint256 id, address ipAssets) = register.registerFranchise("name", "symbol", "description");
-        ipAssetRegistry = IPAssetRegistry(ipAssets);
-        vm.stopPrank();
-        relationshipModule = RelationshipModuleHarness(
-            _deployUUPSProxy(
-                address(new RelationshipModuleHarness(address(register))),
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), address(acs)
-                )
-            )
-        );
-        RelationshipProcessor = new PermissionlessRelationshipProcessor(address(relationshipModule));
-    }
+contract RelationshipModuleSetupRelationshipsTest is Test, EnvSetup {
 
     function test_setRelationship() public {
         IPAsset[] memory sourceIPAssets = new IPAsset[](1);
@@ -80,7 +19,7 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
             onlySameFranchise: true,
-            processor: address(RelationshipProcessor),
+            processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: IRelationshipModule.TimeConfig({
                 minTTL: 0,
@@ -111,7 +50,7 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
             onlySameFranchise: true,
-            processor: address(RelationshipProcessor),
+            processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: IRelationshipModule.TimeConfig({
                 minTTL: 0,
@@ -137,7 +76,7 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
             onlySameFranchise: true,
-            processor: address(RelationshipProcessor),
+            processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: IRelationshipModule.TimeConfig({
                 minTTL: 0,
@@ -175,60 +114,14 @@ contract RelationshipModuleSetupRelationshipsTest is Test, ProxyHelper {
 
 }
 
-contract RelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
+contract RelationshipModuleUnsetRelationshipsTest is Test, EnvSetup {
 
-    IPAssetRegistryFactory public factory;
-    IPAssetRegistry public ipAssetRegistry;
-    FranchiseRegistry public register;
-    RelationshipModuleHarness public relationshipModule;
-    AccessControlSingleton acs;
-    PermissionlessRelationshipProcessor public RelationshipProcessor;
-
-    address admin = address(123);
-    address relationshipManager = address(234);
-    address franchiseOwner = address(456);
 
     bytes32 relationshipId;
 
-    function setUp() public {
-        factory = new IPAssetRegistryFactory();
-        acs = AccessControlSingleton(
-            _deployUUPSProxy(
-                address(new AccessControlSingleton()),
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), admin
-                )
-            )
-        );
-        vm.prank(admin);
-
-        address accessControl = address(acs);
-        
-        FranchiseRegistry impl = new FranchiseRegistry(address(factory));
-        register = FranchiseRegistry(
-            _deployUUPSProxy(
-                address(impl),
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), accessControl
-                )
-            )
-        );
-        address eventEmitter = address(new CommonIPAssetEventEmitter(address(register)));
-        factory.upgradeFranchises(address(new IPAssetRegistry(eventEmitter)));
-        
-        vm.startPrank(franchiseOwner);
-        (uint256 id, address ipAssets) = register.registerFranchise("name", "symbol", "description");
-        ipAssetRegistry = IPAssetRegistry(ipAssets);
-        vm.stopPrank();
-        relationshipModule = RelationshipModuleHarness(
-            _deployUUPSProxy(
-                address(new RelationshipModuleHarness(address(register))),
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), address(acs)
-                )
-            )
-        );
-        RelationshipProcessor = new PermissionlessRelationshipProcessor(address(relationshipModule));
+    function setUp() virtual override public {
+        super.setUp();
+        relationshipProcessor = new PermissionlessRelationshipProcessor(address(relationshipModule));
         IPAsset[] memory sourceIPAssets = new IPAsset[](1);
         sourceIPAssets[0] = IPAsset.STORY;
         IPAsset[] memory destIPAssets = new IPAsset[](1);
@@ -239,7 +132,7 @@ contract RelationshipModuleUnsetRelationshipsTest is Test, ProxyHelper {
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
             onlySameFranchise: true,
-            processor: address(RelationshipProcessor),
+            processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: IRelationshipModule.TimeConfig({
                 minTTL: 0,
