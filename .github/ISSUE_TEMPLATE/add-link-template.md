@@ -30,13 +30,15 @@ A description of what the link IS and IS NOT. Ideally this is legally compliant,
 
 This text will be the basis for link removal dispute resolution and help scope the implementation.
 
-- **Permissions**:
+- **Processing Logic**:
     
-    Define what permissions must the link requester have, for example owning the source and/or destination NFTs, being the owner of the Franchise NFT, having a protocol level role…
-    
-- **Precondition modules**: 
+Define the logic that has to run correctly before creating the relationship. This include detailing what permissions must the link requester have (for example owning the source and/or destination NFTs, being the owner of the Franchise NFT, having a protocol level role...), request/response flows, multi step or multisig processes, ERC20 payments...
 
-Detailed enumeration of the modules that we need to execute correctly before the link is created, for example payment modules.
+The Processor module in the next section will be the contract in charge of enforcing these.
+    
+- **Processor Module**: 
+
+Detailed enumeration of the modules that we need to execute correctly before the link is created, for example payment modules. Links to the code and/or address of deployed modules implementing the processing logic.
 
 - **Side Effects and interactions**:
 
