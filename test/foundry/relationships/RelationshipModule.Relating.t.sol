@@ -8,6 +8,7 @@ import "contracts/IPAsset.sol";
 import "contracts/errors/General.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "contracts/ip-assets/IPAssetRegistry.sol";
 
 contract MockExternalAsset is ERC721 {
     constructor() ERC721("MockExternalAsset", "MEA") {}

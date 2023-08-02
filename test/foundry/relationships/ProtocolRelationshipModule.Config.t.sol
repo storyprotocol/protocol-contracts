@@ -6,6 +6,8 @@ import '../utils/BaseTest.sol';
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/access-control/ProtocolRoles.sol";
+import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
+import "contracts/ip-assets/IPAssetRegistry.sol";
 
 contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
 
