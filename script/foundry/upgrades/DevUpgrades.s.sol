@@ -10,6 +10,9 @@ import "contracts/modules/relationships/RelationshipModuleBase.sol";
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/access-control/ProtocolRoles.sol";
+import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
+import "contracts/ip-assets/IPAssetRegistry.sol";
+
 /**
  * Use to upgrade contracts during development, in testnets. Expect things to break.
  */
@@ -61,6 +64,42 @@ contract UpgradeFranchise is Script, BroadcastManager, JsonDeploymentHandler {
         address newFranchiseRegistry = address(new FranchiseRegistry(ipAssetRegistryFactory));
         console.log("Upgrading FranchiseRegistry to ", newFranchiseRegistry);
         franchiseRegistry.upgradeTo(newFranchiseRegistry);
+        
+    }
+
+}
+
+contract UpgradeIPAssetRegistry is Script, BroadcastManager, JsonDeploymentHandler {
+
+    using StringUtil for uint256;
+    using stdJson for string;
+
+    constructor() JsonDeploymentHandler("main") {}
+
+    function run() public {
+        _readDeployment();
+        _beginBroadcast();
+
+        address franchiseRegistryProxy = _readAddress(".main.FranchiseRegistry-Proxy");
+        address ipAssetRegistryFactory = _readAddress(".main.IPAssetRegistryFactory");
+        if (address(ipAssetRegistryFactory) == address(0)) {
+            revert("ipAssetRegistryFactory not found");
+        }
+
+        string memory contractKey = "CommonEventEmitter";
+
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        address eventEmitter = address(new CommonIPAssetEventEmitter(franchiseRegistryProxy));
+        console.log(string.concat(contractKey, " deployed to:"), eventEmitter);
+
+        contractKey = "IPAssetRegistry-Impl";
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        address ipAssetRegistry = address(new IPAssetRegistry(eventEmitter));
+        console.log(string.concat(contractKey, " deployed to:"), ipAssetRegistry);
+
+        console.log(string.concat("Updating ", contractKey, " beacon..."));
+        IPAssetRegistryFactory(ipAssetRegistryFactory).upgradeFranchises(ipAssetRegistry);
+        console.log(string.concat(contractKey, " beacon updated to:"), ipAssetRegistry);
         
     }
 

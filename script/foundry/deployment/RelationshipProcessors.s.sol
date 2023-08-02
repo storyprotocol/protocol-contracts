@@ -32,7 +32,7 @@ contract RelationshipProcessors is Script, BroadcastManager, JsonDeploymentHandl
 
         string memory contractKey;
         address newAddress;
-        /*
+        
         /// PERMISSIONLESS
         contractKey = "PermissionlessRelationshipProcessor";
 
@@ -64,7 +64,7 @@ contract RelationshipProcessors is Script, BroadcastManager, JsonDeploymentHandl
         newAddress = address(new SrcDstOwnerRelationshipProcessor(relationshipModule));
         _writeAddress(contractKey, newAddress);
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
-        */
+        
         /// SRC REQUEST OR DST OWNER
         contractKey = "SrcRequestOrDstOwnerRelationshipProcessor";
 

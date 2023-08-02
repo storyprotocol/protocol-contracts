@@ -5,18 +5,18 @@ import { IPAsset } from "contracts/IPAsset.sol";
 
 library LibIPAssetId {
 
-    error InvalidIPAsset(IPAsset sb);
+    error InvalidIPAsset(IPAsset ipAsset);
 
     uint256 private constant _ID_RANGE = 10 ** 12;
 
-    function _zeroId(IPAsset sb) internal pure returns (uint256) {
-        if (sb == IPAsset.UNDEFINED) revert InvalidIPAsset(sb);
-        return _ID_RANGE * (uint256(sb) - 1);
+    function _zeroId(IPAsset ipAsset) internal pure returns (uint256) {
+        if (ipAsset == IPAsset.UNDEFINED) revert InvalidIPAsset(ipAsset);
+        return _ID_RANGE * (uint256(ipAsset) - 1);
     }
 
-    function _lastId(IPAsset sb) internal pure returns (uint256) {
-        if (sb == IPAsset.UNDEFINED) revert InvalidIPAsset(sb);
-        return (_ID_RANGE * uint256(sb)) - 1;
+    function _lastId(IPAsset ipAsset) internal pure returns (uint256) {
+        if (ipAsset == IPAsset.UNDEFINED) revert InvalidIPAsset(ipAsset);
+        return (_ID_RANGE * uint256(ipAsset)) - 1;
     }
 
     function _ipAssetTypeFor(uint256 id) internal pure returns (IPAsset) {

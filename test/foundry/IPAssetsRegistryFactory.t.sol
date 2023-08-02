@@ -5,8 +5,13 @@ import "forge-std/Test.sol";
 import "contracts/ip-assets/IPAssetRegistryFactory.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { IERC1967 } from "@openzeppelin/contracts/interfaces/IERC1967.sol";
+import "./mocks/MockIPAssetEventEmitter.sol";
 
 contract IPAssetRegistryv2 is IPAssetRegistry {
+
+    constructor(address _eventEmitter) IPAssetRegistry(_eventEmitter) {
+    }
+
     function version() virtual override external pure returns (string memory) {
         return "2.0.0";
     }
@@ -20,9 +25,15 @@ contract IPAssetRegistryFactoryTest is Test {
 
     address notOwner = address(0x123);
     IPAssetRegistryFactory public factory;
+    address private _mockEventEmitter = address(0x123123);
 
     function setUp() public {
+
         factory = new IPAssetRegistryFactory();
+        address eventEmitter = address(new MockIPAssetEventEmitter());
+        address ipAssetRegistry = address(new IPAssetRegistry(eventEmitter));
+
+        factory.upgradeFranchises(ipAssetRegistry);
     }
 
     function test_Contructor() public {
@@ -45,7 +56,7 @@ contract IPAssetRegistryFactoryTest is Test {
     }
 
     function test_UpgradeCollections() public {
-        IPAssetRegistryv2 newImplementation = new IPAssetRegistryv2();
+        IPAssetRegistryv2 newImplementation = new IPAssetRegistryv2(_mockEventEmitter);
         //vm.expectEmit(true, true, true, true);
         //emit CollectionsUpgraded(address(newImplementation), "2.0.0");
         factory.upgradeFranchises(address(newImplementation));
@@ -54,7 +65,7 @@ contract IPAssetRegistryFactoryTest is Test {
     }
 
     function test_revertIfNotOwnerUpgrades() public {
-        IPAssetRegistryv2 newImplementation = new IPAssetRegistryv2();
+        IPAssetRegistryv2 newImplementation = new IPAssetRegistryv2(_mockEventEmitter);
         vm.prank(notOwner);
         vm.expectRevert("Ownable: caller is not the owner");
         factory.upgradeFranchises(address(newImplementation));

@@ -3,16 +3,19 @@ pragma solidity ^0.8.13;
 //import "forge-std/console.sol";
 import { IIPAssetRegistry } from "./IIPAssetRegistry.sol";
 import { LibIPAssetId } from "./LibIPAssetId.sol";
-import { Unauthorized, ZeroAmount } from "../errors/General.sol";
-import { IPAssetData } from "./data-access-modules/storage/IPAssetData.sol";
+import { Unauthorized, ZeroAmount, ZeroAddress } from "../errors/General.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 import { GroupDAM } from "./data-access-modules/group/GroupDAM.sol";
+import { IIPAssetEventEmitter } from "./events/IIPAssetEventEmitter.sol";
+import { IIPAssetDataManager } from "./data-access-modules/storage/IIPAssetDataManager.sol";
+import { IPAssetDataManager } from "./data-access-modules/storage/IPAssetDataManager.sol";
 import { ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { MulticallUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 
 contract IPAssetRegistry is
     IIPAssetRegistry,
+    IPAssetDataManager,
     ERC721Upgradeable,
     MulticallUpgradeable,
     GroupDAM
@@ -28,11 +31,14 @@ contract IPAssetRegistry is
         uint256 franchiseId;
     }
 
+    IIPAssetEventEmitter public immutable EVENT_EMITTER;
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.ip-assets-registry.storage")) - 1)))
     bytes32 private constant _STORAGE_LOCATION = 0x1a0b8fa444ff575656111a4368b8e6a743b70cbf31ffb9ee2c7afe1983f0e378;
     string private constant _VERSION = "0.1.0";
 
-    constructor() {
+    constructor(address _eventEmitter) {
+        if (_eventEmitter == address(0)) revert ZeroAddress();
+        EVENT_EMITTER = IIPAssetEventEmitter(_eventEmitter);
         _disableInitializers();
     }
 
@@ -63,6 +69,19 @@ contract IPAssetRegistry is
     function version() external pure virtual override returns (string memory) {
         return _VERSION;
     }
+
+    function createIPAsset(
+        IPAsset sb,
+        string calldata name,
+        string calldata _description,
+        string calldata mediaUrl
+    ) public virtual override(IIPAssetDataManager, IPAssetDataManager) returns (uint256) {
+        uint256 sbId = _createIPAsset(sb, name, _description, mediaUrl);
+        IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
+        EVENT_EMITTER.emitIPAssetCreation($.franchiseId, sbId);
+        return sbId;
+    }
+    
 
     function _mintBlock(address to, IPAsset sb) internal override returns (uint256) {
         uint256 nextId = currentIdFor(sb) + 1;

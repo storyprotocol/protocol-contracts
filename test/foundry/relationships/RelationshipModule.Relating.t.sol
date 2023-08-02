@@ -12,6 +12,8 @@ import "contracts/IPAsset.sol";
 import "contracts/errors/General.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
+import "contracts/ip-assets/IPAssetRegistry.sol";
 
 contract MockExternalAsset is ERC721 {
     constructor() ERC721("MockExternalAsset", "MEA") {}
@@ -63,6 +65,9 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
                 )
             )
         );
+        address eventEmitter = address(new CommonIPAssetEventEmitter(address(register)));
+        factory.upgradeFranchises(address(new IPAssetRegistry(eventEmitter)));
+
         vm.prank(franchiseOwner);
         (uint256 id, address ipAssets) = register.registerFranchise("name", "symbol", "description");
         ipAssetRegistry = IPAssetRegistry(ipAssets);

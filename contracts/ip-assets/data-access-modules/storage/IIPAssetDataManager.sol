@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { IPAsset } from "contracts/IPAsset.sol";
 
-interface IIPAssetData  {
+interface IIPAssetDataManager  {
 
     event IPAssetWritten(
         uint256 indexed IPAssetId,

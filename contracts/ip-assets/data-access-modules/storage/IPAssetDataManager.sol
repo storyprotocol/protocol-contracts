@@ -2,18 +2,18 @@
 pragma solidity ^0.8.19;
 
 import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
-import { Unauthorized, NonExistentID } from "contracts/errors/General.sol";
-import { IIPAssetData } from "./IIPAssetData.sol";
+import { Unauthorized, NonExistentID, ZeroAddress } from "contracts/errors/General.sol";
+import { IIPAssetDataManager } from "./IIPAssetDataManager.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 
-abstract contract IPAssetData is Initializable, IIPAssetData {
+abstract contract IPAssetDataManager is Initializable, IIPAssetDataManager {
 
     error InvalidBlockType();
 
     /// @custom:storage-location erc7201:story-protocol.ip-asset-data.storage
     struct IPAssetDataStorage {
-        mapping(uint256 => IPAssetData) IPAsset;
+        mapping(uint256 => IPAssetData) ipAssetsData;
     }
 
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.ip-asset-data.storage")) - 1)))
@@ -32,7 +32,14 @@ abstract contract IPAssetData is Initializable, IIPAssetData {
         string calldata name,
         string calldata _description,
         string calldata mediaUrl
-    ) public returns (uint256) {
+    ) public virtual returns (uint256);
+
+    function _createIPAsset(
+        IPAsset sb,
+        string calldata name,
+        string calldata _description,
+        string calldata mediaUrl
+    ) internal returns (uint256) {
         if (sb == IPAsset.UNDEFINED) revert InvalidBlockType();
         uint256 sbId = _mintBlock(msg.sender, sb);
         _writeIPAsset(sbId, name, _description, mediaUrl);
@@ -40,26 +47,26 @@ abstract contract IPAssetData is Initializable, IIPAssetData {
     }
     
     function _writeIPAsset(
-        uint256 IPAssetId,
+        uint256 ipAssetId,
         string calldata name,
         string calldata description,
         string calldata mediaUrl
     ) private returns (IPAsset) {
         IPAssetDataStorage storage $ = _getIPAssetDataStorage();
-        IPAssetData storage sbd = $.IPAsset[IPAssetId];
+        IPAssetData storage sbd = $.ipAssetsData[ipAssetId];
         if (sbd.blockType == IPAsset.UNDEFINED) {
-            sbd.blockType = LibIPAssetId._ipAssetTypeFor(IPAssetId);
+            sbd.blockType = LibIPAssetId._ipAssetTypeFor(ipAssetId);
         }
         sbd.name = name;
         sbd.description = description;
         sbd.mediaUrl = mediaUrl;
-        emit IPAssetWritten(IPAssetId, sbd.blockType, name, description, mediaUrl);
+        emit IPAssetWritten(ipAssetId, sbd.blockType, name, description, mediaUrl);
         return sbd.blockType;
     }
 
-    function readIPAsset(uint256 IPAssetId) public view returns (IPAssetData memory) {
+    function readIPAsset(uint256 ipAssetId) public view returns (IPAssetData memory) {
         IPAssetDataStorage storage $ = _getIPAssetDataStorage();
-        return $.IPAsset[IPAssetId];
+        return $.ipAssetsData[ipAssetId];
     }
     
     function _mintBlock(address to, IPAsset sb) internal virtual returns (uint256);
