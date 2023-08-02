@@ -39,7 +39,7 @@ abstract contract IPAssetDataManager is Initializable, IIPAssetDataManager {
         string calldata name,
         string calldata _description,
         string calldata mediaUrl
-    ) public returns (uint256) {
+    ) internal returns (uint256) {
         if (sb == IPAsset.UNDEFINED) revert InvalidBlockType();
         uint256 sbId = _mintBlock(msg.sender, sb);
         _writeIPAsset(sbId, name, _description, mediaUrl);
