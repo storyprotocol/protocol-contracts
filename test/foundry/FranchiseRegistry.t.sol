@@ -11,7 +11,8 @@ contract FranchiseRegistryTest is BaseTest {
         uint256 id,
         address ipAssetRegistryForId,
         string name,
-        string symbol
+        string symbol,
+        string tokenURI
     );
     
     function setUp() virtual override public {
@@ -26,6 +27,7 @@ contract FranchiseRegistryTest is BaseTest {
     }
 
     function test_registerFranchise() public {
+        FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("name2", "symbol2", "description2", "tokenURI2");
         vm.startPrank(franchiseOwner);
         vm.expectCall(address(factory),
             abi.encodeCall(
@@ -39,22 +41,29 @@ contract FranchiseRegistryTest is BaseTest {
             )
         );
         vm.expectEmit(false, true, false, false);
-        emit FranchiseRegistered(address(0x123), 2, address(0x234), "name2", "symbol2");
-        (uint256 id, address ipAsset) = franchiseRegistry.registerFranchise("name2", "symbol2", "description2");
+        emit FranchiseRegistered(address(0x123), 2, address(0x234), "name2", "symbol2", "tokenURI2");
+        (uint256 id, address ipAsset) = franchiseRegistry.registerFranchise(params);
         assertEq(id, 2);
         assertFalse(ipAsset == address(0));
         assertEq(ipAsset, franchiseRegistry.ipAssetRegistryForId(id));
         assertEq(franchiseRegistry.ownerOf(id), franchiseOwner);
+        assertEq(franchiseRegistry.tokenURI(id), "tokenURI2");
         vm.stopPrank();
     }
 
     function test_isIpAssetRegistry() public {
-        vm.prank(franchiseOwner);   
-        (uint256 id, address ipAsset) = franchiseRegistry.registerFranchise("name", "symbol", "description");
+        vm.prank(franchiseOwner);
+        FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("name", "symbol2", "description2", "tokenURI2");   
+        (uint256 id, address ipAsset) = franchiseRegistry.registerFranchise(params);
         assertTrue(franchiseRegistry.isIpAssetRegistry(ipAsset));
     }
 
     function test_isNotIpAssetRegistry() public {
         assertFalse(franchiseRegistry.isIpAssetRegistry(address(franchiseRegistry)));
+    }
+
+    function test_revert_tokenURI_not_registered() public {
+        vm.expectRevert("ERC721: invalid token ID");
+        franchiseRegistry.tokenURI(420);
     }
 }
