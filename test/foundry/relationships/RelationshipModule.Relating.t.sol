@@ -3,16 +3,11 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import '../utils/ProxyHelper.sol';
-import "contracts/FranchiseRegistry.sol";
-import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/access-control/ProtocolRoles.sol";
-import "contracts/ip-assets/IPAssetRegistryFactory.sol";
-import "./RelationshipModuleHarness.sol";
+import '../utils/BaseTest.sol';
 import "contracts/IPAsset.sol";
 import "contracts/errors/General.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
 import "contracts/ip-assets/IPAssetRegistry.sol";
 
 contract MockExternalAsset is ERC721 {
@@ -23,81 +18,36 @@ contract MockExternalAsset is ERC721 {
     }
 }
 
-contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
+contract RelationshipModuleRelationshipTest is BaseTest {
 
-    IPAssetRegistryFactory public factory;
-    IPAssetRegistry public ipAssetRegistry;
-    FranchiseRegistry public register;
-    RelationshipModuleHarness public relationshipModule;
-    AccessControlSingleton acs;
-    PermissionlessRelationshipProcessor public processor;
-
-    address admin = address(123);
-    address relationshipManager = address(234);
-    address franchiseOwner = address(456);
-    address ipAssetOwner = address(567);
 
     bytes32 relationshipId;
-
+    address ipAssetOwner = address(567);
     mapping(uint8 => uint256) public ipAssetIds;
 
     MockExternalAsset public externalAsset;
 
-
-    function setUp() public {
-        factory = new IPAssetRegistryFactory();
-        acs = AccessControlSingleton(
-            _deployUUPSProxy(
-                address(new AccessControlSingleton()),
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), admin
-                )
-            )
-        );
-        vm.prank(admin);
-        
-        FranchiseRegistry impl = new FranchiseRegistry(address(factory));
-        register = FranchiseRegistry(
-            _deployUUPSProxy(
-                address(impl),
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), address(acs)
-                )
-            )
-        );
-        address eventEmitter = address(new CommonIPAssetEventEmitter(address(register)));
-        factory.upgradeFranchises(address(new IPAssetRegistry(eventEmitter)));
-
-        vm.prank(franchiseOwner);
-        (uint256 id, address ipAssets) = register.registerFranchise("name", "symbol", "description");
-        ipAssetRegistry = IPAssetRegistry(ipAssets);
-
-        relationshipModule = RelationshipModuleHarness(
-            _deployUUPSProxy(
-                address(new RelationshipModuleHarness(address(register))),
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), address(acs)
-                )
-            )
-        );
+    function setUp() override public {
+        deployProcessors = true;
+        super.setUp();
+      
         IPAsset[] memory sourceIPAssets = new IPAsset[](1);
         sourceIPAssets[0] = IPAsset.STORY;
         IPAsset[] memory destIPAssets = new IPAsset[](2);
         destIPAssets[0] = IPAsset.CHARACTER;
         destIPAssets[1] = IPAsset.ART;
 
-        processor = new PermissionlessRelationshipProcessor(address(relationshipModule));
         IRelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
             sourceIPAssets: sourceIPAssets,
             allowedExternalSource: false,
             destIPAssets: destIPAssets,
             allowedExternalDest: true,
             onlySameFranchise: true,
-            processor: address(processor),
+            processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: IRelationshipModule.TimeConfig(0, 0, false)
         });
-        vm.prank(relationshipManager);
+        
         relationshipId = relationshipModule.setRelationshipConfig("RELATIONSHIP_ID", params);
         vm.startPrank(ipAssetOwner);
 
@@ -184,7 +134,7 @@ contract RelationshipModuleRelationshipTest is Test, ProxyHelper {
 
     function test_revert_relationshipsNotSameFranchise() public {
         vm.prank(franchiseOwner);
-        (uint256 id, address otherIPAssets) = register.registerFranchise("name2", "symbol2", "description2");
+        (uint256 id, address otherIPAssets) = franchiseRegistry.registerFranchise("name2", "symbol2", "description2");
         IPAssetRegistry otherIPAssetRegistry = IPAssetRegistry(otherIPAssets);
         vm.prank(ipAssetOwner);
         uint256 otherId = otherIPAssetRegistry.createIPAsset(IPAsset.CHARACTER, "name", "description", "mediaUrl");

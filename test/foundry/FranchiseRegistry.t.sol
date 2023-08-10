@@ -2,13 +2,9 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import './utils/ProxyHelper.sol';
-import "contracts/FranchiseRegistry.sol";
-import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/ip-assets/IPAssetRegistryFactory.sol";
-import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
+import './utils/BaseTest.sol';
 
-contract FranchiseRegistryTest is Test, ProxyHelper {
+contract FranchiseRegistryTest is BaseTest {
 
     event FranchiseRegistered(
         address owner,
@@ -16,46 +12,15 @@ contract FranchiseRegistryTest is Test, ProxyHelper {
         address ipAssetRegistryForId
     );
     
-    IPAssetRegistryFactory public factory;
-    FranchiseRegistry public register;
-
-    address admin = address(123);
-    address franchiseOwner = address(456);
-
-    AccessControlSingleton acs;
-
-    function setUp() public {
-        factory = new IPAssetRegistryFactory();
-        acs = AccessControlSingleton(
-            _deployUUPSProxy(
-                address(new AccessControlSingleton()),
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), admin
-                )
-            )
-        );
-        address accessControl = address(acs);
-        
-        FranchiseRegistry impl = new FranchiseRegistry(address(factory));
-        register = FranchiseRegistry(
-            _deployUUPSProxy(
-                address(impl),
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), accessControl
-                )
-            )
-        );
-
-        address eventEmitter = address(new CommonIPAssetEventEmitter(address(register)));
-        address ipAssetRegistry = address(new IPAssetRegistry(eventEmitter));
-
-        factory.upgradeFranchises(ipAssetRegistry);
+    function setUp() virtual override public {
+        deployProcessors = false;
+        super.setUp();
     }
 
     function test_setUp() public {
-        assertEq(register.version(), "0.1.0");
-        assertEq(register.name(), "Story Protocol");
-        assertEq(register.symbol(), "SP");
+        assertEq(franchiseRegistry.version(), "0.1.0");
+        assertEq(franchiseRegistry.name(), "Story Protocol");
+        assertEq(franchiseRegistry.symbol(), "SP");
     }
 
     function test_registerFranchise() public {
@@ -64,30 +29,30 @@ contract FranchiseRegistryTest is Test, ProxyHelper {
             abi.encodeCall(
                 factory.createFranchiseIPAssets,
                 (
-                    1,
-                    "name",
-                    "symbol",
-                    "description"
+                    2,
+                    "name2",
+                    "symbol2",
+                    "description2"
                 )
             )
         );
         vm.expectEmit(false, true, false, false);
-        emit FranchiseRegistered(address(0x123), 1, address(0x234));
-        (uint256 id, address ipAsset) = register.registerFranchise("name", "symbol", "description");
-        assertEq(id, 1);
+        emit FranchiseRegistered(address(0x123), 2, address(0x234));
+        (uint256 id, address ipAsset) = franchiseRegistry.registerFranchise("name2", "symbol2", "description2");
+        assertEq(id, 2);
         assertFalse(ipAsset == address(0));
-        assertEq(ipAsset, register.ipAssetRegistryForId(id));
-        assertEq(register.ownerOf(id), franchiseOwner);
+        assertEq(ipAsset, franchiseRegistry.ipAssetRegistryForId(id));
+        assertEq(franchiseRegistry.ownerOf(id), franchiseOwner);
         vm.stopPrank();
     }
 
     function test_isIpAssetRegistry() public {
         vm.prank(franchiseOwner);   
-        (uint256 id, address ipAsset) = register.registerFranchise("name", "symbol", "description");
-        assertTrue(register.isIpAssetRegistry(ipAsset));
+        (uint256 id, address ipAsset) = franchiseRegistry.registerFranchise("name", "symbol", "description");
+        assertTrue(franchiseRegistry.isIpAssetRegistry(ipAsset));
     }
 
     function test_isNotIpAssetRegistry() public {
-        assertFalse(register.isIpAssetRegistry(address(register)));
+        assertFalse(franchiseRegistry.isIpAssetRegistry(address(franchiseRegistry)));
     }
 }
