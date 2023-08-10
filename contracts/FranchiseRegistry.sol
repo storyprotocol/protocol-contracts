@@ -21,7 +21,9 @@ contract FranchiseRegistry is
     event FranchiseRegistered(
         address owner,
         uint256 id,
-        address ipAssetRegistryForId
+        address ipAssetRegistryForId,
+        string name,
+        string symbol
     );
     error AlreadyRegistered();
 
@@ -76,7 +78,7 @@ contract FranchiseRegistry is
         );
         $.ipAssetRegistries[$.franchiseIds] = ipAssetRegistry;
         _safeMint(msg.sender, $.franchiseIds);
-        emit FranchiseRegistered(msg.sender, $.franchiseIds, ipAssetRegistry);
+        emit FranchiseRegistered(msg.sender, $.franchiseIds, ipAssetRegistry, name, symbol);
         return ($.franchiseIds, ipAssetRegistry);
     }
 

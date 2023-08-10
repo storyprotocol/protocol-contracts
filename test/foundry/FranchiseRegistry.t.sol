@@ -9,7 +9,9 @@ contract FranchiseRegistryTest is BaseTest {
     event FranchiseRegistered(
         address owner,
         uint256 id,
-        address ipAssetRegistryForId
+        address ipAssetRegistryForId,
+        string name,
+        string symbol
     );
     
     function setUp() virtual override public {
@@ -37,7 +39,7 @@ contract FranchiseRegistryTest is BaseTest {
             )
         );
         vm.expectEmit(false, true, false, false);
-        emit FranchiseRegistered(address(0x123), 2, address(0x234));
+        emit FranchiseRegistered(address(0x123), 2, address(0x234), "name2", "symbol2");
         (uint256 id, address ipAsset) = franchiseRegistry.registerFranchise("name2", "symbol2", "description2");
         assertEq(id, 2);
         assertFalse(ipAsset == address(0));
