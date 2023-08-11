@@ -31,6 +31,7 @@ task('sp:create-franchise')
     .addPositionalParam('name', 'Franchise name')
     .addPositionalParam('symbol', 'Franchise symbol')
     .addPositionalParam('description', 'Franchise description')
+    .addPositionalParam('tokenURI', 'Franchise token URI (arweave URL with metadata)')
     .addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
     .setDescription('Mint Franchise NFT and create IPAssetsRegistry contract')
     .setAction(createFranchise);
