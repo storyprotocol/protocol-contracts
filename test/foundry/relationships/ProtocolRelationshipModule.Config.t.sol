@@ -18,7 +18,8 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
         super.setUp();
 
         vm.startPrank(franchiseOwner);
-        (uint256 id, address ipAssets) = franchiseRegistry.registerFranchise("name", "symbol", "description");
+        FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("name", "symbol", "description", "tokenURI"); 
+        (uint256 id, address ipAssets) = franchiseRegistry.registerFranchise(params);
         ipAssetRegistry = IPAssetRegistry(ipAssets);
         vm.stopPrank();
         relationshipModule = ProtocolRelationshipModule(

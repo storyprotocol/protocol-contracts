@@ -55,7 +55,8 @@ contract BaseTest is Test, ProxyHelper {
         factory.upgradeFranchises(address(new IPAssetRegistry(eventEmitter)));
 
         vm.startPrank(franchiseOwner);
-        (uint256 id, address ipAssets) = franchiseRegistry.registerFranchise("name", "symbol", "description");
+        FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("name", "symbol", "description", "tokenURI");
+        (uint256 id, address ipAssets) = franchiseRegistry.registerFranchise(params);
         ipAssetRegistry = IPAssetRegistry(ipAssets);
         vm.stopPrank();
         relationshipModule = RelationshipModuleBase(

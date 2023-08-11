@@ -134,7 +134,8 @@ contract RelationshipModuleRelationshipTest is BaseTest {
 
     function test_revert_relationshipsNotSameFranchise() public {
         vm.prank(franchiseOwner);
-        (uint256 id, address otherIPAssets) = franchiseRegistry.registerFranchise("name2", "symbol2", "description2");
+        FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("name2", "symbol2", "description2", "tokenURI2"); 
+        (uint256 id, address otherIPAssets) = franchiseRegistry.registerFranchise(params);
         IPAssetRegistry otherIPAssetRegistry = IPAssetRegistry(otherIPAssets);
         vm.prank(ipAssetOwner);
         uint256 otherId = otherIPAssetRegistry.createIPAsset(IPAsset.CHARACTER, "name", "description", "mediaUrl");

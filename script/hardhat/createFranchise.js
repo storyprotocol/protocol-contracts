@@ -12,9 +12,10 @@ function findIdAndAddress(events) {
 async function main(args, hre) {
     const { ethers } = hre;
     const { chainId, contracts } = await loadDeployment(hre);
-    const { name, symbol, description, events } = args;
+    const { name, symbol, description, tokenURI, events } = args;
     console.log("Creating franchise: ", name, symbol);
-    const tx = await contracts.franchiseRegistry.registerFranchise(name, symbol, description);
+    const params = { name, symbol, description, tokenURI };
+    const tx = await contracts.franchiseRegistry.registerFranchise(params);
     console.log("Franchise created in tx: ", tx.hash);
     console.log("Waiting for tx to be mined...");
     const receipt = await tx.wait();

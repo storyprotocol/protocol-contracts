@@ -43,7 +43,7 @@ contract UpgradeRelationships is Script, BroadcastManager, JsonDeploymentHandler
 
 }
 
-contract UpgradeFranchise is Script, BroadcastManager, JsonDeploymentHandler {
+contract UpgradeFranchiseRegistry is Script, BroadcastManager, JsonDeploymentHandler {
 
     using StringUtil for uint256;
     using stdJson for string;

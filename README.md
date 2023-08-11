@@ -61,7 +61,7 @@ forge script script/Deploy.s.sol:Deploy --fork-url=<network rpc url url> -vvvv
 
 Deploy to network
 ```
-forge script script/foundry/Deploy.s.sol:Deploy --fork-url=<network rpc url url> -vvvv --broadcast
+forge script script/foundry/Deploy.s.sol:Deploy --fork-url=<network rpc url url> -vvvv --broadcast --verify
 ```
 
 ## Tasks
