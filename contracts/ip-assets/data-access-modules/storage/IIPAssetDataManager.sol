@@ -26,7 +26,8 @@ interface IIPAssetDataManager  {
         IPAsset sb,
         string calldata name,
         string calldata _description,
-        string calldata mediaUrl
+        string calldata mediaUrl,
+        address to
     ) external returns (uint256);
     
 }

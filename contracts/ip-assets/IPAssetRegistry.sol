@@ -9,6 +9,7 @@ import { GroupDAM } from "./data-access-modules/group/GroupDAM.sol";
 import { IIPAssetEventEmitter } from "./events/IIPAssetEventEmitter.sol";
 import { IIPAssetDataManager } from "./data-access-modules/storage/IIPAssetDataManager.sol";
 import { IPAssetDataManager } from "./data-access-modules/storage/IPAssetDataManager.sol";
+import { FranchiseRegistry } from "../FranchiseRegistry.sol";
 import { ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { MulticallUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
@@ -32,14 +33,23 @@ contract IPAssetRegistry is
     }
 
     IIPAssetEventEmitter public immutable EVENT_EMITTER;
+    FranchiseRegistry public immutable FRANCHISE_REGISTRY;
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.ip-assets-registry.storage")) - 1)))
     bytes32 private constant _STORAGE_LOCATION = 0x1a0b8fa444ff575656111a4368b8e6a743b70cbf31ffb9ee2c7afe1983f0e378;
     string private constant _VERSION = "0.1.0";
 
-    constructor(address _eventEmitter) {
+    constructor(address _eventEmitter, address _franchiseRegistry) {
         if (_eventEmitter == address(0)) revert ZeroAddress();
         EVENT_EMITTER = IIPAssetEventEmitter(_eventEmitter);
+        if (_franchiseRegistry == address(0)) revert ZeroAddress();
+        FRANCHISE_REGISTRY = FranchiseRegistry(_franchiseRegistry);
         _disableInitializers();
+    }
+
+    modifier onlyFranchiseRegistry() {
+        // TODO: extract to FranchiseRegistryControlled.sol
+        if (msg.sender != address(FRANCHISE_REGISTRY)) revert("Sender is not the franchise registry");
+        _;
     }
 
     function initialize(
@@ -74,15 +84,15 @@ contract IPAssetRegistry is
         IPAsset sb,
         string calldata name,
         string calldata _description,
-        string calldata mediaUrl
-    ) public virtual override(IIPAssetDataManager, IPAssetDataManager) returns (uint256) {
-        uint256 sbId = _createIPAsset(sb, name, _description, mediaUrl);
+        string calldata mediaUrl,
+        address to
+    ) public virtual onlyFranchiseRegistry override(IIPAssetDataManager, IPAssetDataManager) returns (uint256) {
+        uint256 sbId = _createIPAsset(sb, name, _description, mediaUrl, to);
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
         EVENT_EMITTER.emitIPAssetCreation($.franchiseId, sbId);
         return sbId;
     }
     
-
     function _mintBlock(address to, IPAsset sb) internal override returns (uint256) {
         uint256 nextId = currentIdFor(sb) + 1;
         if (nextId > LibIPAssetId._lastId(sb)) revert IdOverBounds();

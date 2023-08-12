@@ -31,17 +31,19 @@ abstract contract IPAssetDataManager is Initializable, IIPAssetDataManager {
         IPAsset sb,
         string calldata name,
         string calldata _description,
-        string calldata mediaUrl
+        string calldata mediaUrl,
+        address to
     ) public virtual returns (uint256);
 
     function _createIPAsset(
         IPAsset sb,
         string calldata name,
         string calldata _description,
-        string calldata mediaUrl
+        string calldata mediaUrl,
+        address to
     ) internal returns (uint256) {
         if (sb == IPAsset.UNDEFINED) revert InvalidBlockType();
-        uint256 sbId = _mintBlock(msg.sender, sb);
+        uint256 sbId = _mintBlock(to, sb);
         _writeIPAsset(sbId, name, _description, mediaUrl);
         return sbId;
     }

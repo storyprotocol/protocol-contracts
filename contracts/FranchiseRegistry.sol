@@ -11,6 +11,7 @@ import { IIPAssetRegistry } from "./ip-assets/IIPAssetRegistry.sol";
 import { LibIPAssetId } from "./ip-assets/LibIPAssetId.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import { LicensingModule } from "./modules/licensing/LicensingModule.sol";
 
 contract FranchiseRegistry is
     UUPSUpgradeable,
@@ -41,6 +42,7 @@ contract FranchiseRegistry is
         /// Franchise id => IPAssetRegistry address
         mapping(uint256 => address) ipAssetRegistries;
         mapping(uint256 => string) tokenURIs;
+        LicensingModule licensingModule;
     }
 
     IPAssetRegistryFactory public immutable FACTORY;
@@ -49,7 +51,6 @@ contract FranchiseRegistry is
     uint256 public constant PROTOCOL_ROOT_ID = 0;
     address public constant PROTOCOL_ROOT_ADDRESS = address(0);
     string private constant _VERSION = "0.1.0";
-    
 
     constructor(address _factory) {
         if (_factory == address(0)) revert ZeroAddress();
@@ -61,6 +62,12 @@ contract FranchiseRegistry is
         __UUPSUpgradeable_init();
         __AccessControlledUpgradeable_init(accessControl);
         __ERC721_init("Story Protocol", "SP");
+    }
+
+    function setLicensingModule(LicensingModule module) external{
+        // TODO: set protocol role for this and check sender
+        if (address(module) == address(0)) revert ZeroAddress();
+        _getFranchiseStorage().licensingModule = module;
     }
 
     function _getFranchiseStorage() private pure returns (FranchiseStorage storage $) {
@@ -85,6 +92,7 @@ contract FranchiseRegistry is
         $.ipAssetRegistries[nextId] = ipAssetRegistry;
         $.tokenURIs[nextId] = params.tokenURI;
         _safeMint(msg.sender, nextId);
+        // TODO: set licensing restrictions per franchise, maybe grant commercial root license to the franchise NFT
         
         emit FranchiseRegistered(msg.sender, nextId, ipAssetRegistry, params.name, params.symbol, params.tokenURI);
         
@@ -98,6 +106,7 @@ contract FranchiseRegistry is
         return $.ipAssetRegistries[franchiseId];
     }
 
+    
     /**
      * @notice checks if an address is a valid SP IPAssetRegistry.
      * @param ipAssetRegistry the address to check
@@ -110,6 +119,26 @@ contract FranchiseRegistry is
             return false;
         }
     }
+
+    function createIPAsset(
+        uint256 franchiseId,
+        IPAsset sb,
+        string calldata name,
+        string calldata _description,
+        string calldata mediaUrl
+    ) external returns (uint256 ipAssetID) {
+        FranchiseStorage storage $ = _getFranchiseStorage();
+        if (msg.sender != $.ipAssetRegistries[franchiseId]) revert Unauthorized();
+        ipAssetID = IIPAssetRegistry($.ipAssetRegistries[franchiseId]).createIPAsset(sb, name, _description, mediaUrl, msg.sender);
+        /// TODO: grant registry
+        /*
+        $.licensingModule.grantLicense(
+            
+        );
+        */
+        return ipAssetID;
+    }
+
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         _requireMinted(tokenId);
