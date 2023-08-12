@@ -73,7 +73,7 @@ contract LicensingModule is ERC721Upgradeable {
         // the franchise owner and external PFP owners, etc.
         mapping(uint256 => bytes) franchiseRestrictions;
         // TODO: Remove this
-        mapping(address => mapping(uint256 => uint256)) demoTokenToLicense;
+        mapping(address => mapping(uint256 => mapping(bool => uint256))) demoTokenToLicense;
         string nonCommercialLicenseURI;
     }
 
@@ -102,6 +102,10 @@ contract LicensingModule is ERC721Upgradeable {
         assembly {
             $.slot := _STORAGE_LOCATION
         }
+    }
+
+    function getNonCommercialLicenseURI() public view returns (string memory) {
+        return _getLicenseModuleStorage().nonCommercialLicenseURI;
     }
 
 
@@ -155,7 +159,7 @@ contract LicensingModule is ERC721Upgradeable {
         );
         
         // TODO: remove this, only for demo
-        $.demoTokenToLicense[address(ownershipParams.token.collection)][ownershipParams.token.tokenId] = licenseId;
+        $.demoTokenToLicense[address(ownershipParams.token.collection)][ownershipParams.token.tokenId][generalTerms.commercial] = licenseId;
         return licenseId;
     }
 
@@ -251,8 +255,8 @@ contract LicensingModule is ERC721Upgradeable {
         return currentCounter;
     }
 
-    function licenseIdForToken(address collection, uint256 tokenId) public view returns (uint256) {
-        return _getLicenseModuleStorage().demoTokenToLicense[collection][tokenId];
+    function licenseIdForToken(address collection, uint256 tokenId, bool commercial) public view returns (uint256) {
+        return _getLicenseModuleStorage().demoTokenToLicense[collection][tokenId][commercial];
     }
 
     function getLicense(uint256 licenseId) public view returns (License memory, address holder) {

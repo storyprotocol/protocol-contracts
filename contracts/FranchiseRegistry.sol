@@ -72,6 +72,10 @@ contract FranchiseRegistry is
         _getFranchiseStorage().licensingModule = module;
     }
 
+    function getLicenseingModule() external view returns (LicensingModule) {
+        return _getFranchiseStorage().licensingModule;
+    }
+
     function _getFranchiseStorage() private pure returns (FranchiseStorage storage $) {
         assembly {
             $.slot := _STORAGE_LOCATION
@@ -155,7 +159,7 @@ contract FranchiseRegistry is
     ) external returns (uint256) {
         FranchiseStorage storage $ = _getFranchiseStorage();
         address ipAssetRegistry = $.ipAssetRegistries[franchiseId];
-        uint256 parentLicenseId = $.licensingModule.licenseIdForToken(ipAssetRegistry, ipAssetId);
+        uint256 parentLicenseId = $.licensingModule.licenseIdForToken(ipAssetRegistry, ipAssetId, commercial);
         LicensingModule.OwnershipParams memory ownershipParams = LicensingModule.OwnershipParams({
             holder: msg.sender,
             token: LicensingModule.Token({
