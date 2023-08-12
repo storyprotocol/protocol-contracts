@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { LibTimeConditional } from "../timing/LibTimeConditional.sol";
 
-contract LicensingModule is ERC721 {
+contract LicensingModule is ERC721Upgradeable {
 
     event LicenseGranted (
         uint256 indexed licenseId,
@@ -64,19 +64,22 @@ contract LicensingModule is ERC721 {
         // TODO: tokenbound license config (share alike, ledger authoritative...)
     }
 
-    mapping(uint256 => License) private _licenses;
-    uint256 private _licenseCounter;
+    struct LicenseModuleStorage {
+        mapping(uint256 => License) licenses;
+        uint256 licenseCounter;
+        // TODO
+        mapping(address => bool) bannedMarketPlaces;
+        // Each franchise can choose to restrict stuff, like allowed license templates, the holder of root commercial licenses can only be
+        // the franchise owner and external PFP owners, etc.
+        mapping(uint256 => bytes) franchiseRestrictions;
+        // TODO: Remove this
+        mapping(address => mapping(uint256 => uint256)) demoTokenToLicense;
+        string nonCommercialLicenseURI;
+    }
 
-    // TODO
-    mapping(address => bool) private _bannedMarketPlaces;
-    // Each franchise can choose to restrict stuff, like allowed license templates, the holder of root commercial licenses can only be
-    // the franchise owner and external PFP owners, etc.
-    mapping(uint256 => bytes) private _franchiseRestrictions;
-
-    // TODO: Remove this
-    mapping(address => mapping(uint256 => uint256)) public demoTokenToLicense;
+    // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.license-module.storage")) - 1)))
+    bytes32 private constant _STORAGE_LOCATION = 0x778e3a21329d920b45eecf00e356693a1888f1ae24d67d398ab1f17457bcfabd;
     
-    string public nonCommercialLicenseURI;
     address immutable public FRANCHISE_REGISTRY;
 
     modifier onlyFranchiseRegistry() {
@@ -85,19 +88,32 @@ contract LicensingModule is ERC721 {
         _;
     }
 
-    constructor(string memory name, string memory symbol, string memory _nonCommercialLicenseURI, address franchiseRegistry) ERC721(name, symbol) {
-        nonCommercialLicenseURI = _nonCommercialLicenseURI;
+    constructor(address franchiseRegistry) {
         if (franchiseRegistry == address(0)) revert("Franchise registry cannot be zero address");
         FRANCHISE_REGISTRY = franchiseRegistry;
     }
+
+    function initialize(string memory _nonCommercialLicenseURI) public initializer {
+        __ERC721_init("Story Protocol License", "SPL");
+        _getLicenseModuleStorage().nonCommercialLicenseURI = _nonCommercialLicenseURI;
+    }
+
+    function _getLicenseModuleStorage() private pure returns (LicenseModuleStorage storage $) {
+        assembly {
+            $.slot := _STORAGE_LOCATION
+        }
+    }
+
 
     function isLicenseActive(uint256 licenseId) public view virtual returns (bool) {
         // TODO: limit to the tree depth
         // TODO: check time limits 
         if (licenseId == 0) return false;
         while (licenseId != 0) {
-          if (!_licenses[licenseId].active) return false;
-          licenseId = _licenses[licenseId].parentLicenseId;
+            LicenseModuleStorage storage $ = _getLicenseModuleStorage();
+            License memory license = $.licenses[licenseId];
+            if (!license.active) return false;
+            licenseId = license.parentLicenseId;
         }
         return true;
     }
@@ -106,52 +122,80 @@ contract LicensingModule is ERC721 {
         address licensor,
         uint256 parentLicenseId,
         bytes32 mediaId,
-        GeneralTerms memory generalTerms,
+        GeneralTerms calldata generalTerms,
         OwnershipParams calldata ownershipParams,
-        PaymentTerms memory paymentTerms,
-        GrantingTerms memory grantingTerms,
-        LibTimeConditional.TimeConfig memory durationTerms,
+        PaymentTerms calldata paymentTerms,
+        GrantingTerms calldata grantingTerms,
+        LibTimeConditional.TimeConfig calldata durationTerms,
         string memory licenseURI,
         address revoker
     ) public onlyFranchiseRegistry returns (uint256) {
+        LicenseModuleStorage storage $ = _getLicenseModuleStorage();
         if (parentLicenseId != 0) {
-            License memory parentLicense = _licenses[parentLicenseId];
+            License memory parentLicense = $.licenses[parentLicenseId];
             _verifySublicense(parentLicenseId, licensor, parentLicense, generalTerms);
             licenseURI = parentLicense.licenseURI;
         } else {
             if (!generalTerms.commercial) {
-                licenseURI = nonCommercialLicenseURI;
+                licenseURI = $.nonCommercialLicenseURI;
             }
         }
         
         // TODO: check other terms
-        uint256 licenseId;
-        {
-            licenseId = _emitLicense(
-                parentLicenseId,
-                mediaId,
-                generalTerms,
-                ownershipParams,
-                paymentTerms,
-                grantingTerms,
-                durationTerms,
-                licenseURI,
-                revoker
-            );
-            // Not bound to a token, mint to holder
-            if (ownershipParams.holder != address(0)) {
-                _mint(ownershipParams.holder, licenseId);
-            }
-            emit LicenseGranted(
-                licenseId,
-                ownershipParams.holder,
-                address(ownershipParams.token.collection),
-                ownershipParams.token.tokenId,
-                parentLicenseId
-            );
-        }
+        uint256 licenseId = _emitLicenseAndEvent(
+            parentLicenseId,
+            mediaId,
+            generalTerms,
+            ownershipParams,
+            paymentTerms,
+            grantingTerms,
+            durationTerms,
+            licenseURI,
+            revoker
+        );
+        
         // TODO: remove this, only for demo
-        demoTokenToLicense[address(ownershipParams.token.collection)][ownershipParams.token.tokenId] = licenseId;
+        $.demoTokenToLicense[address(ownershipParams.token.collection)][ownershipParams.token.tokenId] = licenseId;
+        return licenseId;
+    }
+
+    function _emitLicenseAndEvent(
+        uint256 parentLicenseId,
+        bytes32 mediaId,
+        GeneralTerms calldata generalTerms,
+        OwnershipParams calldata ownershipParams,
+        PaymentTerms calldata paymentTerms,
+        GrantingTerms calldata grantingTerms,
+        LibTimeConditional.TimeConfig calldata durationTerms,
+        string memory licenseURI,
+        address revoker
+    ) private returns (uint256 licenseId) {
+        
+        licenseId = _emitLicense(
+            parentLicenseId,
+            mediaId,
+            generalTerms,
+            ownershipParams,
+            paymentTerms,
+            grantingTerms,
+            durationTerms,
+            licenseURI,
+            revoker
+        );
+
+        // Not bound to a token, mint to holder
+        if (ownershipParams.holder != address(0)) {
+            _mint(ownershipParams.holder, licenseId);
+        }
+
+        emit LicenseGranted(
+            licenseId,
+            ownershipParams.holder,
+            address(ownershipParams.token.collection),
+            ownershipParams.token.tokenId,
+            parentLicenseId
+        );
+        
         return licenseId;
     }
 
@@ -169,7 +213,7 @@ contract LicensingModule is ERC721 {
 
     function ownerOf(uint256 tokenId) public view virtual override returns (address) {
         // TODO: This should work with ERC6665 or similar, this is only for demo
-        Token memory token = _licenses[tokenId].licensedToken;
+        Token memory token = _getLicenseModuleStorage().licenses[tokenId].licensedToken;
         if (address(token.collection) != address(0)) {
             return token.collection.ownerOf(token.tokenId);
         }
@@ -190,8 +234,9 @@ contract LicensingModule is ERC721 {
         if (ownershipParams.holder == address(0) && _isUnsetToken(ownershipParams.token)) revert("License must be bound to a token or a license holder");
         if (ownershipParams.holder != address(0) && !_isUnsetToken(ownershipParams.token)) revert("License cannot be bound to a token and a license holder at the same time");
         // TODO: validate all terms
-        _licenseCounter++;
-        _licenses[_licenseCounter] = License({
+        LicenseModuleStorage storage $ = _getLicenseModuleStorage();
+        uint256 currentCounter = $.licenseCounter++;
+        $.licenses[currentCounter] = License({
             active: true,
             parentLicenseId: parentLicenseId,
             mediaId: mediaId,
@@ -203,13 +248,16 @@ contract LicensingModule is ERC721 {
             durationTerms: durationTerms,
             licenseURI: licenseURI
         });
-        return _licenseCounter;
+        return currentCounter;
+    }
+
+    function licenseIdForToken(address collection, uint256 tokenId) public view returns (uint256) {
+        return _getLicenseModuleStorage().demoTokenToLicense[collection][tokenId];
     }
 
     function getLicense(uint256 licenseId) public view returns (License memory, address holder) {
-        return (_licenses[licenseId], ownerOf(licenseId));
+        return (_getLicenseModuleStorage().licenses[licenseId], ownerOf(licenseId));
     }
-
 
     function _beforeTokenTransfer(
         address from,

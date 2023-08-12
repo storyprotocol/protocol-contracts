@@ -155,7 +155,7 @@ contract FranchiseRegistry is
     ) external returns (uint256) {
         FranchiseStorage storage $ = _getFranchiseStorage();
         address ipAssetRegistry = $.ipAssetRegistries[franchiseId];
-        uint256 parentLicenseId = $.licensingModule.demoTokenToLicense(ipAssetRegistry, ipAssetId);
+        uint256 parentLicenseId = $.licensingModule.licenseIdForToken(ipAssetRegistry, ipAssetId);
         LicensingModule.OwnershipParams memory ownershipParams = LicensingModule.OwnershipParams({
             holder: msg.sender,
             token: LicensingModule.Token({
