@@ -21,7 +21,7 @@ contract LicenseModuleTest is BaseTest {
         address proxy = _deployUUPSProxy(
             licenseModuleImpl,
             abi.encodeWithSelector(
-                bytes4(keccak256(bytes("initialize(string)"))), noncommercialLicenseURL
+                bytes4(keccak256(bytes("initialize(string,address)"))), noncommercialLicenseURL, address(accessControl)
             )
         );
         licensingModule = LicensingModule(proxy);
@@ -36,7 +36,15 @@ contract LicenseModuleTest is BaseTest {
     function test_happyPath() public {
         vm.startPrank(ipAssetHolder);
         uint256 ipAssetId = franchiseRegistry.createIPAsset(1, IPAsset.STORY, "name", "description", "tokenURI");
-        franchiseRegistry.createLicense(1, ipAssetId, true, keccak256("MOVIE_ADAPTATION"), "https://cool-license-bro.pdf");
+        LicensingModule.DemoTerms memory terms = LicensingModule.DemoTerms({
+            imageURI: "https://imgs.search.brave.com/BTQd7FLJIG2gx5fNTzevIycsnm8JMWKSrBeQawWG3hI/rs:fit:860:0:0/g:ce/aHR0cHM6Ly93d3cu/bWVtZS1hcnNlbmFs/LmNvbS9tZW1lcy9k/ZTk2ODRiOWU0NDI3/MWI4MmUxMjQ4Mzgy/ODA1YWUxMC5qcGc",
+            usage: "yes",
+            duration: "forever",
+            rights: "all",
+            name: "name"
+        });
+        uint256 licenseId = franchiseRegistry.createLicense(1, ipAssetId, true, keccak256("MOVIE_ADAPTATION"), "https://cool-license-bro.pdf", terms);
+        console.log(licensingModule.tokenURI(licenseId));
         vm.stopPrank();
     }
  

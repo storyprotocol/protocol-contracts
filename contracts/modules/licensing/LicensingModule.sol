@@ -6,15 +6,23 @@ import { LibTimeConditional } from "../timing/LibTimeConditional.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { UPGRADER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
+import { Base64 } from 'base64-sol/base64.sol';
+import { Strings } from '@openzeppelin/contracts/utils/Strings.sol';
 
 contract LicensingModule is UUPSUpgradeable, ERC721Upgradeable, AccessControlledUpgradeable {
-
+    using Strings for uint;
+    
     event LicenseGranted (
         uint256 indexed licenseId,
         address holder,
         address ipAssetRegistry,
         uint256 ipAssetId,
-        uint256 parentLicenseId
+        uint256 parentLicenseId,
+        string scope,
+        string duration,
+        string rights,
+        string imageURI,
+        string name
     );
 
     struct Token {
@@ -28,14 +36,12 @@ contract LicensingModule is UUPSUpgradeable, ERC721Upgradeable, AccessControlled
         bool commercial;
     }
 
-    struct PaymentTerms {
-        address interpreter;
-        bytes data;
-    }
-
-    struct GrantingTerms {
-        address processor;
-        bytes data;
+    struct DemoTerms {
+        string imageURI;
+        string usage;
+        string duration;
+        string rights;
+        string name;
     }
 
     struct OwnershipParams {
@@ -52,17 +58,7 @@ contract LicensingModule is UUPSUpgradeable, ERC721Upgradeable, AccessControlled
         // If licensed token is set, the license is bound to a token, so ownerOf must return 0, and the license is not transferrable
         Token licensedToken;
 
-        // Contract defining the payment terms, royalties, milestones, etc.
-        // The interpreter does not necessarily enforce the terms.
-        PaymentTerms paymentTerms;
-
-        // Intermediate steps before granting, such as approval by parent, KYC, revenue splits are set, time limits for transfer, security stuff...
-        // Triggered in beforeTransfer.
-        GrantingTerms grantingTerms;
-        address revoker;
-
-        // Temporal terms and address that could renew the license
-        LibTimeConditional.TimeConfig durationTerms;
+        DemoTerms demoTerms;
         string licenseURI;
         // TODO: tokenbound license config (share alike, ledger authoritative...)
     }
@@ -132,11 +128,8 @@ contract LicensingModule is UUPSUpgradeable, ERC721Upgradeable, AccessControlled
         bytes32 mediaId,
         GeneralTerms calldata generalTerms,
         OwnershipParams calldata ownershipParams,
-        PaymentTerms calldata paymentTerms,
-        GrantingTerms calldata grantingTerms,
-        LibTimeConditional.TimeConfig calldata durationTerms,
-        string memory licenseURI,
-        address revoker
+        DemoTerms calldata demoTerms,
+        string memory licenseURI
     ) public onlyFranchiseRegistry returns (uint256) {
         LicenseModuleStorage storage $ = _getLicenseModuleStorage();
         if (parentLicenseId != 0) {
@@ -155,11 +148,8 @@ contract LicensingModule is UUPSUpgradeable, ERC721Upgradeable, AccessControlled
             mediaId,
             generalTerms,
             ownershipParams,
-            paymentTerms,
-            grantingTerms,
-            durationTerms,
-            licenseURI,
-            revoker
+            demoTerms,
+            licenseURI
         );
         
         // TODO: remove this, only for demo
@@ -172,11 +162,8 @@ contract LicensingModule is UUPSUpgradeable, ERC721Upgradeable, AccessControlled
         bytes32 mediaId,
         GeneralTerms calldata generalTerms,
         OwnershipParams calldata ownershipParams,
-        PaymentTerms calldata paymentTerms,
-        GrantingTerms calldata grantingTerms,
-        LibTimeConditional.TimeConfig calldata durationTerms,
-        string memory licenseURI,
-        address revoker
+        DemoTerms calldata demoTerms,
+        string memory licenseURI
     ) private returns (uint256 licenseId) {
         
         licenseId = _emitLicense(
@@ -184,29 +171,33 @@ contract LicensingModule is UUPSUpgradeable, ERC721Upgradeable, AccessControlled
             mediaId,
             generalTerms,
             ownershipParams,
-            paymentTerms,
-            grantingTerms,
-            durationTerms,
-            licenseURI,
-            revoker
+            demoTerms,
+            licenseURI
         );
 
         // Not bound to a token, mint to holder
         if (ownershipParams.holder != address(0)) {
             _mint(ownershipParams.holder, licenseId);
         }
+        _emitEvent(licenseId, ownershipParams, parentLicenseId, demoTerms);
+        
+        return licenseId;
+    }
 
+    function _emitEvent(uint256 licenseId, OwnershipParams memory ownershipParams, uint256 parentLicenseId, DemoTerms memory demoTerms) private {
         emit LicenseGranted(
             licenseId,
             ownershipParams.holder,
             address(ownershipParams.token.collection),
             ownershipParams.token.tokenId,
-            parentLicenseId
+            parentLicenseId,
+            demoTerms.usage,
+            demoTerms.duration,
+            demoTerms.rights,
+            demoTerms.imageURI,
+            demoTerms.name
         );
-        
-        return licenseId;
     }
-
 
     function _verifySublicense(uint256 parentLicenseId, address licensor, License memory parentLicense, GeneralTerms memory generalTerms) private view {
         if (ownerOf(parentLicenseId) != licensor) revert("Sender is not the owner of the parent license");
@@ -233,11 +224,8 @@ contract LicensingModule is UUPSUpgradeable, ERC721Upgradeable, AccessControlled
         bytes32 mediaId,
         GeneralTerms memory generalTerms,
         OwnershipParams memory ownershipParams,
-        PaymentTerms memory paymentTerms,
-        GrantingTerms memory grantingTerms,
-        LibTimeConditional.TimeConfig memory durationTerms,
-        string memory licenseURI,
-        address revoker
+        DemoTerms memory demoTerms,
+        string memory licenseURI
     ) internal returns (uint256) {
         if (ownershipParams.holder == address(0) && _isUnsetToken(ownershipParams.token)) revert("License must be bound to a token or a license holder");
         if (ownershipParams.holder != address(0) && !_isUnsetToken(ownershipParams.token)) revert("License cannot be bound to a token and a license holder at the same time");
@@ -250,10 +238,7 @@ contract LicensingModule is UUPSUpgradeable, ERC721Upgradeable, AccessControlled
             mediaId: mediaId,
             generalTerms: generalTerms,
             licensedToken: ownershipParams.token,
-            paymentTerms: paymentTerms,
-            grantingTerms: grantingTerms,
-            revoker: revoker,
-            durationTerms: durationTerms,
+            demoTerms: demoTerms,
             licenseURI: licenseURI
         });
         return currentCounter;
@@ -277,7 +262,33 @@ contract LicensingModule is UUPSUpgradeable, ERC721Upgradeable, AccessControlled
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
     }
 
+    function tokenURI(uint256 tokenId_) public view override returns (string memory) {
+        require(_exists(tokenId_), 'URI query for nonexistent token');
+        License memory license = _getLicenseModuleStorage().licenses[tokenId_];
+        string memory name = string(abi.encodePacked('Story Protocol License #', tokenId_.toString()));
+        string memory description = string(abi.encodePacked('Commercial license for the Story Protocol IP Asset: ', license.demoTerms.name));
+        return string(
+            abi.encodePacked(
+                'data:application/json;base64,',
+                Base64.encode(
+                    bytes(
+                        abi.encodePacked(
+                            '{"name":"', name,
+                            '", "description":"', description,
+                            '", "image": "', license.demoTerms.imageURI,
+                            '", "external_url": "', license.licenseURI,
+                            '", "attributes": [{"trait_type": "usage", "value": "', license.demoTerms.usage, '"},',
+                            '{"trait_type": "duration", "value": "', license.demoTerms.duration, '"},',
+                            '{"trait_type": "rights", "value": "', license.demoTerms.rights, '"}]'
+                            '}')
+                    )
+                )
+            )
+        );
+    }
+
     function _authorizeUpgrade(
         address newImplementation
     ) internal virtual override onlyRole(UPGRADER_ROLE) {}
+
 }

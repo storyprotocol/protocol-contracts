@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.8.3",
-    "@openzeppelin/contracts-upgradeable": "^4.8.3"
+    "@openzeppelin/contracts-upgradeable": "^4.8.3",
+    "base64-sol": "^1.1.0"
   }
 }

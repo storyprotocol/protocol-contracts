@@ -145,8 +145,24 @@ contract FranchiseRegistry is
                 tokenId: ipAssetID
             })
         });
-        _demoGrantLicense(keccak256("FULL_COMMERCIAL_RIGHTS"), true, true, 0, ownershipParams, "");
-        _demoGrantLicense(keccak256("NON_COMMERCIAL_PUBLIC_NFT_SHARE_ALIKE"), false, true, 0, ownershipParams, "");
+        LicensingModule.DemoTerms memory commercialDemoTerms = LicensingModule.DemoTerms({
+            imageURI: '',
+            usage: "",
+            duration: "perpetual",
+            rights: "Full Commercial Rights",
+            name: name
+        });
+        _demoGrantLicense(keccak256("FULL_COMMERCIAL_RIGHTS"), true, true, 0, ownershipParams, commercialDemoTerms, "");
+
+        LicensingModule.DemoTerms memory nonCommercialDemoTerms = LicensingModule.DemoTerms({
+            imageURI: '',
+            usage: "",
+            duration: "perpetual",
+            rights: "Non Commercial Remixing Rights",
+            name: name
+        });
+
+        _demoGrantLicense(keccak256("NON_COMMERCIAL_PUBLIC_NFT_SHARE_ALIKE"), false, true, 0, ownershipParams, nonCommercialDemoTerms, "");
         return ipAssetID;
     }
 
@@ -155,7 +171,8 @@ contract FranchiseRegistry is
         uint256 ipAssetId,
         bool commercial,
         bytes32 mediaId,
-        string memory licenseURI
+        string memory licenseURI,
+        LicensingModule.DemoTerms memory demoTerms
     ) external returns (uint256) {
         FranchiseStorage storage $ = _getFranchiseStorage();
         address ipAssetRegistry = $.ipAssetRegistries[franchiseId];
@@ -167,7 +184,7 @@ contract FranchiseRegistry is
                 tokenId: 0
             })
         });
-        return _demoGrantLicense(mediaId, commercial, false, parentLicenseId, ownershipParams, licenseURI);
+        return _demoGrantLicense(mediaId, commercial, false, parentLicenseId, ownershipParams, demoTerms, licenseURI);
     }
 
     function _demoGrantLicense(
@@ -176,6 +193,7 @@ contract FranchiseRegistry is
         bool canSublicense,
         uint256 parentLicenseId,
         LicensingModule.OwnershipParams memory ownershipParamns,
+        LicensingModule.DemoTerms memory demoTerms,
         string memory licenseUri
     ) private returns (uint256) {
         FranchiseStorage storage $ = _getFranchiseStorage();
@@ -189,23 +207,8 @@ contract FranchiseRegistry is
                 commercial: commercial
             }),
             ownershipParamns,
-            LicensingModule.PaymentTerms({
-                interpreter: address(0),
-                data: ""
-            }),
-            LicensingModule.GrantingTerms({
-                processor: address(0),
-                data: ""
-            }),
-            LibTimeConditional.TimeConfig({
-                maxTTL: 0,
-                minTTL: 0,
-                renewable: false,
-                renewer: address(0),
-                endTime: 0
-            }),
-            licenseUri, // License URI ignored for non commercial
-            address(0) // No revoker for demo
+            demoTerms,
+            licenseUri // License URI ignored for non commercial
         );
     }
 
