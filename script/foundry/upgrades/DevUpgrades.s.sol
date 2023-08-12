@@ -131,10 +131,6 @@ contract UpgradeLicenseModule is Script, BroadcastManager, JsonDeploymentHandler
 
         LicensingModule licenseModule = LicensingModule(_readAddress(".main.LicenseModule-Proxy"));
         licenseModule.upgradeTo(licenseModuleImpl);
-
-        console.log("Upgraded LicenseModule to ", licenseModuleImpl);
-        address accessControl = _readAddress(".main.AccessControlSingleton-Proxy");
-        licenseModule.setAccessControl(accessControl);
         
     }
 
