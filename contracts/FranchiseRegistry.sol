@@ -122,6 +122,7 @@ contract FranchiseRegistry is
         }
     }
 
+    // TODO create asset as derivative of another asset
     function createIPAsset(
         uint256 franchiseId,
         IPAsset sb,
@@ -132,76 +133,76 @@ contract FranchiseRegistry is
         FranchiseStorage storage $ = _getFranchiseStorage();
         address ipAssetRegistry = $.ipAssetRegistries[franchiseId];
         ipAssetID = IIPAssetRegistry(ipAssetRegistry).createIPAsset(sb, name, _description, mediaUrl, msg.sender);
-        // For demo, every IPAsset has root comercial and non commercial
-        $.licensingModule.grantLicense(
-            msg.sender,
-            0, // root license
-            keccak256(abi.encode(sb)), //Using IPAsset Type as media ID for demo,
-            LicensingModule.GeneralTerms({
-                exclusive: false,
-                canSublicense: true,
-                commercial: false
-            }),
-            LicensingModule.OwnershipParams({
-                holder: address(0),
-                token: LicensingModule.Token({
-                    collection: IERC721(ipAssetRegistry),
-                    tokenId: ipAssetID
-                })
-            }),
-            LicensingModule.PaymentTerms({
-                interpreter: address(0),
-                data: ""
-            }),
-            LicensingModule.GrantingTerms({
-                processor: address(0),
-                data: ""
-            }),
-            LibTimeConditional.TimeConfig({
-                maxTTL: 0,
-                minTTL: 0,
-                renewable: false,
-                renewer: address(0),
-                endTime: 0
-            }),
-            "", // License URI ignored for non commercial
-            address(0) // No revoker for demo
-        );
-        $.licensingModule.grantLicense(
-            msg.sender,
-            0, // root license
-            keccak256(abi.encode(sb)), //Using IPAsset Type as media ID for demo,
-            LicensingModule.GeneralTerms({
-                exclusive: false,
-                canSublicense: true,
-                commercial: true
-            }),
-            LicensingModule.OwnershipParams({
-                holder: address(0),
-                token: LicensingModule.Token({
-                    collection: IERC721(ipAssetRegistry),
-                    tokenId: ipAssetID
-                })
-            }),
-            LicensingModule.PaymentTerms({
-                interpreter: address(0),
-                data: ""
-            }),
-            LicensingModule.GrantingTerms({
-                processor: address(0),
-                data: ""
-            }),
-            LibTimeConditional.TimeConfig({
-                maxTTL: 0,
-                minTTL: 0,
-                renewable: false,
-                renewer: address(0),
-                endTime: 0
-            }),
-            "", // License URI ignored for non commercial
-            address(0) // No revoker for demo
-        );
+        // For demo, every IPAsset has root comercial and non commercial licenses. Both can sublicense
+        LicensingModule.OwnershipParams memory ownershipParams = LicensingModule.OwnershipParams({
+            holder: address(0),
+            token: LicensingModule.Token({
+                collection: IERC721(ipAssetRegistry),
+                tokenId: ipAssetID
+            })
+        });
+        _demoGrantLicense(keccak256("FULL_COMMERCIAL_RIGHTS"), true, true, 0, ownershipParams, "");
+        _demoGrantLicense(keccak256("NON_COMMERCIAL_PUBLIC_NFT_SHARE_ALIKE"), false, true, 0, ownershipParams, "");
         return ipAssetID;
+    }
+
+    function createLicense(
+        uint256 franchiseId,
+        uint256 ipAssetId,
+        bool commercial,
+        bytes32 mediaId,
+        string memory licenseURI
+    ) external returns (uint256) {
+        FranchiseStorage storage $ = _getFranchiseStorage();
+        address ipAssetRegistry = $.ipAssetRegistries[franchiseId];
+        uint256 parentLicenseId = $.licensingModule.demoTokenToLicense(ipAssetRegistry, ipAssetId);
+        LicensingModule.OwnershipParams memory ownershipParams = LicensingModule.OwnershipParams({
+            holder: msg.sender,
+            token: LicensingModule.Token({
+                collection: IERC721(address(0)),
+                tokenId: 0
+            })
+        });
+        return _demoGrantLicense(mediaId, commercial, false, parentLicenseId, ownershipParams, licenseURI);
+    }
+
+    function _demoGrantLicense(
+        bytes32 mediaId,
+        bool commercial,
+        bool canSublicense,
+        uint256 parentLicenseId,
+        LicensingModule.OwnershipParams memory ownershipParamns,
+        string memory licenseUri
+    ) private returns (uint256) {
+        FranchiseStorage storage $ = _getFranchiseStorage();
+        return $.licensingModule.grantLicense(
+            msg.sender,
+            parentLicenseId,
+            mediaId,
+            LicensingModule.GeneralTerms({
+                exclusive: false,
+                canSublicense: canSublicense,
+                commercial: commercial
+            }),
+            ownershipParamns,
+            LicensingModule.PaymentTerms({
+                interpreter: address(0),
+                data: ""
+            }),
+            LicensingModule.GrantingTerms({
+                processor: address(0),
+                data: ""
+            }),
+            LibTimeConditional.TimeConfig({
+                maxTTL: 0,
+                minTTL: 0,
+                renewable: false,
+                renewer: address(0),
+                endTime: 0
+            }),
+            licenseUri, // License URI ignored for non commercial
+            address(0) // No revoker for demo
+        );
     }
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {

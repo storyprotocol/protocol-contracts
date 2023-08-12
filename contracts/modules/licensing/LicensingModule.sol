@@ -61,16 +61,20 @@ contract LicensingModule is ERC721 {
         // Temporal terms and address that could renew the license
         LibTimeConditional.TimeConfig durationTerms;
         string licenseURI;
+        // TODO: tokenbound license config (share alike, ledger authoritative...)
     }
 
     mapping(uint256 => License) private _licenses;
     uint256 private _licenseCounter;
 
     // TODO
-    mapping(address => bool) _bannedMarketPlaces;
+    mapping(address => bool) private _bannedMarketPlaces;
     // Each franchise can choose to restrict stuff, like allowed license templates, the holder of root commercial licenses can only be
     // the franchise owner and external PFP owners, etc.
-    mapping(uint256 => bytes) _franchiseRestrictions;
+    mapping(uint256 => bytes) private _franchiseRestrictions;
+
+    // TODO: Remove this
+    mapping(address => mapping(uint256 => uint256)) public demoTokenToLicense;
     
     string public nonCommercialLicenseURI;
     address immutable public FRANCHISE_REGISTRY;
@@ -146,6 +150,8 @@ contract LicensingModule is ERC721 {
                 parentLicenseId
             );
         }
+        // TODO: remove this, only for demo
+        demoTokenToLicense[address(ownershipParams.token.collection)][ownershipParams.token.tokenId] = licenseId;
         return licenseId;
     }
 
