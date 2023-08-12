@@ -38,12 +38,12 @@ contract DeployLicenseModule is Script, BroadcastManager, JsonDeploymentHandler,
 
         contractKey = "LicenseModule-Proxy";
         string memory noncommercialLicenseURL = "https://arweave.net/yHIbKlFBg3xuKSzlM_dREG8Y08uod-gWKsWi9OaPFsM";
-
+        address accessControl = _readAddress(".main.AccessControlSingleton-Proxy");
         console.log(string.concat("Deploying ", contractKey, "..."));
         address proxy = _deployUUPSProxy(
             licenseModuleImpl,
             abi.encodeWithSelector(
-                bytes4(keccak256(bytes("initialize(string)"))), noncommercialLicenseURL
+                bytes4(keccak256(bytes("initialize(string,address)"))), noncommercialLicenseURL, accessControl
             )
         );
         

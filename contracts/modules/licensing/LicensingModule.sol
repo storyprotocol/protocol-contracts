@@ -3,14 +3,17 @@ pragma solidity ^0.8.13;
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { LibTimeConditional } from "../timing/LibTimeConditional.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
+import { UPGRADER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
 
-contract LicensingModule is ERC721Upgradeable {
+contract LicensingModule is UUPSUpgradeable, ERC721Upgradeable, AccessControlledUpgradeable {
 
     event LicenseGranted (
         uint256 indexed licenseId,
         address holder,
-        address token,
-        uint256 tokenId,
+        address ipAssetRegistry,
+        uint256 ipAssetId,
         uint256 parentLicenseId
     );
 
@@ -93,7 +96,9 @@ contract LicensingModule is ERC721Upgradeable {
         FRANCHISE_REGISTRY = franchiseRegistry;
     }
 
-    function initialize(string calldata _nonCommercialLicenseURI) public initializer {
+    function initialize(string calldata _nonCommercialLicenseURI, address accessControl) public initializer {
+        __UUPSUpgradeable_init();
+        __AccessControlledUpgradeable_init(accessControl);
         __ERC721_init("Story Protocol License", "SPL");
         _getLicenseModuleStorage().nonCommercialLicenseURI = _nonCommercialLicenseURI;
     }
@@ -107,7 +112,6 @@ contract LicensingModule is ERC721Upgradeable {
     function getNonCommercialLicenseURI() public view returns (string memory) {
         return _getLicenseModuleStorage().nonCommercialLicenseURI;
     }
-
 
     function isLicenseActive(uint256 licenseId) public view virtual returns (bool) {
         // TODO: limit to the tree depth
@@ -272,4 +276,8 @@ contract LicensingModule is ERC721Upgradeable {
         // TODO: check granting terms, banned marketplaces, etc.
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
     }
+
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal virtual override onlyRole(UPGRADER_ROLE) {}
 }
