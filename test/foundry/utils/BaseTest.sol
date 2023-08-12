@@ -52,7 +52,7 @@ contract BaseTest is Test, ProxyHelper {
             )
         );
         address eventEmitter = address(new CommonIPAssetEventEmitter(address(franchiseRegistry)));
-        factory.upgradeFranchises(address(new IPAssetRegistry(eventEmitter)));
+        factory.upgradeFranchises(address(new IPAssetRegistry(eventEmitter, address(franchiseRegistry))));
 
         vm.startPrank(franchiseOwner);
         FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("name", "symbol", "description", "tokenURI");

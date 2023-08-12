@@ -9,7 +9,7 @@ import "./mocks/MockIPAssetEventEmitter.sol";
 
 contract IPAssetRegistryv2 is IPAssetRegistry {
 
-    constructor(address _eventEmitter) IPAssetRegistry(_eventEmitter) {
+    constructor(address _eventEmitter, address _franchiseRegistry) IPAssetRegistry(_eventEmitter, _franchiseRegistry) {
     }
 
     function version() virtual override external pure returns (string memory) {
@@ -26,12 +26,14 @@ contract IPAssetRegistryFactoryTest is Test {
     address notOwner = address(0x123);
     IPAssetRegistryFactory public factory;
     address private _mockEventEmitter = address(0x123123);
+    address mockFranchiseRegistry = address(0x7474);
 
     function setUp() public {
 
         factory = new IPAssetRegistryFactory();
         address eventEmitter = address(new MockIPAssetEventEmitter());
-        address ipAssetRegistry = address(new IPAssetRegistry(eventEmitter));
+        
+        address ipAssetRegistry = address(new IPAssetRegistry(eventEmitter, mockFranchiseRegistry));
 
         factory.upgradeFranchises(ipAssetRegistry);
     }
@@ -56,7 +58,7 @@ contract IPAssetRegistryFactoryTest is Test {
     }
 
     function test_UpgradeCollections() public {
-        IPAssetRegistryv2 newImplementation = new IPAssetRegistryv2(_mockEventEmitter);
+        IPAssetRegistryv2 newImplementation = new IPAssetRegistryv2(_mockEventEmitter, mockFranchiseRegistry);
         //vm.expectEmit(true, true, true, true);
         //emit CollectionsUpgraded(address(newImplementation), "2.0.0");
         factory.upgradeFranchises(address(newImplementation));
@@ -65,7 +67,7 @@ contract IPAssetRegistryFactoryTest is Test {
     }
 
     function test_revertIfNotOwnerUpgrades() public {
-        IPAssetRegistryv2 newImplementation = new IPAssetRegistryv2(_mockEventEmitter);
+        IPAssetRegistryv2 newImplementation = new IPAssetRegistryv2(_mockEventEmitter, mockFranchiseRegistry);
         vm.prank(notOwner);
         vm.expectRevert("Ownable: caller is not the owner");
         factory.upgradeFranchises(address(newImplementation));

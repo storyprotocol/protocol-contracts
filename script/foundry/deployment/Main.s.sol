@@ -104,7 +104,7 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         contractKey = "IPAssetRegistry-Template";
 
         console.log(string.concat("Deploying ", contractKey, "..."));
-        newAddress = address(new IPAssetRegistry(commonIPAssetEventEmitter));
+        newAddress = address(new IPAssetRegistry(commonIPAssetEventEmitter, franchiseRegistry));
         _writeAddress(contractKey, newAddress);
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
 

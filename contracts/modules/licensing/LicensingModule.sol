@@ -31,7 +31,7 @@ contract LicensingModule is ERC721 {
     }
 
     struct GrantingTerms {
-        address grantProcessor;
+        address processor;
         bytes data;
     }
 
@@ -110,45 +110,51 @@ contract LicensingModule is ERC721 {
         string memory licenseURI,
         address revoker
     ) public onlyFranchiseRegistry returns (uint256) {
-        string memory _licenseURI = licenseURI;
-        if (parentLicenseId == 0) {
-            if (!generalTerms.commercial) {
-                _licenseURI = nonCommercialLicenseURI;
-            }
-        } else {
-            if (ownerOf(parentLicenseId) != licensor) revert("Sender is not the owner of the parent license");
+        if (parentLicenseId != 0) {
             License memory parentLicense = _licenses[parentLicenseId];
-            if (!parentLicense.active) revert("Parent license is not active");
-            if (!parentLicense.generalTerms.canSublicense) revert("Parent license cannot be sublicensed");
-            if (parentLicense.generalTerms.commercial != generalTerms.commercial) revert("Commercial terms must be the same as parent license");
+            _verifySublicense(parentLicenseId, licensor, parentLicense, generalTerms);
+            licenseURI = parentLicense.licenseURI;
+        } else {
             if (!generalTerms.commercial) {
-                _licenseURI = parentLicense.licenseURI;
+                licenseURI = nonCommercialLicenseURI;
             }
         }
+        
         // TODO: check other terms
-        uint256 licenseId = _emitLicense(
-            parentLicenseId,
-            mediaId,
-            generalTerms,
-            ownershipParams,
-            paymentTerms,
-            grantingTerms,
-            durationTerms,
-            _licenseURI,
-            revoker
-        );
-        // Not bound to a token, mint to holder
-        if (ownershipParams.holder != address(0)) {
-            _mint(ownershipParams.holder, licenseId);
+        uint256 licenseId;
+        {
+            licenseId = _emitLicense(
+                parentLicenseId,
+                mediaId,
+                generalTerms,
+                ownershipParams,
+                paymentTerms,
+                grantingTerms,
+                durationTerms,
+                licenseURI,
+                revoker
+            );
+            // Not bound to a token, mint to holder
+            if (ownershipParams.holder != address(0)) {
+                _mint(ownershipParams.holder, licenseId);
+            }
+            emit LicenseGranted(
+                licenseId,
+                ownershipParams.holder,
+                address(ownershipParams.token.collection),
+                ownershipParams.token.tokenId,
+                parentLicenseId
+            );
         }
-        emit LicenseGranted(
-            licenseId,
-            ownershipParams.holder,
-            address(ownershipParams.token.collection),
-            ownershipParams.token.tokenId,
-            parentLicenseId
-        );
         return licenseId;
+    }
+
+
+    function _verifySublicense(uint256 parentLicenseId, address licensor, License memory parentLicense, GeneralTerms memory generalTerms) private view {
+        if (ownerOf(parentLicenseId) != licensor) revert("Sender is not the owner of the parent license");
+        if (!parentLicense.active) revert("Parent license is not active");
+        if (!parentLicense.generalTerms.canSublicense) revert("Parent license cannot be sublicensed");
+        if (parentLicense.generalTerms.commercial != generalTerms.commercial) revert("Commercial terms must be the same as parent license");
     }
 
     function _isUnsetToken(Token memory token) private pure returns (bool) {

@@ -41,8 +41,8 @@ abstract contract GroupDAM is IGroupDAM, IPAssetDataManager {
         }
     }
 
-    function createGroup(string calldata name, string calldata _description, string calldata mediaUrl, IPAsset linkedType, uint256[] calldata linkedItems) external returns(uint256) {
-        uint256 id = createIPAsset(IPAsset.GROUP, name, _description, mediaUrl);
+    function createGroup(string calldata name, string calldata _description, string calldata mediaUrl, address to, IPAsset linkedType, uint256[] calldata linkedItems) external returns(uint256) {
+        uint256 id = createIPAsset(IPAsset.GROUP, name, _description, mediaUrl, to);
         GroupDAMStorage storage $ = _getGroupDAMStorage();
         $.groupData[id].linkedType = linkedType;
         groupItems(id, linkedItems);

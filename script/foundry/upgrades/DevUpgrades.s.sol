@@ -94,7 +94,7 @@ contract UpgradeIPAssetRegistry is Script, BroadcastManager, JsonDeploymentHandl
 
         contractKey = "IPAssetRegistry-Impl";
         console.log(string.concat("Deploying ", contractKey, "..."));
-        address ipAssetRegistry = address(new IPAssetRegistry(eventEmitter));
+        address ipAssetRegistry = address(new IPAssetRegistry(eventEmitter, franchiseRegistryProxy));
         console.log(string.concat(contractKey, " deployed to:"), ipAssetRegistry);
 
         console.log(string.concat("Updating ", contractKey, " beacon..."));

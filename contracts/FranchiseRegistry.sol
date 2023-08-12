@@ -11,7 +11,9 @@ import { IIPAssetRegistry } from "./ip-assets/IIPAssetRegistry.sol";
 import { LibIPAssetId } from "./ip-assets/LibIPAssetId.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { LicensingModule } from "./modules/licensing/LicensingModule.sol";
+import { LibTimeConditional } from "./modules/timing/LibTimeConditional.sol";
 
 contract FranchiseRegistry is
     UUPSUpgradeable,
@@ -128,17 +130,79 @@ contract FranchiseRegistry is
         string calldata mediaUrl
     ) external returns (uint256 ipAssetID) {
         FranchiseStorage storage $ = _getFranchiseStorage();
-        if (msg.sender != $.ipAssetRegistries[franchiseId]) revert Unauthorized();
-        ipAssetID = IIPAssetRegistry($.ipAssetRegistries[franchiseId]).createIPAsset(sb, name, _description, mediaUrl, msg.sender);
-        /// TODO: grant registry
-        /*
+        address ipAssetRegistry = $.ipAssetRegistries[franchiseId];
+        ipAssetID = IIPAssetRegistry(ipAssetRegistry).createIPAsset(sb, name, _description, mediaUrl, msg.sender);
+        // For demo, every IPAsset has root comercial and non commercial
         $.licensingModule.grantLicense(
-            
+            msg.sender,
+            0, // root license
+            keccak256(abi.encode(sb)), //Using IPAsset Type as media ID for demo,
+            LicensingModule.GeneralTerms({
+                exclusive: false,
+                canSublicense: true,
+                commercial: false
+            }),
+            LicensingModule.OwnershipParams({
+                holder: address(0),
+                token: LicensingModule.Token({
+                    collection: IERC721(ipAssetRegistry),
+                    tokenId: ipAssetID
+                })
+            }),
+            LicensingModule.PaymentTerms({
+                interpreter: address(0),
+                data: ""
+            }),
+            LicensingModule.GrantingTerms({
+                processor: address(0),
+                data: ""
+            }),
+            LibTimeConditional.TimeConfig({
+                maxTTL: 0,
+                minTTL: 0,
+                renewable: false,
+                renewer: address(0),
+                endTime: 0
+            }),
+            "", // License URI ignored for non commercial
+            address(0) // No revoker for demo
         );
-        */
+        $.licensingModule.grantLicense(
+            msg.sender,
+            0, // root license
+            keccak256(abi.encode(sb)), //Using IPAsset Type as media ID for demo,
+            LicensingModule.GeneralTerms({
+                exclusive: false,
+                canSublicense: true,
+                commercial: true
+            }),
+            LicensingModule.OwnershipParams({
+                holder: address(0),
+                token: LicensingModule.Token({
+                    collection: IERC721(ipAssetRegistry),
+                    tokenId: ipAssetID
+                })
+            }),
+            LicensingModule.PaymentTerms({
+                interpreter: address(0),
+                data: ""
+            }),
+            LicensingModule.GrantingTerms({
+                processor: address(0),
+                data: ""
+            }),
+            LibTimeConditional.TimeConfig({
+                maxTTL: 0,
+                minTTL: 0,
+                renewable: false,
+                renewer: address(0),
+                endTime: 0
+            }),
+            "", // License URI ignored for non commercial
+            address(0) // No revoker for demo
+        );
         return ipAssetID;
     }
-
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         _requireMinted(tokenId);
