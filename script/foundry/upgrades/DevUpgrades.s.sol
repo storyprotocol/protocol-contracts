@@ -91,17 +91,14 @@ contract UpgradeIPAssetRegistry is Script, BroadcastManager, JsonDeploymentHandl
 
         address franchiseRegistryProxy = _readAddress(".main.FranchiseRegistry-Proxy");
         address ipAssetRegistryFactory = _readAddress(".main.IPAssetRegistryFactory");
+        address eventEmitter = _readAddress(".main.CommonIPAssetEventEmitter");
         if (address(ipAssetRegistryFactory) == address(0)) {
             revert("ipAssetRegistryFactory not found");
         }
 
-        string memory contractKey = "CommonEventEmitter";
+        string memory contractKey;
 
-        console.log(string.concat("Deploying ", contractKey, "..."));
-        address eventEmitter = address(new CommonIPAssetEventEmitter(franchiseRegistryProxy));
-        console.log(string.concat(contractKey, " deployed to:"), eventEmitter);
-
-        contractKey = "IPAssetRegistry-Impl";
+        contractKey = "IPAssetRegistry-Template";
         console.log(string.concat("Deploying ", contractKey, "..."));
         address ipAssetRegistry = address(new IPAssetRegistry(eventEmitter, franchiseRegistryProxy));
         console.log(string.concat(contractKey, " deployed to:"), ipAssetRegistry);
