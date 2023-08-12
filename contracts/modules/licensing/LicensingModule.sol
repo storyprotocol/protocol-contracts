@@ -93,7 +93,7 @@ contract LicensingModule is ERC721Upgradeable {
         FRANCHISE_REGISTRY = franchiseRegistry;
     }
 
-    function initialize(string memory _nonCommercialLicenseURI) public initializer {
+    function initialize(string calldata _nonCommercialLicenseURI) public initializer {
         __ERC721_init("Story Protocol License", "SPL");
         _getLicenseModuleStorage().nonCommercialLicenseURI = _nonCommercialLicenseURI;
     }

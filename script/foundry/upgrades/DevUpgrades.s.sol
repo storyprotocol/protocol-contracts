@@ -7,6 +7,7 @@ import "script/foundry/utils/JsonDeploymentHandler.s.sol";
 import "script/foundry/utils/BroadcastManager.s.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/modules/relationships/RelationshipModuleBase.sol";
+import "contracts/modules/licensing/LicensingModule.sol";
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/access-control/ProtocolRoles.sol";
@@ -64,6 +65,12 @@ contract UpgradeFranchiseRegistry is Script, BroadcastManager, JsonDeploymentHan
         address newFranchiseRegistry = address(new FranchiseRegistry(ipAssetRegistryFactory));
         console.log("Upgrading FranchiseRegistry to ", newFranchiseRegistry);
         franchiseRegistry.upgradeTo(newFranchiseRegistry);
+
+        console.log("Upgrading IPAssetRegistryFactory to ", newFranchiseRegistry);
+
+        LicensingModule licenseModule = LicensingModule(_readAddress(".main.LicenseModule-Proxy"));
+        console.log("Setting license module");
+        franchiseRegistry.setLicensingModule(licenseModule);
         
     }
 

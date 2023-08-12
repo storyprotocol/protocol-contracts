@@ -67,7 +67,7 @@ contract FranchiseRegistry is
     }
 
     function setLicensingModule(LicensingModule module) external{
-        // TODO: set protocol role for this and check sender
+        // TODO: set protocol role for this and check sender.
         if (address(module) == address(0)) revert ZeroAddress();
         _getFranchiseStorage().licensingModule = module;
     }
