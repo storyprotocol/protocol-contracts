@@ -45,6 +45,8 @@ contract LicenseModuleTest is BaseTest {
         });
         uint256 licenseId = franchiseRegistry.createLicense(1, ipAssetId, true, keccak256("MOVIE_ADAPTATION"), "https://cool-license-bro.pdf", terms);
         console.log(licensingModule.tokenURI(licenseId));
+        licenseId = franchiseRegistry.createLicense(1, ipAssetId, true, keccak256("NOT_MOVIE"), "https://cool-license-bro.pdf", terms);
+
         vm.stopPrank();
     }
  

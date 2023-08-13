@@ -153,7 +153,9 @@ contract LicensingModule is UUPSUpgradeable, ERC721Upgradeable, AccessControlled
         );
         
         // TODO: remove this, only for demo
-        $.demoTokenToLicense[address(ownershipParams.token.collection)][ownershipParams.token.tokenId][generalTerms.commercial] = licenseId;
+        if (ownershipParams.holder == address(0)) {
+            $.demoTokenToLicense[address(ownershipParams.token.collection)][ownershipParams.token.tokenId][generalTerms.commercial] = licenseId;
+        }
         return licenseId;
     }
 
