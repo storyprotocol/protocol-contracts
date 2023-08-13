@@ -5,10 +5,9 @@ import { IIPAssetRegistry } from "./IIPAssetRegistry.sol";
 import { LibIPAssetId } from "./LibIPAssetId.sol";
 import { Unauthorized, ZeroAmount, ZeroAddress } from "../errors/General.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
-import { GroupDAM } from "./data-access-modules/group/GroupDAM.sol";
 import { IIPAssetEventEmitter } from "./events/IIPAssetEventEmitter.sol";
-import { IIPAssetDataManager } from "./data-access-modules/storage/IIPAssetDataManager.sol";
-import { IPAssetDataManager } from "./data-access-modules/storage/IPAssetDataManager.sol";
+import { IIPAssetDataManager } from "./storage/IIPAssetDataManager.sol";
+import { IPAssetDataManager } from "./storage/IPAssetDataManager.sol";
 import { ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { MulticallUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
@@ -17,8 +16,7 @@ contract IPAssetRegistry is
     IIPAssetRegistry,
     IPAssetDataManager,
     ERC721Upgradeable,
-    MulticallUpgradeable,
-    GroupDAM
+    MulticallUpgradeable
 {
 
     error IdOverBounds();
@@ -75,15 +73,16 @@ contract IPAssetRegistry is
         string calldata name,
         string calldata _description,
         string calldata mediaUrl
-    ) public virtual override(IIPAssetDataManager, IPAssetDataManager) returns (uint256) {
-        uint256 sbId = _createIPAsset(sb, name, _description, mediaUrl);
+    ) external virtual override returns (uint256) {
+        if (sb == IPAsset.UNDEFINED) revert InvalidBlockType();
+        uint256 sbId = _mintBlock(msg.sender, sb);
+        _writeIPAsset(sbId, name, _description, mediaUrl);
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
         EVENT_EMITTER.emitIPAssetCreation($.franchiseId, sbId);
         return sbId;
     }
-    
 
-    function _mintBlock(address to, IPAsset sb) internal override returns (uint256) {
+    function _mintBlock(address to, IPAsset sb) private returns (uint256) {
         uint256 nextId = currentIdFor(sb) + 1;
         if (nextId > LibIPAssetId._lastId(sb)) revert IdOverBounds();
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
