@@ -180,8 +180,8 @@ contract FranchiseRegistry is
         LicensingModule.OwnershipParams memory ownershipParams = LicensingModule.OwnershipParams({
             holder: msg.sender,
             token: LicensingModule.Token({
-                collection: IERC721(address(0)),
-                tokenId: 0
+                collection: IERC721(ipAssetRegistry),
+                tokenId: ipAssetId
             })
         });
         return _demoGrantLicense(mediaId, commercial, false, parentLicenseId, ownershipParams, demoTerms, licenseURI);
