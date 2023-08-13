@@ -9,7 +9,7 @@
     "IPAssetRegistryFactory": "0x461DF243955aD5493cFa33434c2B7CfF2C583dc7",
     "ProtocolRelationshipModule-Impl": "0x0c34223fc772aeC0514B5fbf5614b9ab85EdaAe1",
     "ProtocolRelationshipModule-Proxy": "0xb146cB898E95953f353bf5A50Fb8f129eC0D5AAb",
-    "LicenseModule-Impl": "0x03Ca78D3A307c98D848d427bD1929bB73a1F3E00",
+    "LicenseModule-Impl": "0x9C92B9BB61d80Cd0d9603c3d97cf564238A71a77",
     "LicenseModule-Proxy": "0x329845768f83E642B1eF95747140A74c65Ae198D"
   },
   "relationship-processors": {

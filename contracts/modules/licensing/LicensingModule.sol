@@ -228,7 +228,6 @@ contract LicensingModule is UUPSUpgradeable, ERC721Upgradeable, AccessControlled
         string memory licenseURI
     ) internal returns (uint256) {
         if (ownershipParams.holder == address(0) && _isUnsetToken(ownershipParams.token)) revert("License must be bound to a token or a license holder");
-        if (ownershipParams.holder != address(0) && !_isUnsetToken(ownershipParams.token)) revert("License cannot be bound to a token and a license holder at the same time");
         // TODO: validate all terms
         LicenseModuleStorage storage $ = _getLicenseModuleStorage();
         uint256 currentCounter = $.licenseCounter++;
