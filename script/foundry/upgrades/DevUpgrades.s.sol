@@ -7,13 +7,11 @@ import "script/foundry/utils/JsonDeploymentHandler.s.sol";
 import "script/foundry/utils/BroadcastManager.s.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/modules/relationships/RelationshipModuleBase.sol";
-import "contracts/modules/licensing/LicensingModule.sol";
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/access-control/ProtocolRoles.sol";
 import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
 import "contracts/ip-assets/IPAssetRegistry.sol";
-import "contracts/modules/licensing/LicensingModule.sol";
 
 
 /**
@@ -69,11 +67,6 @@ contract UpgradeFranchiseRegistry is Script, BroadcastManager, JsonDeploymentHan
         franchiseRegistry.upgradeTo(newFranchiseRegistry);
 
         console.log("Upgrading IPAssetRegistryFactory to ", newFranchiseRegistry);
-
-        LicensingModule licenseModule = LicensingModule(_readAddress(".main.LicenseModule-Proxy"));
-        console.log("Setting license module");
-        franchiseRegistry.setLicensingModule(licenseModule);
-        
     }
 
 }
@@ -109,32 +102,6 @@ contract UpgradeIPAssetRegistry is Script, BroadcastManager, JsonDeploymentHandl
         console.log(string.concat("Updating ", contractKey, " beacon..."));
         IPAssetRegistryFactory(ipAssetRegistryFactory).upgradeFranchises(ipAssetRegistry);
         console.log(string.concat(contractKey, " beacon updated to:"), ipAssetRegistry);
-        
-    }
-
-}
-
-contract UpgradeLicenseModule is Script, BroadcastManager, JsonDeploymentHandler {
-
-    using StringUtil for uint256;
-    using stdJson for string;
-
-    constructor() JsonDeploymentHandler("main") {}
-
-    function run() public {
-        _readDeployment();
-        _beginBroadcast();
-
-        address franchiseRegistryProxy = _readAddress(".main.FranchiseRegistry-Proxy");
-
-        address licenseModuleImpl = address(new LicensingModule(franchiseRegistryProxy));
-
-        LicensingModule licenseModule = LicensingModule(_readAddress(".main.LicenseModule-Proxy"));
-        licenseModule.upgradeTo(licenseModuleImpl);
-
-        console.log("Upgraded LicenseModule to ", licenseModuleImpl);
-        address accessControl = _readAddress(".main.AccessControlSingleton-Proxy");
-        licenseModule.setAccessControl(accessControl);
         
     }
 

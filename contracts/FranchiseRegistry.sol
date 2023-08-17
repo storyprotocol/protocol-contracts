@@ -12,7 +12,6 @@ import { LibIPAssetId } from "./ip-assets/LibIPAssetId.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { LicensingModule } from "./modules/licensing/LicensingModule.sol";
 import { LibTimeConditional } from "./modules/timing/LibTimeConditional.sol";
 
 contract FranchiseRegistry is
@@ -44,7 +43,6 @@ contract FranchiseRegistry is
         /// Franchise id => IPAssetRegistry address
         mapping(uint256 => address) ipAssetRegistries;
         mapping(uint256 => string) tokenURIs;
-        LicensingModule licensingModule;
     }
 
     IPAssetRegistryFactory public immutable FACTORY;
@@ -64,16 +62,6 @@ contract FranchiseRegistry is
         __UUPSUpgradeable_init();
         __AccessControlledUpgradeable_init(accessControl);
         __ERC721_init("Story Protocol", "SP");
-    }
-
-    function setLicensingModule(LicensingModule module) external{
-        // TODO: set protocol role for this and check sender.
-        if (address(module) == address(0)) revert ZeroAddress();
-        _getFranchiseStorage().licensingModule = module;
-    }
-
-    function getLicenseingModule() external view returns (LicensingModule) {
-        return _getFranchiseStorage().licensingModule;
     }
 
     function _getFranchiseStorage() private pure returns (FranchiseStorage storage $) {
@@ -137,76 +125,7 @@ contract FranchiseRegistry is
         FranchiseStorage storage $ = _getFranchiseStorage();
         address ipAssetRegistry = $.ipAssetRegistries[franchiseId];
         ipAssetID = IIPAssetRegistry(ipAssetRegistry).createIPAsset(sb, name, _description, mediaUrl, msg.sender);
-        // For demo, every IPAsset has root comercial and non commercial licenses. Both can sublicense
-        LicensingModule.OwnershipParams memory ownershipParams = LicensingModule.OwnershipParams({
-            holder: address(0),
-            token: LicensingModule.Token({
-                collection: IERC721(ipAssetRegistry),
-                tokenId: ipAssetID
-            })
-        });
-        _demoGrantLicense(keccak256("FULL_COMMERCIAL_RIGHTS"), true, true, 0, ownershipParams, "");
-        _demoGrantLicense(keccak256("NON_COMMERCIAL_PUBLIC_NFT_SHARE_ALIKE"), false, true, 0, ownershipParams, "");
         return ipAssetID;
-    }
-
-    function createLicense(
-        uint256 franchiseId,
-        uint256 ipAssetId,
-        bool commercial,
-        bytes32 mediaId,
-        string memory licenseURI
-    ) external returns (uint256) {
-        FranchiseStorage storage $ = _getFranchiseStorage();
-        address ipAssetRegistry = $.ipAssetRegistries[franchiseId];
-        uint256 parentLicenseId = $.licensingModule.licenseIdForToken(ipAssetRegistry, ipAssetId, commercial);
-        LicensingModule.OwnershipParams memory ownershipParams = LicensingModule.OwnershipParams({
-            holder: msg.sender,
-            token: LicensingModule.Token({
-                collection: IERC721(address(0)),
-                tokenId: 0
-            })
-        });
-        return _demoGrantLicense(mediaId, commercial, false, parentLicenseId, ownershipParams, licenseURI);
-    }
-
-    function _demoGrantLicense(
-        bytes32 mediaId,
-        bool commercial,
-        bool canSublicense,
-        uint256 parentLicenseId,
-        LicensingModule.OwnershipParams memory ownershipParamns,
-        string memory licenseUri
-    ) private returns (uint256) {
-        FranchiseStorage storage $ = _getFranchiseStorage();
-        return $.licensingModule.grantLicense(
-            msg.sender,
-            parentLicenseId,
-            mediaId,
-            LicensingModule.GeneralTerms({
-                exclusive: false,
-                canSublicense: canSublicense,
-                commercial: commercial
-            }),
-            ownershipParamns,
-            LicensingModule.PaymentTerms({
-                interpreter: address(0),
-                data: ""
-            }),
-            LicensingModule.GrantingTerms({
-                processor: address(0),
-                data: ""
-            }),
-            LibTimeConditional.TimeConfig({
-                maxTTL: 0,
-                minTTL: 0,
-                renewable: false,
-                renewer: address(0),
-                endTime: 0
-            }),
-            licenseUri, // License URI ignored for non commercial
-            address(0) // No revoker for demo
-        );
     }
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
