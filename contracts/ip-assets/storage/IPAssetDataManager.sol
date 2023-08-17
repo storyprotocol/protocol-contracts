@@ -26,34 +26,13 @@ abstract contract IPAssetDataManager is Initializable, IIPAssetDataManager {
             $.slot := _STORAGE_LOCATION
         }
     }
-
-    function createIPAsset(
-        IPAsset sb,
-        string calldata name,
-        string calldata _description,
-        string calldata mediaUrl,
-        address to
-    ) public virtual returns (uint256);
-
-    function _createIPAsset(
-        IPAsset sb,
-        string calldata name,
-        string calldata _description,
-        string calldata mediaUrl,
-        address to
-    ) internal returns (uint256) {
-        if (sb == IPAsset.UNDEFINED) revert InvalidBlockType();
-        uint256 sbId = _mintBlock(to, sb);
-        _writeIPAsset(sbId, name, _description, mediaUrl);
-        return sbId;
-    }
     
     function _writeIPAsset(
         uint256 ipAssetId,
         string calldata name,
         string calldata description,
         string calldata mediaUrl
-    ) private returns (IPAsset) {
+    ) internal returns (IPAsset) {
         IPAssetDataStorage storage $ = _getIPAssetDataStorage();
         IPAssetData storage sbd = $.ipAssetsData[ipAssetId];
         if (sbd.blockType == IPAsset.UNDEFINED) {
@@ -71,5 +50,4 @@ abstract contract IPAssetDataManager is Initializable, IIPAssetDataManager {
         return $.ipAssetsData[ipAssetId];
     }
     
-    function _mintBlock(address to, IPAsset sb) internal virtual returns (uint256);
 }

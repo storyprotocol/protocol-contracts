@@ -22,12 +22,4 @@ interface IIPAssetDataManager  {
     
     function readIPAsset(uint256 IPAssetId) external view returns (IPAssetData memory);
     
-    function createIPAsset(
-        IPAsset sb,
-        string calldata name,
-        string calldata _description,
-        string calldata mediaUrl,
-        address to
-    ) external returns (uint256);
-    
 }

@@ -1,18 +1,26 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import { IVersioned } from "../utils/IVersioned.sol";
-import { IIPAssetDataManager } from './data-access-modules/storage/IIPAssetDataManager.sol';
-import { IGroupDAM } from "./data-access-modules/group/IGroupDAM.sol";
-import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
-import { IERC5218 } from "../modules/licensing/IERC5218.sol";
+import {IVersioned} from "../utils/IVersioned.sol";
+import {IIPAssetDataManager} from "./storage/IIPAssetDataManager.sol";
+import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
+import {IERC5218} from "../modules/licensing/IERC5218.sol";
+import {IPAsset} from "../IPAsset.sol";
 
-interface IIPAssetRegistry is 
+interface IIPAssetRegistry is
     IVersioned,
     IERC165Upgradeable,
     IERC5218,
-    IIPAssetDataManager,
-    IGroupDAM
-    { 
+    IIPAssetDataManager
+{
     function franchiseId() external view returns (uint256);
-    }
+
+    function createIPAsset(
+        IPAsset sb,
+        string calldata name,
+        string calldata _description,
+        string calldata mediaUrl,
+        address to
+    ) external returns (uint256);
+
+}
