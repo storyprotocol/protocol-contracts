@@ -15,7 +15,6 @@ contract LicenseRegistry is ERC721 {
         RIGHTS_MANAGER = IERC5218(rightsManager);
     }
 
-
     modifier onlyRightsManager() {
         if (msg.sender != address(RIGHTS_MANAGER)) revert Unauthorized();
         _;
@@ -24,7 +23,6 @@ contract LicenseRegistry is ERC721 {
     function mint(address to, uint256 tokenId) public onlyRightsManager {
         _mint(to, tokenId);
     }
-
 
     function _beforeTokenTransfer(
         address from,
@@ -35,8 +33,5 @@ contract LicenseRegistry is ERC721 {
         RIGHTS_MANAGER.transferSublicense(firstTokenId, to);
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
     }
-
-
-
 
 }

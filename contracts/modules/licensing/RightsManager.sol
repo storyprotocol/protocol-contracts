@@ -32,17 +32,15 @@ abstract contract RightsManager is
         string uri; // NOTE: should we merge this with IPAssetRegistry tokenURI for Licenses who are rights?
     }
 
-    struct LicenseModuleStorage {
+    struct RightsManagerStorage {
         mapping(uint256 => License) licenses;
         // keccack256(commercial, tokenId) => licenseId
         mapping(bytes32 => uint256) licenseForTokenId;
         uint256 licenseCounter;
-        string nonCommercialLicenseURI;
     }
 
-    // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.license-module.storage")) - 1)))
-    bytes32 private constant _STORAGE_LOCATION =
-        0x778e3a21329d920b45eecf00e356693a1888f1ae24d67d398ab1f17457bcfabd;
+    // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.rights-manager.storage")) - 1)))
+    bytes32 private constant _STORAGE_LOCATION = 0x315576c20e31e03ef3e70482445a4c33e45baf13beff28e79f2adf6d06cc0bee;
     uint256 private constant _UNSET_LICENSE_ID = 0;
     LicenseRegistry public immutable LICENSE_REGISTRY;
 
@@ -52,38 +50,20 @@ abstract contract RightsManager is
     }
 
     function __RightsManager_init(
-        string calldata _nonCommercialLicenseURI,
         string calldata name,
         string calldata symbol
     ) public initializer {
         __ERC721_init(name, symbol);
-        _getLicenseModuleStorage()
-            .nonCommercialLicenseURI = _nonCommercialLicenseURI;
     }
 
-    function setNonCommercialLicenseURI(
-        string calldata _nonCommercialLicenseURI
-    ) external virtual;
-
-    function _setNonCommercialLicenseURI(
-        string calldata _nonCommercialLicenseURI
-    ) internal {
-        _getLicenseModuleStorage()
-            .nonCommercialLicenseURI = _nonCommercialLicenseURI;
-    }
-
-    function _getLicenseModuleStorage()
+    function _getRightsManagerStorage()
         private
         pure
-        returns (LicenseModuleStorage storage $)
+        returns (RightsManagerStorage storage $)
     {
         assembly {
             $.slot := _STORAGE_LOCATION
         }
-    }
-
-    function getNonCommercialLicenseURI() public view returns (string memory) {
-        return _getLicenseModuleStorage().nonCommercialLicenseURI;
     }
 
     function isLicenseActive(
@@ -93,7 +73,7 @@ abstract contract RightsManager is
         // TODO: check time limits
         if (licenseId == 0) return false;
         while (licenseId != 0) {
-            LicenseModuleStorage storage $ = _getLicenseModuleStorage();
+            RightsManagerStorage storage $ = _getRightsManagerStorage();
             License memory license = $.licenses[licenseId];
             if (!license.active) return false;
             licenseId = license.parentLicenseId;
@@ -117,7 +97,7 @@ abstract contract RightsManager is
         uint256 licenseId
     ) public view returns (License memory, address holder) {
         return (
-            _getLicenseModuleStorage().licenses[licenseId],
+            _getRightsManagerStorage().licenses[licenseId],
             getLicenseHolder(licenseId)
         );
     }
@@ -135,19 +115,19 @@ abstract contract RightsManager is
     function getLicenseTokenId(
         uint256 _licenseId
     ) external view override returns (uint256) {
-        return _getLicenseModuleStorage().licenses[_licenseId].tokenId;
+        return _getRightsManagerStorage().licenses[_licenseId].tokenId;
     }
 
     function getParentLicenseId(
         uint256 _licenseId
     ) external view override returns (uint256) {
-        return _getLicenseModuleStorage().licenses[_licenseId].parentLicenseId;
+        return _getRightsManagerStorage().licenses[_licenseId].parentLicenseId;
     }
 
     function getLicenseHolder(
         uint256 _licenseId
     ) public view override returns (address) {
-        License memory license = _getLicenseModuleStorage().licenses[
+        License memory license = _getRightsManagerStorage().licenses[
             _licenseId
         ];
         if (license.parentLicenseId == _UNSET_LICENSE_ID) {
@@ -160,13 +140,13 @@ abstract contract RightsManager is
     function getLicenseURI(
         uint256 _licenseId
     ) external view override returns (string memory) {
-        return _getLicenseModuleStorage().licenses[_licenseId].uri;
+        return _getRightsManagerStorage().licenses[_licenseId].uri;
     }
 
     function getLicenseRevoker(
         uint256 _licenseId
     ) external view override returns (address) {
-        return _getLicenseModuleStorage().licenses[_licenseId].revoker;
+        return _getRightsManagerStorage().licenses[_licenseId].revoker;
     }
 
     function getLicenseIdByTokenId(
@@ -174,7 +154,7 @@ abstract contract RightsManager is
         bool _commercial
     ) external view override returns (uint256) {
         return
-            _getLicenseModuleStorage().licenseForTokenId[
+            _getRightsManagerStorage().licenseForTokenId[
                 keccak256(abi.encode(_commercial, _tokenId))
             ];
     }
@@ -182,7 +162,7 @@ abstract contract RightsManager is
     function isRootLicense(
         uint256 licenseId
     ) public view returns (bool) {
-        return _getLicenseModuleStorage().licenses[licenseId].parentLicenseId == _UNSET_LICENSE_ID;
+        return _getRightsManagerStorage().licenses[licenseId].parentLicenseId == _UNSET_LICENSE_ID;
     }
 
     function createLicense(
@@ -198,9 +178,6 @@ abstract contract RightsManager is
             // Root licenses aka rights can only be minted by IPAssetRegistry
             // TODO: check how to allow the Franchise NFT to have root commercial license
             revert Unauthorized();
-        }
-        if (!_commercial) {
-            _uri = getNonCommercialLicenseURI();
         }
         return _createLicense(
             _tokenId,
@@ -222,7 +199,7 @@ abstract contract RightsManager is
         bool commercial,
         bool canSublicense
     ) internal returns (uint256) {
-        LicenseModuleStorage storage $ = _getLicenseModuleStorage();
+        RightsManagerStorage storage $ = _getRightsManagerStorage();
         if (!_exists(tokenId)) {
             revert NonExistentID(tokenId);
         }
@@ -262,7 +239,7 @@ abstract contract RightsManager is
 
     function revokeLicense(uint256 _licenseId) external override {
         if (!_exists(_licenseId)) revert NonExistentID(_licenseId);
-        LicenseModuleStorage storage $ = _getLicenseModuleStorage();
+        RightsManagerStorage storage $ = _getRightsManagerStorage();
         License storage license = $.licenses[_licenseId];
         if (msg.sender != license.revoker) revert SenderNotRevoker();
         license.active = false;
@@ -282,7 +259,7 @@ abstract contract RightsManager is
     ) public virtual override(IERC5218) {
         if (msg.sender != address(LICENSE_REGISTRY)) revert Unauthorized();
         if (!isLicenseActive(licenseId)) revert InactiveLicense();
-        if (_getLicenseModuleStorage().licenses[licenseId].parentLicenseId == 0)
+        if (_getRightsManagerStorage().licenses[licenseId].parentLicenseId == 0)
             revert CannotSublicense();
         _updateLicenseHolder(licenseId, licenseHolder);
     }
