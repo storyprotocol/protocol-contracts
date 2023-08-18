@@ -152,7 +152,7 @@ abstract contract RightsManager is
     function getLicenseIdByTokenId(
         uint256 _tokenId,
         bool _commercial
-    ) external view override returns (uint256) {
+    ) public view override returns (uint256) {
         return
             _getRightsManagerStorage().licenseForTokenId[
                 keccak256(abi.encode(_commercial, _tokenId))

@@ -20,7 +20,8 @@ interface IIPAssetRegistry is
         string calldata name,
         string calldata _description,
         string calldata mediaUrl,
-        address to
+        address to,
+        uint256 parentIpAssetId
     ) external returns (uint256);
 
 }

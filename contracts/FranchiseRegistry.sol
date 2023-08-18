@@ -114,19 +114,6 @@ contract FranchiseRegistry is
         }
     }
 
-    // TODO create asset as derivative of another asset
-    function createIPAsset(
-        uint256 franchiseId,
-        IPAsset sb,
-        string calldata name,
-        string calldata _description,
-        string calldata mediaUrl
-    ) external returns (uint256 ipAssetID) {
-        FranchiseStorage storage $ = _getFranchiseStorage();
-        address ipAssetRegistry = $.ipAssetRegistries[franchiseId];
-        ipAssetID = IIPAssetRegistry(ipAssetRegistry).createIPAsset(sb, name, _description, mediaUrl, msg.sender);
-        return ipAssetID;
-    }
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         _requireMinted(tokenId);

@@ -13,12 +13,15 @@ contract LicensingModule is AccessControlledUpgradeable {
         uint256 franchiseRootLicenseId;
         // TODO: allowed license terms? processors?
         // TODO: limit medium of sublicenses? something like LibIPAssetMask?
+        // TODO: limit who you can sublicense to?
     }
 
     struct FranchiseConfig {
-        IpAssetConfig commercialConfig;
         IpAssetConfig nonCommercialConfig;
+        IpAssetConfig commercialConfig;
         bool rootIpAssetHasCommercialRights;
+        address revoker;
+        string commercialLicenseUri;
     }
 
     struct LicensingModuleStorage {
@@ -64,7 +67,7 @@ contract LicensingModule is AccessControlledUpgradeable {
         emit NonCommercialLicenseUriSet(_nonCommercialLicenseURI);
     }
 
-    function configureLicense(uint256 franchiseId, FranchiseConfig memory config) external {
+    function configureFranchiseLicensing(uint256 franchiseId, FranchiseConfig memory config) external {
         if (msg.sender != FRANCHISE_REGISTRY.ownerOf(franchiseId)) {
             revert Unauthorized();
         }

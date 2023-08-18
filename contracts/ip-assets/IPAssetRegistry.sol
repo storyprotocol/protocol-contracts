@@ -12,6 +12,7 @@ import { ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC7
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { MulticallUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 import { RightsManager } from "../modules/licensing/RightsManager.sol";
+import { LicensingModule } from "../modules/licensing/LicensingModule.sol";
 
 contract IPAssetRegistry is
     IPAssetDataManager,
@@ -29,35 +30,28 @@ contract IPAssetRegistry is
     }
 
     IIPAssetEventEmitter public immutable EVENT_EMITTER;
-    FranchiseRegistry public immutable FRANCHISE_REGISTRY;
+    LicensingModule public immutable LICENSING_MODULE;
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.ip-assets-registry.storage")) - 1)))
     bytes32 private constant _STORAGE_LOCATION =
         0x1a0b8fa444ff575656111a4368b8e6a743b70cbf31ffb9ee2c7afe1983f0e378;
     string private constant _VERSION = "0.1.0";
 
-    constructor(address _eventEmitter, address _franchiseRegistry) {
+    constructor(address _eventEmitter, address _licensingModule) {
+        // TODO: should Franchise owner be able to change this?
         if (_eventEmitter == address(0)) revert ZeroAddress();
         EVENT_EMITTER = IIPAssetEventEmitter(_eventEmitter);
-        if (_franchiseRegistry == address(0)) revert ZeroAddress();
-        FRANCHISE_REGISTRY = FranchiseRegistry(_franchiseRegistry);
+        if (_licensingModule == address(0)) revert ZeroAddress();
+        LICENSING_MODULE = LicensingModule(_licensingModule);
         _disableInitializers();
-    }
-
-    modifier onlyFranchiseRegistry() {
-        // TODO: extract to FranchiseRegistryControlled.sol
-        if (msg.sender != address(FRANCHISE_REGISTRY))
-            revert("Sender is not the franchise registry");
-        _;
     }
 
     function initialize(
         uint256 _franchiseId,
         string calldata _name,
         string calldata _symbol,
-        string calldata _description,
-        string calldata _nonCommercialLicenseUri
+        string calldata _description
     ) public initializer {
-        __RightsManager_init(_nonCommercialLicenseUri, _name, _symbol);
+        __RightsManager_init(_name, _symbol);
         __Multicall_init();
         if (_franchiseId == 0) revert ZeroAmount();
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
@@ -80,24 +74,60 @@ contract IPAssetRegistry is
     }
 
     function createIPAsset(
-        IPAsset sb,
+        IPAsset ipAssetType,
         string calldata name,
         string calldata _description,
         string calldata mediaUrl,
-        address to
+        address to,
+        uint256 parentIpAssetId
     )
         public
-        onlyFranchiseRegistry
         returns (uint256)
     {
-        if (sb == IPAsset.UNDEFINED) revert InvalidBlockType();
-        uint256 sbId = _mintBlock(to, sb);
-        _writeIPAsset(sbId, name, _description, mediaUrl);
+        if (ipAssetType == IPAsset.UNDEFINED) revert InvalidBlockType();
+        uint256 ipAssetId = _mintBlock(to, ipAssetType);
+        _writeIPAsset(ipAssetId, name, _description, mediaUrl);
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
-        EVENT_EMITTER.emitIPAssetCreation($.franchiseId, sbId);
-        // TODO: grant rights (root licenses) according to what the Franchise Owner sets in the LicensingModulegit
-        return sbId;
+        EVENT_EMITTER.emitIPAssetCreation($.franchiseId, ipAssetId);
+        // Non commercial
+        LicensingModule.FranchiseConfig memory config = LICENSING_MODULE.getFranchiseConfig($.franchiseId);
+        _setNonCommercialRights(ipAssetId, parentIpAssetId, to, config.revoker, config.nonCommercialConfig);
+
+        // If non derivative IpAsset, then franchise config may dictate commercial rights
+        // Derivative works do not have commercial rights unless a deal with the relevant licensor is made
+        if (config.rootIpAssetHasCommercialRights && parentIpAssetId == 0) {
+            // Commercial
+            _setCommercialRights(ipAssetId, 0, to, config.revoker, config.commercialLicenseUri, config.commercialConfig);
+        }
+        return ipAssetId;
     }
+
+    function _setNonCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, LicensingModule.IpAssetConfig memory config) private {
+        uint256 parentLicenseId = parentIpAssetId == 0 ? config.franchiseRootLicenseId : getLicenseIdByTokenId(parentIpAssetId, false);
+        createLicense(
+            ipAssetId,
+            parentLicenseId,
+            holder,
+            LICENSING_MODULE.getNonCommercialLicenseURI(),
+            revoker,
+            false,
+            config.canSublicense
+        );
+    }
+
+    function _setCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, string memory licenseUri, LicensingModule.IpAssetConfig memory config) private {
+        uint256 parentLicenseId = parentIpAssetId == 0 ? config.franchiseRootLicenseId : getLicenseIdByTokenId(parentIpAssetId, true);
+        createLicense(
+            ipAssetId,
+            parentLicenseId,
+            holder,
+            licenseUri,
+            revoker,
+            true,
+            config.canSublicense
+        );
+    }
+
 
     function _mintBlock(address to, IPAsset sb) private returns (uint256) {
         uint256 nextId = currentIdFor(sb) + 1;
@@ -146,13 +176,6 @@ contract IPAssetRegistry is
         return
             interfaceId == type(IIPAssetRegistry).interfaceId ||
             super.supportsInterface(interfaceId);
-    }
-
-    function setNonCommercialLicenseURI(string calldata uri)
-        external
-        override
-    {
-        // TODO: add governance role to change this
     }
 
 }
