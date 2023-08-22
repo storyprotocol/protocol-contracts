@@ -8,7 +8,13 @@
     "IPAssetRegistry-Template": "0xC60382Ea8cBea33ad9052E2FBC12d2F019C8947D",
     "IPAssetRegistryFactory": "0x461DF243955aD5493cFa33434c2B7CfF2C583dc7",
     "ProtocolRelationshipModule-Impl": "0x0c34223fc772aeC0514B5fbf5614b9ab85EdaAe1",
+<<<<<<< HEAD
     "ProtocolRelationshipModule-Proxy": "0xb146cB898E95953f353bf5A50Fb8f129eC0D5AAb"
+=======
+    "ProtocolRelationshipModule-Proxy": "0xb146cB898E95953f353bf5A50Fb8f129eC0D5AAb",
+    "LicensingModule-Impl": "0x9C92B9BB61d80Cd0d9603c3d97cf564238A71a77",
+    "LicensingModule-Proxy": "0x329845768f83E642B1eF95747140A74c65Ae198D"
+>>>>>>> 24d5357 (fix create ipasser)
   },
   "relationship-processors": {
     "DstOwnerRelationshipProcessor": "0x2890a4263BA12c6d6241CfC5c8D762B828041b86",
