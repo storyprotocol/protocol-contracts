@@ -14,6 +14,7 @@ const createIPAsset = require("./script/hardhat/createIPAsset.js");
 const getIPAssetRegistryAddress = require("./script/hardhat/getIPAssetRegistryAddress.js");
 const getIPAsset = require("./script/hardhat/getIPAsset.js");
 const sbUploader = require("./script/hardhat/sbUploader.js");
+const createLicense = require("./script/hardhat/createLicense.js");
 const namespacedStorageKey = require("./script/hardhat/namespacedStorageKey.js");
 const { task } = require("hardhat/config");
 
@@ -56,6 +57,21 @@ task('sp:read-ip-asset')
     .addPositionalParam('ipAssetId', 'Id of the IP Asset to read')
     .setDescription('Get the IP Asset details')
     .setAction(getIPAsset);
+
+task('sp:create-license')
+    .addPositionalParam('franchiseId', 'Id of the Franchise')
+    .addPositionalParam('ipAssetId', 'Id of the IP Asset the license will steam from')
+    .addPositionalParam('commercial', 'Commercial or non commercial license')
+    .addPositionalParam('licenseURI', 'License URI (arweave URL with license text)')
+    .addPositionalParam('imageURI', 'Image URI')
+    .addPositionalParam('usage', 'Usage')
+    .addPositionalParam('duration', 'Duration')
+    .addPositionalParam('rights', 'Rights')
+    .addPositionalParam('name', 'Name')
+    //.addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
+    .setDescription('Create a license from an IP Asset')
+    .setAction(createLicense);
+
 
 task('sp:uploader')
     .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Assets in, as given by FranchiseRegistry contract')
