@@ -15,6 +15,7 @@ const getIPAssetRegistryAddress = require("./script/hardhat/getIPAssetRegistryAd
 const getIPAsset = require("./script/hardhat/getIPAsset.js");
 const sbUploader = require("./script/hardhat/sbUploader.js");
 const createLicense = require("./script/hardhat/createLicense.js");
+const createRelationship = require("./script/hardhat/createRelationship.js");
 const namespacedStorageKey = require("./script/hardhat/namespacedStorageKey.js");
 const { task } = require("hardhat/config");
 
@@ -68,9 +69,21 @@ task('sp:create-license')
     .addPositionalParam('duration', 'Duration')
     .addPositionalParam('rights', 'Rights')
     .addPositionalParam('name', 'Name')
-    //.addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
+    .addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
     .setDescription('Create a license from an IP Asset')
     .setAction(createLicense);
+
+task('sp:create-relationship')
+    .addPositionalParam('sourceContract', 'Address of the source contract')
+    .addPositionalParam('sourceId', 'Id of the source IP Asset (or external NFT id)')
+    .addPositionalParam('destContract', 'Address of the destination contract')
+    .addPositionalParam('destId', 'Id of the destination IP Asset (or external NFT id)')
+    .addPositionalParam('name', 'Name of the relationship, for example TEST_RELATIONSHIP')
+    .addPositionalParam('ttl', 'Time to live in seconds, 0 for no expiration')
+    .addOptionalParam('data', 'encoded bytes data to be decoded by relationship processors', '0x', types.string)
+    .addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
+    .setDescription('Create a license from an IP Asset')
+    .setAction(createRelationship);
 
 
 task('sp:uploader')
