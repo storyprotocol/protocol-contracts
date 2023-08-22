@@ -5,6 +5,8 @@ import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { UPGRADER_ROLE, LICENSING_MANAGER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
+import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
+import { IERC5218 } from "./IERC5218.sol";
 
 contract LicensingModule is AccessControlledUpgradeable {
     
@@ -18,10 +20,13 @@ contract LicensingModule is AccessControlledUpgradeable {
 
     struct FranchiseConfig {
         IpAssetConfig nonCommercialConfig;
+        IERC5218.TermsProcessorConfig nonCommercialTerms;
         IpAssetConfig commercialConfig;
+        IERC5218.TermsProcessorConfig commercialTerms;
         bool rootIpAssetHasCommercialRights;
         address revoker;
         string commercialLicenseUri;
+        
     }
 
     struct LicensingModuleStorage {

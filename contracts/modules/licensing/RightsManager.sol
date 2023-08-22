@@ -6,13 +6,17 @@ import { LibTimeConditional } from "../timing/LibTimeConditional.sol";
 import { UPGRADER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
 import { IERC5218 } from "./IERC5218.sol";
 import { LicenseRegistry } from "./LicenseRegistry.sol";
-import { NonExistentID, Unauthorized, ZeroAddress } from "contracts/errors/General.sol";
+import { NonExistentID, Unauthorized, ZeroAddress, UnsupportedInterface } from "contracts/errors/General.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
+import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
+import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
 
 abstract contract RightsManager is
     ERC721Upgradeable,
     IERC5218
 {
+    using ERC165CheckerUpgradeable for address;
+
     error NotOwnerOfParentLicense();
     error InactiveLicense();
     error InactiveParentLicense();
@@ -30,6 +34,9 @@ abstract contract RightsManager is
         uint256 tokenId;
         address revoker;
         string uri; // NOTE: should we merge this with IPAssetRegistry tokenURI for Licenses who are rights?
+        ITermsProcessor termsProcessor;
+        bytes termsData;
+
     }
 
     struct RightsManagerStorage {
@@ -75,11 +82,12 @@ abstract contract RightsManager is
         while (licenseId != 0) {
             RightsManagerStorage storage $ = _getRightsManagerStorage();
             License memory license = $.licenses[licenseId];
-            if (!license.active) return false;
+            if (!(license.active && license.termsProcessor.tersmExecutedSuccessfully())) return false;
             licenseId = license.parentLicenseId;
         }
         return true;
     }
+
 
     function _verifySublicense(
         uint256 parentLicenseId,
@@ -91,11 +99,6 @@ abstract contract RightsManager is
         if (!parentLicense.active) revert InactiveParentLicense();
         if (!parentLicense.canSublicense) revert CannotSublicense();
         if (parentLicense.commercial != commercial) revert CommercialTermsMismatch();
-    }
-
-    function _addTerms(ProcessorConfig memory _terms) internal virtual {
-        if (IERC)
-        
     }
 
     function getLicense(
@@ -116,6 +119,14 @@ abstract contract RightsManager is
     ) internal virtual override {
         // TODO: check granting terms, banned marketplaces, etc.
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
+    }
+
+    function _verifyTerms(TermsProcessorConfig memory _terms) private view {
+        if  (address(_terms.config) != address(0) &&
+            !address(_terms.config).supportsInterface(type(ITermsProcessor).interfaceId)) {
+            revert UnsupportedInterface("ITermsProcessor");
+        }
+        
     }
 
     function getLicenseTokenId(
@@ -179,7 +190,7 @@ abstract contract RightsManager is
         address _revoker,
         bool _commercial,
         bool _canSublicense,
-        ProcessorConfig memory _terms
+        TermsProcessorConfig memory _terms
     ) public override returns (uint256) {
         if (_parentLicenseId == _UNSET_LICENSE_ID && msg.sender != address(this)) {
             // Root licenses aka rights can only be minted by IPAssetRegistry
@@ -206,7 +217,7 @@ abstract contract RightsManager is
         address revoker,
         bool commercial,
         bool canSublicense,
-        ProcessorConfig memory _terms
+        TermsProcessorConfig memory _terms
     ) internal returns (uint256) {
         RightsManagerStorage storage $ = _getRightsManagerStorage();
         if (!_exists(tokenId)) {
@@ -221,6 +232,7 @@ abstract contract RightsManager is
             License memory parentLicense = $.licenses[parentLicenseId];
             _verifySublicense(parentLicenseId, licenseHolder, commercial, parentLicense);
         }
+        _verifyTerms(_terms);
         uint256 licenseId = ++$.licenseCounter;
         $.licenses[licenseId] = License({
             active: true,
@@ -229,7 +241,9 @@ abstract contract RightsManager is
             parentLicenseId: parentLicenseId,
             tokenId: tokenId,
             revoker: revoker,
-            uri: uri
+            uri: uri,
+            termsProcessor: _terms.config,
+            termsData: _terms.data
         });
         $.licenseForTokenId[
             keccak256(abi.encode(commercial, tokenId))

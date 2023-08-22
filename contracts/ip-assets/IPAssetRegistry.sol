@@ -91,18 +91,18 @@ contract IPAssetRegistry is
         EVENT_EMITTER.emitIPAssetCreation($.franchiseId, ipAssetId);
         // Non commercial
         LicensingModule.FranchiseConfig memory config = LICENSING_MODULE.getFranchiseConfig($.franchiseId);
-        _setNonCommercialRights(ipAssetId, parentIpAssetId, to, config.revoker, config.nonCommercialConfig);
+        _setNonCommercialRights(ipAssetId, parentIpAssetId, to, config.revoker, config.nonCommercialConfig, config.nonCommercialTerms);
 
         // If non derivative IpAsset, then franchise config may dictate commercial rights
         // Derivative works do not have commercial rights unless a deal with the relevant licensor is made
         if (config.rootIpAssetHasCommercialRights && parentIpAssetId == 0) {
             // Commercial
-            _setCommercialRights(ipAssetId, 0, to, config.revoker, config.commercialLicenseUri, config.commercialConfig);
+            _setCommercialRights(ipAssetId, 0, to, config.revoker, config.commercialLicenseUri, config.commercialConfig, config.commercialTerms);
         }
         return ipAssetId;
     }
 
-    function _setNonCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, LicensingModule.IpAssetConfig memory config) private {
+    function _setNonCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, LicensingModule.IpAssetConfig memory config, TermsProcessorConfig memory terms) private {
         uint256 parentLicenseId = parentIpAssetId == 0 ? config.franchiseRootLicenseId : getLicenseIdByTokenId(parentIpAssetId, false);
         createLicense(
             ipAssetId,
@@ -111,11 +111,12 @@ contract IPAssetRegistry is
             LICENSING_MODULE.getNonCommercialLicenseURI(),
             revoker,
             false,
-            config.canSublicense
+            config.canSublicense,
+            terms
         );
     }
 
-    function _setCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, string memory licenseUri, LicensingModule.IpAssetConfig memory config) private {
+    function _setCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, string memory licenseUri, LicensingModule.IpAssetConfig memory config, TermsProcessorConfig memory terms) private {
         uint256 parentLicenseId = parentIpAssetId == 0 ? config.franchiseRootLicenseId : getLicenseIdByTokenId(parentIpAssetId, true);
         createLicense(
             ipAssetId,
@@ -124,7 +125,8 @@ contract IPAssetRegistry is
             licenseUri,
             revoker,
             true,
-            config.canSublicense
+            config.canSublicense,
+            terms
         );
     }
 
