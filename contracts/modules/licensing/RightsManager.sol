@@ -93,6 +93,11 @@ abstract contract RightsManager is
         if (parentLicense.commercial != commercial) revert CommercialTermsMismatch();
     }
 
+    function _addTerms(ProcessorConfig memory _terms) internal virtual {
+        if (IERC)
+        
+    }
+
     function getLicense(
         uint256 licenseId
     ) public view returns (License memory, address holder) {
@@ -101,6 +106,7 @@ abstract contract RightsManager is
             getLicenseHolder(licenseId)
         );
     }
+
 
     function _beforeTokenTransfer(
         address from,
@@ -172,7 +178,8 @@ abstract contract RightsManager is
         string memory _uri,
         address _revoker,
         bool _commercial,
-        bool _canSublicense
+        bool _canSublicense,
+        ProcessorConfig memory _terms
     ) public override returns (uint256) {
         if (_parentLicenseId == _UNSET_LICENSE_ID && msg.sender != address(this)) {
             // Root licenses aka rights can only be minted by IPAssetRegistry
@@ -186,7 +193,8 @@ abstract contract RightsManager is
             _uri,
             _revoker,
             _commercial,
-            _canSublicense
+            _canSublicense,
+            _terms
         );
     }
 
@@ -197,7 +205,8 @@ abstract contract RightsManager is
         string memory uri,
         address revoker,
         bool commercial,
-        bool canSublicense
+        bool canSublicense,
+        ProcessorConfig memory _terms
     ) internal returns (uint256) {
         RightsManagerStorage storage $ = _getRightsManagerStorage();
         if (!_exists(tokenId)) {

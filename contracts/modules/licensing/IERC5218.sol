@@ -1,6 +1,7 @@
 pragma solidity ^0.8.0;
 
 import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
 
 /// @title ERC-5218: NFT Rights Management
 interface IERC5218 is IERC721Upgradeable {
@@ -25,6 +26,11 @@ interface IERC5218 is IERC721Upgradeable {
     ///  root license of an NFT should be transferred with the NFT in an ERC721
     ///  `transfer` function call.
     event TransferLicense(uint256 _licenseId, address _licenseHolder);
+
+    struct TermsProcessorConfig {
+        ITermsProcessor config;
+        bytes data;
+    }
 
     /// @notice Check if a license is active.
     /// @dev A non-existing or revoked license is inactive and this function must
@@ -102,15 +108,19 @@ interface IERC5218 is IERC721Upgradeable {
     /// @param _licenseHolder The address of the license holder
     /// @param _uri The URI of the license terms
     /// @param _revoker The revoker address
+    /// @param _commercial Whether the license granted is commercial or non commercial
+    /// @param _canSublicense Whether the license holder can sublicense the license
+    /// @param _terms The license terms
     /// @return The identifier of the created license
     function createLicense(
         uint256 _tokenId,
         uint256 _parentLicenseId,
         address _licenseHolder,
         string memory _uri,
-        address _revoker,
+        address _revoker, // NOTE: MODIFIED ERC-5218
         bool _commercial, // NOTE: MODIFIED ERC-5218
-        bool _canSublicense // NOTE: MODIFIED ERC-5218
+        bool _canSublicense, // NOTE: MODIFIED ERC-5218
+        TermsProcessorConfig memory _terms // NOTE: MODIFIED ERC-5218
     ) external returns (uint256);
 
     /// @notice Revoke a license.

@@ -1,0 +1,45 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.19;
+
+import { ITermsProcessor } from "./ITermsProcessor.sol";
+import { EmptyArray, LengthMismatch } from "contracts/errors/General.sol";
+
+contract MultiTermsProcessor is ITermsProcessor {
+    ITermsProcessor[] public processors;
+
+    constructor(ITermsProcessor[] memory _processors) {
+        setProcessors(_processors);
+    }
+
+    function setProcessors(ITermsProcessor[] memory _processors) public {
+        if (_processors.length == 0) revert EmptyArray();
+        processors = _processors;
+    }
+
+    function encodeTerms() external returns (bytes memory) {
+        bytes[] memory encodedTerms = new bytes[](processors.length);
+        uint256 length = encodedTerms.length;
+        for (uint256 i = 0; i < length; i++) {
+            encodedTerms[i] = processors[i].encodeTerms();
+        }
+        return abi.encode(encodedTerms);
+    }
+
+    function decodeTerms(bytes calldata data) external {
+        bytes[] memory terms = abi.decode(data, (bytes[]));
+        uint256 length = terms.length;
+        if (length != processors.length) revert LengthMismatch();
+        for (uint256 i = 0; i < length; i++) {
+            processors[i].decodeTerms(terms[i]);
+        }
+    }
+
+    function executeTerms() external override returns (bool) {
+        uint256 length = processors.length;
+        bool result = true;
+        for (uint256 i = 0; i < length; i++) {
+            result = result && processors[i].executeTerms();
+        }
+        return result;
+    }
+}
