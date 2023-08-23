@@ -4,11 +4,11 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 
 import "contracts/ip-accounts/IPAccountRegistry.sol";
-import "test/foundry/mocks/MockIpAccount.sol";
+import "test/foundry/mocks/MockIPAccount.sol";
 
 contract RegistryTest is Test {
     IPAccountRegistry public registry;
-    MockIpAccount public implementation;
+    MockIPAccount public implementation;
     uint256 chainId;
     address tokenAddress;
     uint256 tokenId;
@@ -16,7 +16,7 @@ contract RegistryTest is Test {
     error IpAccountInitializationFailed();
 
     function setUp() public {
-        implementation = new MockIpAccount();
+        implementation = new MockIPAccount();
         registry = new IPAccountRegistry(address(implementation));
         chainId = 100;
         tokenAddress = address(200);
