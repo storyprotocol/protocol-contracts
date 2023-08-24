@@ -24,6 +24,10 @@ contract LicenseRegistry is ERC721 {
         _mint(to, tokenId);
     }
 
+    function exists(uint256 tokenId) public view returns (bool) {
+        return _exists(tokenId);
+    }
+
     function _beforeTokenTransfer(
         address from,
         address to,

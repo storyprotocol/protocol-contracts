@@ -15,6 +15,9 @@ interface IERC5218 is IERC721Upgradeable {
         address _revoker
     );
 
+    /// @dev emits when license terms are executed to activate a license
+    event ExecuteTerms(uint256 _licenseId, bytes _data);
+
     /// @dev This emits when a license is revoked. Note that under some
     ///  license terms, the sublicenses may be `implicitly` revoked following the
     ///  revocation of some ancestral license. In that case, your smart contract

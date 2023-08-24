@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import { LibTimeConditional } from "../timing/LibTimeConditional.sol";
+import { LibDuration } from "../timing/LibDuration.sol";
 import { UPGRADER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
 import { IERC5218 } from "./IERC5218.sol";
 import { LicenseRegistry } from "./LicenseRegistry.sol";
@@ -36,7 +36,6 @@ abstract contract RightsManager is
         string uri; // NOTE: should we merge this with IPAssetRegistry tokenURI for Licenses who are rights?
         ITermsProcessor termsProcessor;
         bytes termsData;
-
     }
 
     struct RightsManagerStorage {
@@ -71,115 +70,6 @@ abstract contract RightsManager is
         assembly {
             $.slot := _STORAGE_LOCATION
         }
-    }
-
-    function isLicenseActive(
-        uint256 licenseId
-    ) public view virtual returns (bool) {
-        // TODO: limit to the tree depth
-        // TODO: check time limits
-        if (licenseId == 0) return false;
-        while (licenseId != 0) {
-            RightsManagerStorage storage $ = _getRightsManagerStorage();
-            License memory license = $.licenses[licenseId];
-            if (!(license.active && license.termsProcessor.tersmExecutedSuccessfully())) return false;
-            licenseId = license.parentLicenseId;
-        }
-        return true;
-    }
-
-
-    function _verifySublicense(
-        uint256 parentLicenseId,
-        address licensor,
-        bool commercial,
-        License memory parentLicense
-    ) private view {
-        if (ownerOf(parentLicenseId) != licensor) revert NotOwnerOfParentLicense();
-        if (!parentLicense.active) revert InactiveParentLicense();
-        if (!parentLicense.canSublicense) revert CannotSublicense();
-        if (parentLicense.commercial != commercial) revert CommercialTermsMismatch();
-    }
-
-    function getLicense(
-        uint256 licenseId
-    ) public view returns (License memory, address holder) {
-        return (
-            _getRightsManagerStorage().licenses[licenseId],
-            getLicenseHolder(licenseId)
-        );
-    }
-
-
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 firstTokenId,
-        uint256 batchSize
-    ) internal virtual override {
-        // TODO: check granting terms, banned marketplaces, etc.
-        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
-    }
-
-    function _verifyTerms(TermsProcessorConfig memory _terms) private view {
-        if  (address(_terms.config) != address(0) &&
-            !address(_terms.config).supportsInterface(type(ITermsProcessor).interfaceId)) {
-            revert UnsupportedInterface("ITermsProcessor");
-        }
-        
-    }
-
-    function getLicenseTokenId(
-        uint256 _licenseId
-    ) external view override returns (uint256) {
-        return _getRightsManagerStorage().licenses[_licenseId].tokenId;
-    }
-
-    function getParentLicenseId(
-        uint256 _licenseId
-    ) external view override returns (uint256) {
-        return _getRightsManagerStorage().licenses[_licenseId].parentLicenseId;
-    }
-
-    function getLicenseHolder(
-        uint256 _licenseId
-    ) public view override returns (address) {
-        License memory license = _getRightsManagerStorage().licenses[
-            _licenseId
-        ];
-        if (license.parentLicenseId == _UNSET_LICENSE_ID) {
-            return ownerOf(_licenseId);
-        } else {
-            return LICENSE_REGISTRY.ownerOf(_licenseId);
-        }
-    }
-
-    function getLicenseURI(
-        uint256 _licenseId
-    ) external view override returns (string memory) {
-        return _getRightsManagerStorage().licenses[_licenseId].uri;
-    }
-
-    function getLicenseRevoker(
-        uint256 _licenseId
-    ) external view override returns (address) {
-        return _getRightsManagerStorage().licenses[_licenseId].revoker;
-    }
-
-    function getLicenseIdByTokenId(
-        uint256 _tokenId,
-        bool _commercial
-    ) public view override returns (uint256) {
-        return
-            _getRightsManagerStorage().licenseForTokenId[
-                keccak256(abi.encode(_commercial, _tokenId))
-            ];
-    }
-
-    function isRootLicense(
-        uint256 licenseId
-    ) public view returns (bool) {
-        return _getRightsManagerStorage().licenses[licenseId].parentLicenseId == _UNSET_LICENSE_ID;
     }
 
     function createLicense(
@@ -256,7 +146,7 @@ abstract contract RightsManager is
             uri,
             revoker
         );
-        _updateLicenseHolder(licenseId, licenseHolder);
+        emit TransferLicense(licenseId, licenseHolder);
         return licenseId;
     }
 
@@ -269,12 +159,132 @@ abstract contract RightsManager is
         emit RevokeLicense(_licenseId);
     }
 
-    function _updateLicenseHolder(
-        uint256 licenseId,
-        address licenseHolder
-    ) internal virtual {
-        emit TransferLicense(licenseId, licenseHolder);
+    function executeTerms(uint256 _licenseId) external {
+        if (msg.sender != address(LICENSE_REGISTRY)) revert Unauthorized();
+        RightsManagerStorage storage $ = _getRightsManagerStorage();
+        License storage license = $.licenses[_licenseId];
+        if (license.termsProcessor != ITermsProcessor(address(0))) {
+            bytes memory newData = license.termsProcessor.executeTerms(license.termsData);
+            if (keccak256(license.termsData) != keccak256(newData)) {
+                license.termsData = newData;
+            }
+        }
+        emit ExecuteTerms(_licenseId, license.termsData);
     }
+
+    function isLicenseActive(
+        uint256 licenseId
+    ) public view virtual returns (bool) {
+        // TODO: limit to the tree depth
+        // TODO: check time limits
+        if (licenseId == 0) return false;
+        while (licenseId != 0) {
+            RightsManagerStorage storage $ = _getRightsManagerStorage();
+            License memory license = $.licenses[licenseId];
+            if (
+                !(
+                    license.active &&
+                    license.termsProcessor.tersmExecutedSuccessfully(license.termsData)
+                )
+            ) return false;
+            licenseId = license.parentLicenseId;
+        }
+        return true;
+    }
+
+
+    function _verifySublicense(
+        uint256 parentLicenseId,
+        address licensor,
+        bool commercial,
+        License memory parentLicense
+    ) private view {
+        if (ownerOf(parentLicenseId) != licensor) revert NotOwnerOfParentLicense();
+        if (!parentLicense.active) revert InactiveParentLicense();
+        if (!parentLicense.canSublicense) revert CannotSublicense();
+        if (parentLicense.commercial != commercial) revert CommercialTermsMismatch();
+    }
+
+    function getLicense(
+        uint256 licenseId
+    ) public view returns (License memory, address holder) {
+        return (
+            _getRightsManagerStorage().licenses[licenseId],
+            getLicenseHolder(licenseId)
+        );
+    }
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 firstTokenId,
+        uint256 batchSize
+    ) internal virtual override {
+        // TODO: trigger rights transfer check, check granting terms, banned marketplaces, etc.
+        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
+    }
+
+    function _verifyTerms(TermsProcessorConfig memory _terms) private view {
+        if  (address(_terms.config) != address(0) &&
+            !address(_terms.config).supportsInterface(type(ITermsProcessor).interfaceId)) {
+            revert UnsupportedInterface("ITermsProcessor");
+        }
+    }
+
+    function getLicenseTokenId(
+        uint256 _licenseId
+    ) external view override returns (uint256) {
+        return _getRightsManagerStorage().licenses[_licenseId].tokenId;
+    }
+
+    function getParentLicenseId(
+        uint256 _licenseId
+    ) external view override returns (uint256) {
+        return _getRightsManagerStorage().licenses[_licenseId].parentLicenseId;
+    }
+
+    function getLicenseHolder(
+        uint256 _licenseId
+    ) public view override returns (address) {
+        if (LICENSE_REGISTRY.exists(_licenseId)) {
+            return LICENSE_REGISTRY.ownerOf(_licenseId);
+        } else {
+            License storage license = _getRightsManagerStorage().licenses[
+                _licenseId
+            ];
+            return ownerOf(license.tokenId);
+        }
+    }
+
+    function getLicenseURI(
+        uint256 _licenseId
+    ) external view override returns (string memory) {
+        return _getRightsManagerStorage().licenses[_licenseId].uri;
+    }
+
+    function getLicenseRevoker(
+        uint256 _licenseId
+    ) external view override returns (address) {
+        return _getRightsManagerStorage().licenses[_licenseId].revoker;
+    }
+
+    function getLicenseIdByTokenId(
+        uint256 _tokenId,
+        bool _commercial
+    ) public view override returns (uint256) {
+        return
+            _getRightsManagerStorage().licenseForTokenId[
+                keccak256(abi.encode(_commercial, _tokenId))
+            ];
+    }
+
+    function isRootLicense(
+        uint256 licenseId
+    ) public view returns (bool) {
+        return _getRightsManagerStorage().licenses[licenseId].parentLicenseId == _UNSET_LICENSE_ID;
+    }
+
+    
 
     function transferSublicense(
         uint256 licenseId,
@@ -284,7 +294,7 @@ abstract contract RightsManager is
         if (!isLicenseActive(licenseId)) revert InactiveLicense();
         if (_getRightsManagerStorage().licenses[licenseId].parentLicenseId == 0)
             revert CannotSublicense();
-        _updateLicenseHolder(licenseId, licenseHolder);
+        emit TransferLicense(licenseId, licenseHolder);
     }
 
     function supportsInterface(

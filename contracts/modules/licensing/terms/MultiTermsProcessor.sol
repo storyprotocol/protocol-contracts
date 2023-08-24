@@ -25,18 +25,18 @@ contract MultiTermsProcessor is ITermsProcessor {
         emit ProcessorsSet(_processors);
     }
 
-    function executeTerms(bytes calldata data) external override returns (bool) {
+    function executeTerms(bytes calldata data) external override returns (bytes memory newData) {
         uint256 length = processors.length;
         bytes[] memory encodedTerms = new bytes[](length);
         encodedTerms = abi.decode(data, (bytes[]));
-        bool result = true;
+        bytes[] memory newEncodedTerms = new bytes[](length);
         for (uint256 i = 0; i < length;) {
-            result = result && processors[i].executeTerms(encodedTerms[i]);
+            newEncodedTerms[i] = processors[i].executeTerms(encodedTerms[i]);
             unchecked {
                 i++;
             }
         }
-        return result;
+        return abi.encode(newEncodedTerms);
     }
 
     function supportsInterface(
@@ -45,19 +45,27 @@ contract MultiTermsProcessor is ITermsProcessor {
         bool supported = true;
         if (interfaceId == type(ITermsProcessor).interfaceId) {
             uint256 length = processors.length;
-            for (uint256 i = 0; i < length; i++) {
+            for (uint256 i = 0; i < length;) {
                 supported && processors[i].supportsInterface(interfaceId);
+                unchecked {
+                    i++;
+                }
             }
             return supported;
         }
         return false;
     }
 
-    function tersmExecutedSuccessfully() external view override returns (bool) {
+    function tersmExecutedSuccessfully(bytes calldata data) external view override returns (bool) {
         uint256 length = processors.length;
+        bytes[] memory encodedTerms = new bytes[](length);
+        encodedTerms = abi.decode(data, (bytes[]));
         bool result = true;
-        for (uint256 i = 0; i < length; i++) {
-            result = result && processors[i].tersmExecutedSuccessfully();
+        for (uint256 i = 0; i < length;) {
+            result = result && processors[i].tersmExecutedSuccessfully(encodedTerms[i]);
+            unchecked {
+                i++;
+            }
         }
         return result;
     }
