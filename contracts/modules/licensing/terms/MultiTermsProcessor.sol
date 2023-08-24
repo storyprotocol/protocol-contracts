@@ -25,29 +25,16 @@ contract MultiTermsProcessor is ITermsProcessor {
         emit ProcessorsSet(_processors);
     }
 
-    function encodeTerms() external view returns (bytes memory) {
-        bytes[] memory encodedTerms = new bytes[](processors.length);
-        uint256 length = encodedTerms.length;
-        for (uint256 i = 0; i < length; i++) {
-            encodedTerms[i] = processors[i].encodeTerms();
-        }
-        return abi.encode(encodedTerms);
-    }
-
-    function decodeTerms(bytes calldata data) external view {
-        bytes[] memory terms = abi.decode(data, (bytes[]));
-        uint256 length = terms.length;
-        if (length != processors.length) revert LengthMismatch();
-        for (uint256 i = 0; i < length; i++) {
-            processors[i].decodeTerms(terms[i]);
-        }
-    }
-
-    function executeTerms() external override returns (bool) {
+    function executeTerms(bytes calldata data) external override returns (bool) {
         uint256 length = processors.length;
+        bytes[] memory encodedTerms = new bytes[](length);
+        encodedTerms = abi.decode(data, (bytes[]));
         bool result = true;
-        for (uint256 i = 0; i < length; i++) {
-            result = result && processors[i].executeTerms();
+        for (uint256 i = 0; i < length;) {
+            result = result && processors[i].executeTerms(encodedTerms[i]);
+            unchecked {
+                i++;
+            }
         }
         return result;
     }
