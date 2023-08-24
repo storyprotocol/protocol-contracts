@@ -94,9 +94,9 @@ async function main(args, hre) {
         .filter((block) => block.id === null);
     console.log("Will upload: ", blocks.length, "story blocks");
 
-    const IPAssetRegistry = await contracts.IPAssetsRegistry.attach(address);
+    const { FranchiseRegistry, IPAssetsRegistry } = contracts;
     const calls = blocks.map((block) => {
-        return IPAssetRegistry.interface.encodeFunctionData('createIPAsset', [block.numBlockType, block.name, block.description, block.mediaURL ?? ''])
+        return FranchiseRegistry.interface.encodeFunctionData('createIPAsset', [franchiseId, block.numBlockType, block.name, block.description, block.mediaURL ?? ''])
     });
 
     console.log('Batches: ', Math.ceil(calls.length / batchSize));
@@ -106,7 +106,7 @@ async function main(args, hre) {
             console.log('Uploading batch of ', callChunk.length, ' story blocks');
             let tx;
             try {
-                tx = await IPAssetRegistry.multicall(callChunk);
+                tx = await FranchiseRegistry.multicall(callChunk);
             } catch (e) {
                 console.log('ERROR sbUploader');
                 console.log('chainId', chainId);
@@ -115,7 +115,7 @@ async function main(args, hre) {
             console.log('tx: ', tx.hash);
             console.log('Waiting for tx to be mined...');
             const receipt = await tx.wait();
-            return updateIds(ethers, tx.hash, data, filePath, IPAssetRegistry);
+            return updateIds(ethers, tx.hash, data, filePath, IPAssetsRegistry);
         })
     ).then(() => console.log('Blocks created!'));
 
