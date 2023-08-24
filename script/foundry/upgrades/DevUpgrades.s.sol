@@ -68,11 +68,11 @@ contract UpgradeFranchiseRegistry is Script, BroadcastManager, JsonDeploymentHan
         console.log("Upgrading FranchiseRegistry to ", newFranchiseRegistry);
         franchiseRegistry.upgradeTo(newFranchiseRegistry);
 
-        console.log("Upgrading IPAssetRegistryFactory to ", newFranchiseRegistry);
+        console.log("Upgrading FranchiseRegistry to ", newFranchiseRegistry);
 
-        LicensingModule licenseModule = LicensingModule(_readAddress(".main.LicenseModule-Proxy"));
-        console.log("Setting license module");
-        franchiseRegistry.setLicensingModule(licenseModule);
+        //LicensingModule licenseModule = LicensingModule(_readAddress(".main.LicenseModule-Proxy"));
+        //console.log("Setting license module");
+        //franchiseRegistry.setLicensingModule(licenseModule);
         
     }
 

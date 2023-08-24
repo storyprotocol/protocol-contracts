@@ -12,6 +12,7 @@ import { LibIPAssetId } from "./ip-assets/LibIPAssetId.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { LicensingModule } from "./modules/licensing/LicensingModule.sol";
 import { LibTimeConditional } from "./modules/timing/LibTimeConditional.sol";
 
@@ -19,7 +20,8 @@ contract FranchiseRegistry is
     UUPSUpgradeable,
     IVersioned,
     AccessControlledUpgradeable,
-    ERC721Upgradeable
+    ERC721Upgradeable,
+    Multicall
 {
     event FranchiseRegistered(
         address owner,
