@@ -9,12 +9,14 @@ import { ZeroAddress } from "./errors/General.sol";
 import { DataTypes } from './libraries/DataTypes.sol';
 import { IVersioned } from "./utils/IVersioned.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 
 contract StoryProtocol is
     UUPSUpgradeable,
     IVersioned,
     AccessControlledUpgradeable,
-    IStoryProtocol
+    IStoryProtocol,
+    Multicall
 {
 
     /// @custom:storage-location erc7201:story-protocol.story-protocol.storage
