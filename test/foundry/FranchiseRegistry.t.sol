@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import './utils/BaseTest.sol';
+import "contracts/libraries/DataTypes.sol";
 
 contract FranchiseRegistryTest is BaseTest {
 
@@ -27,7 +28,7 @@ contract FranchiseRegistryTest is BaseTest {
     }
 
     function test_registerFranchise() public {
-        FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("name2", "symbol2", "description2", "tokenURI2");
+        DataTypes.FranchiseCreationParams memory params = DataTypes.FranchiseCreationParams("name2", "symbol2", "description2", "tokenURI2", address(0));
         vm.startPrank(franchiseOwner);
         vm.expectCall(address(factory),
             abi.encodeCall(
@@ -53,7 +54,7 @@ contract FranchiseRegistryTest is BaseTest {
 
     function test_isIpAssetRegistry() public {
         vm.prank(franchiseOwner);
-        FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("name", "symbol2", "description2", "tokenURI2");   
+        DataTypes.FranchiseCreationParams memory params = DataTypes.FranchiseCreationParams("name", "symbol2", "description2", "tokenURI2", address(0));
         (uint256 id, address ipAsset) = franchiseRegistry.registerFranchise(params);
         assertTrue(franchiseRegistry.isIpAssetRegistry(ipAsset));
     }

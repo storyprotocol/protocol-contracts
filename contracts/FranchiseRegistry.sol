@@ -9,6 +9,7 @@ import { ZeroAddress, Unauthorized } from "./errors/General.sol";
 import { IVersioned } from "./utils/IVersioned.sol";
 import { IIPAssetRegistry } from "./ip-assets/IIPAssetRegistry.sol";
 import { LibIPAssetId } from "./ip-assets/LibIPAssetId.sol";
+import { DataTypes } from './libraries/DataTypes.sol';
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
@@ -27,13 +28,6 @@ contract FranchiseRegistry is
         string tokenURI
     );
     error AlreadyRegistered();
-
-    struct FranchiseCreationParams {
-        string name;
-        string symbol;
-        string description;
-        string tokenURI;
-    }
 
     /// @custom:storage-location erc7201:story-protocol.franchise-registry.storage
     struct FranchiseStorage {
@@ -73,7 +67,7 @@ contract FranchiseRegistry is
         return _VERSION;
     }
 
-    function registerFranchise(FranchiseCreationParams calldata params) external returns (uint256, address) {
+    function registerFranchise(DataTypes.FranchiseCreationParams calldata params) external returns (uint256, address) {
         FranchiseStorage storage $ = _getFranchiseStorage();
         uint256 nextId = ++$.franchiseIds;
         address ipAssetRegistry = FACTORY.createFranchiseIPAssets(
@@ -82,11 +76,12 @@ contract FranchiseRegistry is
             params.symbol,
             params.description
         );
+        address owner = params.owner == address(0) ? msg.sender : params.owner;
         $.ipAssetRegistries[nextId] = ipAssetRegistry;
         $.tokenURIs[nextId] = params.tokenURI;
-        _safeMint(msg.sender, nextId);
+        _safeMint(owner, nextId);
         
-        emit FranchiseRegistered(msg.sender, nextId, ipAssetRegistry, params.name, params.symbol, params.tokenURI);
+        emit FranchiseRegistered(owner, nextId, ipAssetRegistry, params.name, params.symbol, params.tokenURI);
         
         return (nextId, ipAssetRegistry);
     }

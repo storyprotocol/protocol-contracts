@@ -9,6 +9,7 @@ import "contracts/errors/General.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "contracts/ip-assets/IPAssetRegistry.sol";
+import "contracts/libraries/DataTypes.sol";
 
 contract MockExternalAsset is ERC721 {
     constructor() ERC721("MockExternalAsset", "MEA") {}
@@ -134,7 +135,7 @@ contract RelationshipModuleRelationshipTest is BaseTest {
 
     function test_revert_relationshipsNotSameFranchise() public {
         vm.prank(franchiseOwner);
-        FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("name2", "symbol2", "description2", "tokenURI2"); 
+        DataTypes.FranchiseCreationParams memory params = DataTypes.FranchiseCreationParams("name2", "symbol2", "description2", "tokenURI2", address(0));
         (uint256 id, address otherIPAssets) = franchiseRegistry.registerFranchise(params);
         IPAssetRegistry otherIPAssetRegistry = IPAssetRegistry(otherIPAssets);
         vm.prank(ipAssetOwner);

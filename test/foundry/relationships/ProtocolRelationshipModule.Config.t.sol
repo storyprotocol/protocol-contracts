@@ -8,6 +8,7 @@ import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/access-control/ProtocolRoles.sol";
 import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
 import "contracts/ip-assets/IPAssetRegistry.sol";
+import "contracts/libraries/DataTypes.sol";
 
 contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
 
@@ -18,7 +19,7 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
         super.setUp();
 
         vm.startPrank(franchiseOwner);
-        FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("name", "symbol", "description", "tokenURI"); 
+        DataTypes.FranchiseCreationParams memory params = DataTypes.FranchiseCreationParams("name", "symbol", "description", "tokenURI", address(0));
         (uint256 id, address ipAssets) = franchiseRegistry.registerFranchise(params);
         ipAssetRegistry = IPAssetRegistry(ipAssets);
         vm.stopPrank();
