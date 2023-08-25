@@ -120,7 +120,7 @@ interface IERC5218 is IERC721Upgradeable {
         uint256 _parentLicenseId,
         address _licenseHolder,
         string memory _uri,
-        address _revoker, // NOTE: MODIFIED ERC-5218
+        address _revoker,
         bool _commercial, // NOTE: MODIFIED ERC-5218
         bool _canSublicense, // NOTE: MODIFIED ERC-5218
         TermsProcessorConfig memory _terms // NOTE: MODIFIED ERC-5218
