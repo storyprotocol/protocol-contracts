@@ -10,6 +10,8 @@ import { NonExistentID, Unauthorized, ZeroAddress, UnsupportedInterface } from "
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
+import "forge-std/console.sol";
+
 
 abstract contract RightsManager is
     ERC721Upgradeable,
@@ -81,12 +83,8 @@ abstract contract RightsManager is
         bool _commercial,
         bool _canSublicense,
         TermsProcessorConfig memory _terms
-    ) public override returns (uint256) {
-        if (_parentLicenseId == _UNSET_LICENSE_ID && msg.sender != address(this)) {
-            // Root licenses aka rights can only be minted by IPAssetRegistry
-            // TODO: check how to allow the Franchise NFT to have root commercial license
-            revert Unauthorized();
-        }
+    ) external override returns (uint256) {
+        // TODO: check if msg.sender is allowed to create license
         return _createLicense(
             _tokenId,
             _parentLicenseId,
@@ -132,7 +130,7 @@ abstract contract RightsManager is
             tokenId: tokenId,
             revoker: revoker,
             uri: uri,
-            termsProcessor: _terms.config,
+            termsProcessor: _terms.processor,
             termsData: _terms.data
         });
         $.licenseForTokenId[
@@ -225,8 +223,8 @@ abstract contract RightsManager is
     }
 
     function _verifyTerms(TermsProcessorConfig memory _terms) private view {
-        if  (address(_terms.config) != address(0) &&
-            !address(_terms.config).supportsInterface(type(ITermsProcessor).interfaceId)) {
+        if  (address(_terms.processor) != address(0) &&
+            !address(_terms.processor).supportsInterface(type(ITermsProcessor).interfaceId)) {
             revert UnsupportedInterface("ITermsProcessor");
         }
     }

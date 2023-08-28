@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
@@ -31,7 +32,7 @@ interface IERC5218 is IERC721Upgradeable {
     event TransferLicense(uint256 _licenseId, address _licenseHolder);
 
     struct TermsProcessorConfig {
-        ITermsProcessor config;
+        ITermsProcessor processor;
         bytes data;
     }
 

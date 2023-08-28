@@ -7,27 +7,9 @@ import { AccessControlledUpgradeable } from "contracts/access-control/AccessCont
 import { UPGRADER_ROLE, LICENSING_MANAGER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
 import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
 import { IERC5218 } from "./IERC5218.sol";
+import { ILicensingModule } from "./ILicensingModule.sol";
 
-contract LicensingModule is AccessControlledUpgradeable {
-    
-    struct IpAssetConfig {
-        bool canSublicense;
-        uint256 franchiseRootLicenseId;
-        // TODO: allowed license terms? processors?
-        // TODO: limit medium of sublicenses? something like LibIPAssetMask?
-        // TODO: limit who you can sublicense to?
-    }
-
-    struct FranchiseConfig {
-        IpAssetConfig nonCommercialConfig;
-        IERC5218.TermsProcessorConfig nonCommercialTerms;
-        IpAssetConfig commercialConfig;
-        IERC5218.TermsProcessorConfig commercialTerms;
-        bool rootIpAssetHasCommercialRights;
-        address revoker;
-        string commercialLicenseUri;
-        
-    }
+contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
 
     struct LicensingModuleStorage {
         /// franchiseId => FranchiseConfig
@@ -36,7 +18,6 @@ contract LicensingModule is AccessControlledUpgradeable {
     }
 
     event NonCommercialLicenseUriSet(string uri);
-    event FranchiseConfigSet(uint256 franchiseId, FranchiseConfig config);
 
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.licensing-module.storage")) - 1)))
     bytes32 private constant _STORAGE_LOCATION = 0x80b4ea8c21e869c68acfd93c8ef2c0d867835b92e2fded15a1d74d7e7ff3312d;

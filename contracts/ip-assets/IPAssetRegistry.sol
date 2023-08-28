@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
-//import "forge-std/console.sol";
+
 import { IIPAssetRegistry } from "./IIPAssetRegistry.sol";
 import { LibIPAssetId } from "./LibIPAssetId.sol";
 import { Unauthorized, ZeroAmount, ZeroAddress } from "../errors/General.sol";
@@ -12,7 +12,7 @@ import { ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC7
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { MulticallUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 import { RightsManager } from "../modules/licensing/RightsManager.sol";
-import { LicensingModule } from "../modules/licensing/LicensingModule.sol";
+import { ILicensingModule } from "../modules/licensing/ILicensingModule.sol";
 
 contract IPAssetRegistry is
     IPAssetDataManager,
@@ -20,6 +20,7 @@ contract IPAssetRegistry is
     MulticallUpgradeable
 {
     error IdOverBounds();
+    error LicensingNotConfigured();
 
     /// @custom:storage-location erc7201:story-protocol.ip-assets-registry.storage
     struct IPAssetRegistryStorage {
@@ -30,7 +31,7 @@ contract IPAssetRegistry is
     }
 
     IIPAssetEventEmitter public immutable EVENT_EMITTER;
-    LicensingModule public immutable LICENSING_MODULE;
+    ILicensingModule public immutable LICENSING_MODULE;
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.ip-assets-registry.storage")) - 1)))
     bytes32 private constant _STORAGE_LOCATION =
         0x1a0b8fa444ff575656111a4368b8e6a743b70cbf31ffb9ee2c7afe1983f0e378;
@@ -41,7 +42,7 @@ contract IPAssetRegistry is
         if (_eventEmitter == address(0)) revert ZeroAddress();
         EVENT_EMITTER = IIPAssetEventEmitter(_eventEmitter);
         if (_licensingModule == address(0)) revert ZeroAddress();
-        LICENSING_MODULE = LicensingModule(_licensingModule);
+        LICENSING_MODULE = ILicensingModule(_licensingModule);
         _disableInitializers();
     }
 
@@ -89,22 +90,25 @@ contract IPAssetRegistry is
         _writeIPAsset(ipAssetId, name, _description, mediaUrl);
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
         EVENT_EMITTER.emitIPAssetCreation($.franchiseId, ipAssetId);
+        
         // Non commercial
-        LicensingModule.FranchiseConfig memory config = LICENSING_MODULE.getFranchiseConfig($.franchiseId);
-        _setNonCommercialRights(ipAssetId, parentIpAssetId, to, config.revoker, config.nonCommercialConfig, config.nonCommercialTerms);
+        ILicensingModule.FranchiseConfig memory config = LICENSING_MODULE.getFranchiseConfig($.franchiseId);
+        if (config.revoker == address(0)) revert LicensingNotConfigured();
 
+        _setNonCommercialRights(ipAssetId, parentIpAssetId, to, config.revoker, config.nonCommercialConfig, config.nonCommercialTerms);
         // If non derivative IpAsset, then franchise config may dictate commercial rights
         // Derivative works do not have commercial rights unless a deal with the relevant licensor is made
         if (config.rootIpAssetHasCommercialRights && parentIpAssetId == 0) {
             // Commercial
             _setCommercialRights(ipAssetId, 0, to, config.revoker, config.commercialLicenseUri, config.commercialConfig, config.commercialTerms);
         }
+        
         return ipAssetId;
     }
 
-    function _setNonCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, LicensingModule.IpAssetConfig memory config, TermsProcessorConfig memory terms) private {
+    function _setNonCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, ILicensingModule.IpAssetConfig memory config, TermsProcessorConfig memory terms) private {
         uint256 parentLicenseId = parentIpAssetId == 0 ? config.franchiseRootLicenseId : getLicenseIdByTokenId(parentIpAssetId, false);
-        createLicense(
+        _createLicense(
             ipAssetId,
             parentLicenseId,
             holder,
@@ -116,9 +120,9 @@ contract IPAssetRegistry is
         );
     }
 
-    function _setCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, string memory licenseUri, LicensingModule.IpAssetConfig memory config, TermsProcessorConfig memory terms) private {
+    function _setCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, string memory licenseUri, ILicensingModule.IpAssetConfig memory config, TermsProcessorConfig memory terms) private {
         uint256 parentLicenseId = parentIpAssetId == 0 ? config.franchiseRootLicenseId : getLicenseIdByTokenId(parentIpAssetId, true);
-        createLicense(
+        _createLicense(
             ipAssetId,
             parentLicenseId,
             holder,

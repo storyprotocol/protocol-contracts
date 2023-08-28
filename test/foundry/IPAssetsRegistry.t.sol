@@ -8,6 +8,7 @@ import { LibIPAssetId } from "../../contracts/ip-assets/LibIPAssetId.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { IERC1967 } from "@openzeppelin/contracts/interfaces/IERC1967.sol";
 import { MockIPAssetEventEmitter } from "./mocks/MockIPAssetEventEmitter.sol";
+import { MockLicensingModule } from "./mocks/MockLicensingModule.sol";
 import "forge-std/Test.sol";
 
 contract IPAssetRegistryTest is Test {
@@ -27,6 +28,7 @@ contract IPAssetRegistryTest is Test {
     address mintee = address(1);
     address mintee2 = address(2);
     address mockFranchiseRegistry = address(0x7474);
+    address mockLicenseModule;
 
     uint256 private constant _ID_RANGE = 10**12;
     uint256 private constant _FIRST_ID_STORY = 1;
@@ -39,7 +41,8 @@ contract IPAssetRegistryTest is Test {
     function setUp() public {
         factory = new IPAssetRegistryFactory();
         address mockEventEmitter = address(new MockIPAssetEventEmitter());
-        factory.upgradeFranchises(address(new IPAssetRegistry(mockEventEmitter, mockFranchiseRegistry)));
+        mockLicenseModule = address(new MockLicensingModule());
+        factory.upgradeFranchises(address(new IPAssetRegistry(mockEventEmitter, mockLicenseModule)));
         ipAssetRegistry = IPAssetRegistry(factory.createFranchiseIPAssets(1, "name", "symbol", "description"));
     }
 
@@ -119,6 +122,3 @@ contract IPAssetRegistryTest is Test {
 
 }
 
-contract DerivativeIPAssetRegistryTest is Test {
-    // TODO
-}
