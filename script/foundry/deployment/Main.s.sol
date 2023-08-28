@@ -29,6 +29,7 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
     /// @dev To use, run the following command (e.g. for Goerli):
     /// forge script script/Deploy.s.sol:Deploy --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv
+    /**
     function run() public {
         _beginBroadcast();
         string memory contractKey;
@@ -143,5 +144,5 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         _writeDeployment(); 
         _endBroadcast();
     }
-
+    */
 }

@@ -70,7 +70,7 @@ contract UpgradeFranchiseRegistry is Script, BroadcastManager, JsonDeploymentHan
     }
 
 }
-
+/**
 contract UpgradeIPAssetRegistry is Script, BroadcastManager, JsonDeploymentHandler {
 
     using StringUtil for uint256;
@@ -106,3 +106,4 @@ contract UpgradeIPAssetRegistry is Script, BroadcastManager, JsonDeploymentHandl
     }
 
 }
+*/

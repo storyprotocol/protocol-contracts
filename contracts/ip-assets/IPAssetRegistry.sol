@@ -7,7 +7,6 @@ import { Unauthorized, ZeroAmount, ZeroAddress } from "../errors/General.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 import { IIPAssetEventEmitter } from "./events/IIPAssetEventEmitter.sol";
 import { IPAssetDataManager } from "./storage/IPAssetDataManager.sol";
-import { FranchiseRegistry } from "../FranchiseRegistry.sol";
 import { ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { MulticallUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
@@ -37,7 +36,7 @@ contract IPAssetRegistry is
         0x1a0b8fa444ff575656111a4368b8e6a743b70cbf31ffb9ee2c7afe1983f0e378;
     string private constant _VERSION = "0.1.0";
 
-    constructor(address _eventEmitter, address _licensingModule) {
+    constructor(address _eventEmitter, address _licensingModule, address _franchiseRegistry) RightsManager(_franchiseRegistry) {
         // TODO: should Franchise owner be able to change this?
         if (_eventEmitter == address(0)) revert ZeroAddress();
         EVENT_EMITTER = IIPAssetEventEmitter(_eventEmitter);

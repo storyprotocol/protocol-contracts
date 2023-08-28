@@ -77,7 +77,7 @@ contract BaseTest is Test, ProxyHelper {
         );
         
         // upgrade factory to use new event emitter
-        factory.upgradeFranchises(address(new IPAssetRegistry(eventEmitter, address(licensingModule))));
+        factory.upgradeFranchises(address(new IPAssetRegistry(eventEmitter, address(licensingModule), address(franchiseRegistry))));
         vm.startPrank(franchiseOwner);
 
         // Register Franchise (will create IPAssetRegistry and associated LicenseRegistry)

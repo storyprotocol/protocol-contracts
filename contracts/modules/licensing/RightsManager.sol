@@ -27,6 +27,7 @@ abstract contract RightsManager is
     error SenderNotRevoker();
     error NotSublicense();
     error AlreadyHasRootLicense();
+    error ZeroRevokerAddress();
 
     struct License {
         bool active;
@@ -50,10 +51,16 @@ abstract contract RightsManager is
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.rights-manager.storage")) - 1)))
     bytes32 private constant _STORAGE_LOCATION = 0x315576c20e31e03ef3e70482445a4c33e45baf13beff28e79f2adf6d06cc0bee;
     uint256 private constant _UNSET_LICENSE_ID = 0;
+    uint256 public constant FRANCHISE_REGISTRY_OWNED_TOKEN_ID = type(uint256).max;
     LicenseRegistry public immutable LICENSE_REGISTRY;
+    IERC721 public immutable FRANCHISE_REGISTRY;
 
 
-    constructor() {
+    constructor(address _franchiseRegistry) {
+        if (_franchiseRegistry == address(0)) {
+            revert ZeroAddress();
+        }
+        FRANCHISE_REGISTRY = IERC721(_franchiseRegistry);
         LICENSE_REGISTRY = new LicenseRegistry(address(this), "Licenses", "SPLC");
     }
 
@@ -97,6 +104,28 @@ abstract contract RightsManager is
         );
     }
 
+    function createFranchiseRootLicense(
+        uint256 franchiseId,
+        address _licenseHolder,
+        string memory _uri,
+        address _revoker,
+        bool _commercial,
+        bool _canSublicense,
+        TermsProcessorConfig memory _terms
+    ) external returns (uint256) {
+        if (msg.sender != FRANCHISE_REGISTRY.ownerOf(franchiseId)) revert Unauthorized();
+        return _createLicense(
+            FRANCHISE_REGISTRY_OWNED_TOKEN_ID,
+            _UNSET_LICENSE_ID,
+            _licenseHolder,
+            _uri,
+            _revoker,
+            _commercial,
+            _canSublicense,
+            _terms
+        );
+    }
+
     function _createLicense(
         uint256 tokenId,
         uint256 parentLicenseId,
@@ -107,16 +136,19 @@ abstract contract RightsManager is
         bool canSublicense,
         TermsProcessorConfig memory _terms
     ) internal returns (uint256) {
+        // TODO: should revoker come from allowed revoker list?
+        if (revoker == address(0)) revert ZeroRevokerAddress();
         RightsManagerStorage storage $ = _getRightsManagerStorage();
-        if (!_exists(tokenId)) {
-            revert NonExistentID(tokenId);
+        if (tokenId != FRANCHISE_REGISTRY_OWNED_TOKEN_ID) {
+            if (!_exists(tokenId)) {
+                revert NonExistentID(tokenId);
+            }
         }
-        if ($.licenseForTokenId[
-            keccak256(abi.encode(commercial, tokenId))
-        ] != _UNSET_LICENSE_ID) {
-            revert AlreadyHasRootLicense();
-        }
-        if (parentLicenseId != _UNSET_LICENSE_ID) {
+        if (parentLicenseId == _UNSET_LICENSE_ID) {
+            if ($.licenseForTokenId[keccak256(abi.encode(commercial, tokenId))] != _UNSET_LICENSE_ID) {
+                revert AlreadyHasRootLicense();
+            }
+        } else {
             License memory parentLicense = $.licenses[parentLicenseId];
             _verifySublicense(parentLicenseId, licenseHolder, commercial, parentLicense);
         }
@@ -281,8 +313,6 @@ abstract contract RightsManager is
     ) public view returns (bool) {
         return _getRightsManagerStorage().licenses[licenseId].parentLicenseId == _UNSET_LICENSE_ID;
     }
-
-    
 
     function transferSublicense(
         uint256 licenseId,

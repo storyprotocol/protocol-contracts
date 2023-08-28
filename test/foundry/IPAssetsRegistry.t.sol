@@ -42,7 +42,7 @@ contract IPAssetRegistryTest is Test {
         factory = new IPAssetRegistryFactory();
         address mockEventEmitter = address(new MockIPAssetEventEmitter());
         mockLicenseModule = address(new MockLicensingModule());
-        factory.upgradeFranchises(address(new IPAssetRegistry(mockEventEmitter, mockLicenseModule)));
+        factory.upgradeFranchises(address(new IPAssetRegistry(mockEventEmitter, mockLicenseModule, mockFranchiseRegistry)));
         ipAssetRegistry = IPAssetRegistry(factory.createFranchiseIPAssets(1, "name", "symbol", "description"));
     }
 

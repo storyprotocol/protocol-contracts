@@ -19,6 +19,10 @@ contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
 
     event NonCommercialLicenseUriSet(string uri);
 
+    error NonExistentFranchise();
+    error RootLicenseNotActive(uint256 rootLicenseId);
+    error ZeroRevokerAddress();
+
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.licensing-module.storage")) - 1)))
     bytes32 private constant _STORAGE_LOCATION = 0x80b4ea8c21e869c68acfd93c8ef2c0d867835b92e2fded15a1d74d7e7ff3312d;
 
@@ -57,9 +61,26 @@ contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
         if (msg.sender != FRANCHISE_REGISTRY.ownerOf(franchiseId)) {
             revert Unauthorized();
         }
+        _verifyRootLicense(franchiseId, config.nonCommercialConfig.franchiseRootLicenseId);
+        _verifyRootLicense(franchiseId, config.commercialConfig.franchiseRootLicenseId);
+        if (config.revoker == address(0)) {
+            revert ZeroRevokerAddress();
+        }
         LicensingModuleStorage storage $ = _getLicensingModuleStorage();
         $.franchiseConfigs[franchiseId] = config;
         emit FranchiseConfigSet(franchiseId, config);
+    }
+
+    function _verifyRootLicense(uint256 franchiseId, uint256 rootLicenseId) internal view {
+        if (rootLicenseId != 0) {
+            IERC5218 rightsManager = IERC5218(FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId));
+            if (address(rightsManager) == address(0)) {
+                revert NonExistentFranchise();
+            }
+            if (!rightsManager.isLicenseActive(rootLicenseId)) {
+                revert RootLicenseNotActive(rootLicenseId);
+            }
+        }
     }
 
     function getFranchiseConfig(uint256 franchiseId) public view returns (FranchiseConfig memory) {
