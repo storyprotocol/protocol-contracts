@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import '../utils/ProxyHelper.sol';
 import '../utils/BaseTest.sol';
+import "../mocks/MockLicensingModule.sol";
 import "contracts/IPAsset.sol";
 import "contracts/errors/General.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
@@ -134,9 +135,11 @@ contract RelationshipModuleRelationshipTest is BaseTest {
     }
 
     function test_revert_relationshipsNotSameFranchise() public {
-        vm.prank(franchiseOwner);
+        vm.startPrank(franchiseOwner);
         FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("name2", "symbol2", "description2", "tokenURI2"); 
         (uint256 id, address otherIPAssets) = franchiseRegistry.registerFranchise(params);
+        licensingModule.configureFranchiseLicensing(id, LibMockFranchiseConfig.getMockFranchiseConfig());
+        vm.stopPrank();
         IPAssetRegistry otherIPAssetRegistry = IPAssetRegistry(otherIPAssets);
         vm.prank(address(franchiseRegistry));
         uint256 otherId = otherIPAssetRegistry.createIPAsset(IPAsset.CHARACTER, "name", "description", "mediaUrl", ipAssetOwner, 0);
