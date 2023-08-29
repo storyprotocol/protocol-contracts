@@ -10,8 +10,6 @@ import { NonExistentID, Unauthorized, ZeroAddress, UnsupportedInterface } from "
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
-import "forge-std/console.sol";
-
 
 abstract contract RightsManager is
     ERC721Upgradeable,
@@ -46,13 +44,13 @@ abstract contract RightsManager is
         // keccack256(commercial, tokenId) => licenseId
         mapping(bytes32 => uint256) licenseForTokenId;
         uint256 licenseCounter;
+        LicenseRegistry licenseRegistry;
     }
 
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.rights-manager.storage")) - 1)))
     bytes32 private constant _STORAGE_LOCATION = 0x315576c20e31e03ef3e70482445a4c33e45baf13beff28e79f2adf6d06cc0bee;
     uint256 private constant _UNSET_LICENSE_ID = 0;
     uint256 public constant FRANCHISE_REGISTRY_OWNED_TOKEN_ID = type(uint256).max;
-    LicenseRegistry public immutable LICENSE_REGISTRY;
     IERC721 public immutable FRANCHISE_REGISTRY;
 
 
@@ -60,8 +58,7 @@ abstract contract RightsManager is
         if (_franchiseRegistry == address(0)) {
             revert ZeroAddress();
         }
-        FRANCHISE_REGISTRY = IERC721(_franchiseRegistry);
-        LICENSE_REGISTRY = new LicenseRegistry(address(this), "Licenses", "SPLC");
+        FRANCHISE_REGISTRY = IERC721(_franchiseRegistry);        
     }
 
     function __RightsManager_init(
@@ -69,6 +66,9 @@ abstract contract RightsManager is
         string calldata symbol
     ) public initializer {
         __ERC721_init(name, symbol);
+        // licenseRegistry should be immutable, but address(this) in the constructor is the interface address, not the proxy address
+        // TODO: Revisit this if/when we make IPAssetRegistries immutable
+        _getRightsManagerStorage().licenseRegistry = new LicenseRegistry(address(this), "Licenses", "SPLC");
     }
 
     function _getRightsManagerStorage()
@@ -100,7 +100,8 @@ abstract contract RightsManager is
             _revoker,
             _commercial,
             _canSublicense,
-            _terms
+            _terms,
+            true
         );
     }
 
@@ -122,7 +123,8 @@ abstract contract RightsManager is
             _revoker,
             _commercial,
             _canSublicense,
-            _terms
+            _terms,
+            true
         );
     }
 
@@ -134,7 +136,8 @@ abstract contract RightsManager is
         address revoker,
         bool commercial,
         bool canSublicense,
-        TermsProcessorConfig memory _terms
+        TermsProcessorConfig memory _terms,
+        bool inLicenseRegistry
     ) internal returns (uint256) {
         // TODO: should revoker come from allowed revoker list?
         if (revoker == address(0)) revert ZeroRevokerAddress();
@@ -168,6 +171,11 @@ abstract contract RightsManager is
         $.licenseForTokenId[
             keccak256(abi.encode(commercial, tokenId))
         ] = licenseId;
+
+        if (inLicenseRegistry) {
+            $.licenseRegistry.mint(licenseHolder, licenseId);
+        }
+        emit TransferLicense(licenseId, licenseHolder);
         emit CreateLicense(
             licenseId,
             tokenId,
@@ -176,7 +184,7 @@ abstract contract RightsManager is
             uri,
             revoker
         );
-        emit TransferLicense(licenseId, licenseHolder);
+        
         return licenseId;
     }
 
@@ -187,11 +195,12 @@ abstract contract RightsManager is
         if (msg.sender != license.revoker) revert SenderNotRevoker();
         license.active = false;
         emit RevokeLicense(_licenseId);
+        // TODO: should we burn the license if it's from the LicenseRegistry?
     }
 
     function executeTerms(uint256 _licenseId) external {
-        if (msg.sender != address(LICENSE_REGISTRY)) revert Unauthorized();
         RightsManagerStorage storage $ = _getRightsManagerStorage();
+        if (msg.sender != address($.licenseRegistry)) revert Unauthorized();
         License storage license = $.licenses[_licenseId];
         if (license.termsProcessor != ITermsProcessor(address(0))) {
             bytes memory newData = license.termsProcessor.executeTerms(license.termsData);
@@ -256,7 +265,7 @@ abstract contract RightsManager is
 
     function _verifyTerms(TermsProcessorConfig memory _terms) private view {
         if  (address(_terms.processor) != address(0) &&
-            !address(_terms.processor).supportsInterface(type(ITermsProcessor).interfaceId)) {
+            !_terms.processor.supportsInterface(type(ITermsProcessor).interfaceId)) {
             revert UnsupportedInterface("ITermsProcessor");
         }
     }
@@ -276,10 +285,11 @@ abstract contract RightsManager is
     function getLicenseHolder(
         uint256 _licenseId
     ) public view override returns (address) {
-        if (LICENSE_REGISTRY.exists(_licenseId)) {
-            return LICENSE_REGISTRY.ownerOf(_licenseId);
+        RightsManagerStorage storage $ = _getRightsManagerStorage();
+        if ($.licenseRegistry.exists(_licenseId)) {
+            return $.licenseRegistry.ownerOf(_licenseId);
         } else {
-            License storage license = _getRightsManagerStorage().licenses[
+            License storage license = $.licenses[
                 _licenseId
             ];
             return ownerOf(license.tokenId);
@@ -308,6 +318,10 @@ abstract contract RightsManager is
             ];
     }
 
+    function getLicenseRegistry() external view returns (LicenseRegistry) {
+        return _getRightsManagerStorage().licenseRegistry;
+    }
+
     function isRootLicense(
         uint256 licenseId
     ) public view returns (bool) {
@@ -318,10 +332,9 @@ abstract contract RightsManager is
         uint256 licenseId,
         address licenseHolder
     ) public virtual override(IERC5218) {
-        if (msg.sender != address(LICENSE_REGISTRY)) revert Unauthorized();
+        RightsManagerStorage storage $ = _getRightsManagerStorage();
+        if (msg.sender != address($.licenseRegistry)) revert Unauthorized();
         if (!isLicenseActive(licenseId)) revert InactiveLicense();
-        if (_getRightsManagerStorage().licenses[licenseId].parentLicenseId == 0)
-            revert CannotSublicense();
         emit TransferLicense(licenseId, licenseHolder);
     }
 

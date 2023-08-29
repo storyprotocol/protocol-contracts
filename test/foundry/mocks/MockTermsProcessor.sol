@@ -2,8 +2,10 @@
 pragma solidity ^0.8.13;
 
 import "contracts/modules/licensing/terms/ITermsProcessor.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-contract MockTermsProcessor is ITermsProcessor {
+contract MockTermsProcessor is ITermsProcessor, ERC165 {
 
     bool success = true;
 
@@ -13,7 +15,7 @@ contract MockTermsProcessor is ITermsProcessor {
 
     function supportsInterface(
         bytes4
-    ) external pure override returns (bool) {
+    ) public pure override(ERC165, IERC165) returns (bool) {
         return true;
     }
 

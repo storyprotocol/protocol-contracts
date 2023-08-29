@@ -9,8 +9,8 @@ import "contracts/errors/General.sol";
 
 contract LicensingModuleTest is BaseTest {
 
-    ITermsProcessor public termsProcessor1;
-    ITermsProcessor public termsProcessor2;
+    MockTermsProcessor public termsProcessor1;
+    MockTermsProcessor public termsProcessor2;
 
     function setUp() virtual override public {
         deployProcessors = false;
@@ -40,7 +40,10 @@ contract LicensingModuleTest is BaseTest {
             processor: termsProcessor1,
             data: abi.encode("root")
         });
+
         uint256 rootLicenseId = ipAssetRegistry.createFranchiseRootLicense(1, franchiseOwner, "commercial_uri_root", revoker, true, true, termsConfig);
+        assertEq(licenseRegistry.ownerOf(rootLicenseId), franchiseOwner);
+        assertEq(rootLicenseId, 1);
 
         ILicensingModule.FranchiseConfig memory config = ILicensingModule.FranchiseConfig({
             nonCommercialConfig: ILicensingModule.IpAssetConfig({

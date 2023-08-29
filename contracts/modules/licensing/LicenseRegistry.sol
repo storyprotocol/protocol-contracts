@@ -7,6 +7,8 @@ import { IERC5218 } from "./IERC5218.sol";
 contract LicenseRegistry is ERC721 {
 
     IERC5218 public immutable RIGHTS_MANAGER;
+    
+    error LicenseCanBeRevokedNotBurned();
 
     constructor(address rightsManager, string memory name, string memory symbol) ERC721(name, symbol) {
         if (rightsManager == address(0)) {
@@ -20,11 +22,11 @@ contract LicenseRegistry is ERC721 {
         _;
     }
 
-    function mint(address to, uint256 tokenId) public onlyRightsManager {
+    function mint(address to, uint256 tokenId) external onlyRightsManager {
         _mint(to, tokenId);
     }
 
-    function exists(uint256 tokenId) public view returns (bool) {
+    function exists(uint256 tokenId) external view returns (bool) {
         return _exists(tokenId);
     }
 
@@ -34,7 +36,13 @@ contract LicenseRegistry is ERC721 {
         uint256 firstTokenId,
         uint256 batchSize
     ) internal virtual override {
-        RIGHTS_MANAGER.transferSublicense(firstTokenId, to);
+        // Minting has already been checked by the RightsManager.
+        if (from != address(0)) {
+            RIGHTS_MANAGER.transferSublicense(firstTokenId, to);
+        }
+        if (to == address(0)) {
+            revert LicenseCanBeRevokedNotBurned();
+        }
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
     }
 

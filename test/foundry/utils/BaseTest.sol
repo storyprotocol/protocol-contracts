@@ -17,6 +17,7 @@ import "contracts/modules/relationships/RelationshipModuleBase.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
 import "contracts/modules/licensing/terms/ITermsProcessor.sol";
+import "contracts/modules/licensing/LicenseRegistry.sol";
 
 contract BaseTest is Test, ProxyHelper {
 
@@ -27,6 +28,7 @@ contract BaseTest is Test, ProxyHelper {
     AccessControlSingleton accessControl;
     PermissionlessRelationshipProcessor public relationshipProcessor;
     LicensingModule public licensingModule;
+    LicenseRegistry public licenseRegistry;
     bool public deployProcessors = false;
 
     address constant admin = address(123);
@@ -63,7 +65,6 @@ contract BaseTest is Test, ProxyHelper {
 
         // Create Common Event Emitter
         address eventEmitter = address(new CommonIPAssetEventEmitter(address(franchiseRegistry)));
-        console.log("Event Emitter", eventEmitter);
         // Create Licensing Module
         address licensingImplementation = address(new LicensingModule(address(franchiseRegistry)));
         licensingModule = LicensingModule(
@@ -84,6 +85,7 @@ contract BaseTest is Test, ProxyHelper {
         FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("name", "symbol", "description", "tokenURI");
         (uint256 franchiseId, address ipAssets) = franchiseRegistry.registerFranchise(params);
         ipAssetRegistry = IPAssetRegistry(ipAssets);
+        licenseRegistry = ipAssetRegistry.getLicenseRegistry();
 
         // Configure Licensing for Franchise
         LicensingModule.FranchiseConfig memory licenseConfig = ILicensingModule.FranchiseConfig({

@@ -115,7 +115,8 @@ contract IPAssetRegistry is
             revoker,
             false,
             config.canSublicense,
-            terms
+            terms,
+            false
         );
     }
 
@@ -129,7 +130,8 @@ contract IPAssetRegistry is
             revoker,
             true,
             config.canSublicense,
-            terms
+            terms,
+            false
         );
     }
 
