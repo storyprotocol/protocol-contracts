@@ -8,6 +8,7 @@ import { UPGRADER_ROLE, LICENSING_MANAGER_ROLE } from "contracts/access-control/
 import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
 import { IERC5218 } from "./IERC5218.sol";
 import { ILicensingModule } from "./ILicensingModule.sol";
+import "forge-std/console.sol";
 
 contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
 
@@ -72,11 +73,15 @@ contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
     }
 
     function _verifyRootLicense(uint256 franchiseId, uint256 rootLicenseId) internal view {
+        console.log("rootLicenseId", rootLicenseId);
         if (rootLicenseId != 0) {
             IERC5218 rightsManager = IERC5218(FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId));
             if (address(rightsManager) == address(0)) {
+                // FRANCHISE_REGISTRY.ownerOf(franchiseId) should take care of this,
+                // but leaving it in case IPAssetRegistration creation fails somewhow.
                 revert NonExistentFranchise();
             }
+            console.log("rightsManager.isLicenseActive(rootLicenseId)", rightsManager.isLicenseActive(rootLicenseId));
             if (!rightsManager.isLicenseActive(rootLicenseId)) {
                 revert RootLicenseNotActive(rootLicenseId);
             }

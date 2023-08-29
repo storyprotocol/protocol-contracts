@@ -23,17 +23,6 @@ contract LicensingModuleTest is BaseTest {
         assertEq(licensingModule.getNonCommercialLicenseURI(), NON_COMMERCIAL_LICENSE_URI);
     }
 
-    function test_revert_nonAuthorizedConfigSetter() public {
-        vm.expectRevert(Unauthorized.selector);
-        licensingModule.configureFranchiseLicensing(1, LibMockFranchiseConfig.getMockFranchiseConfig());
-    }
-
-    function test_revert_nonExistingFranchise() public {
-        vm.expectRevert("ERC721: invalid token ID");
-        licensingModule.configureFranchiseLicensing(2, LibMockFranchiseConfig.getMockFranchiseConfig());
-    }
-    
-
     function test_configFranchise() public {
         vm.startPrank(franchiseOwner);
         IERC5218.TermsProcessorConfig memory termsConfig = IERC5218.TermsProcessorConfig({
@@ -45,27 +34,8 @@ contract LicensingModuleTest is BaseTest {
         assertEq(licenseRegistry.ownerOf(rootLicenseId), franchiseOwner);
         assertEq(rootLicenseId, 1);
 
-        ILicensingModule.FranchiseConfig memory config = ILicensingModule.FranchiseConfig({
-            nonCommercialConfig: ILicensingModule.IpAssetConfig({
-                canSublicense: true,
-                franchiseRootLicenseId: 0
-            }),
-            nonCommercialTerms: IERC5218.TermsProcessorConfig({
-                processor: termsProcessor1,
-                data: abi.encode("hi")
-            }),
-            commercialConfig: ILicensingModule.IpAssetConfig({
-                canSublicense: false,
-                franchiseRootLicenseId: rootLicenseId
-            }),
-            commercialTerms: IERC5218.TermsProcessorConfig({
-                processor: termsProcessor2,
-                data: abi.encode("bye")
-            }),
-            rootIpAssetHasCommercialRights: false,
-            revoker: address(0x5656565),
-            commercialLicenseUri: "uriuri"
-        });
+        ILicensingModule.FranchiseConfig memory config = _getLicensingConfig();
+        config.commercialConfig.franchiseRootLicenseId = rootLicenseId;
         
         licensingModule.configureFranchiseLicensing(1, config);
         ILicensingModule.FranchiseConfig memory configResult = licensingModule.getFranchiseConfig(1);
@@ -82,6 +52,68 @@ contract LicensingModuleTest is BaseTest {
         vm.stopPrank();
     }
 
+    function test_revert_nonAuthorizedConfigSetter() public {
+        vm.expectRevert(Unauthorized.selector);
+        licensingModule.configureFranchiseLicensing(1, LibMockFranchiseConfig.getMockFranchiseConfig());
+    }
 
+    function test_revert_nonExistingFranchise() public {
+        vm.expectRevert("ERC721: invalid token ID");
+        licensingModule.configureFranchiseLicensing(2, LibMockFranchiseConfig.getMockFranchiseConfig());
+    }
 
+    function test_revert_zeroRevokerAddress() public {
+        vm.startPrank(franchiseOwner);
+        ILicensingModule.FranchiseConfig memory config = LibMockFranchiseConfig.getMockFranchiseConfig();
+        config.revoker = address(0);
+        vm.expectRevert(LicensingModule.ZeroRevokerAddress.selector);
+        licensingModule.configureFranchiseLicensing(1, config);
+        vm.stopPrank();
+    }
+
+    function test_revert_rootLicenseNotActiveCommercial() public {
+        
+        IERC5218.TermsProcessorConfig memory termsConfig = IERC5218.TermsProcessorConfig({
+            processor: termsProcessor1,
+            data: abi.encode("root")
+        });
+
+        
+
+        vm.prank(franchiseOwner);
+        uint256 rootLicenseId = ipAssetRegistry.createFranchiseRootLicense(1, franchiseOwner, "commercial_uri_root", revoker, true, true, termsConfig);
+
+        termsProcessor2.setSuccess(false);
+
+        ILicensingModule.FranchiseConfig memory config = _getLicensingConfig();
+        config.commercialConfig.franchiseRootLicenseId = rootLicenseId;
+        vm.startPrank(franchiseOwner);
+        vm.expectRevert(LicensingModule.RootLicenseNotActive.selector);
+        licensingModule.configureFranchiseLicensing(1, config);
+        vm.stopPrank();
+    }
+
+    function _getLicensingConfig() view private returns (ILicensingModule.FranchiseConfig memory) {
+        return ILicensingModule.FranchiseConfig({
+            nonCommercialConfig: ILicensingModule.IpAssetConfig({
+                canSublicense: true,
+                franchiseRootLicenseId: 0
+            }),
+            nonCommercialTerms: IERC5218.TermsProcessorConfig({
+                processor: termsProcessor1,
+                data: abi.encode("hi")
+            }),
+            commercialConfig: ILicensingModule.IpAssetConfig({
+                canSublicense: false,
+                franchiseRootLicenseId: 0
+            }),
+            commercialTerms: IERC5218.TermsProcessorConfig({
+                processor: termsProcessor2,
+                data: abi.encode("bye")
+            }),
+            rootIpAssetHasCommercialRights: false,
+            revoker: address(0x5656565),
+            commercialLicenseUri: "uriuri"
+        });
+    }
 }
