@@ -140,7 +140,7 @@ contract RightsManagerTest is Test, ProxyHelper {
         licenseRegistry.ownerOf(licenseId);
 
     }
-    /**
+    
     function test_internal_create_license_nonRootLicense_minting() public {
         uint256 tokenId = 1;
         rightsManager.mint(licenseHolder, tokenId);
@@ -150,7 +150,19 @@ contract RightsManagerTest is Test, ProxyHelper {
             processor: termsProcessor,
             data: abi.encode("terms")
         });
-        // TODO test events
+        // Mint root
+        rightsManager.createLicense_exposed(
+            tokenId,
+            0,
+            licenseHolder,
+            "licenseUri",
+            revoker,
+            true,
+            true,
+            terms,
+            true
+        );
+        // Mint sublicense
         rightsManager.createLicense_exposed(
             tokenId,
             parentLicenseId,
@@ -160,15 +172,13 @@ contract RightsManagerTest is Test, ProxyHelper {
             true,
             true,
             terms,
-            false
+            true
         );
         uint256 licenseId = _verifyLicense(tokenId, termsProcessor);
         LicenseRegistry licenseRegistry = LicenseRegistry(rightsManager.getLicenseRegistry());
-        vm.expectRevert("ERC721: invalid token ID");
-        licenseRegistry.ownerOf(licenseId);
-
+        assertEq(licenseRegistry.ownerOf(licenseId), licenseHolder);
     }
-    */
+    
 
     function test_revert_internal_createLicense_zeroRevoker() public {}
     function test_revert_internal_createLicense_nonExistentId() public {}
