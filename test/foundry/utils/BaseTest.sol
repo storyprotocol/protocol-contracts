@@ -18,6 +18,7 @@ import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
 import "contracts/modules/licensing/terms/ITermsProcessor.sol";
 import "contracts/modules/licensing/LicenseRegistry.sol";
+import '../mocks/MockTermsProcessor.sol';
 
 contract BaseTest is Test, ProxyHelper {
 
@@ -29,6 +30,8 @@ contract BaseTest is Test, ProxyHelper {
     PermissionlessRelationshipProcessor public relationshipProcessor;
     LicensingModule public licensingModule;
     LicenseRegistry public licenseRegistry;
+    MockTermsProcessor public nonCommercialTermsProcessor;
+    MockTermsProcessor public commercialTermsProcessor;
     bool public deployProcessors = false;
 
     address constant admin = address(123);
@@ -82,36 +85,14 @@ contract BaseTest is Test, ProxyHelper {
         vm.startPrank(franchiseOwner);
 
         // Register Franchise (will create IPAssetRegistry and associated LicenseRegistry)
-        FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("name", "symbol", "description", "tokenURI");
+        FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("FranchiseName", "FRN", "description", "tokenURI");
         (uint256 franchiseId, address ipAssets) = franchiseRegistry.registerFranchise(params);
         ipAssetRegistry = IPAssetRegistry(ipAssets);
         licenseRegistry = ipAssetRegistry.getLicenseRegistry();
 
         // Configure Licensing for Franchise
-        LicensingModule.FranchiseConfig memory licenseConfig = ILicensingModule.FranchiseConfig({
-            nonCommercialConfig: ILicensingModule.IpAssetConfig({
-                canSublicense: true,
-                franchiseRootLicenseId: 0
-            }),
-            nonCommercialTerms: IERC5218.TermsProcessorConfig({
-                processor: ITermsProcessor(address(0)),
-                data: ""
-            }),
-            commercialConfig: ILicensingModule.IpAssetConfig({
-                canSublicense: true,
-                franchiseRootLicenseId: 0
-            }),
-            commercialTerms: IERC5218.TermsProcessorConfig({
-                processor: ITermsProcessor(address(0)),
-                data: ""
-            }),
-            rootIpAssetHasCommercialRights: false,
-            revoker: revoker,
-            commercialLicenseUri: COMMERCIAL_LICENSE_URI
-        });
-        licensingModule.configureFranchiseLicensing(franchiseId, licenseConfig);
+        licensingModule.configureFranchiseLicensing(franchiseId, _getLicensingConfig());
 
-        
         vm.stopPrank();
 
         // Create Relationship Module
@@ -127,4 +108,29 @@ contract BaseTest is Test, ProxyHelper {
             relationshipProcessor = new PermissionlessRelationshipProcessor(address(relationshipModule));
         }
     }
+
+    function _getLicensingConfig() view internal returns (ILicensingModule.FranchiseConfig memory) {
+        return ILicensingModule.FranchiseConfig({
+            nonCommercialConfig: ILicensingModule.IpAssetConfig({
+                canSublicense: true,
+                franchiseRootLicenseId: 0
+            }),
+            nonCommercialTerms: IERC5218.TermsProcessorConfig({
+                processor: nonCommercialTermsProcessor,
+                data: abi.encode("nonCommercial")
+            }),
+            commercialConfig: ILicensingModule.IpAssetConfig({
+                canSublicense: false,
+                franchiseRootLicenseId: 0
+            }),
+            commercialTerms: IERC5218.TermsProcessorConfig({
+                processor: commercialTermsProcessor,
+                data: abi.encode("commercial")
+            }),
+            rootIpAssetHasCommercialRights: false,
+            revoker: revoker,
+            commercialLicenseUri: "uriuri"
+        });
+    }
+
 }

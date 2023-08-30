@@ -9,14 +9,9 @@ import "contracts/errors/General.sol";
 
 contract LicensingModuleTest is BaseTest {
 
-    MockTermsProcessor public termsProcessor1;
-    MockTermsProcessor public termsProcessor2;
-
     function setUp() virtual override public {
         deployProcessors = false;
         super.setUp();
-        termsProcessor1 = new MockTermsProcessor();
-        termsProcessor2 = new MockTermsProcessor();
     }
 
     function test_setUp() public {
@@ -26,7 +21,7 @@ contract LicensingModuleTest is BaseTest {
     function test_configFranchise() public {
         vm.startPrank(franchiseOwner);
         IERC5218.TermsProcessorConfig memory termsConfig = IERC5218.TermsProcessorConfig({
-            processor: termsProcessor1,
+            processor: commercialTermsProcessor,
             data: abi.encode("root")
         });
 
@@ -35,17 +30,20 @@ contract LicensingModuleTest is BaseTest {
         assertEq(rootLicenseId, 1);
 
         ILicensingModule.FranchiseConfig memory config = _getLicensingConfig();
+        config.revoker = address(0x5656565);
         config.commercialConfig.franchiseRootLicenseId = rootLicenseId;
+        config.commercialTerms.data = abi.encode("bye");
+        config.nonCommercialTerms.data = abi.encode("hi");
         
         licensingModule.configureFranchiseLicensing(1, config);
         ILicensingModule.FranchiseConfig memory configResult = licensingModule.getFranchiseConfig(1);
         assertEq(configResult.nonCommercialConfig.canSublicense, true);
         assertEq(configResult.nonCommercialConfig.franchiseRootLicenseId, 0);
-        assertEq(address(configResult.nonCommercialTerms.processor), address(termsProcessor1));
+        assertEq(address(configResult.nonCommercialTerms.processor), address(nonCommercialTermsProcessor));
         assertEq(configResult.nonCommercialTerms.data, abi.encode("hi"));
         assertEq(configResult.commercialConfig.canSublicense, false);
         assertEq(configResult.commercialConfig.franchiseRootLicenseId, 1);
-        assertEq(address(configResult.commercialTerms.processor), address(termsProcessor2));
+        assertEq(address(configResult.commercialTerms.processor), address(commercialTermsProcessor));
         assertEq(configResult.commercialTerms.data, abi.encode("bye"));
         assertEq(configResult.rootIpAssetHasCommercialRights, false);
         assertEq(configResult.revoker, address(0x5656565));
@@ -74,16 +72,14 @@ contract LicensingModuleTest is BaseTest {
     function test_revert_rootLicenseNotActiveCommercial() public {
         
         IERC5218.TermsProcessorConfig memory termsConfig = IERC5218.TermsProcessorConfig({
-            processor: termsProcessor1,
+            processor: commercialTermsProcessor,
             data: abi.encode("root")
         });
-
-        
 
         vm.prank(franchiseOwner);
         uint256 rootLicenseId = ipAssetRegistry.createFranchiseRootLicense(1, franchiseOwner, "commercial_uri_root", revoker, true, true, termsConfig);
 
-        termsProcessor2.setSuccess(false);
+        commercialTermsProcessor.setSuccess(false);
 
         ILicensingModule.FranchiseConfig memory config = _getLicensingConfig();
         config.commercialConfig.franchiseRootLicenseId = rootLicenseId;
@@ -93,27 +89,4 @@ contract LicensingModuleTest is BaseTest {
         vm.stopPrank();
     }
 
-    function _getLicensingConfig() view private returns (ILicensingModule.FranchiseConfig memory) {
-        return ILicensingModule.FranchiseConfig({
-            nonCommercialConfig: ILicensingModule.IpAssetConfig({
-                canSublicense: true,
-                franchiseRootLicenseId: 0
-            }),
-            nonCommercialTerms: IERC5218.TermsProcessorConfig({
-                processor: termsProcessor1,
-                data: abi.encode("hi")
-            }),
-            commercialConfig: ILicensingModule.IpAssetConfig({
-                canSublicense: false,
-                franchiseRootLicenseId: 0
-            }),
-            commercialTerms: IERC5218.TermsProcessorConfig({
-                processor: termsProcessor2,
-                data: abi.encode("bye")
-            }),
-            rootIpAssetHasCommercialRights: false,
-            revoker: address(0x5656565),
-            commercialLicenseUri: "uriuri"
-        });
-    }
 }

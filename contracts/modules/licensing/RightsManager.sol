@@ -10,6 +10,7 @@ import { NonExistentID, Unauthorized, ZeroAddress, UnsupportedInterface } from "
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
+import "forge-std/console.sol";
 
 abstract contract RightsManager is
     ERC721Upgradeable,
@@ -68,7 +69,11 @@ abstract contract RightsManager is
         __ERC721_init(name, symbol);
         // licenseRegistry should be immutable, but address(this) in the constructor is the interface address, not the proxy address
         // TODO: Revisit this if/when we make IPAssetRegistries immutable
-        _getRightsManagerStorage().licenseRegistry = new LicenseRegistry(address(this), "Licenses", "SPLC");
+        _getRightsManagerStorage().licenseRegistry = new LicenseRegistry(
+            address(this),
+            string.concat("Licenses for ", name),
+            string.concat("sl", symbol)
+        );
     }
 
     function _getRightsManagerStorage()
@@ -175,7 +180,6 @@ abstract contract RightsManager is
         if (inLicenseRegistry) {
             $.licenseRegistry.mint(licenseHolder, licenseId);
         }
-        emit TransferLicense(licenseId, licenseHolder);
         emit CreateLicense(
             licenseId,
             tokenId,
@@ -184,7 +188,7 @@ abstract contract RightsManager is
             uri,
             revoker
         );
-        
+        emit TransferLicense(licenseId, licenseHolder);
         return licenseId;
     }
 
@@ -215,20 +219,24 @@ abstract contract RightsManager is
         uint256 licenseId
     ) public view virtual returns (bool) {
         // TODO: limit to the tree depth
-        // TODO: check time limits
+        console.log("isLicenseActive(%s)");
         if (licenseId == 0) return false;
+        RightsManagerStorage storage $ = _getRightsManagerStorage();
         while (licenseId != 0) {
-            RightsManagerStorage storage $ = _getRightsManagerStorage();
+            console.log("licenseId", licenseId);
             License memory license = $.licenses[licenseId];
-            if (
-                !(
-                    license.active &&
-                    license.termsProcessor.tersmExecutedSuccessfully(license.termsData)
-                )
-            ) return false;
+            if (!_isActiveAndTermsOk(license)) return false;
             licenseId = license.parentLicenseId;
         }
         return true;
+    }
+
+    function _isActiveAndTermsOk(License memory license) view private returns (bool) {
+        //console.log("license.active", license.active);
+        //console.log("license.termsProcessor", address(license.termsProcessor));
+        if (address(license.termsProcessor) == address(0)) return license.active;
+        //console.log("tersmExecutedSuccessfully", license.termsProcessor.tersmExecutedSuccessfully(license.termsData));
+        return license.active && license.termsProcessor.tersmExecutedSuccessfully(license.termsData);
     }
 
 
