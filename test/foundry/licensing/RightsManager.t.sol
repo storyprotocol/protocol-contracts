@@ -38,7 +38,6 @@ contract RightsManagerTest is Test, ProxyHelper {
                 )
             )
         );
-
     }
 
     function test_setup() public {
@@ -51,11 +50,7 @@ contract RightsManagerTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mint(licenseHolder, tokenId);
         uint256 parentLicenseId = 0;
-        MockTermsProcessor termsProcessor = new MockTermsProcessor();
-        IERC5218.TermsProcessorConfig memory terms = IERC5218.TermsProcessorConfig({
-            processor: termsProcessor,
-            data: abi.encode("terms")
-        });
+        (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = _getTermsProcessorConfig();
         // TODO test events
         rightsManager.createLicense_exposed(
             tokenId,
@@ -79,11 +74,7 @@ contract RightsManagerTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mint(licenseHolder, tokenId);
         uint256 parentLicenseId = 0;
-        MockTermsProcessor termsProcessor = new MockTermsProcessor();
-        IERC5218.TermsProcessorConfig memory terms = IERC5218.TermsProcessorConfig({
-            processor: termsProcessor,
-            data: abi.encode("terms")
-        });
+        (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = _getTermsProcessorConfig();
         // TODO test events
         rightsManager.createLicense_exposed(
             tokenId,
@@ -105,11 +96,7 @@ contract RightsManagerTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        MockTermsProcessor termsProcessor = new MockTermsProcessor();
-        IERC5218.TermsProcessorConfig memory terms = IERC5218.TermsProcessorConfig({
-            processor: termsProcessor,
-            data: abi.encode("terms")
-        });
+        (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = _getTermsProcessorConfig();
         // Mint root
         rightsManager.createLicense_exposed(
             tokenId,
@@ -145,11 +132,7 @@ contract RightsManagerTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        MockTermsProcessor termsProcessor = new MockTermsProcessor();
-        IERC5218.TermsProcessorConfig memory terms = IERC5218.TermsProcessorConfig({
-            processor: termsProcessor,
-            data: abi.encode("terms")
-        });
+        (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = _getTermsProcessorConfig();
         // Mint root
         rightsManager.createLicense_exposed(
             tokenId,
@@ -178,17 +161,267 @@ contract RightsManagerTest is Test, ProxyHelper {
         LicenseRegistry licenseRegistry = LicenseRegistry(rightsManager.getLicenseRegistry());
         assertEq(licenseRegistry.ownerOf(licenseId), licenseHolder);
     }
-    
 
-    function test_revert_internal_createLicense_zeroRevoker() public {}
-    function test_revert_internal_createLicense_nonExistentId() public {}
-    function test_revert_internal_createLicense_alreadyHasRootLicense() public {}
-    function test_revert_internal_createLicense_notOwnerOfParentLicense() public {}
-    function test_revert_internal_createLicense_inactiveParentLicense() public {}
-    function test_revert_internal_createLicense_cannotSublicense() public {}
-    function test_revert_internal_createLicense_commercialTermsMismatch() public {}
-    function test_revert_internal_createLicense_nonCommercialTermsMismatch() public {}
-    function test_revert_internal_createLicense_termsProcessorUnsupportedInterface() public {}
+    function test_revert_internal_createLicense_zeroRevoker() public {
+        uint256 tokenId = 1;
+        rightsManager.mint(licenseHolder, tokenId);
+        uint256 parentLicenseId = 0;
+        (IERC5218.TermsProcessorConfig memory terms,) = _getTermsProcessorConfig();
+        vm.expectRevert(RightsManager.ZeroRevokerAddress.selector);
+        rightsManager.createLicense_exposed(
+            tokenId,
+            parentLicenseId,
+            licenseHolder,
+            "licenseUri",
+            address(0),
+            true,
+            true,
+            terms,
+            false
+        );
+    }
+
+    function test_revert_internal_createLicense_nonExistentId() public {
+        uint256 tokenId = 1;
+        uint256 parentLicenseId = 0;
+        (IERC5218.TermsProcessorConfig memory terms,) = _getTermsProcessorConfig();
+        vm.expectRevert(abi.encodeWithSignature("NonExistentID(uint256)", 1));
+        rightsManager.createLicense_exposed(
+            tokenId,
+            parentLicenseId,
+            licenseHolder,
+            "licenseUri",
+            revoker,
+            true,
+            true,
+            terms,
+            false
+        );
+    }
+
+    function test_revert_internal_createLicense_alreadyHasRootLicense() public {
+        uint256 tokenId = 1;
+        rightsManager.mint(licenseHolder, tokenId);
+        uint256 parentLicenseId = 0;
+        (IERC5218.TermsProcessorConfig memory terms,) = _getTermsProcessorConfig();
+        // Mint root
+        rightsManager.createLicense_exposed(
+            tokenId,
+            0,
+            licenseHolder,
+            "licenseUri",
+            revoker,
+            true,
+            true,
+            terms,
+            false
+        );
+        // Mint root again
+        vm.expectRevert(RightsManager.AlreadyHasRootLicense.selector);
+        rightsManager.createLicense_exposed(
+            tokenId,
+            parentLicenseId,
+            licenseHolder,
+            "licenseUri",
+            revoker,
+            true,
+            true,
+            terms,
+            false
+        );
+    }
+
+    function test_revert_internal_createLicense_notOwnerOfParentLicense() public {
+        uint256 tokenId = 1;
+        rightsManager.mint(licenseHolder, tokenId);
+        uint256 parentLicenseId = 1;
+        (IERC5218.TermsProcessorConfig memory terms,) = _getTermsProcessorConfig();
+        // Mint root
+        rightsManager.createLicense_exposed(
+            tokenId,
+            0,
+            licenseHolder,
+            "licenseUri",
+            revoker,
+            true,
+            true,
+            terms,
+            false
+        );
+        // Mint sublicense
+        vm.expectRevert(RightsManager.NotOwnerOfParentLicense.selector);
+        rightsManager.createLicense_exposed(
+            tokenId,
+            parentLicenseId,
+            address(0x123456),
+            "licenseUri",
+            revoker,
+            true,
+            true,
+            terms,
+            false
+        );
+    }
+
+    function test_revert_internal_createLicense_inactiveParentLicense() public {
+        uint256 tokenId = 1;
+        rightsManager.mint(licenseHolder, tokenId);
+        uint256 parentLicenseId = 1;
+        (IERC5218.TermsProcessorConfig memory terms,) = _getTermsProcessorConfig();
+        // Mint root
+        rightsManager.createLicense_exposed(
+            tokenId,
+            0,
+            licenseHolder,
+            "licenseUri",
+            revoker,
+            true,
+            true,
+            terms,
+            false
+        );
+        
+        vm.prank(revoker);
+        rightsManager.revokeLicense(parentLicenseId);
+
+        // Mint sublicense
+        vm.expectRevert(RightsManager.InactiveParentLicense.selector);
+        rightsManager.createLicense_exposed(
+            tokenId,
+            parentLicenseId,
+            licenseHolder,
+            "licenseUri",
+            revoker,
+            true,
+            true,
+            terms,
+            false
+        );
+    }
+
+    function test_revert_internal_createLicense_cannotSublicense() public {
+        uint256 tokenId = 1;
+        rightsManager.mint(licenseHolder, tokenId);
+        uint256 parentLicenseId = 1;
+        (IERC5218.TermsProcessorConfig memory terms,) = _getTermsProcessorConfig();
+        // Mint root
+        rightsManager.createLicense_exposed(
+            tokenId,
+            0,
+            licenseHolder,
+            "licenseUri",
+            revoker,
+            true,
+            false,
+            terms,
+            false
+        );
+        // Mint sublicense
+        vm.expectRevert(RightsManager.CannotSublicense.selector);
+        rightsManager.createLicense_exposed(
+            tokenId,
+            parentLicenseId,
+            licenseHolder,
+            "licenseUri",
+            revoker,
+            true,
+            true,
+            terms,
+            false
+        );
+    }
+
+    function test_revert_internal_createLicense_commercialTermsMismatch() public {
+        uint256 tokenId = 1;
+        rightsManager.mint(licenseHolder, tokenId);
+        uint256 parentLicenseId = 1;
+        (IERC5218.TermsProcessorConfig memory terms,) = _getTermsProcessorConfig();
+        // Mint root
+        rightsManager.createLicense_exposed(
+            tokenId,
+            0,
+            licenseHolder,
+            "licenseUri",
+            revoker,
+            true,
+            true,
+            terms,
+            false
+        );
+        // Mint sublicense
+        vm.expectRevert(RightsManager.CommercialTermsMismatch.selector);
+        rightsManager.createLicense_exposed(
+            tokenId,
+            parentLicenseId,
+            licenseHolder,
+            "licenseUri",
+            revoker,
+            false,
+            true,
+            terms,
+            false
+        );
+    }
+
+    function test_revert_internal_createLicense_nonCommercialTermsMismatch() public {
+        uint256 tokenId = 1;
+        rightsManager.mint(licenseHolder, tokenId);
+        uint256 parentLicenseId = 1;
+        (IERC5218.TermsProcessorConfig memory terms,) = _getTermsProcessorConfig();
+        // Mint root
+        rightsManager.createLicense_exposed(
+            tokenId,
+            0,
+            licenseHolder,
+            "licenseUri",
+            revoker,
+            false,
+            true,
+            terms,
+            false
+        );
+        // Mint sublicense
+        vm.expectRevert(RightsManager.CommercialTermsMismatch.selector);
+        rightsManager.createLicense_exposed(
+            tokenId,
+            parentLicenseId,
+            licenseHolder,
+            "licenseUri",
+            revoker,
+            true,
+            true,
+            terms,
+            false
+        );
+    }
+
+    function test_revert_internal_createLicense_termsProcessorUnsupportedInterface() public {
+        uint256 tokenId = 1;
+        rightsManager.mint(licenseHolder, tokenId);
+        
+        vm.expectRevert(abi.encodeWithSignature("UnsupportedInterface(string)", "ITermsProcessor"));
+        // Mint root
+        rightsManager.createLicense_exposed(
+            tokenId,
+            0,
+            licenseHolder,
+            "licenseUri",
+            revoker,
+            false,
+            true,
+            IERC5218.TermsProcessorConfig({
+                processor: ITermsProcessor(address(rightsManager)),
+                data: abi.encode("terms")
+            }),
+            false
+        );
+    }
+    // TODO: could we inspect call to _createLicense with appropiate args?
+    function test_create_license() public {}
+    function test_revert_create_license_unauthorized() public {}
+    // This one we can just call the internal method
+    function test_create_root_license() public {}
+    function test_revert_create_root_license_unauthorized() public {}
 
     function _verifyLicense(uint256 tokenId, MockTermsProcessor termsProcessor) private returns(uint256) {
         uint256 licenseId = rightsManager.getLicenseIdByTokenId(tokenId, true);
@@ -211,62 +444,11 @@ contract RightsManagerTest is Test, ProxyHelper {
         return licenseId;
     }
 
+    function _getTermsProcessorConfig() private returns(IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor){
+        termsProcessor = new MockTermsProcessor();
+        terms = IERC5218.TermsProcessorConfig({
+            processor: termsProcessor,
+            data: abi.encode("terms")
+        });
+    }
 }
-
-/*
-contract RightsManagerIPAssetRightsTest is BaseTest {
-
-    address ipAssetCreator = address(0x999999);
-
-    function setUp() virtual override public {
-        deployProcessors = false;
-        super.setUp();
-    }
-
-    function test_setUp() public {
-        assertEq(licenseRegistry.name(), "Licenses for FranchiseName");
-        assertEq(licenseRegistry.symbol(), "slFRN");
-        assertEq(address(licenseRegistry.RIGHTS_MANAGER()), address(ipAssetRegistry));
-    }
-
-    function test_Rights_NoCommercialRights_RootIPAsset() public {
-        
-        // TODO: test for events
-        vm.prank(ipAssetCreator);
-        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaurl", address(ipAssetCreator), 0);
-        uint256 ncrLicenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, false);
-        assertEq(ncrLicenseId, 1);
-        assertEq(ipAssetRegistry.getLicenseTokenId(ncrLicenseId), ipAssetId);
-        assertEq(ipAssetRegistry.getParentLicenseId(ncrLicenseId), 0);
-        assertTrue(ipAssetRegistry.isLicenseActive(ncrLicenseId));
-        (RightsManager.License memory license, address owner) = ipAssetRegistry.getLicense(ncrLicenseId);
-        assertEq(address(ipAssetCreator), owner, "license owner");
-        assertEq(license.active, true, "license active");
-        assertEq(license.canSublicense, true, "license canSublicense");
-        assertEq(license.commercial, false, "license commercial");
-        assertEq(license.parentLicenseId, 0, "license parentLicenseId");
-        assertEq(license.tokenId, ipAssetId, "license tokenId");
-        assertEq(license.revoker, revoker, "license revoker");
-        assertEq(license.uri, NON_COMMERCIAL_LICENSE_URI, "license uri");
-        assertEq(address(license.termsProcessor), address(nonCommercialTermsProcessor), "license termsProcessor");
-        assertEq(license.termsData, abi.encode("nonCommercial"), "license termsData");
-        uint256 crLicenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, true);
-        assertEq(crLicenseId, 0);
-        (RightsManager.License memory licenseCr, address ownerCr) = ipAssetRegistry.getLicense(ncrLicenseId);
-        assertEq(address(0), ownerCr, "commercial license owner");
-    }
-    /*
-    function test_Rights_CommercialRights_RootIPAsset() public {
-        assertTrue(false);
-    }
-    function test_Rights_CommercialRights_NonRootIPAsset() public {
-        assertTrue(false);
-    }
-    function test_revert_licensingModuleNotConfigured() public {
-        assertTrue(false);
-    }
-
-
-
-}
-*/
