@@ -78,15 +78,16 @@ contract LicensingModuleTest is BaseTest {
 
         vm.prank(franchiseOwner);
         uint256 rootLicenseId = ipAssetRegistry.createFranchiseRootLicense(1, franchiseOwner, "commercial_uri_root", revoker, true, true, termsConfig);
-
+        
         commercialTermsProcessor.setSuccess(false);
-
+        
         ILicensingModule.FranchiseConfig memory config = _getLicensingConfig();
         config.commercialConfig.franchiseRootLicenseId = rootLicenseId;
         vm.startPrank(franchiseOwner);
-        vm.expectRevert(LicensingModule.RootLicenseNotActive.selector);
+        vm.expectRevert(abi.encodeWithSignature("RootLicenseNotActive(uint256)", 1));
         licensingModule.configureFranchiseLicensing(1, config);
         vm.stopPrank();
+        
     }
 
 }

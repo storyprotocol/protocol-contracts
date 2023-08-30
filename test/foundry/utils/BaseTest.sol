@@ -91,6 +91,8 @@ contract BaseTest is Test, ProxyHelper {
         licenseRegistry = ipAssetRegistry.getLicenseRegistry();
 
         // Configure Licensing for Franchise
+        nonCommercialTermsProcessor = new MockTermsProcessor();
+        commercialTermsProcessor = new MockTermsProcessor();
         licensingModule.configureFranchiseLicensing(franchiseId, _getLicensingConfig());
 
         vm.stopPrank();

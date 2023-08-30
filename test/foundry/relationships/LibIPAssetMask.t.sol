@@ -9,6 +9,7 @@ import { IPAsset, EXTERNAL_ASSET } from "contracts/IPAsset.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
+import { MockERC721 } from "../mocks/MockERC721.sol";
 
 contract LibIPAssetMaskHarness {
 
@@ -28,15 +29,6 @@ contract LibIPAssetMaskHarness {
         return LibIPAssetMask._checkRelationshipNode(isAssetRegistry, assetId, assetTypeMask);
     }
 }
-
-contract MockERC721 is ERC721 {
-    constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
-
-    function mint(address to, uint256 tokenId) external {
-        _mint(to, tokenId);
-    }
-}
-
 
 contract LibIPAssetMaskHarnessTest is Test {
 

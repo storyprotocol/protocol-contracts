@@ -93,7 +93,7 @@ interface IERC5218 is IERC721Upgradeable {
     ///  license (such as 0).
     /// @param _tokenId The identifier for the queried NFT
     /// @return The root license identifier of the queried NFT
-    function getLicenseIdByTokenId(
+    function getLicenseIdByTokenId( // NOTE: This will not work for sublicenses that have a tokenId associated. Rename to getRootLicenseIdByTokenId??
         uint256 _tokenId,
         bool _commercial // NOTE: MODIFIED ERC-5218
     ) external view returns (uint256);
@@ -147,4 +147,5 @@ interface IERC5218 is IERC721Upgradeable {
         uint256 _licenseId,
         address _licenseHolder
     ) external;
+
 }

@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { ZeroAddress, Unauthorized } from "contracts/errors/General.sol";
 import { IERC5218 } from "./IERC5218.sol";
+import "forge-std/console.sol";
 
 contract LicenseRegistry is ERC721 {
 
@@ -29,13 +30,14 @@ contract LicenseRegistry is ERC721 {
     function exists(uint256 tokenId) external view returns (bool) {
         return _exists(tokenId);
     }
-
+    
     function _beforeTokenTransfer(
         address from,
         address to,
         uint256 firstTokenId,
         uint256 batchSize
     ) internal virtual override {
+        console.log("_beforeTokenTransfer LicenseRegistry");
         // Minting has already been checked by the RightsManager.
         if (from != address(0)) {
             RIGHTS_MANAGER.transferSublicense(firstTokenId, to);
@@ -45,5 +47,6 @@ contract LicenseRegistry is ERC721 {
         }
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
     }
+    
 
 }
