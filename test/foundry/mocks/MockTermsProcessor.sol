@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "contracts/modules/licensing/terms/ITermsProcessor.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import "forge-std/console.sol";
+
 
 contract MockTermsProcessor is ITermsProcessor, ERC165 {
 
@@ -12,7 +12,6 @@ contract MockTermsProcessor is ITermsProcessor, ERC165 {
 
     function setSuccess(bool value) external {
         _success = value;
-        console.log(_success);
     }
 
     function supportsInterface(

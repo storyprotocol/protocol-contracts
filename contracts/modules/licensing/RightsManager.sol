@@ -10,7 +10,7 @@ import { NonExistentID, Unauthorized, ZeroAddress, UnsupportedInterface } from "
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
-import "forge-std/console.sol";
+
 
 abstract contract RightsManager is
     ERC721Upgradeable,
@@ -58,7 +58,6 @@ abstract contract RightsManager is
 
 
     constructor(address _franchiseRegistry) {
-        console.log(_franchiseRegistry);
         if (_franchiseRegistry == address(0)) {
             revert ZeroAddress();
         }
@@ -214,7 +213,7 @@ abstract contract RightsManager is
     }
 
     function revokeLicense(uint256 _licenseId) external override {
-        if (!_exists(_licenseId)) revert NonExistentID(_licenseId);
+        if (!isLicenseSet(_licenseId)) revert NonExistentID(_licenseId);
         RightsManagerStorage storage $ = _getRightsManagerStorage();
         License storage license = $.licenses[_licenseId];
         if (msg.sender != license.revoker) revert SenderNotRevoker();
@@ -244,7 +243,7 @@ abstract contract RightsManager is
         if (licenseId == 0) return false;
         RightsManagerStorage storage $ = _getRightsManagerStorage();
         while (licenseId != 0) {
-            console.log("licenseId", licenseId);
+            
             License memory license = $.licenses[licenseId];
             if (!_isActiveAndTermsOk(license)) return false;
             licenseId = license.parentLicenseId;
@@ -253,10 +252,7 @@ abstract contract RightsManager is
     }
 
     function _isActiveAndTermsOk(License memory license) view private returns (bool) {
-        // console.log("license.active", license.active);
-        // console.log("license.termsProcessor", address(license.termsProcessor));
         if (address(license.termsProcessor) == address(0)) return license.active;
-        // console.log("tersmExecutedSuccessfully", license.termsProcessor.tersmExecutedSuccessfully(license.termsData));
         return license.active && license.termsProcessor.tersmExecutedSuccessfully(license.termsData);
     }
 
@@ -361,7 +357,11 @@ abstract contract RightsManager is
     function isRootLicense(
         uint256 licenseId
     ) public view returns (bool) {
-        return _getRightsManagerStorage().licenses[licenseId].parentLicenseId == _UNSET_LICENSE_ID;
+        return _getRightsManagerStorage().licenses[licenseId].parentLicenseId == _UNSET_LICENSE_ID && isLicenseSet(licenseId);
+    }
+
+    function isLicenseSet(uint256 licenseId) public view returns (bool) {
+        return _getRightsManagerStorage().licenses[licenseId].revoker != address(0);
     }
 
     function transferSublicense(

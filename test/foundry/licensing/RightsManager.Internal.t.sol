@@ -46,6 +46,11 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         assertEq(rightsManager.symbol(), "symbol");
     }
 
+    function test_revert_transfer_sublicense() public {
+        vm.expectRevert(Unauthorized.selector);
+        rightsManager.transferSublicense(1, address(0x123456));
+    }
+
     function test_internal_create_license_rootLicense_notmockMinting() public {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);

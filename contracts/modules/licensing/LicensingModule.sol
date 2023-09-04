@@ -8,7 +8,7 @@ import { UPGRADER_ROLE, LICENSING_MANAGER_ROLE } from "contracts/access-control/
 import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
 import { IERC5218 } from "./IERC5218.sol";
 import { ILicensingModule } from "./ILicensingModule.sol";
-import "forge-std/console.sol";
+
 
 contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
 
