@@ -10,7 +10,7 @@ import "../mocks/MockERC721.sol";
 import "contracts/errors/General.sol"; 
 
 
-contract RightsManagerTest is Test, ProxyHelper {
+contract RightsManagerInternalTest is Test, ProxyHelper {
 
     MockERC721 mockFranchiseRegistry;
     RightsManagerHarness rightsManager;
@@ -46,11 +46,11 @@ contract RightsManagerTest is Test, ProxyHelper {
         assertEq(rightsManager.symbol(), "symbol");
     }
 
-    function test_internal_create_license_rootLicense_notminting() public {
+    function test_internal_create_license_rootLicense_notmockMinting() public {
         uint256 tokenId = 1;
-        rightsManager.mint(licenseHolder, tokenId);
+        rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 0;
-        (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = _getTermsProcessorConfig();
+        (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
         // TODO test events
         rightsManager.createLicense_exposed(
             tokenId,
@@ -70,11 +70,11 @@ contract RightsManagerTest is Test, ProxyHelper {
 
     }
 
-    function test_internal_create_license_rootLicense_minting() public {
+    function test_internal_create_license_rootLicense_mockMinting() public {
         uint256 tokenId = 1;
-        rightsManager.mint(licenseHolder, tokenId);
+        rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 0;
-        (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = _getTermsProcessorConfig();
+        (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
         // TODO test events
         rightsManager.createLicense_exposed(
             tokenId,
@@ -92,12 +92,12 @@ contract RightsManagerTest is Test, ProxyHelper {
         assertEq(licenseRegistry.ownerOf(licenseId), licenseHolder);
     }
 
-    function test_internal_create_license_nonRootLicense_notminting() public {
+    function test_internal_create_license_nonRootLicense_notmockMinting() public {
         uint256 tokenId = 1;
-        rightsManager.mint(licenseHolder, tokenId);
+        rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = _getTermsProcessorConfig();
-        // Mint root
+        (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
             0,
@@ -109,7 +109,7 @@ contract RightsManagerTest is Test, ProxyHelper {
             terms,
             false
         );
-        // Mint sublicense
+        // mockMint sublicense
         rightsManager.createLicense_exposed(
             tokenId,
             parentLicenseId,
@@ -128,12 +128,12 @@ contract RightsManagerTest is Test, ProxyHelper {
 
     }
     
-    function test_internal_create_license_nonRootLicense_minting() public {
+    function test_internal_create_license_nonRootLicense_mockMinting() public {
         uint256 tokenId = 1;
-        rightsManager.mint(licenseHolder, tokenId);
+        rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = _getTermsProcessorConfig();
-        // Mint root
+        (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
             0,
@@ -145,7 +145,7 @@ contract RightsManagerTest is Test, ProxyHelper {
             terms,
             true
         );
-        // Mint sublicense
+        // mockMint sublicense
         rightsManager.createLicense_exposed(
             tokenId,
             parentLicenseId,
@@ -164,9 +164,9 @@ contract RightsManagerTest is Test, ProxyHelper {
 
     function test_revert_internal_createLicense_zeroRevoker() public {
         uint256 tokenId = 1;
-        rightsManager.mint(licenseHolder, tokenId);
+        rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 0;
-        (IERC5218.TermsProcessorConfig memory terms,) = _getTermsProcessorConfig();
+        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
         vm.expectRevert(RightsManager.ZeroRevokerAddress.selector);
         rightsManager.createLicense_exposed(
             tokenId,
@@ -184,7 +184,7 @@ contract RightsManagerTest is Test, ProxyHelper {
     function test_revert_internal_createLicense_nonExistentId() public {
         uint256 tokenId = 1;
         uint256 parentLicenseId = 0;
-        (IERC5218.TermsProcessorConfig memory terms,) = _getTermsProcessorConfig();
+        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
         vm.expectRevert(abi.encodeWithSignature("NonExistentID(uint256)", 1));
         rightsManager.createLicense_exposed(
             tokenId,
@@ -201,10 +201,10 @@ contract RightsManagerTest is Test, ProxyHelper {
 
     function test_revert_internal_createLicense_alreadyHasRootLicense() public {
         uint256 tokenId = 1;
-        rightsManager.mint(licenseHolder, tokenId);
+        rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 0;
-        (IERC5218.TermsProcessorConfig memory terms,) = _getTermsProcessorConfig();
-        // Mint root
+        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
             0,
@@ -216,7 +216,7 @@ contract RightsManagerTest is Test, ProxyHelper {
             terms,
             false
         );
-        // Mint root again
+        // mockMint root again
         vm.expectRevert(RightsManager.AlreadyHasRootLicense.selector);
         rightsManager.createLicense_exposed(
             tokenId,
@@ -233,10 +233,10 @@ contract RightsManagerTest is Test, ProxyHelper {
 
     function test_revert_internal_createLicense_notOwnerOfParentLicense() public {
         uint256 tokenId = 1;
-        rightsManager.mint(licenseHolder, tokenId);
+        rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (IERC5218.TermsProcessorConfig memory terms,) = _getTermsProcessorConfig();
-        // Mint root
+        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
             0,
@@ -248,7 +248,7 @@ contract RightsManagerTest is Test, ProxyHelper {
             terms,
             false
         );
-        // Mint sublicense
+        // mockMint sublicense
         vm.expectRevert(RightsManager.NotOwnerOfParentLicense.selector);
         rightsManager.createLicense_exposed(
             tokenId,
@@ -265,10 +265,10 @@ contract RightsManagerTest is Test, ProxyHelper {
 
     function test_revert_internal_createLicense_inactiveParentLicense() public {
         uint256 tokenId = 1;
-        rightsManager.mint(licenseHolder, tokenId);
+        rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (IERC5218.TermsProcessorConfig memory terms,) = _getTermsProcessorConfig();
-        // Mint root
+        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
             0,
@@ -284,7 +284,7 @@ contract RightsManagerTest is Test, ProxyHelper {
         vm.prank(revoker);
         rightsManager.revokeLicense(parentLicenseId);
 
-        // Mint sublicense
+        // mockMint sublicense
         vm.expectRevert(RightsManager.InactiveParentLicense.selector);
         rightsManager.createLicense_exposed(
             tokenId,
@@ -301,10 +301,10 @@ contract RightsManagerTest is Test, ProxyHelper {
 
     function test_revert_internal_createLicense_cannotSublicense() public {
         uint256 tokenId = 1;
-        rightsManager.mint(licenseHolder, tokenId);
+        rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (IERC5218.TermsProcessorConfig memory terms,) = _getTermsProcessorConfig();
-        // Mint root
+        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
             0,
@@ -316,7 +316,7 @@ contract RightsManagerTest is Test, ProxyHelper {
             terms,
             false
         );
-        // Mint sublicense
+        // mockMint sublicense
         vm.expectRevert(RightsManager.CannotSublicense.selector);
         rightsManager.createLicense_exposed(
             tokenId,
@@ -333,10 +333,10 @@ contract RightsManagerTest is Test, ProxyHelper {
 
     function test_revert_internal_createLicense_commercialTermsMismatch() public {
         uint256 tokenId = 1;
-        rightsManager.mint(licenseHolder, tokenId);
+        rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (IERC5218.TermsProcessorConfig memory terms,) = _getTermsProcessorConfig();
-        // Mint root
+        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
             0,
@@ -348,7 +348,7 @@ contract RightsManagerTest is Test, ProxyHelper {
             terms,
             false
         );
-        // Mint sublicense
+        // mockMint sublicense
         vm.expectRevert(RightsManager.CommercialTermsMismatch.selector);
         rightsManager.createLicense_exposed(
             tokenId,
@@ -365,10 +365,10 @@ contract RightsManagerTest is Test, ProxyHelper {
 
     function test_revert_internal_createLicense_nonCommercialTermsMismatch() public {
         uint256 tokenId = 1;
-        rightsManager.mint(licenseHolder, tokenId);
+        rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (IERC5218.TermsProcessorConfig memory terms,) = _getTermsProcessorConfig();
-        // Mint root
+        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
             0,
@@ -380,7 +380,7 @@ contract RightsManagerTest is Test, ProxyHelper {
             terms,
             false
         );
-        // Mint sublicense
+        // mockMint sublicense
         vm.expectRevert(RightsManager.CommercialTermsMismatch.selector);
         rightsManager.createLicense_exposed(
             tokenId,
@@ -397,10 +397,10 @@ contract RightsManagerTest is Test, ProxyHelper {
 
     function test_revert_internal_createLicense_termsProcessorUnsupportedInterface() public {
         uint256 tokenId = 1;
-        rightsManager.mint(licenseHolder, tokenId);
+        rightsManager.mockMint(licenseHolder, tokenId);
         
         vm.expectRevert(abi.encodeWithSignature("UnsupportedInterface(string)", "ITermsProcessor"));
-        // Mint root
+        // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
             0,
@@ -416,12 +416,13 @@ contract RightsManagerTest is Test, ProxyHelper {
             false
         );
     }
-    // TODO: could we inspect call to _createLicense with appropiate args?
-    function test_create_license() public {}
-    function test_revert_create_license_unauthorized() public {}
-    // This one we can just call the internal method
-    function test_create_root_license() public {}
-    function test_revert_create_root_license_unauthorized() public {}
+
+    function test_revert_unknown_license() public {
+        vm.expectRevert("ERC721: invalid token ID");
+        rightsManager.getLicense(222);
+        vm.expectRevert("ERC721: invalid token ID");
+        rightsManager.getLicense(0);
+    }
 
     function _verifyLicense(uint256 tokenId, MockTermsProcessor termsProcessor) private returns(uint256) {
         uint256 licenseId = rightsManager.getLicenseIdByTokenId(tokenId, true);
@@ -431,7 +432,7 @@ contract RightsManagerTest is Test, ProxyHelper {
         assertTrue(rightsManager.isLicenseActive(licenseId));
         assertEq(rightsManager.getLicenseURI(licenseId), "licenseUri");
         (RightsManager.License memory license, address owner) = rightsManager.getLicense(licenseId);
-        assertEq(owner, licenseHolder, "internal method will not create ipasset, but we minted in RightsManagerHarness");
+        assertEq(owner, licenseHolder, "internal method will not create ipasset, but we mockMinted in RightsManagerHarness");
         assertEq(license.active, true, "license active");
         assertEq(license.canSublicense, true, "license canSublicense");
         assertEq(license.commercial, true, "license commercial");
@@ -442,13 +443,5 @@ contract RightsManagerTest is Test, ProxyHelper {
         assertEq(address(license.termsProcessor), address(termsProcessor), "license termsProcessor");
         assertEq(license.termsData, abi.encode("terms"), "license termsData");
         return licenseId;
-    }
-
-    function _getTermsProcessorConfig() private returns(IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor){
-        termsProcessor = new MockTermsProcessor();
-        terms = IERC5218.TermsProcessorConfig({
-            processor: termsProcessor,
-            data: abi.encode("terms")
-        });
     }
 }

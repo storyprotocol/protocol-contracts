@@ -28,6 +28,7 @@ abstract contract RightsManager is
     error AlreadyHasRootLicense();
     error ZeroRevokerAddress();
     error NFTHasNoAssociatedLicense();
+    error UseCreateFranchiseRootLicenseInstead();
 
     struct License {
         bool active;
@@ -44,7 +45,7 @@ abstract contract RightsManager is
     struct RightsManagerStorage {
         mapping(uint256 => License) licenses;
         // keccack256(commercial, tokenId) => licenseId
-        mapping(bytes32 => uint256) rootLicensesForTokenId;
+        mapping(bytes32 => uint256) licensesForTokenId;
         uint256 licenseCounter;
         LicenseRegistry licenseRegistry;
     }
@@ -89,16 +90,19 @@ abstract contract RightsManager is
     }
 
     function createLicense(
-        uint256 _tokenId,
+        uint256 _tokenId, // Question: should sublicenses be created with a tokenId or just a parentLicenseId?
         uint256 _parentLicenseId,
-        address _licenseHolder, // NOTE: MODIFIED ERC-5218, we should ignore this
+        address _licenseHolder,
         string memory _uri,
         address _revoker,
         bool _commercial,
         bool _canSublicense,
         TermsProcessorConfig memory _terms
     ) external override returns (uint256) {
-        // TODO: check if msg.sender is allowed to create license
+        if (_tokenId == FRANCHISE_REGISTRY_OWNED_TOKEN_ID || _parentLicenseId == _UNSET_LICENSE_ID) {
+            revert UseCreateFranchiseRootLicenseInstead();
+        }
+        if (msg.sender != getLicenseHolder(_parentLicenseId)) revert Unauthorized();
         return _createLicense(
             _tokenId,
             _parentLicenseId,
@@ -157,15 +161,15 @@ abstract contract RightsManager is
                 revert NonExistentID(tokenId);
             }
         }
-        // If this is a root license, check that the tokenId doesn't already have a root license
-        if (parentLicenseId == _UNSET_LICENSE_ID) {
-            if ($.rootLicensesForTokenId[keccak256(abi.encode(commercial, tokenId))] != _UNSET_LICENSE_ID) {
+        // If this is not a LicenseRegsitry license, check that the tokenId doesn't already have a root license
+        if (!inLicenseRegistry) {
+            if ($.licensesForTokenId[keccak256(abi.encode(commercial, tokenId))] != _UNSET_LICENSE_ID) {
                 revert AlreadyHasRootLicense();
             }
         } else {
             // If this is a sublicense, check that this is a valid sublicense
             License memory parentLicense = $.licenses[parentLicenseId];
-            _verifySublicense(parentLicenseId, licenseHolder, commercial, parentLicense);
+            _verifySublicense(parentLicenseId, commercial, parentLicense);
         }
         // Check that the terms are valid
         _verifyTerms(_terms);
@@ -183,16 +187,14 @@ abstract contract RightsManager is
             termsProcessor: _terms.processor,
             termsData: _terms.data
         });
-        // Save tokenId => licenseId relationship IF this is a root license
-        if (parentLicenseId == _UNSET_LICENSE_ID) {
-            $.rootLicensesForTokenId[
-                keccak256(abi.encode(commercial, tokenId))
-            ] = licenseId;
-        }
+        
         // Mint the license in the LicenseRegistry if requested. Should not do this for IPAsset Rights, but
         // the checks on inLicenseRegistry should be done in the calling function
         if (inLicenseRegistry) {
             $.licenseRegistry.mint(licenseHolder, licenseId);
+        } else {
+            // Save tokenId => licenseId relationship IF this is a root license
+            $.licensesForTokenId[keccak256(abi.encode(commercial, tokenId))] = licenseId;
         }
 
         // Emit events
@@ -236,7 +238,6 @@ abstract contract RightsManager is
         uint256 licenseId
     ) public view virtual returns (bool) {
         // TODO: limit to the tree depth
-        console.log("isLicenseActive(%s)");
         if (licenseId == 0) return false;
         RightsManagerStorage storage $ = _getRightsManagerStorage();
         while (licenseId != 0) {
@@ -257,21 +258,13 @@ abstract contract RightsManager is
     }
 
 
-    function _verifySublicense(
-        uint256 parentLicenseId,
-        address licensor,
-        bool commercial,
-        License memory parentLicense
-    ) private view {
-        if (ownerOf(parentLicenseId) != licensor) revert NotOwnerOfParentLicense();
+    function _verifySublicense(uint256 parentLicenseId, bool commercial, License memory parentLicense) private view {
         if (!parentLicense.active) revert InactiveParentLicense();
         if (!parentLicense.canSublicense) revert CannotSublicense();
         if (parentLicense.commercial != commercial) revert CommercialTermsMismatch();
     }
 
-    function getLicense(
-        uint256 licenseId
-    ) public view returns (License memory, address holder) {
+    function getLicense(uint256 licenseId) public view returns (License memory, address holder) {
         return (
             _getRightsManagerStorage().licenses[licenseId],
             getLicenseHolder(licenseId)
@@ -291,8 +284,6 @@ abstract contract RightsManager is
                     i++;
                 }
             }
-        } else {
-            console.log("minting", firstTokenId, batchSize);
         }
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
     }
@@ -306,7 +297,7 @@ abstract contract RightsManager is
         RightsManagerStorage storage $ = _getRightsManagerStorage();
         // NOTE: We are assuming a revoked Non Commercial License impedes the transfer of the NFT.
         // Should revoked commercial rights also impede the transfer?
-        uint256 licenseId = $.rootLicensesForTokenId[keccak256(abi.encode(false, tokenId))];
+        uint256 licenseId = $.licensesForTokenId[keccak256(abi.encode(false, tokenId))];
         if (licenseId != _UNSET_LICENSE_ID) revert NFTHasNoAssociatedLicense(); // This should not happen, if fired there is a bug somewhere
         if (isLicenseActive(licenseId)) revert InactiveLicense(); // NOTE: Should we freeze invalid licenses? burn them?
         emit TransferLicense(licenseId, to);
@@ -362,7 +353,7 @@ abstract contract RightsManager is
         bool _commercial
     ) public view override returns (uint256) {
         return
-            _getRightsManagerStorage().rootLicensesForTokenId[
+            _getRightsManagerStorage().licensesForTokenId[
                 keccak256(abi.encode(_commercial, _tokenId))
             ];
     }
@@ -381,7 +372,6 @@ abstract contract RightsManager is
         uint256 licenseId,
         address licenseHolder
     ) public virtual override(IERC5218) {
-        console.log("wtf", licenseId, licenseHolder);
         RightsManagerStorage storage $ = _getRightsManagerStorage();
         if (msg.sender != address($.licenseRegistry)) revert Unauthorized();
         if (!isLicenseActive(licenseId)) revert InactiveLicense();

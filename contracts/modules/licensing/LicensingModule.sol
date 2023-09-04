@@ -73,7 +73,6 @@ contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
     }
 
     function _verifyRootLicense(uint256 franchiseId, uint256 rootLicenseId) internal view {
-        console.log("rootLicenseId", rootLicenseId);
         if (rootLicenseId != 0) {
             IERC5218 rightsManager = IERC5218(FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId));
             if (address(rightsManager) == address(0)) {
@@ -81,7 +80,6 @@ contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
                 // but leaving it in case IPAssetRegistration creation fails somewhow.
                 revert NonExistentFranchise();
             }
-            console.log("rightsManager.isLicenseActive(rootLicenseId)", rightsManager.isLicenseActive(rootLicenseId));
             if (!rightsManager.isLicenseActive(rootLicenseId)) {
                 revert RootLicenseNotActive(rootLicenseId);
             }

@@ -2,6 +2,10 @@
 pragma solidity ^0.8.13;
 
 import { IPAssetRegistry } from "contracts/ip-assets/IPAssetRegistry.sol";
+import { IPAsset } from "contracts/IPAsset.sol";
+import { ILicensingModule } from "contracts/modules/licensing/ILicensingModule.sol";
+import { IERC5218 } from "contracts/modules/licensing/IERC5218.sol";
+import { ITermsProcessor } from "contracts/modules/licensing/terms/ITermsProcessor.sol";
 
 contract RightsManagerHarness is IPAssetRegistry {
 
@@ -10,8 +14,19 @@ contract RightsManagerHarness is IPAssetRegistry {
 
     }
 
-    function mint(address to, uint256 tokenId) external {
+    function mockMint(address to, uint256 tokenId) external {
         _mint(to, tokenId);
+    }
+
+    function mockMintWithRights(address to, uint256 tokenId, address revoker) external {
+        _mint(to, tokenId);
+        _setNonCommercialRights(tokenId, 0, to, revoker, ILicensingModule.IpAssetConfig({
+            canSublicense: true,
+            franchiseRootLicenseId: 0
+        }), IERC5218.TermsProcessorConfig({
+            processor: ITermsProcessor(address(0)),
+            data: ""
+        }));
     }
 
     function createLicense_exposed(

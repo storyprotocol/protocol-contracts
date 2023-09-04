@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 import {ILicensingModule} from "contracts/modules/licensing/ILicensingModule.sol";
 import {IERC5218} from "contracts/modules/licensing/IERC5218.sol";
 import {ITermsProcessor} from "contracts/modules/licensing/terms/ITermsProcessor.sol";
+import {MockTermsProcessor} from "./MockTermsProcessor.sol";
 
 library LibMockFranchiseConfig {
     function getMockFranchiseConfig()
@@ -32,6 +33,14 @@ library LibMockFranchiseConfig {
                 revoker: address(0x5656565),
                 commercialLicenseUri: ""
             });
+    }
+
+    function getTermsProcessorConfig() public returns(IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor){
+        termsProcessor = new MockTermsProcessor();
+        terms = IERC5218.TermsProcessorConfig({
+            processor: termsProcessor,
+            data: abi.encode("terms")
+        });
     }
 }
 

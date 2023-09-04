@@ -105,7 +105,7 @@ contract IPAssetRegistry is
         return ipAssetId;
     }
 
-    function _setNonCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, ILicensingModule.IpAssetConfig memory config, TermsProcessorConfig memory terms) private {
+    function _setNonCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, ILicensingModule.IpAssetConfig memory config, TermsProcessorConfig memory terms) internal {
         uint256 parentLicenseId = parentIpAssetId == 0 ? config.franchiseRootLicenseId : getLicenseIdByTokenId(parentIpAssetId, false);
         _createLicense(
             ipAssetId,
@@ -120,7 +120,7 @@ contract IPAssetRegistry is
         );
     }
 
-    function _setCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, string memory licenseUri, ILicensingModule.IpAssetConfig memory config, TermsProcessorConfig memory terms) private {
+    function _setCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, string memory licenseUri, ILicensingModule.IpAssetConfig memory config, TermsProcessorConfig memory terms) internal {
         uint256 parentLicenseId = parentIpAssetId == 0 ? config.franchiseRootLicenseId : getLicenseIdByTokenId(parentIpAssetId, true);
         _createLicense(
             ipAssetId,
