@@ -160,7 +160,7 @@ contract LibIPAssetMaskNodesTest is Test {
 
     function setUp() public {
         checker = new LibIPAssetMaskHarness();
-        collection = new MockERC721("Test", "TEST");
+        collection = new MockERC721();
     }
 
     function test_checkRelationshipNode_ipAsset_true() public {
