@@ -37,7 +37,6 @@ contract LicenseRegistry is ERC721 {
         uint256 firstTokenId,
         uint256 batchSize
     ) internal virtual override {
-        console.log("_beforeTokenTransfer LicenseRegistry");
         // Minting has already been checked by the RightsManager.
         if (from != address(0)) {
             RIGHTS_MANAGER.transferSublicense(firstTokenId, to);

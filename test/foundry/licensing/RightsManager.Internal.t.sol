@@ -52,7 +52,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 parentLicenseId = 0;
         (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
         // TODO test events
-        rightsManager.createLicense_exposed(
+        uint256 licenseId = rightsManager.createLicense_exposed(
             tokenId,
             parentLicenseId,
             licenseHolder,
@@ -63,7 +63,8 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             terms,
             false
         );
-        uint256 licenseId = _verifyLicense(tokenId, termsProcessor);
+        assertEq(licenseId, rightsManager.getLicenseIdByTokenId(tokenId, true));
+        _verifyLicense(licenseId, parentLicenseId, tokenId, termsProcessor, true, true);
         LicenseRegistry licenseRegistry = LicenseRegistry(rightsManager.getLicenseRegistry());
         vm.expectRevert("ERC721: invalid token ID");
         licenseRegistry.ownerOf(licenseId);
@@ -76,7 +77,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 parentLicenseId = 0;
         (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
         // TODO test events
-        rightsManager.createLicense_exposed(
+        uint256 licenseId = rightsManager.createLicense_exposed(
             tokenId,
             parentLicenseId,
             licenseHolder,
@@ -85,20 +86,21 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             true,
             true,
             terms,
-            true
+            false
         );
-        uint256 licenseId = _verifyLicense(tokenId, termsProcessor);
+        assertEq(licenseId, rightsManager.getLicenseIdByTokenId(tokenId, true), "wtf");
+        _verifyLicense(licenseId, parentLicenseId, tokenId, termsProcessor, true, true);
         LicenseRegistry licenseRegistry = LicenseRegistry(rightsManager.getLicenseRegistry());
-        assertEq(licenseRegistry.ownerOf(licenseId), licenseHolder);
+        vm.expectRevert("ERC721: invalid token ID");
+        licenseRegistry.ownerOf(licenseId);
     }
 
     function test_internal_create_license_nonRootLicense_notmockMinting() public {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
-        uint256 parentLicenseId = 1;
         (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
         // mockMint root
-        rightsManager.createLicense_exposed(
+        uint256 parentLicenseId = rightsManager.createLicense_exposed(
             tokenId,
             0,
             licenseHolder,
@@ -109,9 +111,12 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             terms,
             false
         );
+        // mockMint derivative ip
+        uint256 nextTokenId = tokenId + 1;
+        rightsManager.mockMint(licenseHolder, nextTokenId);
         // mockMint sublicense
-        rightsManager.createLicense_exposed(
-            tokenId,
+        uint256 licenseId = rightsManager.createLicense_exposed(
+            nextTokenId,
             parentLicenseId,
             licenseHolder,
             "licenseUri",
@@ -121,7 +126,8 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             terms,
             false
         );
-        uint256 licenseId = _verifyLicense(tokenId, termsProcessor);
+        assertEq(licenseId, rightsManager.getLicenseIdByTokenId(nextTokenId, true));
+        _verifyLicense(licenseId, parentLicenseId, nextTokenId, termsProcessor, true, true);
         LicenseRegistry licenseRegistry = LicenseRegistry(rightsManager.getLicenseRegistry());
         vm.expectRevert("ERC721: invalid token ID");
         licenseRegistry.ownerOf(licenseId);
@@ -131,10 +137,9 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
     function test_internal_create_license_nonRootLicense_mockMinting() public {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
-        uint256 parentLicenseId = 1;
         (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
         // mockMint root
-        rightsManager.createLicense_exposed(
+        uint256 parentLicenseId = rightsManager.createLicense_exposed(
             tokenId,
             0,
             licenseHolder,
@@ -146,7 +151,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             true
         );
         // mockMint sublicense
-        rightsManager.createLicense_exposed(
+        uint256 licenseId = rightsManager.createLicense_exposed(
             tokenId,
             parentLicenseId,
             licenseHolder,
@@ -157,7 +162,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             terms,
             true
         );
-        uint256 licenseId = _verifyLicense(tokenId, termsProcessor);
+        _verifyLicense(licenseId, parentLicenseId, tokenId, termsProcessor, true, true);
         LicenseRegistry licenseRegistry = LicenseRegistry(rightsManager.getLicenseRegistry());
         assertEq(licenseRegistry.ownerOf(licenseId), licenseHolder);
     }
@@ -259,7 +264,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             true,
             true,
             terms,
-            false
+            true
         );
     }
 
@@ -295,7 +300,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             true,
             true,
             terms,
-            false
+            true
         );
     }
 
@@ -327,7 +332,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             true,
             true,
             terms,
-            false
+            true
         );
     }
 
@@ -359,7 +364,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             false,
             true,
             terms,
-            false
+            true
         );
     }
 
@@ -391,8 +396,22 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             true,
             true,
             terms,
-            false
+            true
         );
+        // Uncomment this if we ever allow commercial sublicenses attached to children tokenIds
+        /*
+        vm.expectRevert(RightsManager.CommercialTermsMismatch.selector);
+        rightsManager.createLicense_exposed(
+            tokenId,
+            parentLicenseId,
+            licenseHolder,
+            "licenseUri",
+            revoker,
+            true,
+            true,
+            terms,
+            false
+        );*/
     }
 
     function test_revert_internal_createLicense_termsProcessorUnsupportedInterface() public {
@@ -424,24 +443,21 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         rightsManager.getLicense(0);
     }
 
-    function _verifyLicense(uint256 tokenId, MockTermsProcessor termsProcessor) private returns(uint256) {
-        uint256 licenseId = rightsManager.getLicenseIdByTokenId(tokenId, true);
-        assertEq(licenseId, 1);
-        assertEq(rightsManager.getLicenseTokenId(licenseId), tokenId);
-        assertEq(rightsManager.getParentLicenseId(licenseId), 0);
-        assertTrue(rightsManager.isLicenseActive(licenseId));
+    function _verifyLicense(uint256 licenseId, uint256 parentLicenseId, uint256 tokenId, MockTermsProcessor termsProcessor, bool canSublicense, bool commercial) private {
+        assertEq(rightsManager.getLicenseTokenId(licenseId), tokenId, "license tokenId");
+        assertEq(rightsManager.getParentLicenseId(licenseId), parentLicenseId, "license parentLicenseId");
+        assertTrue(rightsManager.isLicenseActive(licenseId), "license active");
         assertEq(rightsManager.getLicenseURI(licenseId), "licenseUri");
         (RightsManager.License memory license, address owner) = rightsManager.getLicense(licenseId);
         assertEq(owner, licenseHolder, "internal method will not create ipasset, but we mockMinted in RightsManagerHarness");
         assertEq(license.active, true, "license active");
-        assertEq(license.canSublicense, true, "license canSublicense");
-        assertEq(license.commercial, true, "license commercial");
-        assertEq(license.parentLicenseId, 0, "license parentLicenseId");
+        assertEq(license.canSublicense, canSublicense, "license canSublicense");
+        assertEq(license.commercial, commercial, "license commercial");
+        assertEq(license.parentLicenseId, parentLicenseId, "license parentLicenseId");
         assertEq(license.tokenId, tokenId, "license tokenId");
         assertEq(license.revoker, revoker, "license revoker");
         assertEq(license.uri, "licenseUri", "license uri");
         assertEq(address(license.termsProcessor), address(termsProcessor), "license termsProcessor");
         assertEq(license.termsData, abi.encode("terms"), "license termsData");
-        return licenseId;
     }
 }

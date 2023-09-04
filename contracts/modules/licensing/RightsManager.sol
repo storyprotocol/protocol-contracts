@@ -166,10 +166,13 @@ abstract contract RightsManager is
             if ($.licensesForTokenId[keccak256(abi.encode(commercial, tokenId))] != _UNSET_LICENSE_ID) {
                 revert AlreadyHasRootLicense();
             }
-        } else {
+        } else if(tokenId != FRANCHISE_REGISTRY_OWNED_TOKEN_ID && parentLicenseId != _UNSET_LICENSE_ID) {
             // If this is a sublicense, check that this is a valid sublicense
             License memory parentLicense = $.licenses[parentLicenseId];
-            _verifySublicense(parentLicenseId, commercial, parentLicense);
+            if (!parentLicense.active) revert InactiveParentLicense();
+            if (!parentLicense.canSublicense) revert CannotSublicense();
+            if (parentLicense.commercial != commercial) revert CommercialTermsMismatch();
+            if (getLicenseHolder(parentLicenseId) != licenseHolder) revert NotOwnerOfParentLicense();
         }
         // Check that the terms are valid
         _verifyTerms(_terms);
@@ -255,13 +258,6 @@ abstract contract RightsManager is
         if (address(license.termsProcessor) == address(0)) return license.active;
         // console.log("tersmExecutedSuccessfully", license.termsProcessor.tersmExecutedSuccessfully(license.termsData));
         return license.active && license.termsProcessor.tersmExecutedSuccessfully(license.termsData);
-    }
-
-
-    function _verifySublicense(uint256 parentLicenseId, bool commercial, License memory parentLicense) private view {
-        if (!parentLicense.active) revert InactiveParentLicense();
-        if (!parentLicense.canSublicense) revert CannotSublicense();
-        if (parentLicense.commercial != commercial) revert CommercialTermsMismatch();
     }
 
     function getLicense(uint256 licenseId) public view returns (License memory, address holder) {

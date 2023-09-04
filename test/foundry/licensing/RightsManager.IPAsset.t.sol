@@ -166,10 +166,10 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
     }
 
     function test_create_license() public {
-        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", ipAssetCreator, 0);
+        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", licenseHolder, 0);
         uint256 parentLicenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, false);
         bool commercial = false;
-        vm.prank(ipAssetCreator);
+        vm.prank(licenseHolder);
         uint256 licenseId = ipAssetRegistry.createLicense(
             ipAssetId,
             parentLicenseId,
@@ -253,11 +253,66 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
         vm.stopPrank();
     }
 
+    function test_revert_create_license_terms_mismatch() public {
+        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", ipAssetCreator, 0);
+        uint256 parentLicenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, false);
+        bool commercial = true;
+        vm.expectRevert(RightsManager.CommercialTermsMismatch.selector);
+        vm.prank(ipAssetCreator);
+        ipAssetRegistry.createLicense(
+            ipAssetId,
+            parentLicenseId,
+            licenseHolder,
+            "licenseUri",
+            revoker,
+            commercial,
+            false,
+            IERC5218.TermsProcessorConfig({
+                processor: nonCommercialTermsProcessor,
+                data: abi.encode("terms")
+            })
+        );
+    }
+
     // This one we can just call the internal method
     function test_create_root_license() public {
-        
+        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        vm.prank(franchiseOwner);
+        uint256 licenseId = ipAssetRegistry.createFranchiseRootLicense(
+            1,
+            franchiseOwner,
+            "licenseUri",
+            revoker,
+            true,
+            true,
+            terms
+        );
+        (RightsManager.License memory license, address owner) = ipAssetRegistry.getLicense(licenseId);
+        assertEq(owner, franchiseOwner);
+        assertEq(license.active, true);
+        assertEq(license.canSublicense, true);
+        assertEq(license.commercial, true);
+        assertEq(license.parentLicenseId, 0);
+        assertEq(license.tokenId, ipAssetRegistry.FRANCHISE_REGISTRY_OWNED_TOKEN_ID());
+        assertEq(license.revoker, revoker);
+        assertEq(license.uri, "licenseUri");
+        assertEq(address(license.termsProcessor), address(terms.processor));
+        assertEq(license.termsData, abi.encode("terms"));
     }
-    function test_revert_create_root_license_unauthorized() public {}
+
+    function test_revert_create_root_license_unauthorized() public {
+        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        vm.expectRevert(Unauthorized.selector);
+        ipAssetRegistry.createFranchiseRootLicense(
+            1,
+            franchiseOwner,
+            "licenseUri",
+            revoker,
+            true,
+            true,
+            terms
+        );
+    }
 
     function _verifyLicense(uint256 tokenId, MockTermsProcessor termsProcessor) private returns(uint256) {
         uint256 licenseId = ipAssetRegistry.getLicenseIdByTokenId(tokenId, true);
