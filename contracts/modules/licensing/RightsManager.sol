@@ -30,6 +30,8 @@ abstract contract RightsManager is
     error NFTHasNoAssociatedLicense();
     error UseCreateFranchiseRootLicenseInstead();
 
+    event TermsUpdated(uint256 indexed licenseId, address processor, bytes termsData);
+
     struct License {
         bool active;
         bool canSublicense;
@@ -225,12 +227,16 @@ abstract contract RightsManager is
 
     function executeTerms(uint256 _licenseId) external {
         RightsManagerStorage storage $ = _getRightsManagerStorage();
-        if (msg.sender != address($.licenseRegistry)) revert Unauthorized();
+        if (msg.sender != $.licenseRegistry.ownerOf(_licenseId)) revert Unauthorized();
         License storage license = $.licenses[_licenseId];
         if (license.termsProcessor != ITermsProcessor(address(0))) {
             bytes memory newData = license.termsProcessor.executeTerms(license.termsData);
+            console.logBytes32(keccak256(license.termsData));
+            console.logBytes32(keccak256(newData));
             if (keccak256(license.termsData) != keccak256(newData)) {
                 license.termsData = newData;
+                console.log("newData");
+                emit TermsUpdated(_licenseId, address(license.termsProcessor), newData);
             }
         }
         emit ExecuteTerms(_licenseId, license.termsData);
@@ -243,7 +249,6 @@ abstract contract RightsManager is
         if (licenseId == 0) return false;
         RightsManagerStorage storage $ = _getRightsManagerStorage();
         while (licenseId != 0) {
-            
             License memory license = $.licenses[licenseId];
             if (!_isActiveAndTermsOk(license)) return false;
             licenseId = license.parentLicenseId;

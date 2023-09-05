@@ -2,9 +2,10 @@
 pragma solidity ^0.8.19;
 
 import { ITermsProcessor } from "./ITermsProcessor.sol";
+import { BaseTermsProcessor } from "./BaseTermsProcessor.sol";
 import { EmptyArray, LengthMismatch } from "contracts/errors/General.sol";
 
-contract MultiTermsProcessor is ITermsProcessor {
+contract MultiTermsProcessor is BaseTermsProcessor {
     error TooManyTermsProcessors();
 
     event ProcessorsSet(ITermsProcessor[] processors);
@@ -13,11 +14,11 @@ contract MultiTermsProcessor is ITermsProcessor {
 
     uint256 public constant MAX_PROCESSORS = 100;
 
-    constructor(ITermsProcessor[] memory _processors) {
-        setProcessors(_processors);
+    constructor(address authorizedExecutor, ITermsProcessor[] memory _processors) BaseTermsProcessor(authorizedExecutor) {
+        _setProcessors(_processors);
     }
 
-    function setProcessors(ITermsProcessor[] memory _processors) public {
+    function _setProcessors(ITermsProcessor[] memory _processors) private {
         if (_processors.length == 0) revert EmptyArray();
         if (_processors.length > MAX_PROCESSORS)
             revert TooManyTermsProcessors();
@@ -25,7 +26,7 @@ contract MultiTermsProcessor is ITermsProcessor {
         emit ProcessorsSet(_processors);
     }
 
-    function executeTerms(bytes calldata data) external override returns (bytes memory newData) {
+    function _executeTerms(bytes calldata data) internal override returns (bytes memory newData) {
         uint256 length = processors.length;
         bytes[] memory encodedTerms = new bytes[](length);
         encodedTerms = abi.decode(data, (bytes[]));
@@ -41,7 +42,7 @@ contract MultiTermsProcessor is ITermsProcessor {
 
     function supportsInterface(
         bytes4 interfaceId
-    ) external view override returns (bool) {
+    ) public view override returns (bool) {
         bool supported = true;
         if (interfaceId == type(ITermsProcessor).interfaceId) {
             uint256 length = processors.length;
@@ -53,7 +54,7 @@ contract MultiTermsProcessor is ITermsProcessor {
             }
             return supported;
         }
-        return false;
+        return super.supportsInterface(interfaceId);
     }
 
     function tersmExecutedSuccessfully(bytes calldata data) external view override returns (bool) {

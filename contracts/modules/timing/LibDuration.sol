@@ -14,8 +14,10 @@ library LibDuration {
         address renewer;
     }
 
+    uint64 public constant START_TIME_NOT_SET = uint64(0);
+
     function isActive(TimeConfig memory self) internal view returns (bool) {
-        return self.startTime >= block.timestamp && self.startTime + self.ttl < block.timestamp;
+        return self.startTime != START_TIME_NOT_SET && block.timestamp >= self.startTime && block.timestamp < self.startTime + self.ttl;
     }
 
     function isRenewable(TimeConfig memory self) internal pure returns (bool) {
