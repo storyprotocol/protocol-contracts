@@ -231,11 +231,8 @@ abstract contract RightsManager is
         License storage license = $.licenses[_licenseId];
         if (license.termsProcessor != ITermsProcessor(address(0))) {
             bytes memory newData = license.termsProcessor.executeTerms(license.termsData);
-            console.logBytes32(keccak256(license.termsData));
-            console.logBytes32(keccak256(newData));
             if (keccak256(license.termsData) != keccak256(newData)) {
                 license.termsData = newData;
-                console.log("newData");
                 emit TermsUpdated(_licenseId, address(license.termsProcessor), newData);
             }
         }
