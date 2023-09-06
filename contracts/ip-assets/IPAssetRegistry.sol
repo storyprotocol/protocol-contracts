@@ -73,6 +73,19 @@ contract IPAssetRegistry is
         return _VERSION;
     }
 
+    /**
+     * Creates a new IPAsset, and assigns licenses (rights) to it, according to the Franchise config in LicensingModule.
+     * A Non commercial license is always assigned, and if the IPAsset is a root IPAsset, a commercial license may also be assigned.
+     * @dev reverts if LicensingModule is not configured for the Franchise.
+     * Logs to IPAssetEventEmitter, common contract for all IPAsset registries.
+     * @param ipAssetType the type of IPAsset to create
+     * @param name IPAsset name
+     * @param _description short description of the IPAsset
+     * @param mediaUrl url to the IPAsset media and metadata
+     * @param to holder of the IPAsset (and thus the licenses)
+     * @param parentIpAssetId 0 if this is a root IPAsset, if it is a derivative, set the parent IPAsset id
+     * @return the created IPAsset id
+     */
     function createIPAsset(
         IPAsset ipAssetType,
         string calldata name,
@@ -105,6 +118,16 @@ contract IPAssetRegistry is
         return ipAssetId;
     }
 
+    /**
+     * Sets the non commercial rights for an IPAsset, with terms from the Franchise config in LicensingModule.
+     * If no parent asset id is provided, the root IPAsset id is used if it exists in the Franchise config.
+     * @param ipAssetId the IPAsset id
+     * @param parentIpAssetId in case this is a derivative IPAsset, set the parent IPAsset id, 0 otherwise
+     * @param holder of the IPAsset and licenses
+     * @param revoker of the license. Can't be zero or changed later
+     * @param config Franchise config
+     * @param terms for the license to be active
+     */
     function _setNonCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, ILicensingModule.IpAssetConfig memory config, TermsProcessorConfig memory terms) internal {
         uint256 parentLicenseId = parentIpAssetId == 0 ? config.franchiseRootLicenseId : getLicenseIdByTokenId(parentIpAssetId, false);
         _createLicense(
@@ -120,6 +143,16 @@ contract IPAssetRegistry is
         );
     }
 
+    /**
+     * Sets the commercial rights for an IPAsset, with terms from the Franchise config in LicensingModule.
+     * If no parent asset id is provided, the root IPAsset id is used if it exists in the Franchise config.
+     * @param ipAssetId the IPAsset id
+     * @param parentIpAssetId in case this is a derivative IPAsset, set the parent IPAsset id, 0 otherwise
+     * @param holder of the IPAsset and licenses
+     * @param revoker of the license. Can't be zero or changed later
+     * @param config Franchise config
+     * @param terms for the license to be active
+     */
     function _setCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, string memory licenseUri, ILicensingModule.IpAssetConfig memory config, TermsProcessorConfig memory terms) internal {
         uint256 parentLicenseId = parentIpAssetId == 0 ? config.franchiseRootLicenseId : getLicenseIdByTokenId(parentIpAssetId, true);
         _createLicense(
@@ -135,7 +168,11 @@ contract IPAssetRegistry is
         );
     }
 
-
+    /**
+     * mints the IPAsset block, and assigns the next id to it.
+     * @param to holder
+     * @param sb ip asset type
+     */
     function _mintBlock(address to, IPAsset sb) private returns (uint256) {
         uint256 nextId = currentIdFor(sb) + 1;
         if (nextId > LibIPAssetId._lastId(sb)) revert IdOverBounds();
@@ -168,6 +205,7 @@ contract IPAssetRegistry is
     function tokenURI(
         uint256 tokenId
     ) public view override returns (string memory) {
+        // TODO: should this reference the license too?
         return readIPAsset(tokenId).mediaUrl;
     }
 

@@ -11,10 +11,10 @@ import { IERC5218 } from "./IERC5218.sol";
 interface ILicensingModule {
     
     struct IpAssetConfig {
-        bool canSublicense;
-        uint256 franchiseRootLicenseId;
+        bool canSublicense; // If false, this IPAsset cannot be parentLicenseId of any other IPAsset
+        uint256 franchiseRootLicenseId; // If set, root IPAsset licenses will have this as their parentLicenseId
         // TODO: allowed license terms? processors?
-        // TODO: limit medium of sublicenses? something like LibIPAssetMask?
+        // TODO: limit medium of sublicenses? As in, you can only license prose to prose? something like LibIPAssetMask?
         // TODO: limit who you can sublicense to?
     }
 

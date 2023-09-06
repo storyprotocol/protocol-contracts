@@ -11,7 +11,19 @@ import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/in
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
 
-
+/**
+ * @title RightsManager
+ * @author Raul Martinez
+ * @notice  IERC-5218 implementation.
+    Allows us to grant 2 type of licenses:
+    1. Rights: Licenses tied to a tokenId (IPAsset id), in which the license holder is always the owner of the tokenId. Each tokenId can a commercial or non commercial license tied to it
+    2. Tradeable Licenses): The license holder is the owner of the correspondent LicenseRegistry NFT. They are either:
+    2.1 Franchise root license: LicenseRegistry enabled license minted by a Franchise owner to govern commercial or non commercial rights for all the IPAssetRegistries.
+    2.2 Sublicense: a license coming from Rights or other Licenses, minted by the parent license owner. These would be the future "movie adaptation" type licenses that can be sold.
+    Creates a LicenseRegistry on initialization
+    Allows license holders to execute terms to activate the license to activate them.
+    Tracks active licenses along the license trees.
+ */
 abstract contract RightsManager is
     ERC721Upgradeable,
     IERC5218
@@ -29,8 +41,6 @@ abstract contract RightsManager is
     error ZeroRevokerAddress();
     error NFTHasNoAssociatedLicense();
     error UseCreateFranchiseRootLicenseInstead();
-
-    event TermsUpdated(uint256 indexed licenseId, address processor, bytes termsData);
 
     struct License {
         bool active;
@@ -90,6 +100,19 @@ abstract contract RightsManager is
         }
     }
 
+    /**
+     * Creates a tradeable sublicense.
+     * @dev Throws if trying to create a franchise level or root license.
+     * @param _tokenId The tokenId of the IPAsset to create the sublicense for.
+     * @param _parentLicenseId  The parent license to create the sublicense from.
+     * @param _licenseHolder The address of the sublicense holder, will own the LicenseRegistry NFT.
+     * @param _uri License terms URI.
+     * @param _revoker address that can revoke the license.
+     * @param _commercial if the license is commercial or not.
+     * @param _canSublicense if the license can be parentLicense of another one
+     * @param _terms the on chain terms of the license, via executor and data
+     * @return licenseId
+     */
     function createLicense(
         uint256 _tokenId, // Question: should sublicenses be created with a tokenId or just a parentLicenseId?
         uint256 _parentLicenseId,
@@ -117,6 +140,18 @@ abstract contract RightsManager is
         );
     }
 
+    /**
+     * Creates the root licenses that all other licenses of a Franchise may be based on.
+     * @dev Throws if caller not owner of the FranchiseRegistry NFt.
+     * @param franchiseId in the FranhiseRegistry
+     * @param _licenseHolder The address of the sublicense holder, will own the LicenseRegistry NFT.
+     * @param _uri License terms URI.
+     * @param _revoker address that can revoke the license.
+     * @param _commercial if the license is commercial or not.
+     * @param _canSublicense if the license can be parentLicense of another one
+     * @param _terms the on chain terms of the license, via executor and data
+     * @return licenseId
+     */
     function createFranchiseRootLicense(
         uint256 franchiseId,
         address _licenseHolder,
@@ -139,6 +174,7 @@ abstract contract RightsManager is
             true
         );
     }
+
 
     function _createLicense(
         uint256 tokenId,
@@ -214,6 +250,7 @@ abstract contract RightsManager is
         return licenseId;
     }
 
+
     function revokeLicense(uint256 _licenseId) external override {
         if (!isLicenseSet(_licenseId)) revert NonExistentID(_licenseId);
         RightsManagerStorage storage $ = _getRightsManagerStorage();
@@ -225,6 +262,11 @@ abstract contract RightsManager is
         // TODO: delete the rootLicenseForTokenId mapping for licenseId if root license
     }
 
+    /**
+     * If set, runs the TermsExecutor with the terms data stored in the license.
+     * If the terms execution returns different data, the license is updated with the new data.
+     * @param _licenseId The identifier for the queried license
+     */
     function executeTerms(uint256 _licenseId) external {
         RightsManagerStorage storage $ = _getRightsManagerStorage();
         if (msg.sender != $.licenseRegistry.ownerOf(_licenseId)) revert Unauthorized();
@@ -239,6 +281,7 @@ abstract contract RightsManager is
         emit ExecuteTerms(_licenseId, license.termsData);
     }
 
+    /// returns true if the license is active (non revoked and terms returning true) and all its parent licenses are active, false otherwise
     function isLicenseActive(
         uint256 licenseId
     ) public view virtual returns (bool) {
@@ -316,6 +359,7 @@ abstract contract RightsManager is
         return _getRightsManagerStorage().licenses[_licenseId].parentLicenseId;
     }
 
+
     function getLicenseHolder(
         uint256 _licenseId
     ) public view override returns (address) {
@@ -366,6 +410,12 @@ abstract contract RightsManager is
         return _getRightsManagerStorage().licenses[licenseId].revoker != address(0);
     }
 
+    /**
+     * Since the LicenseRegistry tracks sublicense ownership, this method can only be called by the LicenseRegistry.
+     * @dev Throws if the license is not active. Basically exists to not break ERC-5218.
+     * @param licenseId the license to transfer
+     * @param licenseHolder the new license holder
+     */
     function transferSublicense(
         uint256 licenseId,
         address licenseHolder

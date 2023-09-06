@@ -4,6 +4,11 @@ import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { ZeroAddress, Unauthorized } from "contracts/errors/General.sol";
 import { IERC5218 } from "./IERC5218.sol";
 
+/**
+ * @title LicenseRegistry
+ * @author Raul Martinez
+ * @notice Simple NFT tracking the ownership of tradeable Licenses emitted by a RightsManager.
+ */
 contract LicenseRegistry is ERC721 {
 
     IERC5218 public immutable RIGHTS_MANAGER;
@@ -20,6 +25,11 @@ contract LicenseRegistry is ERC721 {
         _;
     }
 
+    /**
+     * @notice Mint a License to the given address. Only caller allowed is the RightsManager.
+     * @param to The address to mint the License to.
+     * @param tokenId The ID of the License to mint.
+     */
     function mint(address to, uint256 tokenId) external onlyRightsManager {
         _mint(to, tokenId);
     }
@@ -34,7 +44,7 @@ contract LicenseRegistry is ERC721 {
         uint256 firstTokenId,
         uint256 batchSize
     ) internal virtual override {
-        // Minting has already been checked by the RightsManager.
+        // Minting has already been checked by the RightsManager, but transfers need to pass some checks.
         if (from != address(0)) {
             RIGHTS_MANAGER.transferSublicense(firstTokenId, to);
         }

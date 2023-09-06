@@ -16,8 +16,11 @@ interface IERC5218 is IERC721Upgradeable {
         address _revoker
     );
 
+    // NOTE: MODIFIED ERC-5218, this may be refactored into ILicenseTermsExecutor
     /// @dev emits when license terms are executed to activate a license
     event ExecuteTerms(uint256 _licenseId, bytes _data);
+    /// @dev This emits when the terms of a license are updated, after executing a processor
+    event TermsUpdated(uint256 indexed licenseId, address processor, bytes termsData);
 
     /// @dev This emits when a license is revoked. Note that under some
     ///  license terms, the sublicenses may be `implicitly` revoked following the
