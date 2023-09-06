@@ -3,14 +3,17 @@ pragma solidity ^0.8.18;
 
 import {Clones} from '@openzeppelin/contracts/proxy/Clones.sol';
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { ICollectModuleEventsAndErrors } from "../../interfaces/ICollectModuleEventsAndErrors.sol";
 import { InitCollectParams, CollectParams } from "../../lib/CollectStructs.sol";
 import { ICollectNFT } from "../../interfaces/ICollectNFT.sol";
 import { ICollectModule } from "../../interfaces/ICollectModule.sol";
 
-abstract contract CollectModule is AccessControlledUpgradeable, ICollectModule {
+/// @title Collect Module Base Implementation
+abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModule {
 
+    /// @notice The address of the IP asset registry.
     address public immutable IP_ASSET_REGISTRY;
     address public immutable COLLECT_NFT_IMPL;
 
@@ -18,7 +21,10 @@ abstract contract CollectModule is AccessControlledUpgradeable, ICollectModule {
     bytes32 private constant _COLLECT_MODULE_STORAGE = 0xd16687d5cf786234491b4cc484b2a64f24855aadee9b1b73824db1ed2840fd0b;
 
     struct CollectModuleStorage {
-        mapping(uint256 => address) collectNFTs;
+        mapping(uint256 => address) collectNFTs; // Globally unique IP Assets
+
+        // mapping(bytes32 => address) collectNFTs; // Franchise-unique IP Asset (with bytes32 hash)
+        // mapping(address => mapping(uint256 => address)) collectNFTs; // Franchise-unique IP Assets
     }
 
     modifier collectAuthorized(uint256 ipAssetId) {

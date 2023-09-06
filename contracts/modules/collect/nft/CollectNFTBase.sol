@@ -5,8 +5,8 @@ import { InitCollectNFTParams } from "contracts/lib/CollectNFTStructs.sol";
 import { ICollectNFT } from "contracts/interfaces/ICollectNFT.sol";
 import { ERC721 } from "./ERC721.sol";
 
-/// @title Collect NFT Contract
-abstract contract CollectNFT is ERC721, ICollectNFT {
+/// @title Collect NFT Base Contract
+abstract contract CollectNFTBase is ERC721, ICollectNFT {
 
     address public collectModule;
     address public ipAssetRegistry;
@@ -30,7 +30,7 @@ abstract contract CollectNFT is ERC721, ICollectNFT {
     }
 
     function collect(address collector) onlyCollectModule public virtual {
-        _mint(collector);
+        _mint(collector, totalSupply);
     }
 
     function _initialize(bytes calldata data) internal virtual {}

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.18;
 
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import { IERC721Errors } from "../../../interfaces/IERC721Errors.sol";
 
 /// @title Minimal ERC-721 Contract
@@ -25,8 +25,8 @@ abstract contract ERC721 is IERC721, IERC721Errors {
     mapping(address => uint256) public balanceOf;
 
     /// @dev EIP-165 identifiers for all supported interfaces.
-    bytes4 internal constant _ERC165_INTERFACE_ID = 0x01ffc9a7;
-    bytes4 internal constant _ERC721_INTERFACE_ID = 0x80ac58cd;
+    bytes4 private constant _ERC165_INTERFACE_ID = 0x01ffc9a7;
+    bytes4 private constant _ERC721_INTERFACE_ID = 0x80ac58cd;
     bytes4 private constant _ERC721_METADATA_INTERFACE_ID = 0x5b5e139f;
 
     /// @notice Sets the operator for `msg.sender` to `operator`.
@@ -51,6 +51,29 @@ abstract contract ERC721 is IERC721, IERC721Errors {
         emit Approval(owner, approved, tokenId);
     }
 
+    /// @notice Transfers NFT of id `id` from address `from` to address `to`,
+    ///  with safety checks ensuring `to` is capable of receiving the NFT.
+    /// @dev Safety checks are only performed if `to` is a smart contract.
+    /// @param from The existing owner address of the NFT to be transferred.
+    /// @param to The new owner address of the NFT being transferred.
+    /// @param data Additional data in bytes to pass to the receiver.
+    /// @param tokenId The id of the NFT being transferred.
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory data
+    ) external {
+        transferFrom(from, to, tokenId);
+        if (
+            to.code.length != 0 &&
+                IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, data)
+                !=
+                IERC721Receiver.onERC721Received.selector
+        ) {
+            revert ERC721SafeTransferUnsupported();
+        }
+    }
     /// @notice Transfers NFT of id `id` from address `from` to address `to`,
     ///  with safety checks ensuring `to` is capable of receiving the NFT.
     /// @dev Safety checks are only performed if `to` is a smart contract.
@@ -117,17 +140,15 @@ abstract contract ERC721 is IERC721, IERC721Errors {
     /// @return True if interface id `id` is supported, false otherwise.
     function supportsInterface(bytes4 id) public view virtual override(IERC165) returns (bool) {
         return id == _ERC165_INTERFACE_ID ||
-               id == _ERC721_INTERFACE_ID ||
-               id == _ERC721_METADATA_INTERFACE_ID;
+               id == _ERC721_INTERFACE_ID;
     }
 
     /// @notice Mints an NFT of identifier `tokenId` to recipient address `to`.
-    function _mint(address to) internal virtual {
+    function _mint(address to, uint256 tokenId) internal virtual {
         if (to == address(0)) {
             revert ERC721ReceiverInvalid();
         }
 
-        uint256 tokenId = totalSupply;
         if (ownerOf[tokenId] != address(0)) {
             revert ERC721TokenAlreadyMinted();
         }
