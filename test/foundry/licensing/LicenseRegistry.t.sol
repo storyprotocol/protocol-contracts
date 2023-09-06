@@ -40,7 +40,7 @@ contract LicenseRegistryTest is BaseTest {
         assertEq(licenseRegistry.ownerOf(licenseId), licenseHolder);
         assertEq(licenseRegistry.name(), "Licenses for FranchiseName");
         assertEq(licenseRegistry.symbol(), "slFRN");
-        assertEq(address(licenseRegistry.RIGHTS_MANAGER()), address(ipAssetRegistry));
+        assertEq(address(licenseRegistry.getRightsManager()), address(ipAssetRegistry));
         assertEq(licenseRegistry.exists(licenseId), true);
     }
 

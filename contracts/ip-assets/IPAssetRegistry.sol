@@ -215,7 +215,7 @@ contract IPAssetRegistry is
         public
         view
         virtual
-        override
+        override(ERC721Upgradeable, IERC165Upgradeable)
         returns (bool)
     {
         return

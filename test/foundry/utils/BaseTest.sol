@@ -29,7 +29,7 @@ contract BaseTest is Test, ProxyHelper {
     AccessControlSingleton accessControl;
     PermissionlessRelationshipProcessor public relationshipProcessor;
     LicensingModule public licensingModule;
-    LicenseRegistry public licenseRegistry;
+    ILicenseRegistry public licenseRegistry;
     MockTermsProcessor public nonCommercialTermsProcessor;
     MockTermsProcessor public commercialTermsProcessor;
     bool public deployProcessors = false;
@@ -88,7 +88,7 @@ contract BaseTest is Test, ProxyHelper {
         FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("FranchiseName", "FRN", "description", "tokenURI");
         (uint256 franchiseId, address ipAssets) = franchiseRegistry.registerFranchise(params);
         ipAssetRegistry = IPAssetRegistry(ipAssets);
-        licenseRegistry = ipAssetRegistry.getLicenseRegistry();
+        licenseRegistry = ILicenseRegistry(ipAssetRegistry.getLicenseRegistry());
 
         // Configure Licensing for Franchise
         nonCommercialTermsProcessor = new MockTermsProcessor();

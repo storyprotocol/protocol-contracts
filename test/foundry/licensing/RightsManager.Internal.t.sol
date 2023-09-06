@@ -38,6 +38,8 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
                 )
             )
         );
+        LicenseRegistry licenseRegistry = new LicenseRegistry(address(rightsManager), "name", "symbol");
+        rightsManager.setLicenseRegistry(address(licenseRegistry));
     }
 
     function test_setup() public {
@@ -70,7 +72,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         );
         assertEq(licenseId, rightsManager.getLicenseIdByTokenId(tokenId, true));
         _verifyLicense(licenseId, parentLicenseId, tokenId, termsProcessor, true, true);
-        LicenseRegistry licenseRegistry = LicenseRegistry(rightsManager.getLicenseRegistry());
+        ILicenseRegistry licenseRegistry = ILicenseRegistry(rightsManager.getLicenseRegistry());
         vm.expectRevert("ERC721: invalid token ID");
         licenseRegistry.ownerOf(licenseId);
 
@@ -95,7 +97,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         );
         assertEq(licenseId, rightsManager.getLicenseIdByTokenId(tokenId, true), "wtf");
         _verifyLicense(licenseId, parentLicenseId, tokenId, termsProcessor, true, true);
-        LicenseRegistry licenseRegistry = LicenseRegistry(rightsManager.getLicenseRegistry());
+        ILicenseRegistry licenseRegistry = ILicenseRegistry(rightsManager.getLicenseRegistry());
         vm.expectRevert("ERC721: invalid token ID");
         licenseRegistry.ownerOf(licenseId);
     }
@@ -133,7 +135,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         );
         assertEq(licenseId, rightsManager.getLicenseIdByTokenId(nextTokenId, true));
         _verifyLicense(licenseId, parentLicenseId, nextTokenId, termsProcessor, true, true);
-        LicenseRegistry licenseRegistry = LicenseRegistry(rightsManager.getLicenseRegistry());
+        ILicenseRegistry licenseRegistry = ILicenseRegistry(rightsManager.getLicenseRegistry());
         vm.expectRevert("ERC721: invalid token ID");
         licenseRegistry.ownerOf(licenseId);
 
@@ -168,7 +170,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             true
         );
         _verifyLicense(licenseId, parentLicenseId, tokenId, termsProcessor, true, true);
-        LicenseRegistry licenseRegistry = LicenseRegistry(rightsManager.getLicenseRegistry());
+        ILicenseRegistry licenseRegistry = ILicenseRegistry(rightsManager.getLicenseRegistry());
         assertEq(licenseRegistry.ownerOf(licenseId), licenseHolder);
     }
 

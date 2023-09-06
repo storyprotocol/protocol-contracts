@@ -22,7 +22,7 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
     function test_setUp() public {
         assertEq(licenseRegistry.name(), "Licenses for FranchiseName");
         assertEq(licenseRegistry.symbol(), "slFRN");
-        assertEq(address(licenseRegistry.RIGHTS_MANAGER()), address(ipAssetRegistry));
+        assertEq(address(licenseRegistry.getRightsManager()), address(ipAssetRegistry));
 
         // Default licensing is root non-commercial with sublicense on, no commercial rights
         ILicensingModule.FranchiseConfig memory configResult = licensingModule.getFranchiseConfig(1);

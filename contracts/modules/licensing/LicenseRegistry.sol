@@ -3,25 +3,26 @@ pragma solidity ^0.8.13;
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { ZeroAddress, Unauthorized } from "contracts/errors/General.sol";
 import { IERC5218 } from "./IERC5218.sol";
+import { ILicenseRegistry } from "./ILicenseRegistry.sol";
 
 /**
  * @title LicenseRegistry
  * @author Raul Martinez
  * @notice Simple NFT tracking the ownership of tradeable Licenses emitted by a RightsManager.
  */
-contract LicenseRegistry is ERC721 {
+contract LicenseRegistry is ILicenseRegistry, ERC721 {
 
-    IERC5218 public immutable RIGHTS_MANAGER;
+    IERC5218 private immutable _RIGHTS_MANAGER;
     
-    constructor(address rightsManager, string memory name, string memory symbol) ERC721(name, symbol) {
-        if (rightsManager == address(0)) {
+    constructor(address _rightsManager, string memory _name, string memory _symbol) ERC721(_name, _symbol) {
+        if (_rightsManager == address(0)) {
             revert ZeroAddress();
         }
-        RIGHTS_MANAGER = IERC5218(rightsManager);
+        _RIGHTS_MANAGER = IERC5218(_rightsManager);
     }
 
     modifier onlyRightsManager() {
-        if (msg.sender != address(RIGHTS_MANAGER)) revert Unauthorized();
+        if (msg.sender != address(_RIGHTS_MANAGER)) revert Unauthorized();
         _;
     }
 
@@ -46,10 +47,21 @@ contract LicenseRegistry is ERC721 {
     ) internal virtual override {
         // Minting has already been checked by the RightsManager, but transfers need to pass some checks.
         if (from != address(0)) {
-            RIGHTS_MANAGER.transferSublicense(firstTokenId, to);
+            _RIGHTS_MANAGER.transferSublicense(firstTokenId, to);
         }
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
     }
+
+    function getRightsManager() external view override returns (address) {
+        return address(_RIGHTS_MANAGER);
+    }
+
+    function name() public view override(ERC721, ILicenseRegistry) returns (string memory) {
+        return super.name();
+    }
     
+    function symbol() public view override(ERC721, ILicenseRegistry) returns (string memory) {
+        return super.symbol();
+    }
 
 }
