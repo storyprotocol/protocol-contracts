@@ -3,6 +3,9 @@ const { getIPAssetRegistryAddress } = require('./getIPAssetRegistryAddress.js');
 const { createIPAsset, validateIPAssetType } = require('./createIPAsset.js');
 const { readFileSync, writeFileSync } = require('fs');
 
+const ASSET_CREATED_TOPIC = "0x9081eaced0c09521965c689337c0d5ed61a0baeb8b9f0fda7a4cd4f59a251515"
+const LICENSE_GRANTED_TOPIC = "0xc4c430c7298394a4f1268e65ccf943343f533fb611f496755716d2548b074cad"
+
 Array.range = function (n) {
     return Array(n)
         .fill()
@@ -13,12 +16,18 @@ Array.prototype.chunk = function (size) {
     return Array.range(Math.ceil(this.length / size)).map((i) => this.slice(i * size, i * size + size));
 };
 
-function getCreatedBlocks(receipt, IPAssetRegistry) {
+async function getCreatedBlocks(receipt, IPAssetRegistry, IPAssetEventEmitter, LicensingModule) {
     if (receipt.events) {
         return events.filter((e) => e.event === "IPAssetWritten").map((e) => e.args);
     } else {
-        const events = receipt.logs.map((log) => {
-            return IPAssetRegistry.interface.parseLog(log);
+        const events = receipt.logs.map( (log) => {
+            if (log.topics[0] == ASSET_CREATED_TOPIC) {
+                return IPAssetEventEmitter.interface.parseLog(log);
+            } else if (log.topics[0] == LICENSE_GRANTED_TOPIC) {
+                return LicensingModule.interface.parseLog(log);
+            } else {
+                return IPAssetRegistry.interface.parseLog(log);
+            }
         }).filter((e) => e.name === "IPAssetWritten")
         .map((e) => {
             const ev = Object.keys(e.args).reduce((acc, key) => {
@@ -35,12 +44,11 @@ function getCreatedBlocks(receipt, IPAssetRegistry) {
     }
 }
 
-async function updateIds(ethers, txHash, data, filePath, IPAssetRegistry) {
+async function updateIds(ethers, txHash, data, filePath, IPAssetRegistry, IPAssetEventEmitter, LicensingModule) {
     const provider = ethers.provider;
     const receipt = await provider.getTransactionReceipt(txHash);
 
-    const createdBlocks = getCreatedBlocks(receipt, IPAssetRegistry);
-
+    const createdBlocks = await getCreatedBlocks(receipt, IPAssetRegistry, IPAssetEventEmitter, LicensingModule);
     const mapBlocks = (blocks, createdBlocks) => {
         return blocks.map((b) => {
             const createdBlock = createdBlocks.find((s) => s.name === b.name);
@@ -75,6 +83,7 @@ async function updateIds(ethers, txHash, data, filePath, IPAssetRegistry) {
     if (createdItems.length > 0) {
         data.blocks.items = mapBlocks(data.blocks.items, createdItems);
     }
+
     writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
     
@@ -94,7 +103,7 @@ async function main(args, hre) {
         .filter((block) => block.id === null);
     console.log("Will upload: ", blocks.length, "story blocks");
 
-    const { FranchiseRegistry, IPAssetsRegistry } = contracts;
+    const { FranchiseRegistry, franchiseRegistry, IPAssetsRegistry, IPAssetEventEmitter, LicensingModule, ProtocolRelationshipModule, relationshipModule } = contracts;
     const calls = blocks.map((block) => {
         return FranchiseRegistry.interface.encodeFunctionData('createIPAsset', [franchiseId, block.numBlockType, block.name, block.description, block.mediaURL ?? ''])
     });
@@ -106,7 +115,7 @@ async function main(args, hre) {
             console.log('Uploading batch of ', callChunk.length, ' story blocks');
             let tx;
             try {
-                tx = await FranchiseRegistry.multicall(callChunk);
+                tx = await franchiseRegistry.multicall(callChunk);
             } catch (e) {
                 console.log('ERROR sbUploader');
                 console.log('chainId', chainId);
@@ -115,10 +124,89 @@ async function main(args, hre) {
             console.log('tx: ', tx.hash);
             console.log('Waiting for tx to be mined...');
             const receipt = await tx.wait();
-            return updateIds(ethers, tx.hash, data, filePath, IPAssetsRegistry);
+            // function call is getting rather long, would it be more efficient to pass contracts itself?
+            return updateIds(ethers, tx.hash, data, filePath, IPAssetsRegistry, IPAssetEventEmitter, LicensingModule);
         })
     ).then(() => console.log('Blocks created!'));
 
+    console.log('Setting up relationships...')
+
+    const relationshipParams = await Promise.all(data.relationships.map(
+        async (relationship) => {
+            const { sourceContract, destContract, ttl, name } = relationship
+            // can replace these as needed in future
+            const sourceId = (data.blocks.stories)[0].id
+            const destId = (data.blocks.characters)[0].id
+            const relationshipId = await relationshipModule.getRelationshipId(name);
+            const params = {
+                sourceContract,
+                sourceId,
+                destContract,
+                destId,
+                relationshipId,
+                ttl
+            }
+            return params;
+        }
+    ))
+
+    console.log("Uploading " + relationshipParams.length + " relationships...")
+    const relCalls = relationshipParams.map(
+        (relationship) => {
+            return relationshipModule.interface.encodeFunctionData('relate', [relationship, "0x"])
+        }
+    )
+
+    await Promise.all(
+        relCalls.chunk(batchSize).map(async (callChunk) => {
+            console.log('Uploading batch of ', callChunk.length, ' relationships');
+            let tx;
+            try {
+                tx = await relationshipModule.multicall(callChunk);
+            } catch (e) {
+                console.log('ERROR sbUploader');
+                console.log('chainId', chainId);
+                throw new Error(e);
+            }
+            console.log('tx: ', tx.hash);
+            console.log('Waiting for tx to be mined...');
+            const receipt = await tx.wait();
+            return updateRelationships(ethers, tx.hash, data, filePath, relationshipModule);
+        })
+    ).then(() => console.log('Relationships created!'));
+}
+
+async function updateRelationships(ethers, txHash, data, filePath, relationshipModule) {
+    const provider = ethers.provider;
+    const receipt = await provider.getTransactionReceipt(txHash);
+
+    let createdRelationships;
+
+    if (receipt.events) {
+        createdRelationships = events.filter((e) => e.event === "RelationSet").map((e) => e.args);
+    } else {
+        createdRelationships = receipt.logs.map( (log) => {
+            console.log(JSON.stringify(relationshipModule.interface.parseLog(log)))
+            return relationshipModule.interface.parseLog(log)
+        }).map((e) => {
+            const ev = Object.keys(e.args).reduce((acc, key) => {
+                acc[key] = e.args[key];
+                return acc;
+            }, {});
+            return ev;
+        })
+    }
+    
+    console.log("Writing relationship information to file...")
+    data.relationships.forEach((relationship, index) => {
+        const createdRelationship = createdRelationships[index]
+        data.relationships[index] = { ...relationship, 
+            sourceId: createdRelationship.sourceId.toNumber(), 
+            destId: createdRelationship.destId.toNumber(),
+            relationshipId: createdRelationship.relationshipId }
+    })
+
+    writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
 
 async function updateIdsTask(args, hre) {

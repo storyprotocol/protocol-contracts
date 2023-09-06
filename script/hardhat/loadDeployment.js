@@ -18,8 +18,10 @@ async function main(hre) {
     contracts.FranchiseRegistry = await ethers.getContractFactory("FranchiseRegistry");
     contracts.franchiseRegistry = await contracts.FranchiseRegistry.attach(deployment.main["FranchiseRegistry-Proxy"]);
     contracts.IPAssetsRegistry = await ethers.getContractFactory("IPAssetRegistry");
+    contracts.IPAssetEventEmitter = await ethers.getContractFactory("CommonIPAssetEventEmitter");
     contracts.ProtocolRelationshipModule = await ethers.getContractFactory("ProtocolRelationshipModule");
     contracts.relationshipModule = await contracts.ProtocolRelationshipModule.attach(deployment.main["ProtocolRelationshipModule-Proxy"]);
+    contracts.LicensingModule = await ethers.getContractFactory("LicensingModule")
     return { chainId, contracts, deployment };
 }
 
