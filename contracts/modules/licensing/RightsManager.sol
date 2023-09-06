@@ -10,7 +10,6 @@ import { NonExistentID, Unauthorized, ZeroAddress, UnsupportedInterface } from "
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
-import "forge-std/console.sol";
 
 /**
  * @title RightsManager
