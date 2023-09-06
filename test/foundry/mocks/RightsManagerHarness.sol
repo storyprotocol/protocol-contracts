@@ -7,11 +7,12 @@ import { ILicensingModule } from "contracts/modules/licensing/ILicensingModule.s
 import { IERC5218 } from "contracts/modules/licensing/IERC5218.sol";
 import { ITermsProcessor } from "contracts/modules/licensing/terms/ITermsProcessor.sol";
 
+
 contract RightsManagerHarness is IPAssetRegistry {
 
     constructor(address _eventEmitter, address _licensingModule, address _franchiseRegistry)
         IPAssetRegistry(_eventEmitter, _licensingModule, _franchiseRegistry) {
-
+        
     }
 
     function mockMint(address to, uint256 tokenId) external {

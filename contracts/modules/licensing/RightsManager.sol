@@ -21,7 +21,6 @@ import "forge-std/console.sol";
     2. Tradeable Licenses): The license holder is the owner of the correspondent LicenseRegistry NFT. They are either:
     2.1 Franchise root license: LicenseRegistry enabled license minted by a Franchise owner to govern commercial or non commercial rights for all the IPAssetRegistries.
     2.2 Sublicense: a license coming from Rights or other Licenses, minted by the parent license owner. These would be the future "movie adaptation" type licenses that can be sold.
-    Creates a LicenseRegistry on initialization
     Allows license holders to execute terms to activate the license to activate them.
     Tracks active licenses along the license trees.
  */
