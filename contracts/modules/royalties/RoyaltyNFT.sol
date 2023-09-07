@@ -7,7 +7,7 @@ import { ERC1155 } from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC20} from "solmate/tokens/ERC20.sol";
+import {ERC20} from "solmate/src/tokens/ERC20.sol";
 import { ISplitMain } from "./ISplitMain.sol";
 
 error AccountsAndAllocationsMismatch(
