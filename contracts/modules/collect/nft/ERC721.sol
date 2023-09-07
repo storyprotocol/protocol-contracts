@@ -10,7 +10,7 @@ import { IERC721Errors } from "../../../interfaces/IERC721Errors.sol";
 abstract contract ERC721 is IERC721, IERC721Errors {
 
     /// @notice The total number of ERC-721 NFTs in circulation.
-    uint256 public totalSupply;
+    uint256 public _totalSupply;
 
     /// @notice Maps tokens to their owner addresses.
     mapping(uint256 => address) public ownerOf;
@@ -154,7 +154,7 @@ abstract contract ERC721 is IERC721, IERC721Errors {
         }
 
         unchecked {
-            totalSupply++;
+            _totalSupply++;
             balanceOf[to]++;
         }
 
@@ -171,7 +171,7 @@ abstract contract ERC721 is IERC721, IERC721Errors {
         }
 
         unchecked {
-            totalSupply--;
+            _totalSupply--;
             balanceOf[owner]--;
         }
 

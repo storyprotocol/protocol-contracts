@@ -12,4 +12,7 @@ interface ICollectNFTEventsAndErrors {
     /// @notice Caller of the Collect NFT is not authorized.
     error CollectNFTCallerUnauthorized();
 
+    /// @notice IP asset bound to the Collect NFT does not exist.
+    error CollectNFTIPAssetNonExistent();
+
 }

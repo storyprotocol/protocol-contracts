@@ -22,24 +22,25 @@ contract ERC721Test is BaseERC721Test {
         vm.label(address(erc721), "MockCollectModuleERC721");
     }
 
-    function testSupportsInterface() public {
-        _testSupportsInterface(erc721);
-    }
-    function testERC721ApprovalOwner(uint256 tokenId, address owner, address operator, address approved) public mintTokenForOwner(owner, tokenId) {
-        _testERC721ApprovalOwner(erc721, tokenId, owner, approved);
+    function test_ERC721SupportsInterface() public {
+        _test_ERC721SupportsInterface(erc721);
     }
 
-    function testERC721ApprovalOperator(uint256 tokenId, address owner, address operator, address approved) public mintTokenForOwner(owner, tokenId) {
-        _testERC721ApprovalOperator(erc721, tokenId, owner, operator, approved);
+    function test_ERC721ApprovalOwner(uint256 tokenId, address owner, address approved) public mintTokenForOwner(owner, tokenId) {
+        _test_ERC721ApprovalOwner(erc721, tokenId, owner, approved);
     }
 
-    function testERC721ApprovalNonOwnerReverts(uint256 tokenId, address owner, address operator, address approved) public mintTokenForOwner(owner, tokenId) {
-        _testERC721ApprovalNonOwnerReverts(erc721, tokenId, owner, operator, approved);
+    function test_ERC721ApprovalOperator(uint256 tokenId, address owner, address operator, address approved) public mintTokenForOwner(owner, tokenId) {
+        _test_ERC721ApprovalOperator(erc721, tokenId, owner, operator, approved);
     }
 
-    function testERC721SafeTransferReceive(uint256 tokenId, address owner, address sender) public mintTokenForOwner(owner, tokenId) {
+    function test_ERC721ApprovalNonOwnerReverts(uint256 tokenId, address owner, address operator, address approved) public mintTokenForOwner(owner, tokenId) {
+        _test_ERC721ApprovalNonOwnerReverts(erc721, tokenId, owner, operator, approved);
+    }
+
+    function test_ERC721SafeTransferReceive(uint256 tokenId, address owner, address sender) public mintTokenForOwner(owner, tokenId) {
         _runAllSafeTransferTestVariants(
-            _testERC721SafeTransferReceive,
+            _test_ERC721SafeTransferReceive,
             erc721,
             tokenId,
             owner,
@@ -47,9 +48,9 @@ contract ERC721Test is BaseERC721Test {
         );
     }
 
-    function testERC721SafeTransferInvalidReceiverReverts(uint256 tokenId, address owner, address sender) public mintTokenForOwner(owner, tokenId) {
+    function test_ERC721SafeTransferInvalidReceiverReverts(uint256 tokenId, address owner, address sender) public mintTokenForOwner(owner, tokenId) {
         _runAllSafeTransferTestVariants(
-            _testERC721SafeTransferInvalidReceiverReverts,
+            _test_ERC721SafeTransferInvalidReceiverReverts,
             erc721,
             tokenId,
             owner,
@@ -57,20 +58,9 @@ contract ERC721Test is BaseERC721Test {
         );
     }
 
-    function testERC721SafeTransferThrowingReceiverReverts(uint256 tokenId, address owner, address sender) public mintTokenForOwner(owner, tokenId) {
+    function test_ERC721SafeTransferThrowingReceiverReverts(uint256 tokenId, address owner, address sender) public mintTokenForOwner(owner, tokenId) {
         _runAllSafeTransferTestVariants(
-            _testERC721SafeTransferThrowingReceiverReverts,
-            erc721,
-            tokenId,
-            owner,
-            sender
-        );
-
-    }
-
-    function testERC721SafeTransferInvalidMagicValueReverts(uint256 tokenId, address owner, address sender) public mintTokenForOwner(owner, tokenId) {
-        _runAllSafeTransferTestVariants(
-            _testERC721SafeTransferInvalidMagicValueReverts,
+            _test_ERC721SafeTransferThrowingReceiverReverts,
             erc721,
             tokenId,
             owner,
@@ -79,9 +69,20 @@ contract ERC721Test is BaseERC721Test {
 
     }
 
-    function testERC721TransferFromOperator(uint256 tokenId, address owner, address sender, address receiver) public mintTokenForOwner(owner, tokenId) {
+    function test_ERC721SafeTransferInvalidMagicValueReverts(uint256 tokenId, address owner, address sender) public mintTokenForOwner(owner, tokenId) {
+        _runAllSafeTransferTestVariants(
+            _test_ERC721SafeTransferInvalidMagicValueReverts,
+            erc721,
+            tokenId,
+            owner,
+            sender
+        );
+
+    }
+
+    function test_ERC721TransferFromOperator(uint256 tokenId, address owner, address sender, address receiver) public mintTokenForOwner(owner, tokenId) {
         _runAllTransferTestVariants(
-            _testERC721TransferFromOperator,
+            _test_ERC721TransferFromOperator,
             erc721,
             tokenId,
             owner,
@@ -90,9 +91,9 @@ contract ERC721Test is BaseERC721Test {
         );
     }
 
-    function testERC721TransferFromApproved(uint256 tokenId, address owner, address sender, address receiver) public mintTokenForOwner(owner, tokenId) {
+    function test_ERC721TransferFromApproved(uint256 tokenId, address owner, address sender, address receiver) public mintTokenForOwner(owner, tokenId) {
         _runAllTransferTestVariants(
-            _testERC721TransferFromApproved,
+            _test_ERC721TransferFromApproved,
             erc721,
             tokenId,
             owner,
@@ -101,20 +102,9 @@ contract ERC721Test is BaseERC721Test {
         );
     }
 
-    function testERC721TransferFromOwner(uint256 tokenId, address owner, address sender, address receiver) public mintTokenForOwner(owner, 0) {
+    function test_ERC721TransferFromOwner(uint256 tokenId, address owner, address sender, address receiver) public mintTokenForOwner(owner, tokenId) {
         _runAllTransferTestVariants(
-            _testERC721TransferFromOwner,
-            erc721,
-            0,
-            owner,
-            sender,
-            receiver
-        );
-    }
-
-    function testERC721TransferToZeroAddressReverts(uint256 tokenId, address owner, address sender, address receiver) public mintTokenForOwner(owner, tokenId) {
-        _runAllTransferTestVariants(
-            _testERC721TransferToZeroAddressReverts,
+            _test_ERC721TransferFromOwner,
             erc721,
             tokenId,
             owner,
@@ -123,9 +113,9 @@ contract ERC721Test is BaseERC721Test {
         );
     }
 
-    function testERC721TransferFromUnauthorizedSenderReverts(uint256 tokenId, address owner, address sender, address receiver) public mintTokenForOwner(owner, tokenId) {
+    function test_ERC721TransferToZeroAddressReverts(uint256 tokenId, address owner, address sender, address receiver) public mintTokenForOwner(owner, tokenId) {
         _runAllTransferTestVariants(
-            _testERC721TransferUnauthorizedSenderReverts,
+            _test_ERC721TransferToZeroAddressReverts,
             erc721,
             tokenId,
             owner,
@@ -134,9 +124,9 @@ contract ERC721Test is BaseERC721Test {
         );
     }
 
-    function testERC721TransferFromNonOwnerReverts(uint256 tokenId, address owner, address sender, address receiver) public mintTokenForOwner(owner, tokenId) {
+    function test_ERC721TransferFromUnauthorizedSenderReverts(uint256 tokenId, address owner, address sender, address receiver) public mintTokenForOwner(owner, tokenId) {
         _runAllTransferTestVariants(
-            _testERC721TransferFromNonOwnerReverts,
+            _test_ERC721TransferUnauthorizedSenderReverts,
             erc721,
             tokenId,
             owner,
@@ -145,7 +135,18 @@ contract ERC721Test is BaseERC721Test {
         );
     }
 
-    function testERC721Mint(uint256 tokenId, address owner) public {
+    function test_ERC721TransferFromNonOwnerReverts(uint256 tokenId, address owner, address sender, address receiver) public mintTokenForOwner(owner, tokenId) {
+        _runAllTransferTestVariants(
+            _test_ERC721TransferFromNonOwnerReverts,
+            erc721,
+            tokenId,
+            owner,
+            sender,
+            receiver
+        );
+    }
+
+    function test_ERC721Mint(uint256 tokenId, address owner) public {
 
         vm.assume(owner != address(0));
         uint256 totalSupply = erc721.totalSupply();
@@ -161,19 +162,19 @@ contract ERC721Test is BaseERC721Test {
         assertEq(erc721.ownerOf(tokenId), owner);
     }
 
-    function testERC721MintZeroAddressReverts(uint256 tokenId) public {
+    function test_ERC721MintZeroAddressReverts(uint256 tokenId) public {
         vm.expectRevert(ERC721ReceiverInvalid.selector);
         erc721.mint(address(0), tokenId);
     }
 
-    function testERC721MintDuplicateReverts(uint256 tokenId, address owner) public {
+    function test_ERC721MintDuplicateReverts(uint256 tokenId, address owner) public {
         vm.assume(owner != address(0));
         erc721.mint(owner, tokenId);
         vm.expectRevert(ERC721TokenAlreadyMinted.selector);
         erc721.mint(owner, tokenId);
     }
 
-    function testERC721Burn(uint256 tokenId, address owner) public mintTokenForOwner(owner, tokenId) {
+    function test_ERC721Burn(uint256 tokenId, address owner) public mintTokenForOwner(owner, tokenId) {
 
         uint256 totalSupply = erc721.totalSupply();
         uint256 balance = erc721.balanceOf(owner);
@@ -188,7 +189,7 @@ contract ERC721Test is BaseERC721Test {
         assertEq(erc721.ownerOf(tokenId), address(0));
     }
 
-    function testERC721BurnClearsApproval(uint256 tokenId, address owner) public mintTokenForOwner(owner, tokenId) {
+    function test_ERC721BurnClearsApproval(uint256 tokenId, address owner) public mintTokenForOwner(owner, tokenId) {
         vm.prank(owner);
         erc721.approve(alice, tokenId);
         assertEq(erc721.getApproved(tokenId), alice);
@@ -196,13 +197,13 @@ contract ERC721Test is BaseERC721Test {
         assertEq(erc721.getApproved(tokenId), address(0));
     }
 
-    function testERC721BurnDuplicateReverts(uint256 tokenId, address owner) public mintTokenForOwner(owner, tokenId) {
+    function test_ERC721BurnDuplicateReverts(uint256 tokenId, address owner) public mintTokenForOwner(owner, tokenId) {
         erc721.burn(tokenId);
         vm.expectRevert(ERC721TokenNonExistent.selector);
         erc721.burn(tokenId);
     }
 
-    function testERC721BurnNonexistentTokenReverts(uint256 tokenId) public {
+    function test_ERC721BurnNonexistentTokenReverts(uint256 tokenId) public {
         vm.expectRevert(ERC721TokenNonExistent.selector);
         erc721.burn(tokenId);
     }

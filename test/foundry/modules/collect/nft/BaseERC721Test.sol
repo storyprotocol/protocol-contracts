@@ -7,46 +7,22 @@ import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Rec
 import { IERC721Errors } from "contracts/interfaces/IERC721Errors.sol";
 import { IERC721Events } from "contracts/interfaces/IERC721Events.sol";
 import { MockCollectModuleERC721 } from "test/foundry/mocks/MockCollectModuleERC721.sol";
+import { BaseTestUtils } from "test/foundry/utils/BaseTestUtils.sol";
 import { MockERC721Receiver } from "test/foundry/mocks/MockERC721Receiver.sol";
 
-contract BaseERC721Test is IERC721Errors, IERC721Events, Test {
+contract BaseERC721Test is IERC721Errors, IERC721Events, BaseTestUtils {
 
     bytes4 constant ERC721_RECEIVER_MAGIC_VALUE = bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"));
-
-    uint256 internal alicePk = 0xa11ce;
-    uint256 internal bobPk = 0xb0b;
-    uint256 internal calPk = 0xca1;
-
-    address payable internal alice = payable(vm.addr(alicePk));
-    address payable internal bob = payable(vm.addr(bobPk));
-    address payable internal cal = payable(vm.addr(calPk));
 
     enum TransferType { SAFE_TRANSFER_WITH_DATA, SAFE_TRANSFER_WITHOUT_DATA, TRANSFER }
 
     bytes private SAFE_TRANSFER_DATA = "mockERC721SafeTransferFromData";
     
-    // https://github.com/foundry-rs/foundry/issues/2946
-    modifier isValidReceiver(address receiver) {
-        vm.assume(receiver != 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D); // HEVM Address
-        vm.assume(receiver != 0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496); // Foundry Test Contract
-        vm.assume(receiver != 0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f);
-        vm.assume(receiver != 0x4e59b44847b379578588920cA78FbF26c0B4956C); // CREATE2 Deployer
-        _;
+    function setUp() public virtual override(BaseTestUtils) {
+        super.setUp();
     }
 
-    modifier stateless() {
-        uint256 snapshot = vm.snapshot();
-        _;
-        vm.revertTo(snapshot);
-    }
-
-    function setUp() public virtual {
-        vm.label(alice, "alice");
-        vm.label(bob, "bob");
-        vm.label(cal, "cal");
-    }
-
-    function _testERC721ApprovalOwner(
+    function _test_ERC721ApprovalOwner(
         IERC721 erc721,
         uint256 tokenId,
         address owner,
@@ -60,7 +36,7 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, Test {
         assertEq(erc721.getApproved(tokenId), approved);
     }
 
-    function _testERC721ApprovalOperator(
+    function _test_ERC721ApprovalOperator(
         IERC721 erc721,
         uint256 tokenId,
         address owner,
@@ -81,7 +57,7 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, Test {
         assertEq(erc721.getApproved(tokenId), approved);
     }
 
-    function _testERC721ApprovalNonOwnerReverts(
+    function _test_ERC721ApprovalNonOwnerReverts(
         IERC721 erc721,
         uint256 tokenId,
         address owner,
@@ -96,7 +72,7 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, Test {
 
 
     // Transfer Test Suite
-    function _testERC721TransferFromOperator(
+    function _test_ERC721TransferFromOperator(
         IERC721 erc721,
         uint256 tokenId,
         address owner,
@@ -108,10 +84,10 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, Test {
         vm.prank(owner);
         erc721.setApprovalForAll(sender, true);
         assertTrue(erc721.isApprovedForAll(owner, sender));
-        _testERC721TransferSuccess(erc721, tokenId,  owner, sender, receiver, transferType);
+        _test_ERC721TransferSuccess(erc721, tokenId,  owner, sender, receiver, transferType);
     }
 
-    function _testERC721TransferFromApproved(
+    function _test_ERC721TransferFromApproved(
         IERC721 erc721,
         uint256 tokenId,
         address owner,
@@ -122,35 +98,34 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, Test {
         vm.assume(receiver != address(0));
         vm.prank(owner);
         erc721.approve(sender, tokenId);
-        _testERC721TransferSuccess(erc721, tokenId,  owner, sender, receiver, transferType);
+        _test_ERC721TransferSuccess(erc721, tokenId,  owner, sender, receiver, transferType);
     }
 
-    function _testERC721TransferFromOwner(
+    function _test_ERC721TransferFromOwner(
         IERC721 erc721,
         uint256 tokenId,
         address owner,
-        address sender,
+        address,
         address receiver,
         TransferType transferType
     ) internal stateless {
         vm.assume(receiver != address(0));
-        console.log('wtf');
-        _testERC721TransferSuccess(erc721, tokenId, owner, owner, receiver, transferType);
+        _test_ERC721TransferSuccess(erc721, tokenId, owner, owner, receiver, transferType);
     }
 
-    function _testERC721TransferToZeroAddressReverts(
+    function _test_ERC721TransferToZeroAddressReverts(
         IERC721 erc721,
         uint256 tokenId,
         address owner,
-        address sender,
-        address receiver,
+        address,
+        address,
         TransferType transferType
     ) internal stateless {
         vm.expectRevert(ERC721ReceiverInvalid.selector);
         _transfer(transferType, erc721, owner, owner, address(0), tokenId);
     }
 
-    function _testERC721TransferFromNonOwnerReverts(
+    function _test_ERC721TransferFromNonOwnerReverts(
         IERC721 erc721,
         uint256 tokenId,
         address owner,
@@ -163,7 +138,7 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, Test {
         _transfer(transferType, erc721, sender, sender, receiver, tokenId);
     }
 
-    function _testERC721TransferUnauthorizedSenderReverts(
+    function _test_ERC721TransferUnauthorizedSenderReverts(
         IERC721 erc721,
         uint256 tokenId,
         address owner,
@@ -177,11 +152,11 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, Test {
         _transfer(transferType, erc721, sender, owner, receiver, tokenId);
     }
 
-    function _testERC721SafeTransferInvalidMagicValueReverts(
+    function _test_ERC721SafeTransferInvalidMagicValueReverts(
         IERC721 erc721,
         uint256 tokenId,
         address owner,
-        address sender,
+        address,
         TransferType transferType
     ) internal stateless {
         MockERC721Receiver invalidReceiver = new MockERC721Receiver(0xDEADBEEF, false);
@@ -189,11 +164,11 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, Test {
         _transfer(transferType, erc721, owner, owner, address(invalidReceiver), tokenId);
     }
 
-    function _testERC721SafeTransferThrowingReceiverReverts(
+    function _test_ERC721SafeTransferThrowingReceiverReverts(
         IERC721 erc721,
         uint256 tokenId,
         address owner,
-        address sender,
+        address,
         TransferType transferType
     ) internal stateless {
         MockERC721Receiver invalidReceiver = new MockERC721Receiver(ERC721_RECEIVER_MAGIC_VALUE, true);
@@ -201,11 +176,11 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, Test {
         _transfer(transferType, erc721, owner, owner, address(invalidReceiver), tokenId);
     }
 
-    function _testERC721SafeTransferReceive(
+    function _test_ERC721SafeTransferReceive(
         IERC721 erc721,
         uint256 tokenId,
         address owner,
-        address sender,
+        address,
         TransferType transferType
     ) internal stateless {
         MockERC721Receiver validReceiver = new MockERC721Receiver(IERC721Receiver.onERC721Received.selector, false);
@@ -215,11 +190,11 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, Test {
         _transfer(transferType, erc721, owner, owner, address(validReceiver), tokenId);
     }
 
-    function _testERC721SafeTransferInvalidReceiverReverts(
+    function _test_ERC721SafeTransferInvalidReceiverReverts(
         IERC721 erc721,
         uint256 tokenId,
         address owner,
-        address sender,
+        address,
         TransferType transferType
     ) internal stateless {
         vm.expectRevert();
@@ -227,30 +202,30 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, Test {
     }
 
     function _runAllTransferTestVariants(
-        function(IERC721, uint256, address, address, address, TransferType) internal testTransferVariant,
+        function(IERC721, uint256, address, address, address, TransferType) internal test_TransferVariant,
         IERC721 erc721,
         uint256 tokenId,
         address owner,
         address sender,
         address receiver
     ) internal isValidReceiver(receiver) {
-        testTransferVariant(erc721, tokenId, owner, sender, receiver, TransferType.TRANSFER);
-        testTransferVariant(erc721, tokenId, owner, sender, receiver, TransferType.SAFE_TRANSFER_WITHOUT_DATA);
-        testTransferVariant(erc721, tokenId, owner, sender, receiver, TransferType.SAFE_TRANSFER_WITH_DATA);
+        test_TransferVariant(erc721, tokenId, owner, sender, receiver, TransferType.TRANSFER);
+        test_TransferVariant(erc721, tokenId, owner, sender, receiver, TransferType.SAFE_TRANSFER_WITHOUT_DATA);
+        test_TransferVariant(erc721, tokenId, owner, sender, receiver, TransferType.SAFE_TRANSFER_WITH_DATA);
     }
 
     function _runAllSafeTransferTestVariants(
-        function(IERC721, uint256, address, address, TransferType) internal testSafeTransferVariant,
+        function(IERC721, uint256, address, address, TransferType) internal test_SafeTransferVariant,
         IERC721 erc721,
         uint256 tokenId,
         address owner,
         address sender
     ) internal {
-        testSafeTransferVariant(erc721, tokenId, owner, sender, TransferType.SAFE_TRANSFER_WITHOUT_DATA);
-        testSafeTransferVariant(erc721, tokenId, owner, sender, TransferType.SAFE_TRANSFER_WITH_DATA);
+        test_SafeTransferVariant(erc721, tokenId, owner, sender, TransferType.SAFE_TRANSFER_WITHOUT_DATA);
+        test_SafeTransferVariant(erc721, tokenId, owner, sender, TransferType.SAFE_TRANSFER_WITH_DATA);
     }
 
-    function _testERC721TransferSuccess(
+    function _test_ERC721TransferSuccess(
         IERC721 erc721,
         uint256 tokenId,
         address owner,
@@ -259,9 +234,7 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, Test {
         TransferType transferType
     ) private {
         uint256 ownerBalance = erc721.balanceOf(owner);
-        console.log(ownerBalance);
         uint256 receiverBalance = erc721.balanceOf(receiver);
-        console.log(receiverBalance);
         vm.expectEmit(address(erc721));
         emit Transfer(owner, receiver, tokenId);
         _transfer(transferType, erc721, sender, owner, receiver, tokenId);
@@ -274,9 +247,9 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, Test {
         }
     }
 
-    function _testSupportsInterface(IERC721 erc721) internal {
+    function _test_ERC721SupportsInterface(IERC721 erc721) internal {
         assertTrue(erc721.supportsInterface(0x01ffc9a7)); // ERC-165
-        assertTrue(erc721.supportsInterface(0x80ac58cd));
+        assertTrue(erc721.supportsInterface(0x80ac58cd)); // ERC-721
     }
     
     function _transfer(

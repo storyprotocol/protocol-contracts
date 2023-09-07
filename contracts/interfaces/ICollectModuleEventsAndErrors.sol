@@ -6,7 +6,19 @@ interface ICollectModuleEventsAndErrors {
     /// @notice Collect action is not authorized.
     error CollectModuleCollectUnauthorized();
 
-    /// @notice CollectModule Caller is unauthorized.
+    /// @notice Collect module caller is unauthorized.
     error CollectModuleCallerUnauthorized();
+
+    /// @notice Collect module IP asset is already initialized.
+    error CollectModuleIPAssetAlreadyInitialized();
+
+    /// @notice Collect module provided IP asset registry does not exist.
+    error CollectModuleIPAssetRegistryNonExistent();
+
+    /// @notice Collect NFT has already been initialized.
+    error CollectModuleCollectNotYetInitialized();
+
+    /// @notice Collect module IP asset does not exist.
+    error CollectModuleIPAssetNonExistent();
 
 }

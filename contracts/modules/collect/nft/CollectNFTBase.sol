@@ -4,35 +4,53 @@ pragma solidity ^0.8.18;
 import { InitCollectNFTParams } from "contracts/lib/CollectNFTStructs.sol";
 import { ICollectNFT } from "contracts/interfaces/ICollectNFT.sol";
 import { ERC721 } from "./ERC721.sol";
+import { ICollectModule } from "contracts/interfaces/ICollectModule.sol";
+import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
 
 /// @title Collect NFT Base Contract
 abstract contract CollectNFTBase is ERC721, ICollectNFT {
 
-    address public collectModule;
-    address public ipAssetRegistry;
+    ICollectModule public collectModule;
+    IIPAssetRegistry public ipAssetRegistry;
     uint256 public ipAssetId;
+    bool private _initialized;
 
     modifier onlyCollectModule() {
-        if (msg.sender != collectModule) {
+        if (msg.sender != address(collectModule)) {
             revert CollectNFTCallerUnauthorized();
         }
         _;
     }
 
+    constructor() {
+        _initialized = true;
+    }
+
+    function totalSupply() public view virtual returns (uint256) {
+        return _totalSupply;
+    }
+
     function initialize(InitCollectNFTParams calldata initParams) public virtual {
-        collectModule = initParams.collectModule;
-        ipAssetRegistry = initParams.ipAssetRegistry;
-        ipAssetId = initParams.ipAssetId;
-        if (address(this).code.length > 0) {
+        if (_initialized) {
             revert CollectNFTAlreadyInitialized();
+        }
+        _initialized = true;
+        collectModule = ICollectModule(msg.sender);
+        ipAssetRegistry = IIPAssetRegistry(initParams.ipAssetRegistry);
+        ipAssetId = initParams.ipAssetId;
+        try ipAssetRegistry.ownerOf(ipAssetId) {
+        } catch {
+            revert CollectNFTIPAssetNonExistent();
         }
         _initialize(initParams.data);
     }
 
-    function collect(address collector) onlyCollectModule public virtual {
-        _mint(collector, totalSupply);
+    function collect(address collector, bytes calldata data) onlyCollectModule public virtual {
+        _mint(collector, _totalSupply);
+        _collect(data);
     }
 
     function _initialize(bytes calldata data) internal virtual {}
 
+    function _collect(bytes calldata data) internal virtual {}
 }

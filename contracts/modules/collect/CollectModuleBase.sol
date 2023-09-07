@@ -4,73 +4,106 @@ pragma solidity ^0.8.18;
 import {Clones} from '@openzeppelin/contracts/proxy/Clones.sol';
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
+import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { ICollectModuleEventsAndErrors } from "../../interfaces/ICollectModuleEventsAndErrors.sol";
-import { InitCollectParams, CollectParams } from "../../lib/CollectStructs.sol";
+import { CollectInfo, InitCollectParams, CollectParams } from "../../lib/CollectModuleStructs.sol";
+import { InitCollectNFTParams } from "../../lib/CollectNFTStructs.sol";
+import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
 import { ICollectNFT } from "../../interfaces/ICollectNFT.sol";
 import { ICollectModule } from "../../interfaces/ICollectModule.sol";
 
 /// @title Collect Module Base Implementation
 abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModule {
 
-    /// @notice The address of the IP asset registry.
-    address public immutable IP_ASSET_REGISTRY;
-    address public immutable COLLECT_NFT_IMPL;
+    FranchiseRegistry public immutable FRANCHISE_REGISTRY;
+    address public immutable DEFAULT_COLLECT_NFT_IMPL;
 
     // keccak256("story-protocol.simple-payment-collect-module.storage") - 1;
     bytes32 private constant _COLLECT_MODULE_STORAGE = 0xd16687d5cf786234491b4cc484b2a64f24855aadee9b1b73824db1ed2840fd0b;
 
     struct CollectModuleStorage {
-        mapping(uint256 => address) collectNFTs; // Globally unique IP Assets
-
-        // mapping(bytes32 => address) collectNFTs; // Franchise-unique IP Asset (with bytes32 hash)
-        // mapping(address => mapping(uint256 => address)) collectNFTs; // Franchise-unique IP Assets
+        mapping(uint256 => mapping(uint256 => CollectInfo)) collectInfo;
     }
 
-    modifier collectAuthorized(uint256 ipAssetId) {
-        if (!_isCollectAuthorized(ipAssetId)) {
-            revert CollectModuleCollectUnauthorized();
-        }
-        _;
-    }
-
-    constructor(address ipAssetRegistry, address collectNFTImpl) {
-        IP_ASSET_REGISTRY = ipAssetRegistry;
-        COLLECT_NFT_IMPL = collectNFTImpl;
+    constructor(address franchiseRegistry, address collectNFTImpl) {
+        FRANCHISE_REGISTRY = FranchiseRegistry(franchiseRegistry);
+        DEFAULT_COLLECT_NFT_IMPL = collectNFTImpl;
         _disableInitializers();
     }
 
-    function __CollectModule_init(address accessControl) internal onlyInitializing {
+    function __CollectModuleBase_init(address accessControl) internal onlyInitializing {
         __AccessControlledUpgradeable_init(accessControl);
-        __CollectModule_init_unchained();
+        __CollectModuleBase_init_unchained();
     }
 
-    function __CollectModule_init_unchained() internal onlyInitializing {}
+    function __CollectModuleBase_init_unchained() internal onlyInitializing {}
 
-    function initialize(InitCollectParams calldata initParams) external {
-        if (msg.sender != IP_ASSET_REGISTRY) {
+    function getCollectNFT(uint256 franchiseId, uint256 ipAssetId) public view returns (address) {
+        CollectModuleStorage storage $ = _getCollectModuleStorage();
+        return $.collectInfo[franchiseId][ipAssetId].collectNFT;
+    }
+
+    function initCollect(InitCollectParams calldata initParams) external {
+        uint256 franchiseId = initParams.franchiseId;
+        address collectNFTImpl = initParams.collectNFTImpl;
+        if (msg.sender != FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId)) {
             revert CollectModuleCallerUnauthorized();
         }
-        _initializeCollect(initParams);
+
+        uint256 ipAssetId = initParams.ipAssetId;
+        CollectModuleStorage storage $ = _getCollectModuleStorage();
+        if ($.collectInfo[franchiseId][ipAssetId].initialized) {
+            revert CollectModuleIPAssetAlreadyInitialized();
+        }
+
+        $.collectInfo[franchiseId][ipAssetId].initialized = true;
+        if (collectNFTImpl != address(0)) {
+            $.collectInfo[franchiseId][ipAssetId].collectNFTImpl = collectNFTImpl;
+        }
+        _initCollect(initParams);
     }
 
-    function collect(CollectParams calldata collectParams) collectAuthorized(collectParams.ipAssetId) external {
-        address collectNFT = _getCollectNFT(collectParams.ipAssetId);
-        ICollectNFT(collectNFT).collect(collectParams.collector);
+    function collect(CollectParams calldata collectParams) external {
+        uint256 franchiseId = collectParams.franchiseId;
+        uint256 ipAssetId = collectParams.ipAssetId;
+        if (!_isCollectAuthorized(franchiseId, ipAssetId)) {
+            revert CollectModuleCollectUnauthorized();
+        }
+        address ipAssetRegistry = FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId);
+        if (ipAssetRegistry == address(0)) {
+            revert CollectModuleIPAssetRegistryNonExistent();
+        }
+        try IIPAssetRegistry(ipAssetRegistry).ownerOf(ipAssetId) {
+        } catch {
+            revert CollectModuleIPAssetNonExistent();
+        }
+        address collectNFT = _getCollectNFT(franchiseId, ipAssetRegistry, ipAssetId, collectParams.collectNFTInitData);
+        ICollectNFT(collectNFT).collect(collectParams.collector, collectParams.collectNFTData);
         _collect(collectParams);
     }
 
-    function _initializeCollect(InitCollectParams calldata initCollectParams) internal virtual;
+    function _initCollect(InitCollectParams calldata initCollectParams) internal virtual {}
 
-    function _collect(CollectParams calldata collectParams) internal virtual;
+    function _collect(CollectParams calldata collectParams) internal virtual {}
 
-    function _isCollectAuthorized(uint256 ipAssetId) internal view virtual returns (bool);
+    function _isCollectAuthorized(uint256 franchiseId, uint256 ipAssetId) internal view virtual returns (bool);
 
-    function _getCollectNFT(uint256 ipAssetId) internal returns (address) {
+    function _getCollectNFT(uint256 franchiseId, address ipAssetRegistry, uint256 ipAssetId, bytes memory initData) internal returns (address) {
         CollectModuleStorage storage $ = _getCollectModuleStorage();
-        address collectNFT = $.collectNFTs[ipAssetId];
+        CollectInfo storage info = $.collectInfo[franchiseId][ipAssetId];
+        if (!info.initialized) {
+            revert CollectModuleCollectNotYetInitialized();
+        }
+        address collectNFT = info.collectNFT;
+        address collectNFTImpl = info.collectNFTImpl;
         if (collectNFT == address(0)) {
-            collectNFT = Clones.clone(COLLECT_NFT_IMPL);
+            collectNFT = collectNFTImpl == address(0) ? Clones.clone(DEFAULT_COLLECT_NFT_IMPL) : Clones.clone(collectNFTImpl);
+            ICollectNFT(collectNFT).initialize(InitCollectNFTParams({
+                ipAssetRegistry: ipAssetRegistry,
+                ipAssetId: ipAssetId,
+                data: initData
+            }));
         }
         return collectNFT;
     }
