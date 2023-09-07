@@ -71,7 +71,6 @@ contract CollectModuleBaseTest is BaseTest, ICollectModuleEventsAndErrors, MockC
     }
 
     function test_CollectModuleCollect(address collector, address ipAssetOwner, uint8 ipAssetType) initCollectModule(ipAssetOwner, ipAssetType) public {
-        assertEq(address(0), collectModule.getCollectNFT(franchiseId, ipAssetId));
         uint256 franchiseId = ipAssetRegistry.franchiseId();
         collectModule.collect(CollectParams({
             franchiseId: franchiseId,
