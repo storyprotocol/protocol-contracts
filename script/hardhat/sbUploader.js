@@ -133,10 +133,9 @@ async function main(args, hre) {
 
     const relationshipParams = await Promise.all(data.relationships.map(
         async (relationship) => {
-            const { sourceContract, destContract, ttl, name } = relationship
-            // can replace these as needed in future
-            const sourceId = (data.blocks.stories)[0].id
-            const destId = (data.blocks.characters)[0].id
+            const { sourceContract, destContract, ttl, name, sourceAssetType, sourceAssetIndex, destAssetType, destAssetIndex } = relationship
+            const sourceId = (data.blocks)[sourceAssetType][sourceAssetIndex].id
+            const destId = (data.blocks)[destAssetType][destAssetIndex].id
             const relationshipId = await relationshipModule.getRelationshipId(name);
             const params = {
                 sourceContract,
@@ -186,7 +185,6 @@ async function updateRelationships(ethers, txHash, data, filePath, relationshipM
         createdRelationships = events.filter((e) => e.event === "RelationSet").map((e) => e.args);
     } else {
         createdRelationships = receipt.logs.map( (log) => {
-            console.log(JSON.stringify(relationshipModule.interface.parseLog(log)))
             return relationshipModule.interface.parseLog(log)
         }).map((e) => {
             const ev = Object.keys(e.args).reduce((acc, key) => {

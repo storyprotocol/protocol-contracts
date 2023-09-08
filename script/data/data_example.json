@@ -2,7 +2,7 @@
   "blocks": {
     "stories": [
       {
-        "id": null,
+        "id": 42,
         "blockType": "STORY",
         "name": "The Full Grain World Bible",
         "description": "Lorem Ipsum",
@@ -12,7 +12,7 @@
     ],
     "groups": [
       {
-        "id": null,
+        "id": 3000000000042,
         "blockType": "GROUP",
         "name": "The Fresh",
         "description": "Human Like",
@@ -22,7 +22,7 @@
     ],
     "characters": [
       {
-        "id": null,
+        "id": 1000000000042,
         "blockType": "CHARACTER",
         "name": "Captain Crunch",
         "description": "Lorem Ipsum"
@@ -30,7 +30,7 @@
     ],
     "locations": [
       {
-        "id": null,
+        "id": 4000000000042,
         "blockType": "LOCATION",
         "name": "Weird Homeworld",
         "description": "Lorem Lorem."
@@ -38,7 +38,7 @@
     ],
     "items": [
       {
-        "id": null,
+        "id": 5000000000042,
         "blockType": "ITEM",
         "name": "The asdad",
         "description": "asdd"
@@ -48,10 +48,17 @@
   "relationships": [
     {
       "sourceContract": "0x05395B5Ea9b9e675DAb0000E4Ef3Cb6901e8d3f1",
+      "sourceAssetType": "stories",
+      "sourceAssetIndex": 0,
       "destContract": "0x05395B5Ea9b9e675DAb0000E4Ef3Cb6901e8d3f1",
+      "destAssetType": "characters",
+      "destAssetIndex": 0,
       "data": "0x",
       "name": "TEST_RELATIONSHIP",
-      "ttl": 1
+      "ttl": 1,
+      "sourceId": 42,
+      "destId": 1000000000042,
+      "relationshipId": "0x683621362ba100a18914ac9e6e6c9388fdf9e0de20bed62f0b9c36aa49404e7a"
     }
   ]
 }
