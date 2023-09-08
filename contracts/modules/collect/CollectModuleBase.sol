@@ -26,9 +26,9 @@ abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModu
         mapping(uint256 => mapping(uint256 => CollectInfo)) collectInfo;
     }
 
-    constructor(address franchiseRegistry, address collectNFTImpl) {
+    constructor(address franchiseRegistry, address defaultCollectNFTImpl) {
         FRANCHISE_REGISTRY = FranchiseRegistry(franchiseRegistry);
-        DEFAULT_COLLECT_NFT_IMPL = collectNFTImpl;
+        DEFAULT_COLLECT_NFT_IMPL = defaultCollectNFTImpl;
         _disableInitializers();
     }
 
@@ -40,8 +40,8 @@ abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModu
     function __CollectModuleBase_init_unchained() internal onlyInitializing {}
 
     function getCollectNFT(uint256 franchiseId, uint256 ipAssetId) public view returns (address) {
-        CollectModuleStorage storage $ = _getCollectModuleStorage();
-        return $.collectInfo[franchiseId][ipAssetId].collectNFT;
+        CollectInfo memory info = _getCollectModuleStorage().collectInfo[franchiseId][ipAssetId];
+        return info.collectNFT;
     }
 
     function initCollect(InitCollectParams calldata initParams) external {
@@ -57,14 +57,14 @@ abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModu
             revert CollectModuleIPAssetAlreadyInitialized();
         }
 
-        $.collectInfo[franchiseId][ipAssetId].initialized = true;
         if (collectNFTImpl != address(0)) {
             $.collectInfo[franchiseId][ipAssetId].collectNFTImpl = collectNFTImpl;
         }
+        $.collectInfo[franchiseId][ipAssetId].initialized = true;
         _initCollect(initParams);
     }
 
-    function collect(CollectParams calldata collectParams) external {
+    function collect(CollectParams calldata collectParams) external returns (address collectNFT, uint256 collectNFTId){
         uint256 franchiseId = collectParams.franchiseId;
         uint256 ipAssetId = collectParams.ipAssetId;
         if (!_isCollectAuthorized(franchiseId, ipAssetId)) {
@@ -78,9 +78,10 @@ abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModu
         } catch {
             revert CollectModuleIPAssetNonExistent();
         }
-        address collectNFT = _getCollectNFT(franchiseId, ipAssetRegistry, ipAssetId, collectParams.collectNFTInitData);
-        ICollectNFT(collectNFT).collect(collectParams.collector, collectParams.collectNFTData);
+        collectNFT = _getCollectNFT(franchiseId, ipAssetRegistry, ipAssetId, collectParams.collectNFTInitData);
+        collectNFTId = ICollectNFT(collectNFT).collect(collectParams.collector, collectParams.collectNFTData);
         _collect(collectParams);
+        return (collectNFT, collectNFTId);
     }
 
     function _initCollect(InitCollectParams calldata initCollectParams) internal virtual {}
@@ -96,14 +97,15 @@ abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModu
             revert CollectModuleCollectNotYetInitialized();
         }
         address collectNFT = info.collectNFT;
-        address collectNFTImpl = info.collectNFTImpl;
         if (collectNFT == address(0)) {
+            address collectNFTImpl = info.collectNFTImpl;
             collectNFT = collectNFTImpl == address(0) ? Clones.clone(DEFAULT_COLLECT_NFT_IMPL) : Clones.clone(collectNFTImpl);
             ICollectNFT(collectNFT).initialize(InitCollectNFTParams({
                 ipAssetRegistry: ipAssetRegistry,
                 ipAssetId: ipAssetId,
                 data: initData
             }));
+            $.collectInfo[franchiseId][ipAssetId].collectNFT = collectNFT;
         }
         return collectNFT;
     }

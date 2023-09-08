@@ -12,6 +12,6 @@ interface ICollectNFT is IERC721, ICollectNFTEventsAndErrors {
 
     function initialize(InitCollectNFTParams calldata initParams) external;
 
-    function collect(address collector, bytes calldata data) external;
+    function collect(address collector, bytes calldata data) external returns (uint256);
 
 }

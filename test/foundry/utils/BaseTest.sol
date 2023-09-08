@@ -25,6 +25,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
 
     IPAssetRegistryFactory public factory;
     IPAssetRegistry public ipAssetRegistry;
+    uint256 public franchiseId;
     address ipAssetRegistryImpl;
     FranchiseRegistry public franchiseRegistry;
     RelationshipModuleBase public relationshipModule;
@@ -34,7 +35,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     RelationshipModuleHarness public relationshipModuleHarness;
     address eventEmitter;
     address public franchiseRegistryImpl;
-    address public collectNFTImpl;
+    address public defaultCollectNFTImpl;
     address public collectModuleImpl;
     address public accessControlSingletonImpl;
 
@@ -47,7 +48,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     function setUp() virtual override(BaseTestUtils) public {
         super.setUp();
         factory = new IPAssetRegistryFactory();
-        address accessControlSingletonImpl = address(new AccessControlSingleton());
+        accessControlSingletonImpl = address(new AccessControlSingleton());
         accessControl = AccessControlSingleton(
             _deployUUPSProxy(
                 accessControlSingletonImpl,
@@ -74,6 +75,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("name", "symbol", "description", "tokenURI");
         (uint256 id, address ipAssets) = franchiseRegistry.registerFranchise(params);
         ipAssetRegistry = IPAssetRegistry(ipAssets);
+        franchiseId = ipAssetRegistry.franchiseId();
         vm.stopPrank();
         relationshipModuleHarness = new RelationshipModuleHarness(address(franchiseRegistry));
         relationshipModule = RelationshipModuleBase(
@@ -86,8 +88,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         );
 
         // Deploy collect module and collect NFT impl
-        collectNFTImpl = address(new MockCollectNFT());
-        collectModuleImpl = address(new MockCollectModule(address(franchiseRegistry), collectNFTImpl));
+        defaultCollectNFTImpl = address(new MockCollectNFT());
+        collectModuleImpl = address(new MockCollectModule(address(franchiseRegistry), defaultCollectNFTImpl));
 
         collectModule = ICollectModule(
             _deployUUPSProxy(
@@ -103,7 +105,9 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         }
     }
 
-    function _createIPAsset(address ipAssetOwner, IPAsset ipAssetType) internal isValidReceiver(ipAssetOwner) returns (uint256) {
+    function _createIPAsset(address ipAssetOwner, uint8 ipAssetType) internal isValidReceiver(ipAssetOwner) returns (uint256) {
+        vm.assume(ipAssetType > uint8(type(IPAsset).min));
+        vm.assume(ipAssetType < uint8(type(IPAsset).max));
         vm.assume(ipAssetOwner != address(0));
         vm.assume(ipAssetOwner != address(franchiseRegistry));
         vm.assume(ipAssetOwner != address(factory));
@@ -112,7 +116,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         vm.assume(ipAssetOwner != address(accessControlSingletonImpl));
         vm.assume(ipAssetOwner != address(collectModule));
         vm.assume(ipAssetOwner != address(collectModuleImpl));
-        vm.assume(ipAssetOwner != address(collectNFTImpl));
+        vm.assume(ipAssetOwner != address(defaultCollectNFTImpl));
         vm.assume(ipAssetOwner != address(franchiseRegistryImpl));
         vm.assume(ipAssetOwner != address(relationshipProcessor));
         vm.assume(ipAssetOwner != address(ipAssetRegistry));
@@ -120,7 +124,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         vm.assume(ipAssetOwner != address(ipAssetRegistryImpl));
         vm.assume(ipAssetOwner != address(eventEmitter));
         vm.prank(ipAssetOwner);
-        return ipAssetRegistry.createIPAsset(ipAssetType, "name", "description", "mediaUrl");
+        return ipAssetRegistry.createIPAsset(IPAsset(ipAssetType), "name", "description", "mediaUrl");
     }
 
 }

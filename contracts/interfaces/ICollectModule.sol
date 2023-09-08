@@ -9,7 +9,7 @@ interface ICollectModule is ICollectModuleEventsAndErrors {
 
     function initCollect(InitCollectParams calldata initCollectParams) external;
 
-    function collect(CollectParams calldata collectParams) external;
+    function collect(CollectParams calldata collectParams) external returns (address collectNFT, uint256 collectNFTId);
 
     function getCollectNFT(uint256 franchiseId, uint256 ipAssetId) external returns (address);
 

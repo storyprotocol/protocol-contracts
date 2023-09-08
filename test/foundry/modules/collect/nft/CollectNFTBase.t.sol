@@ -17,10 +17,8 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest, ICollectNFTEventsAndErr
     ICollectNFT collectNFT;
 
     modifier createCollectNFT(address ipAssetOwner, uint8 ipAssetType) {
-        vm.assume(ipAssetType > uint8(type(IPAsset).min));
-        vm.assume(ipAssetType < uint8(type(IPAsset).max));
-        ipAssetId = _createIPAsset(ipAssetOwner, IPAsset(ipAssetType));
-        collectNFT = ICollectNFT(Clones.clone(collectNFTImpl));
+        ipAssetId = _createIPAsset(ipAssetOwner, ipAssetType);
+        collectNFT = ICollectNFT(Clones.clone(defaultCollectNFTImpl));
         vm.prank(address(collectModule));
         collectNFT.initialize(InitCollectNFTParams({
             ipAssetRegistry: address(ipAssetRegistry),
@@ -48,7 +46,7 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest, ICollectNFTEventsAndErr
     }
     
     function test_CollectNFTNonExistentIPAssetReverts() public {
-        collectNFT = ICollectNFT(Clones.clone(collectNFTImpl));
+        collectNFT = ICollectNFT(Clones.clone(defaultCollectNFTImpl));
         vm.expectRevert(CollectNFTIPAssetNonExistent.selector);
         collectNFT.initialize(InitCollectNFTParams({
             ipAssetRegistry: address(ipAssetRegistry),

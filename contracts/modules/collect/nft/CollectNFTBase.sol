@@ -45,9 +45,11 @@ abstract contract CollectNFTBase is ERC721, ICollectNFT {
         _initialize(initParams.data);
     }
 
-    function collect(address collector, bytes calldata data) onlyCollectModule public virtual {
-        _mint(collector, _totalSupply);
+    function collect(address collector, bytes calldata data) onlyCollectModule public virtual returns (uint256) {
+        uint256 tokenId = _totalSupply;
+        _mint(collector, tokenId);
         _collect(data);
+        return tokenId;
     }
 
     function _initialize(bytes calldata data) internal virtual {}
