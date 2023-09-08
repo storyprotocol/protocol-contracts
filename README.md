@@ -91,6 +91,50 @@ Read Story Block
 npx hardhat sp:read-ip-asset--network <network> <franchiseId> <IPAssetId>
 ```
 
+Upload Story Blocks and Relationships
+
+This section requires more detail to establish how to format an input JSON data file. In the file, the data should be separated under "blocks" and "relationships". The blocks are stored in arrays and represented as JSON objects. For each story block, the following fields are required:
+```
+// example:
+stories: [
+// this is an individual story to be uploaded.
+{
+  id: null,
+  blockType: enum,
+  name: string,
+  description: string,
+  ...
+}
+]
+```
+
+The ID is initially set to null to identify a block that is yet to be uploaded; the file will be rewritten once blocks are successfully uploaded.
+
+To upload a relationship, the following fields are needed:
+
+```
+relationships: [
+{
+    sourceContract: 0x...
+    destContract: 0x...
+    data,
+    name,
+    ttl,
+    sourceAssetType: {type of src IP asset: stories, characters, etc.},
+    destAssetType: {type of destination IP asset: stories, characters, etc.}
+    sourceAssetIndex: int, index of desired asset in the array specified from above sourceAssetType
+    destAssetIndex: int, index of desired asset in the array specified from above destAssetType
+}
+]
+```
+
+To call the task, use the following:
+```
+npx hardhat --network <network> -sp:uploader <franchiseId> <pathname of JSON data>
+```
+
+
+
 ### Working with a local network
 
 Foundry comes with local network [anvil](https://book.getfoundry.sh/anvil/index.html) baked in, and allows us to deploy to our local network for quick testing locally.
