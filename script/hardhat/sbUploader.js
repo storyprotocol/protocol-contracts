@@ -119,6 +119,82 @@ async function main(args, hre) {
         })
     ).then(() => console.log('Blocks created!'));
 
+    console.log('Setting up relationships...')
+
+    const relationshipParams = await Promise.all(data.relationships.map(
+        async (relationship) => {
+            const { sourceContract, destContract, ttl, name, sourceAssetType, sourceAssetIndex, destAssetType, destAssetIndex } = relationship
+            const sourceId = (data.blocks)[sourceAssetType][sourceAssetIndex].id
+            const destId = (data.blocks)[destAssetType][destAssetIndex].id
+            const relationshipId = await relationshipModule.getRelationshipId(name);
+            const params = {
+                sourceContract,
+                sourceId,
+                destContract,
+                destId,
+                relationshipId,
+                ttl
+            }
+            return params;
+        }
+    ))
+
+    console.log("Uploading " + relationshipParams.length + " relationships...")
+    const relCalls = relationshipParams.map(
+        (relationship) => {
+            return relationshipModule.interface.encodeFunctionData('relate', [relationship, "0x"])
+        }
+    )
+
+    await Promise.all(
+        relCalls.chunk(batchSize).map(async (callChunk) => {
+            console.log('Uploading batch of ', callChunk.length, ' relationships');
+            let tx;
+            try {
+                tx = await relationshipModule.multicall(callChunk);
+            } catch (e) {
+                console.log('ERROR sbUploader');
+                console.log('chainId', chainId);
+                throw new Error(e);
+            }
+            console.log('tx: ', tx.hash);
+            console.log('Waiting for tx to be mined...');
+            const receipt = await tx.wait();
+            return updateRelationships(ethers, tx.hash, data, filePath, relationshipModule);
+        })
+    ).then(() => console.log('Relationships created!'));
+}
+
+async function updateRelationships(ethers, txHash, data, filePath, relationshipModule) {
+    const provider = ethers.provider;
+    const receipt = await provider.getTransactionReceipt(txHash);
+
+    let createdRelationships;
+
+    if (receipt.events) {
+        createdRelationships = events.filter((e) => e.event === "RelationSet").map((e) => e.args);
+    } else {
+        createdRelationships = receipt.logs.map( (log) => {
+            return relationshipModule.interface.parseLog(log)
+        }).map((e) => {
+            const ev = Object.keys(e.args).reduce((acc, key) => {
+                acc[key] = e.args[key];
+                return acc;
+            }, {});
+            return ev;
+        })
+    }
+    
+    console.log("Writing relationship information to file...")
+    data.relationships.forEach((relationship, index) => {
+        const createdRelationship = createdRelationships[index]
+        data.relationships[index] = { ...relationship, 
+            sourceId: createdRelationship.sourceId.toNumber(), 
+            destId: createdRelationship.destId.toNumber(),
+            relationshipId: createdRelationship.relationshipId }
+    })
+
+    writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
 
 async function updateIdsTask(args, hre) {
