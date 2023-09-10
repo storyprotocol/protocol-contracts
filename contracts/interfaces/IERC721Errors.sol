@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.18;
 
-/// @title Minal ERC-721 Errors Interface
+/// @title ERC-721 Errors Interface
 interface IERC721Errors {
 
     /// @notice Originating address does not own the NFT.
@@ -16,7 +16,7 @@ interface IERC721Errors {
     /// @notice Sender is not NFT owner, approved address, or owner operator.
     error ERC721SenderUnauthorized();
 
-    /// @notice Token has already minted.
+    /// @notice Token has already been minted.
     error ERC721TokenAlreadyMinted();
 
     /// @notice NFT does not exist.

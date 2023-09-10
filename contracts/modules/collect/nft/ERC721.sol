@@ -6,11 +6,17 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import { IERC721Errors } from "../../../interfaces/IERC721Errors.sol";
 
-/// @title Minimal ERC-721 Contract
+/// @title Minimal Collect Module ERC-721 Contract
+/// @notice This is a barebones ERC-721 contract that does not implement the
+///         ERC-721 metadata standard. This contract is purposely lightweight
+///         to support simpler standardization for collect NFTs, which:
+///         - MAY mirror metadata from their bound IP assets, thus not
+///           necessarily having the metadata defined in the collect NFT itself
+///         - MUST support initialization via minimal clone proxies, thus not
+///           requiring a constructor for IP asset specific intialization
+///         - MAY not be upgradeable, thus not necessarily requiring a more
+///           involved IERC721Upgradeable extension
 abstract contract ERC721 is IERC721, IERC721Errors {
-
-    /// @notice The total number of ERC-721 NFTs in circulation.
-    uint256 public _totalSupply;
 
     /// @notice Maps tokens to their owner addresses.
     mapping(uint256 => address) public ownerOf;
@@ -24,10 +30,12 @@ abstract contract ERC721 is IERC721, IERC721Errors {
     /// @notice Gets the number of NFTs owned by an address.
     mapping(address => uint256) public balanceOf;
 
-    /// @dev EIP-165 identifiers for all supported interfaces.
+    // Tracks the total number of ERC-721 NFTs in circulation.
+    uint256 public _totalSupply;
+
+    // EIP-165 identifiers for all supported interfaces.
     bytes4 private constant _ERC165_INTERFACE_ID = 0x01ffc9a7;
     bytes4 private constant _ERC721_INTERFACE_ID = 0x80ac58cd;
-    bytes4 private constant _ERC721_METADATA_INTERFACE_ID = 0x5b5e139f;
 
     /// @notice Sets the operator for `msg.sender` to `operator`.
     /// @param operator The operator address managing NFTs of `msg.sender`.
@@ -37,12 +45,13 @@ abstract contract ERC721 is IERC721, IERC721Errors {
         emit ApprovalForAll(msg.sender, operator, approved);
     }
 
-    /// @notice Sets approved address of NFT of id `id` to address `approved`.
+    /// @notice Sets approved address of NFT `id` to address `approved`.
     /// @param approved The new approved address for the NFT.
     /// @param tokenId The id of the NFT to approve.
     function approve(address approved, uint256 tokenId) public virtual {
         address owner = ownerOf[tokenId];
 
+        // Revert unless msg.sender is the owner or approved operator.
         if (msg.sender != owner && !isApprovedForAll[owner][msg.sender]) {
             revert ERC721SenderUnauthorized();
         }
@@ -74,6 +83,7 @@ abstract contract ERC721 is IERC721, IERC721Errors {
             revert ERC721SafeTransferUnsupported();
         }
     }
+
     /// @notice Transfers NFT of id `id` from address `from` to address `to`,
     ///  with safety checks ensuring `to` is capable of receiving the NFT.
     /// @dev Safety checks are only performed if `to` is a smart contract.
@@ -143,7 +153,9 @@ abstract contract ERC721 is IERC721, IERC721Errors {
                id == _ERC721_INTERFACE_ID;
     }
 
-    /// @notice Mints an NFT of identifier `tokenId` to recipient address `to`.
+    /// @dev Mints an NFT of identifier `tokenId` to recipient address `to`.
+    /// @param to Address of the new NFT owner.
+    /// @param tokenId Id of the NFT being minted.
     function _mint(address to, uint256 tokenId) internal virtual {
         if (to == address(0)) {
             revert ERC721ReceiverInvalid();
@@ -162,7 +174,8 @@ abstract contract ERC721 is IERC721, IERC721Errors {
         emit Transfer(address(0), to, tokenId);
     }
 
-    /// @notice Burns an NFT with identifier `tokenId`.
+    /// @dev Burns an NFT with identifier `tokenId`.
+    /// @param tokenId The id of the NFT being burned.
     function _burn(uint256 tokenId) internal virtual {
         address owner = ownerOf[tokenId];
 
@@ -179,5 +192,4 @@ abstract contract ERC721 is IERC721, IERC721Errors {
         delete getApproved[tokenId];
         emit Transfer(owner, address(0), tokenId);
     }
-
 }

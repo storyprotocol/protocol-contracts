@@ -3,5 +3,6 @@ pragma solidity ^0.8.18;
 
 import { CollectNFTBase } from "contracts/modules/collect/nft/CollectNFTBase.sol";
 
-/// @title Collect NFT Mock Contract
+/// @title Mock Collect NFT
+/// @notice This contract is used for testing base collect NFT functionality.
 contract MockCollectNFT is CollectNFTBase {}

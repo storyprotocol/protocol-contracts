@@ -73,7 +73,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
 
         vm.startPrank(franchiseOwner);
         FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("name", "symbol", "description", "tokenURI");
-        (uint256 id, address ipAssets) = franchiseRegistry.registerFranchise(params);
+        (, address ipAssets) = franchiseRegistry.registerFranchise(params);
         ipAssetRegistry = IPAssetRegistry(ipAssets);
         franchiseId = ipAssetRegistry.franchiseId();
         vm.stopPrank();
@@ -105,6 +105,11 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         }
     }
 
+    /// @dev Helper function for creating an IP asset for an owner and IP type.
+    ///      TO-DO: Replace this with a simpler set of default owners that get
+    ///      tested against. The reason this is currently added is that during
+    ///      fuzz testing, foundry may plug existing contracts as potential
+    ///      owners for IP asset creation.
     function _createIPAsset(address ipAssetOwner, uint8 ipAssetType) internal isValidReceiver(ipAssetOwner) returns (uint256) {
         vm.assume(ipAssetType > uint8(type(IPAsset).min));
         vm.assume(ipAssetType < uint8(type(IPAsset).max));
