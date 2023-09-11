@@ -121,4 +121,3 @@ contract IPAssetRegistryTest is Test {
     }
 
 }
-
