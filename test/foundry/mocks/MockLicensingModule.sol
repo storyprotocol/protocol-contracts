@@ -1,9 +1,9 @@
 pragma solidity ^0.8.19;
 
-import {ILicensingModule} from "contracts/modules/licensing/ILicensingModule.sol";
-import {IERC5218} from "contracts/modules/licensing/IERC5218.sol";
-import {ITermsProcessor} from "contracts/modules/licensing/terms/ITermsProcessor.sol";
-import {MockTermsProcessor} from "./MockTermsProcessor.sol";
+import { ILicensingModule } from "contracts/modules/licensing/ILicensingModule.sol";
+import { IERC5218 } from "contracts/modules/licensing/IERC5218.sol";
+import { ITermsProcessor } from "contracts/modules/licensing/terms/ITermsProcessor.sol";
+import { MockTermsProcessor } from "./MockTermsProcessor.sol";
 
 library LibMockFranchiseConfig {
     function getMockFranchiseConfig()
