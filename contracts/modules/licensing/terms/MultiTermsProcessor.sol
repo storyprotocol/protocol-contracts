@@ -57,13 +57,13 @@ contract MultiTermsProcessor is BaseTermsProcessor {
         return super.supportsInterface(interfaceId);
     }
 
-    function tersmExecutedSuccessfully(bytes calldata data) external view override returns (bool) {
+    function termsExecutedSuccessfully(bytes calldata data) external view override returns (bool) {
         uint256 length = processors.length;
         bytes[] memory encodedTerms = new bytes[](length);
         encodedTerms = abi.decode(data, (bytes[]));
         bool result = true;
         for (uint256 i = 0; i < length;) {
-            result = result && processors[i].tersmExecutedSuccessfully(encodedTerms[i]);
+            result = result && processors[i].termsExecutedSuccessfully(encodedTerms[i]);
             unchecked {
                 i++;
             }

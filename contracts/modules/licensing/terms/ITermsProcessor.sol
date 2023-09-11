@@ -18,6 +18,6 @@ interface ITermsProcessor is IERC165 {
     function executeTerms(bytes calldata data) external returns(bytes memory newData);
 
     /// returns true if the terms have been executed successfully or they don't need to be executed, false otherwise
-    function tersmExecutedSuccessfully(bytes calldata data) external view returns(bool);
+    function termsExecutedSuccessfully(bytes calldata data) external view returns(bool);
 
 }

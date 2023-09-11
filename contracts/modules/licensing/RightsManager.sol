@@ -302,7 +302,7 @@ abstract contract RightsManager is
 
     function _isActiveAndTermsOk(License memory license) view private returns (bool) {
         if (address(license.termsProcessor) == address(0)) return license.active;
-        return license.active && license.termsProcessor.tersmExecutedSuccessfully(license.termsData);
+        return license.active && license.termsProcessor.termsExecutedSuccessfully(license.termsData);
     }
 
     function getLicense(uint256 licenseId) public view returns (License memory, address holder) {

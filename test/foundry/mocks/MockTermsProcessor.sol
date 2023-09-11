@@ -26,7 +26,7 @@ contract MockTermsProcessor is ITermsProcessor, ERC165 {
         return data;
     }
 
-    function tersmExecutedSuccessfully(
+    function termsExecutedSuccessfully(
         bytes calldata
     ) external view override returns (bool) {
         return _success;

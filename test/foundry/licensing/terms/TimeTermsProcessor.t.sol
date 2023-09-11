@@ -44,7 +44,7 @@ contract LicenseRegistryTest is BaseTest {
             data: abi.encode(config)
         });
         
-        assertFalse(processor.tersmExecutedSuccessfully(abi.encode(config)), "terms should be inactive before start time");
+        assertFalse(processor.termsExecutedSuccessfully(abi.encode(config)), "terms should be inactive before start time");
 
         vm.prank(licenseHolder);
         licenseId = ipAssetRegistry.createLicense(
@@ -60,12 +60,12 @@ contract LicenseRegistryTest is BaseTest {
         vm.prank(licenseHolder);
         ipAssetRegistry.executeTerms(licenseId);
         assertFalse(ipAssetRegistry.isLicenseActive(licenseId), "execution is a noop if start time set");
-        assertFalse(processor.tersmExecutedSuccessfully(abi.encode(config)), "execution is a noop if start time set");
+        assertFalse(processor.termsExecutedSuccessfully(abi.encode(config)), "execution is a noop if start time set");
         vm.warp(startTime + 100);
         assertTrue(ipAssetRegistry.isLicenseActive(licenseId), "license should be active after start time");
-        assertTrue(processor.tersmExecutedSuccessfully(abi.encode(config)), "terms should be active after start time");
+        assertTrue(processor.termsExecutedSuccessfully(abi.encode(config)), "terms should be active after start time");
         vm.warp(startTime + ttl + 1);
-        assertFalse(processor.tersmExecutedSuccessfully(abi.encode(config)), "terms should be inactive after ttl");
+        assertFalse(processor.termsExecutedSuccessfully(abi.encode(config)), "terms should be inactive after ttl");
         assertFalse(ipAssetRegistry.isLicenseActive(licenseId), "license should be inactive after ttl");
         
     }
@@ -85,7 +85,7 @@ contract LicenseRegistryTest is BaseTest {
             data: abi.encode(config)
         });
         
-        assertFalse(processor.tersmExecutedSuccessfully(abi.encode(config)));
+        assertFalse(processor.termsExecutedSuccessfully(abi.encode(config)));
 
         vm.prank(licenseHolder);
         licenseId = ipAssetRegistry.createLicense(
@@ -99,12 +99,12 @@ contract LicenseRegistryTest is BaseTest {
             termsConfig
         );
         assertFalse(ipAssetRegistry.isLicenseActive(licenseId));
-        assertFalse(processor.tersmExecutedSuccessfully(abi.encode(config)));
+        assertFalse(processor.termsExecutedSuccessfully(abi.encode(config)));
         vm.warp(block.timestamp + 100);
         assertFalse(ipAssetRegistry.isLicenseActive(licenseId));
-        assertFalse(processor.tersmExecutedSuccessfully(abi.encode(config)));
+        assertFalse(processor.termsExecutedSuccessfully(abi.encode(config)));
         vm.warp(block.timestamp + ttl + 1);
-        assertFalse(processor.tersmExecutedSuccessfully(abi.encode(config)));
+        assertFalse(processor.termsExecutedSuccessfully(abi.encode(config)));
         assertFalse(ipAssetRegistry.isLicenseActive(licenseId));
         
     }
@@ -124,7 +124,7 @@ contract LicenseRegistryTest is BaseTest {
             data: abi.encode(config)
         });
         
-        assertFalse(processor.tersmExecutedSuccessfully(abi.encode(config)), "terms should be inactive before start time");
+        assertFalse(processor.termsExecutedSuccessfully(abi.encode(config)), "terms should be inactive before start time");
 
         vm.prank(licenseHolder);
         licenseId = ipAssetRegistry.createLicense(

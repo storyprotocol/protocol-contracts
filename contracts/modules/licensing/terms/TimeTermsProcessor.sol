@@ -17,7 +17,7 @@ contract TimeTermsProcessor is BaseTermsProcessor {
         return abi.encode(config);
     }
 
-    function tersmExecutedSuccessfully(bytes calldata data) external view override returns (bool) {
+    function termsExecutedSuccessfully(bytes calldata data) external view override returns (bool) {
         LibDuration.TimeConfig memory config = abi.decode(data, (LibDuration.TimeConfig));
         return config.isActive();
     }
