@@ -3,11 +3,13 @@ pragma solidity ^0.8.19;
 
 import { IRoyaltyDistributor } from "./IRoyaltyDistributor.sol";
 import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
+import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { IIPAccountRegistry } from "contracts/ip-accounts/IIPAccountRegistry.sol";
 import { IRoyaltyPolicy } from "contracts/modules/royalties/policies/IRoyaltyPolicy.sol";
 import { RoyaltyNFT } from "contracts/modules/royalties/RoyaltyNFT.sol";
+import { UPGRADER_ROLE, PROTOCOL_ADMIN_ROLE } from "contracts/access-control/ProtocolRoles.sol";
 
-contract RoyaltyDistributor is Pausable, IRoyaltyDistributor {
+contract RoyaltyDistributor is Pausable, IRoyaltyDistributor, AccessControlledUpgradeable {
 
     IIPAccountRegistry public immutable ipAccountRegistry;
     RoyaltyNFT public immutable royaltyNFT;
@@ -26,7 +28,7 @@ contract RoyaltyDistributor is Pausable, IRoyaltyDistributor {
         address royaltyPolicy,
         bytes calldata data
     ) external {
-        address ipAccount = ipAccountRegistry.account(block.chainid, nftContract, tokenId);
+        address ipAccount = _ipAccount(nftContract, tokenId);
         policies[ipAccount] = royaltyPolicy;
         IRoyaltyPolicy(royaltyPolicy).initPolicy(ipAccount, data);
     }
@@ -44,7 +46,7 @@ contract RoyaltyDistributor is Pausable, IRoyaltyDistributor {
         uint256 tokenId,
         bytes calldata data
     ) external {
-        address ipAccount = _ipAccount(nftContract, tokenId);
+        address ipAccount = ipAccountRegistry.createAccount(block.chainid, nftContract, tokenId, "");
         IRoyaltyPolicy(policies[ipAccount]).updateDistribution(ipAccount, data);
     }
 
@@ -57,15 +59,19 @@ contract RoyaltyDistributor is Pausable, IRoyaltyDistributor {
         royaltyNFT.claim(account, token);
     }
 
-    function pause() external {
+    function pause() external onlyRole(PROTOCOL_ADMIN_ROLE) {
         _pause();
     }
-    function unpause() external {
+    function unpause() external onlyRole(PROTOCOL_ADMIN_ROLE) {
         _unpause();
     }
 
     function _ipAccount(address nftContract, uint256 tokenId) internal view returns(address) {
         return ipAccountRegistry.account(block.chainid, nftContract, tokenId);
     }
+
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal virtual override onlyRole(UPGRADER_ROLE) {}
 
 }

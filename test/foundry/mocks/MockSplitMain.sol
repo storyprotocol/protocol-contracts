@@ -2,8 +2,14 @@
 pragma solidity ^0.8.13;
 
 import "contracts/modules/royalties/ISplitMain.sol";
+import "test/foundry/mocks/MockSplit.sol";
+import "test/foundry/mocks/MockERC20.sol";
 
 contract MockSplitMain is ISplitMain {
+
+    mapping(ERC20 => mapping(address => uint256)) internal erc20Balances;
+    uint public TOTAL_SUPPLY = 1e6;
+
     constructor() {}
 
     function createSplit(
@@ -11,8 +17,8 @@ contract MockSplitMain is ISplitMain {
         uint32[] calldata,
         uint32,
         address
-    ) external override pure returns (address) {
-        return address(100);
+    ) external override returns (address) {
+        return address(new MockSplit());
     }
 
     function updateAndDistributeETH(
@@ -26,25 +32,38 @@ contract MockSplitMain is ISplitMain {
     }
 
     function updateAndDistributeERC20(
-        address,
-        ERC20,
-        address[] calldata,
-        uint32[] calldata,
+        address split,
+        ERC20 token,
+        address[] calldata accounts,
+        uint32[] calldata percentAllocations,
         uint32,
         address
     ) external override {
-
+        uint balance = token.balanceOf(split);
+        MockSplit(split).sendERC20ToMain(token, balance);
+        for (uint i = 0; i < accounts.length; i++) {
+            erc20Balances[token][accounts[i]] = percentAllocations[i] * balance / TOTAL_SUPPLY;
+        }
     }
 
     function getETHBalance(address) external pure override returns (uint256) {
         return 100;
     }
 
-    function getERC20Balance(address, ERC20) external pure override returns (uint256) {
-        return 100;
+    function getERC20Balance(address account, ERC20 token) external view override returns (uint256) {
+        return erc20Balances[token][account];
     }
 
-    function withdraw(address, uint256, ERC20[] calldata) external override {
-
+    function withdraw(address account, uint256 withdrawETH, ERC20[] calldata tokens) external override {
+        if (withdrawETH != 0) {
+            revert("Unsupport ETH");
+        }
+        unchecked {
+            for (uint256 i = 0; i < tokens.length; ++i) {
+                uint256 withdrawn = erc20Balances[tokens[i]][account];
+                erc20Balances[tokens[i]][account] = 0;
+                tokens[i].transfer(account, withdrawn);
+            }
+        }
     }
 }
