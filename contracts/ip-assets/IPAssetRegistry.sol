@@ -35,6 +35,7 @@ contract IPAssetRegistry is
     bytes32 private constant _STORAGE_LOCATION =
         0x1a0b8fa444ff575656111a4368b8e6a743b70cbf31ffb9ee2c7afe1983f0e378;
     string private constant _VERSION = "0.1.0";
+    uint256 private constant _ROOT_IP_ASSET = 0;
 
     constructor(address _eventEmitter, address _licensingModule, address _franchiseRegistry) RightsManager(_franchiseRegistry) {
         // TODO: should Franchise owner be able to change this?
@@ -112,7 +113,7 @@ contract IPAssetRegistry is
         // Derivative works do not have commercial rights unless a deal with the relevant licensor is made
         if (config.rootIpAssetHasCommercialRights && parentIpAssetId == 0) {
             // Commercial
-            _setCommercialRights(ipAssetId, 0, to, config.revoker, config.commercialLicenseUri, config.commercialConfig, config.commercialTerms);
+            _setCommercialRights(ipAssetId, _ROOT_IP_ASSET, to, config.revoker, config.commercialLicenseUri, config.commercialConfig, config.commercialTerms);
         }
         
         return ipAssetId;
@@ -154,7 +155,7 @@ contract IPAssetRegistry is
      * @param terms for the license to be active
      */
     function _setCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, string memory licenseUri, ILicensingModule.IpAssetConfig memory config, TermsProcessorConfig memory terms) internal {
-        uint256 parentLicenseId = parentIpAssetId == 0 ? config.franchiseRootLicenseId : getLicenseIdByTokenId(parentIpAssetId, true);
+        uint256 parentLicenseId = parentIpAssetId == _ROOT_IP_ASSET ? config.franchiseRootLicenseId : getLicenseIdByTokenId(parentIpAssetId, true);
         _createLicense(
             ipAssetId,
             parentLicenseId,
