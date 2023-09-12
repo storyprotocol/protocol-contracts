@@ -106,7 +106,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
 
         // Register Franchise (will create IPAssetRegistry and associated LicenseRegistry)
         FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("FranchiseName", "FRN", "description", "tokenURI");
-        (uint256 franchiseId, address ipAssets) = franchiseRegistry.registerFranchise(params);
+        address ipAssets;
+        (franchiseId, ipAssets) = franchiseRegistry.registerFranchise(params);
         ipAssetRegistry = IPAssetRegistry(ipAssets);
         licenseRegistry = ILicenseRegistry(ipAssetRegistry.getLicenseRegistry());
 
