@@ -1,16 +1,19 @@
 {
   "main": {
-    "AccessControlSingleton-Impl": "0xD933e6768a0C86ca11DDf802932FeBD50509Ba4D",
-    "AccessControlSingleton-Proxy": "0x58eda9b5b0983f75fa887B598d7164E82791Ba21",
-    "CommonIPAssetEventEmitter": "0xe2a7213762caDDb7438f21f82cEfbB4931167463",
-    "FranchiseRegistry-Impl": "0x88f3a4cc4eaa2433c44a7c502c7abbd2c76b03e2",
-    "FranchiseRegistry-Proxy": "0xf157916d184598105FE4681eC93Be0f799599003",
-    "IPAssetRegistry-Template": "0xC60382Ea8cBea33ad9052E2FBC12d2F019C8947D",
-    "IPAssetRegistryFactory": "0x461DF243955aD5493cFa33434c2B7CfF2C583dc7",
-    "ProtocolRelationshipModule-Impl": "0x0c34223fc772aeC0514B5fbf5614b9ab85EdaAe1",
-    "ProtocolRelationshipModule-Proxy": "0xb146cB898E95953f353bf5A50Fb8f129eC0D5AAb",
-    "LicenseModule-Impl": "0x8602E35ee65074eF0D2701927289705f2F61773D",
-    "LicenseModule-Proxy": "0xFbfa729428af206a084E18328Ec923587193525d"
+    "AccessControlSingleton-Impl": "0x32f0471E404096B978248d0ECE3A8998D87a4b67",
+    "AccessControlSingleton-Proxy": "0xA3067eb696e55F885aE229DF16e5fD75a739CCDF",
+    "CollectModule-Impl": "0x3EAF051c7c5e7313fBb988025f1B45B4FB3cEc3c",
+    "CollectModule-Proxy": "0x379694d591cD310C3610EDb3D8D5CD625cA013a2",
+    "CollectNFT": "0x88EB80a83Dd82b6356ac694470f7795cd1684C0b",
+    "CommonIPAssetEventEmitter": "0x0baA92F82d8992Ff152047f29084079c263BE7F7",
+    "FranchiseRegistry-Impl": "0x57AE4356320e65fbab8679cC2FD05C0b9CA608D2",
+    "FranchiseRegistry-Proxy": "0x6c88f438cbFd9866DCD067fFE18b951f19B968Da",
+    "IPAssetRegistry-Template": "0x6F1364fcA44fCf2d96ECD8b2303E6B27d9f279B6",
+    "IPAssetRegistryFactory": "0x212b75ec1ea70CeA20a86b430058Cd75E5b6766E",
+    "LicensingModule-Impl": "0xC00744062741d2256e13a267aa9f30d186bfF610",
+    "LicensingModule-Proxy": "0xBC0fe1C5A43faEFc0228fBb51741e0296b377A69",
+    "ProtocolRelationshipModule-Impl": "0x825Cb59b351e2cB35885e27d5C0F846F6ec09335",
+    "ProtocolRelationshipModule-Proxy": "0xfC367bb4047D7621B998C536E54Fa88838A6ACA9"
   },
   "relationship-processors": {
     "DstOwnerRelationshipProcessor": "0x2890a4263BA12c6d6241CfC5c8D762B828041b86",

@@ -51,17 +51,17 @@ Deploy local
 ```
 anvil
 (open other tab)
-forge script script/foundry/Deploy.s.sol:Deploy --fork-url=http://127.0.0.1:8545 
+forge script script/foundry/deployment/Main.s.sol:Main --fork-url=http://127.0.0.1:8545 
 ```
 
 Deploy to network dry run
 ```
-forge script script/Deploy.s.sol:Deploy --fork-url=<network rpc url url> -vvvv
+forge script script/foundry/deployment/Main.s.sol:Main --fork-url=<network rpc url url> -vvvv
 ```
 
 Deploy to network
 ```
-forge script script/foundry/Deploy.s.sol:Deploy --fork-url=<network rpc url url> -vvvv --broadcast --verify
+forge script script/foundry/deployment/Main.s.sol:Main --fork-url=<network rpc url url> -vvvv --broadcast --verify
 ```
 
 ## Tasks

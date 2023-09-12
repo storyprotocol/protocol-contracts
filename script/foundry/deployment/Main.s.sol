@@ -13,6 +13,9 @@ import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/access-control/ProtocolRoles.sol";
+import "contracts/modules/licensing/LicensingModule.sol";
+import "test/foundry/mocks/MockCollectNFT.sol";
+import "test/foundry/mocks/MockCollectModule.sol";
 
 contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
@@ -24,12 +27,15 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
     address franchiseRegistry;
     address commonIPAssetEventEmitter;
 
+    string constant NON_COMMERCIAL_LICENSE_URI = "https://noncommercial.license";
+    string constant COMMERCIAL_LICENSE_URI = "https://commercial.license";
+
     constructor() JsonDeploymentHandler("main") {
     }
 
     /// @dev To use, run the following command (e.g. for Goerli):
     /// forge script script/Deploy.s.sol:Deploy --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv
-    /**
+    
     function run() public {
         _beginBroadcast();
         string memory contractKey;
@@ -100,12 +106,74 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
         commonIPAssetEventEmitter = newAddress;
 
+
+        /// LICENSING MODULE
+        contractKey = "LicensingModule-Impl";
+
+        console.log(string.concat("Deploying ", contractKey, "..."));
+
+        newAddress = address(new LicensingModule(address(franchiseRegistry)));
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+
+        contractKey = "LicensingModule-Proxy";
+
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = _deployUUPSProxy(
+            newAddress,
+            abi.encodeWithSelector(
+                bytes4(keccak256(bytes("initialize(address,string)"))),
+                accessControl, NON_COMMERCIAL_LICENSE_URI
+            )
+        );
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        address licensingModule = newAddress;
+
+        /// COLLECT MODULE
+        contractKey = "CollectNFT";
+        console.log(string.concat("Deploying ", contractKey, "..."));
+
+        newAddress = address(new MockCollectNFT());
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+
+        address defaultCollectNFTImpl = newAddress;
+
+        contractKey = "CollectModule-Impl";
+        console.log(string.concat("Deploying ", contractKey, "..."));
+
+        newAddress = address(new MockCollectModule(address(franchiseRegistry), defaultCollectNFTImpl));
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+
+        contractKey = "CollectModule-Proxy";
+
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = _deployUUPSProxy(
+            newAddress,
+            abi.encodeWithSelector(
+                bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
+            )
+        );
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        address collectModule = newAddress;
+
+
         /// UPDATE BEACON
 
         contractKey = "IPAssetRegistry-Template";
 
         console.log(string.concat("Deploying ", contractKey, "..."));
-        newAddress = address(new IPAssetRegistry(commonIPAssetEventEmitter, franchiseRegistry));
+        newAddress = address(
+            new IPAssetRegistry(
+                commonIPAssetEventEmitter,
+                licensingModule,
+                franchiseRegistry,
+                collectModule
+            )
+        );
         _writeAddress(contractKey, newAddress);
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
@@ -144,5 +212,5 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         _writeDeployment(); 
         _endBroadcast();
     }
-    */
+    
 }
