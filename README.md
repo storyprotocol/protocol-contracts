@@ -16,7 +16,7 @@ The starting IPAsset types are:
 - Art
 - Group
 
-They have metadata identifying medium, duration, divisions, authorship and other characteristics.
+They have mediaURL, an off chain file identifying the IPA medium, duration, divisions, authorship and other characteristics.
 
 IPAssets can be combined together to form more rich intellectual property, and can be remixed and extended within the legal parameters defined on each Franchise.
 
@@ -27,16 +27,41 @@ When registering a new franchise, along with minting an NFT to identify the Fran
 
 Ownership of a Franchise Registry token implies the power to:
 - Configure the licensing rules for the IPAssets created in the Franchise
-- Define possible Relationships between IPAssets of the same franchise // TODO
+- Define possible Relationships between IPAssets of the same franchise 🚧
 
 
 ## IPAssetRegistry
 
+ERC721 NFT where IPAssets are minted. There is 1 IPAssetRegistry per Franchise registered in Story Protocol.
+
+When minted, an IPAsset will also:
+1. Set it's metadata
+2. Set the parent IPA id, in case it is a remix
+3. Assign the licenses representing its IP Rights, as defined by the Franchise Owner in the Licensing Module.
+4. Configure it's collectible 🚧
+
+
 ## IPAssetRegistryFactory
+
+Factory contract responsible for, when triggered by a Franchise registration, deploying an instance of the contracts required to represent and run said Franchise:
+- IPAssetRegistry
+- LicenseRegistry
+
+To save in gas, these contracts will be proxys, currently BeaconProxy clones 🚧
 
 # Modules
 
+We have represented the IP with our Core Components. Now let's look into the contracts that add utility and features to manage IP in Story Protocol:
+
+
 ## Relationships
+
+A Relationship is an on-chain directional association between 2 IPAssets (or an IPAsset and an external NFT), identified by an ID and a set of pre conditions that gives it meaning.
+
+Since they are on-chain, they help compose with other modules or external protocols/contracts:
+- They can be created as a result of the execution of other modules (e.g agreeing on the Licensing terms for a Character creates an APPEARS_IN relationship between Character and Story)
+- They can be a condition for the correct execution of a module (IPA owner can emit commercial license of a Character IPA if said IPA has a EXTERNAL_PFP relation)
+
 
 ## Licensing
 
