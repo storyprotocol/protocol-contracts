@@ -1,9 +1,26 @@
+# Story Protocol Contracts
 
-# Solidity Template 
+# Architecture Diagram
+# Core
+## FranchiseRegistry
 
-Support both [Foundry](https://github.com/gakonst/foundry) test and [Hardhat](https://hardhat.org/).
+## IPAssetRegistry
 
-# Getting Started
+## IPAssetRegistryFactory
+
+# Modules
+
+## Relationships
+
+## Licensing
+
+## Collect
+
+## Royalty Splits
+
+
+
+# Installing
 
 ## Requirements
 
@@ -64,7 +81,7 @@ Deploy to network
 forge script script/foundry/Deploy.s.sol:Deploy --fork-url=<network rpc url url> -vvvv --broadcast --verify
 ```
 
-## Tasks
+# Tasks
 Before using any task, make sure you have run
 ```
 npx hardhat compile
@@ -132,7 +149,4 @@ And get your slither output.
 -   [Foundry Documentation](https://book.getfoundry.sh/)
 -   [Yarn](https://yarnpkg.com/getting-started)
 
-### TODO
-
-[ ] Add support for sepolia chain 
 
