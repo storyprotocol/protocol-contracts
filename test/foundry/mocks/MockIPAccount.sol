@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "contracts/ip-accounts/IPAccountImpl.sol";
 
 contract MockIPAccount is IPAccountImpl {
-    constructor() IPAccountImpl(address(1)) {
+    constructor(address royaltyDistributor) IPAccountImpl(royaltyDistributor) {
 
     }
 

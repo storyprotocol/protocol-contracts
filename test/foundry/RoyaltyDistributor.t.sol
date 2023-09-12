@@ -35,14 +35,13 @@ contract RoyaltyDistributorTest is Test {
 //    error IpAccountInitializationFailed();
 
     function setUp() public {
-        implementation = new MockIPAccount();
-        registry = new IPAccountRegistry(address(implementation));
         chainId = 100;
         tokenAddress = address(200);
         tokenId = 300;
-        splitMain = new MockSplitMain();
-//        splitMain = ISplitMain(0x2ed6c4B5dA6378c7897AC67Ba9e43102Feb694EE);
+        splitMain = _getSplitMain();
         royaltyNft = new RoyaltyNFT(address(splitMain));
+        implementation = new MockIPAccount(address(royaltyNft));
+        registry = new IPAccountRegistry(address(implementation));
         royaltyDistributor = new RoyaltyDistributor(address(registry), address(royaltyNft));
         mutablePolicy = new MutableRoyaltyProportionPolicy(address(royaltyNft));
         mERC20 = new MockERC20("Royalty Token", "RTK", 18);
@@ -138,10 +137,14 @@ contract RoyaltyDistributorTest is Test {
         mERC20.approve(address(royaltyNft), 10000);
         vm.stopPrank();
         royaltyDistributor.distribute(tokenAddress, tokenId, address(mERC20));
-        assertEq(splitMain.getERC20Balance(acc1, mERC20), 2500);
+        assertEq(splitMain.getERC20Balance(acc1, mERC20), 2499);
 
         assertEq(mERC20.balanceOf(acc1), 0);
         royaltyDistributor.claim(acc1, address(mERC20));
-        assertEq(mERC20.balanceOf(acc1), 2500);
+        assertEq(mERC20.balanceOf(acc1), 2498);
+    }
+
+    function _getSplitMain() internal virtual returns(ISplitMain) {
+        return new MockSplitMain();
     }
 }

@@ -39,7 +39,8 @@ contract MockSplitMain is ISplitMain {
         uint32,
         address
     ) external override {
-        uint balance = token.balanceOf(split);
+        // simulate SplitMain behavior that SplitMain reserve 1 from split balance
+        uint balance = token.balanceOf(split) - 1;
         MockSplit(split).sendERC20ToMain(token, balance);
         for (uint i = 0; i < accounts.length; i++) {
             erc20Balances[token][accounts[i]] = percentAllocations[i] * balance / TOTAL_SUPPLY;
@@ -60,8 +61,9 @@ contract MockSplitMain is ISplitMain {
         }
         unchecked {
             for (uint256 i = 0; i < tokens.length; ++i) {
-                uint256 withdrawn = erc20Balances[tokens[i]][account];
-                erc20Balances[tokens[i]][account] = 0;
+                // Simulate SplitMain behavior that account balance reserve 1
+                uint256 withdrawn = erc20Balances[tokens[i]][account] - 1;
+                erc20Balances[tokens[i]][account] = 1;
                 tokens[i].transfer(account, withdrawn);
             }
         }
