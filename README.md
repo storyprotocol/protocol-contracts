@@ -1,7 +1,9 @@
 # Story Protocol Contracts
 
 # Architecture Diagram
-# Core
+![image](https://github.com/storyprotocol/protocol-contracts/assets/2632384/b3912a23-adb9-4fd2-98b7-922e48a6ebb4)
+
+# Core Components
 ## FranchiseRegistry
 
 ## IPAssetRegistry
