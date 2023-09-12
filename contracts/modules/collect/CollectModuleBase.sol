@@ -14,6 +14,7 @@ import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { InitCollectNFTParams } from "contracts/lib/CollectNFTStructs.sol";
 import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
 
+
 /// @title Collect Module Base Implementation
 /// @notice This is the Story Protocol base collect module that SHOULD be
 ///         extended when creating collect modules for franchise IP assets.
