@@ -180,21 +180,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     function _createIPAsset(address ipAssetOwner, uint8 ipAssetType) internal isValidReceiver(ipAssetOwner) returns (uint256) {
         vm.assume(ipAssetType > uint8(type(IPAsset).min));
         vm.assume(ipAssetType < uint8(type(IPAsset).max));
-        vm.assume(ipAssetOwner != address(0));
-        vm.assume(ipAssetOwner != address(franchiseRegistry));
-        vm.assume(ipAssetOwner != address(factory));
-        vm.assume(ipAssetOwner != address(relationshipModule));
-        vm.assume(ipAssetOwner != address(accessControl));
-        vm.assume(ipAssetOwner != address(accessControlSingletonImpl));
-        vm.assume(ipAssetOwner != address(collectModule));
-        vm.assume(ipAssetOwner != address(collectModuleImpl));
-        vm.assume(ipAssetOwner != address(defaultCollectNFTImpl));
-        vm.assume(ipAssetOwner != address(franchiseRegistryImpl));
-        vm.assume(ipAssetOwner != address(relationshipProcessor));
-        vm.assume(ipAssetOwner != address(ipAssetRegistry));
-        vm.assume(ipAssetOwner != address(relationshipModuleHarness));
-        vm.assume(ipAssetOwner != address(ipAssetRegistryImpl));
-        vm.assume(ipAssetOwner != address(eventEmitter));
         vm.prank(ipAssetOwner);
         return ipAssetRegistry.createIPAsset(IPAsset(ipAssetType), "name", "description", "mediaUrl", ipAssetOwner, 0);
     }

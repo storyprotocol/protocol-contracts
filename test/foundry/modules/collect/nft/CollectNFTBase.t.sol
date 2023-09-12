@@ -44,7 +44,7 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest, ICollectNFTEventsAndErr
     }
 
     /// @notice Tests whether collect module collection is successful.
-    function test_CollectNFTCollect(address ipAssetOwner, uint8 ipAssetType) public createCollectNFT(ipAssetOwner, ipAssetType) {
+    function test_CollectNFTCollect(uint8 ipAssetType) public createCollectNFT(cal, ipAssetType) {
         uint256 aliceBalance = collectNFT.balanceOf(alice);
         uint256 bobBalance = collectNFT.balanceOf(bob);
         uint256 totalSupply = collectNFT.totalSupply();
@@ -80,13 +80,13 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest, ICollectNFTEventsAndErr
     }
 
     /// @notice Tests whether collect calls not made by the collect module revert.
-    function test_CollectNFTNonCollectModuleCallerReverts(address ipAssetOwner, uint8 ipAssetType) public createCollectNFT(ipAssetOwner, ipAssetType) {
+    function test_CollectNFTNonCollectModuleCallerReverts(uint8 ipAssetType) public createCollectNFT(cal, ipAssetType) {
         vm.expectRevert(CollectNFTCallerUnauthorized.selector);
         collectNFT.collect(address(this), "");
     }
 
     /// @notice Tests whether re-initialization of collect module settings revert.
-    function test_CollectNFTInitializeTwiceReverts(address ipAssetOwner, uint8 ipAssetType) public createCollectNFT(ipAssetOwner, ipAssetType) {
+    function test_CollectNFTInitializeTwiceReverts(uint8 ipAssetType) public createCollectNFT(cal, ipAssetType) {
         vm.expectRevert(CollectNFTAlreadyInitialized.selector);
         collectNFT.initialize(InitCollectNFTParams({
             ipAssetRegistry: address(ipAssetRegistry),
