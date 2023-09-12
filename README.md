@@ -4,7 +4,31 @@
 ![image](https://github.com/storyprotocol/protocol-contracts/assets/2632384/b3912a23-adb9-4fd2-98b7-922e48a6ebb4)
 
 # Core Components
+
+In Story Protocol, the basic unit of intellectual property is the IPAsset, representing a well defined item that will be subject to a set of rules defined in each Franchise.
+IPAssets will have many categories corresponding to different domains of intellectual property, starting with Narrative Universes.
+
+The starting IPAsset types are:
+- Story
+- Character
+- Item
+- Location
+- Art
+- Group
+
+They have metadata identifying medium, duration, divisions, authorship and other characteristics.
+
+IPAssets can be combined together to form more rich intellectual property, and can be remixed and extended within the legal parameters defined on each Franchise.
+
 ## FranchiseRegistry
+
+ERC721 that registers all the narrative franchises in Story Protocol.
+When registering a new franchise, along with minting an NFT to identify the Franchise Owner, all contracts required to represent the IPAssets, their IP rights, licenses, etc will be deployed by a factory.
+
+Ownership of a Franchise Registry token implies the power to:
+- Configure the licensing rules for the IPAssets created in the Franchise
+- Define possible Relationships between IPAssets of the same franchise // TODO
+
 
 ## IPAssetRegistry
 
