@@ -7,7 +7,8 @@ import { ERC1155 } from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC20} from "solmate/src/tokens/ERC20.sol";
+import { ERC20 } from "solmate/src/tokens/ERC20.sol";
+import { IIPAccount } from "contracts/ip-accounts/IIPAccount.sol";
 import { ISplitMain } from "./ISplitMain.sol";
 
 error AccountsAndAllocationsMismatch(
@@ -20,7 +21,9 @@ error InvalidAllocationsSum(uint32 allocationsSum);
 contract RoyaltyNFT is ERC1155Supply {
     using SafeERC20 for IERC20;
 
+    // tokenId => owners list
     mapping(uint256 => address[]) private owners;
+    // hash(tokenId, owner address) => index
     mapping(bytes32 => uint256) private ownerIndexes;
 
     uint256 public constant TOTAL_SUPPLY = 1e6;
@@ -36,6 +39,7 @@ contract RoyaltyNFT is ERC1155Supply {
     function distributeFunds(address sourceAccount, address token) external {
         uint256 tokenId = toTokenId(sourceAccount);
         address[] memory accounts = owners[tokenId];
+        sort(accounts);
         uint256 numAccounts = accounts.length;
         uint32[] memory allocations = new uint32[](numAccounts);
         for (uint256 i; i < numAccounts;) {
@@ -45,7 +49,7 @@ contract RoyaltyNFT is ERC1155Supply {
             }
         }
         address split = splits[tokenId];
-        IERC20(token).safeTransferFrom(sourceAccount, split, IERC20(token).balanceOf(sourceAccount));
+        IIPAccount(payable(sourceAccount)).sendRoyaltyForDistribution(split, token);
         splitMain.updateAndDistributeERC20({
             split: split,
             token: ERC20(token),
@@ -81,10 +85,18 @@ contract RoyaltyNFT is ERC1155Supply {
                 _mint(accounts[i], tokenId, initAllocations[i], "");
             }
         }
+
+        address[] memory initAccounts = new address[](2);
+        initAccounts[0] = address(0);
+        initAccounts[1] = address(1);
+        uint32[] memory initPercentAllocations = new uint32[](2);
+        initPercentAllocations[0] = uint32(500000);
+        initPercentAllocations[1] = uint32(500000);
+
         splits[tokenId] = payable(
             splitMain.createSplit({
-                accounts: accounts,
-                percentAllocations: initAllocations,
+                accounts: initAccounts,
+                percentAllocations: initPercentAllocations,
                 distributorFee: 0,
                 controller: address(this)
             })
@@ -148,6 +160,19 @@ contract RoyaltyNFT is ERC1155Supply {
                 // overflow should be impossible in for-loop index
                 ++i;
             }
+        }
+    }
+
+    function sort(address[] memory data) internal pure {
+        uint length = data.length;
+        for (uint i = 1; i < length; i++) {
+            address key = data[i];
+            int j = int(i - 1);
+            while ((j >= 0) && (data[uint(j)] > key)) {
+                data[uint(j) + 1] = data[uint(j)];
+                j--;
+            }
+            data[uint(j + 1)] = key;
         }
     }
 }

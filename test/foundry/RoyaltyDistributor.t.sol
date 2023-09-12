@@ -41,6 +41,7 @@ contract RoyaltyDistributorTest is Test {
         tokenAddress = address(200);
         tokenId = 300;
         splitMain = new MockSplitMain();
+//        splitMain = ISplitMain(0x2ed6c4B5dA6378c7897AC67Ba9e43102Feb694EE);
         royaltyNft = new RoyaltyNFT(address(splitMain));
         royaltyDistributor = new RoyaltyDistributor(address(registry), address(royaltyNft));
         mutablePolicy = new MutableRoyaltyProportionPolicy(address(royaltyNft));

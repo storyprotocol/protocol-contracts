@@ -4,6 +4,10 @@ pragma solidity ^0.8.13;
 import "contracts/ip-accounts/IPAccountImpl.sol";
 
 contract MockIPAccount is IPAccountImpl {
+    constructor() IPAccountImpl(address(1)) {
+
+    }
+
     function foo(bool val) pure external {
         if (!val) {
             revert("false");
