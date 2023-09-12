@@ -7,6 +7,7 @@ import { IPAssetRegistry } from "./IPAssetRegistry.sol";
 import { ZeroAddress } from "../errors/General.sol";
 import { IVersioned } from "../utils/IVersioned.sol";
 import { UnsupportedInterface } from "../errors/General.sol";
+import { LicenseRegistry } from "../modules/licensing/LicenseRegistry.sol";
 import { RevertingIPAssetRegistry } from "contracts/utils/RevertingIPAssetRegistry.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
@@ -40,6 +41,9 @@ contract IPAssetRegistryFactory is Ownable {
             description
         );
         address proxy = address(new BeaconProxy(address(BEACON), data));
+        LicenseRegistry licenseRegistry = new LicenseRegistry(proxy, string.concat("Licenses for ", name), string.concat("sl", symbol));
+        IPAssetRegistry(proxy).setLicenseRegistry(address(licenseRegistry));
+        
         emit FranchiseCreated(proxy, name, symbol);
         return proxy;
     }

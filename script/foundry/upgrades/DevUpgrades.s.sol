@@ -13,6 +13,7 @@ import "contracts/access-control/ProtocolRoles.sol";
 import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
 import "contracts/ip-assets/IPAssetRegistry.sol";
 
+
 /**
  * Use to upgrade contracts during development, in testnets. Expect things to break.
  */
@@ -64,11 +65,12 @@ contract UpgradeFranchiseRegistry is Script, BroadcastManager, JsonDeploymentHan
         address newFranchiseRegistry = address(new FranchiseRegistry(ipAssetRegistryFactory));
         console.log("Upgrading FranchiseRegistry to ", newFranchiseRegistry);
         franchiseRegistry.upgradeTo(newFranchiseRegistry);
-        
+
+        console.log("Upgrading IPAssetRegistryFactory to ", newFranchiseRegistry);
     }
 
 }
-
+/**
 contract UpgradeIPAssetRegistry is Script, BroadcastManager, JsonDeploymentHandler {
 
     using StringUtil for uint256;
@@ -94,7 +96,7 @@ contract UpgradeIPAssetRegistry is Script, BroadcastManager, JsonDeploymentHandl
 
         contractKey = "IPAssetRegistry-Impl";
         console.log(string.concat("Deploying ", contractKey, "..."));
-        address ipAssetRegistry = address(new IPAssetRegistry(eventEmitter));
+        address ipAssetRegistry = address(new IPAssetRegistry(eventEmitter, franchiseRegistryProxy));
         console.log(string.concat(contractKey, " deployed to:"), ipAssetRegistry);
 
         console.log(string.concat("Updating ", contractKey, " beacon..."));
@@ -104,3 +106,4 @@ contract UpgradeIPAssetRegistry is Script, BroadcastManager, JsonDeploymentHandl
     }
 
 }
+*/

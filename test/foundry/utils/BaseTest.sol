@@ -18,8 +18,12 @@ import "contracts/errors/General.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "contracts/modules/relationships/RelationshipModuleBase.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
-import { ICollectNFT } from "contracts/interfaces/ICollectNFT.sol";
-import { ICollectModule } from "contracts/interfaces/ICollectModule.sol";
+import "contracts/modules/licensing/LicensingModule.sol";
+import "contracts/modules/licensing/terms/ITermsProcessor.sol";
+import "contracts/modules/licensing/LicenseRegistry.sol";
+import "contracts/interfaces/ICollectModule.sol";
+
+import '../mocks/MockTermsProcessor.sol';
 
 contract BaseTest is BaseTestUtils, ProxyHelper {
 
@@ -31,6 +35,10 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     RelationshipModuleBase public relationshipModule;
     AccessControlSingleton accessControl;
     PermissionlessRelationshipProcessor public relationshipProcessor;
+    LicensingModule public licensingModule;
+    ILicenseRegistry public licenseRegistry;
+    MockTermsProcessor public nonCommercialTermsProcessor;
+    MockTermsProcessor public commercialTermsProcessor;
     ICollectModule public collectModule;
     RelationshipModuleHarness public relationshipModuleHarness;
     address eventEmitter;
@@ -39,15 +47,21 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     address public collectModuleImpl;
     address public accessControlSingletonImpl;
 
-    address admin = address(123);
-    address franchiseOwner = address(456);
     bool public deployProcessors = false;
+
+    address constant admin = address(123);
+    address constant franchiseOwner = address(456);
+    address constant revoker = address(789);
+    string constant NON_COMMERCIAL_LICENSE_URI = "https://noncommercial.license";
+    string constant COMMERCIAL_LICENSE_URI = "https://commercial.license";
 
     constructor() {}
 
     function setUp() virtual override(BaseTestUtils) public {
         super.setUp();
         factory = new IPAssetRegistryFactory();
+
+        // Create Access Control
         accessControlSingletonImpl = address(new AccessControlSingleton());
         accessControl = AccessControlSingleton(
             _deployUUPSProxy(
@@ -58,6 +72,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
             )
         );
         
+        // Create Franchise Registry
         franchiseRegistryImpl = address(new FranchiseRegistry(address(factory)));
         franchiseRegistry = FranchiseRegistry(
             _deployUUPSProxy(
@@ -67,16 +82,43 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
                 )
             )
         );
+        // Create Common Event Emitter
         eventEmitter = address(new CommonIPAssetEventEmitter(address(franchiseRegistry)));
-        ipAssetRegistryImpl = address(new IPAssetRegistry(eventEmitter));
-        factory.upgradeFranchises(ipAssetRegistryImpl);
+        
+        // Create Licensing Module
+        address licensingImplementation = address(new LicensingModule(address(franchiseRegistry)));
+        licensingModule = LicensingModule(
+            _deployUUPSProxy(
+                licensingImplementation,
+                abi.encodeWithSelector(
+                    bytes4(keccak256(bytes("initialize(address,string)"))),
+                    address(accessControl), NON_COMMERCIAL_LICENSE_URI
+                )
+            )
+        );
 
+        
+        // upgrade factory to use new event emitter
+        ipAssetRegistryImpl = address(new IPAssetRegistry(eventEmitter, address(licensingModule), address(franchiseRegistry)));
+        factory.upgradeFranchises(ipAssetRegistryImpl);
+        
         vm.startPrank(franchiseOwner);
-        FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("name", "symbol", "description", "tokenURI");
-        (, address ipAssets) = franchiseRegistry.registerFranchise(params);
+
+        // Register Franchise (will create IPAssetRegistry and associated LicenseRegistry)
+        FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("FranchiseName", "FRN", "description", "tokenURI");
+        address ipAssets;
+        (franchiseId, ipAssets) = franchiseRegistry.registerFranchise(params);
         ipAssetRegistry = IPAssetRegistry(ipAssets);
-        franchiseId = ipAssetRegistry.franchiseId();
+        licenseRegistry = ILicenseRegistry(ipAssetRegistry.getLicenseRegistry());
+
+        // Configure Licensing for Franchise
+        nonCommercialTermsProcessor = new MockTermsProcessor();
+        commercialTermsProcessor = new MockTermsProcessor();
+        licensingModule.configureFranchiseLicensing(franchiseId, _getLicensingConfig());
+
         vm.stopPrank();
+
+        // Create Relationship Module
         relationshipModuleHarness = new RelationshipModuleHarness(address(franchiseRegistry));
         relationshipModule = RelationshipModuleBase(
             _deployUUPSProxy(
@@ -99,11 +141,35 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
                 )
             )
         );
-
         if (deployProcessors) {
             relationshipProcessor = new PermissionlessRelationshipProcessor(address(relationshipModule));
         }
     }
+
+    function _getLicensingConfig() view internal returns (ILicensingModule.FranchiseConfig memory) {
+        return ILicensingModule.FranchiseConfig({
+            nonCommercialConfig: ILicensingModule.IpAssetConfig({
+                canSublicense: true,
+                franchiseRootLicenseId: 0
+            }),
+            nonCommercialTerms: IERC5218.TermsProcessorConfig({
+                processor: nonCommercialTermsProcessor,
+                data: abi.encode("nonCommercial")
+            }),
+            commercialConfig: ILicensingModule.IpAssetConfig({
+                canSublicense: false,
+                franchiseRootLicenseId: 0
+            }),
+            commercialTerms: IERC5218.TermsProcessorConfig({
+                processor: commercialTermsProcessor,
+                data: abi.encode("commercial")
+            }),
+            rootIpAssetHasCommercialRights: false,
+            revoker: revoker,
+            commercialLicenseUri: "uriuri"
+        });
+    }
+
 
     /// @dev Helper function for creating an IP asset for an owner and IP type.
     ///      TO-DO: Replace this with a simpler set of default owners that get
@@ -129,7 +195,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         vm.assume(ipAssetOwner != address(ipAssetRegistryImpl));
         vm.assume(ipAssetOwner != address(eventEmitter));
         vm.prank(ipAssetOwner);
-        return ipAssetRegistry.createIPAsset(IPAsset(ipAssetType), "name", "description", "mediaUrl");
+        return ipAssetRegistry.createIPAsset(IPAsset(ipAssetType), "name", "description", "mediaUrl", ipAssetOwner, 0);
     }
-
 }

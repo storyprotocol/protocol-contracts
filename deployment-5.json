@@ -3,12 +3,14 @@
     "AccessControlSingleton-Impl": "0xD933e6768a0C86ca11DDf802932FeBD50509Ba4D",
     "AccessControlSingleton-Proxy": "0x58eda9b5b0983f75fa887B598d7164E82791Ba21",
     "CommonIPAssetEventEmitter": "0xe2a7213762caDDb7438f21f82cEfbB4931167463",
-    "FranchiseRegistry-Impl": "0x08173A3D97aeAE39078a5714279c2233B270592e",
+    "FranchiseRegistry-Impl": "0x88f3a4cc4eaa2433c44a7c502c7abbd2c76b03e2",
     "FranchiseRegistry-Proxy": "0xf157916d184598105FE4681eC93Be0f799599003",
     "IPAssetRegistry-Template": "0xC60382Ea8cBea33ad9052E2FBC12d2F019C8947D",
     "IPAssetRegistryFactory": "0x461DF243955aD5493cFa33434c2B7CfF2C583dc7",
     "ProtocolRelationshipModule-Impl": "0x0c34223fc772aeC0514B5fbf5614b9ab85EdaAe1",
-    "ProtocolRelationshipModule-Proxy": "0xb146cB898E95953f353bf5A50Fb8f129eC0D5AAb"
+    "ProtocolRelationshipModule-Proxy": "0xb146cB898E95953f353bf5A50Fb8f129eC0D5AAb",
+    "LicenseModule-Impl": "0x8602E35ee65074eF0D2701927289705f2F61773D",
+    "LicenseModule-Proxy": "0xFbfa729428af206a084E18328Ec923587193525d"
   },
   "relationship-processors": {
     "DstOwnerRelationshipProcessor": "0x2890a4263BA12c6d6241CfC5c8D762B828041b86",

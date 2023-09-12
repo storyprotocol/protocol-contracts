@@ -7,3 +7,5 @@ error ZeroAmount();
 error UnsupportedInterface(string name);
 error Unauthorized();
 error NonExistentID(uint256 id);
+error EmptyArray();
+error LengthMismatch();

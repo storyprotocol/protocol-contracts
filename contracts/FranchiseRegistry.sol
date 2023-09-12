@@ -11,6 +11,7 @@ import { IIPAssetRegistry } from "./ip-assets/IIPAssetRegistry.sol";
 import { LibIPAssetId } from "./ip-assets/LibIPAssetId.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract FranchiseRegistry is
     UUPSUpgradeable,
@@ -49,7 +50,6 @@ contract FranchiseRegistry is
     uint256 public constant PROTOCOL_ROOT_ID = 0;
     address public constant PROTOCOL_ROOT_ADDRESS = address(0);
     string private constant _VERSION = "0.1.0";
-    
 
     constructor(address _factory) {
         if (_factory == address(0)) revert ZeroAddress();
@@ -85,6 +85,7 @@ contract FranchiseRegistry is
         $.ipAssetRegistries[nextId] = ipAssetRegistry;
         $.tokenURIs[nextId] = params.tokenURI;
         _safeMint(msg.sender, nextId);
+        // TODO: set licensing restrictions per franchise, maybe grant commercial root license to the franchise NFT
         
         emit FranchiseRegistered(msg.sender, nextId, ipAssetRegistry, params.name, params.symbol, params.tokenURI);
         
@@ -98,6 +99,7 @@ contract FranchiseRegistry is
         return $.ipAssetRegistries[franchiseId];
     }
 
+    
     /**
      * @notice checks if an address is a valid SP IPAssetRegistry.
      * @param ipAssetRegistry the address to check
@@ -110,6 +112,7 @@ contract FranchiseRegistry is
             return false;
         }
     }
+
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         _requireMinted(tokenId);
