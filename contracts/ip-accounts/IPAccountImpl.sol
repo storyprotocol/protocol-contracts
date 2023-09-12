@@ -23,22 +23,11 @@ contract IPAccountImpl is
 {
     using SafeERC20 for IERC20;
 
-    address public immutable royaltyDistributor;
     uint256 public state;
     // ERC20 token => amount
     mapping(address => uint256) public entitled;
     // ERC20 token => amount
     mapping(address => uint256) public withdrawn;
-
-    /// @notice Reverts if the sender isn't RoyaltyDistributor
-    modifier onlyRoyaltyDistributor() {
-        if (msg.sender != royaltyDistributor) revert("Unauthorized") ;
-        _;
-    }
-
-    constructor(address _royaltyDistributor) {
-        royaltyDistributor = _royaltyDistributor;
-    }
 
     receive() external payable {}
 
@@ -122,7 +111,8 @@ contract IPAccountImpl is
         IERC721(nftContract).safeTransferFrom(from, to, tokenId);
     }
 
-    function sendRoyaltyForDistribution(address distributor, address erc20) external onlyRoyaltyDistributor() {
+    // TODO: authorization check that only the royaltyDistributor can call this function
+    function sendRoyaltyForDistribution(address distributor, address erc20) external {
         IERC20(erc20).safeTransfer(
             distributor,
             IERC20(erc20).balanceOf(address(this)) + withdrawn[erc20] - entitled[erc20]

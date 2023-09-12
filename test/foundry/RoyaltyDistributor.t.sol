@@ -40,7 +40,7 @@ contract RoyaltyDistributorTest is Test {
         tokenId = 300;
         splitMain = _getSplitMain();
         royaltyNft = new RoyaltyNFT(address(splitMain));
-        implementation = new MockIPAccount(address(royaltyNft));
+        implementation = new MockIPAccount();
         registry = new IPAccountRegistry(address(implementation));
         royaltyDistributor = new RoyaltyDistributor(address(registry), address(royaltyNft));
         mutablePolicy = new MutableRoyaltyProportionPolicy(address(royaltyNft));

@@ -16,7 +16,7 @@ contract RegistryTest is Test {
     error IpAccountInitializationFailed();
 
     function setUp() public {
-        implementation = new MockIPAccount(address(1));
+        implementation = new MockIPAccount();
         registry = new IPAccountRegistry(address(implementation));
         chainId = 100;
         tokenAddress = address(200);

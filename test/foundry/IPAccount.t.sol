@@ -15,7 +15,7 @@ contract IPAccountTest is Test {
     MockERC721 nft = new MockERC721();
 
     function setUp() public {
-        implementation = new IPAccountImpl(address(1));
+        implementation = new IPAccountImpl();
         registry = new IPAccountRegistry(address(implementation));
     }
 
