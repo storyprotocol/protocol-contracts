@@ -5,7 +5,14 @@ import "test/foundry/RoyaltyDistributor.t.sol";
 
 contract RoyaltyDistributorForkTest is RoyaltyDistributorTest {
     function _getSplitMain() internal virtual override returns(ISplitMain) {
-        uint256 mainnetFork = vm.createFork(vm.envString("MAINNET_RPC_URL"), 18117657);
+        string memory mainnetRpc;
+        try vm.envString("MAINNET_RPC_URL") returns (string memory rpcUrl) {
+            mainnetRpc = rpcUrl;
+        } catch {
+            mainnetRpc = "https://eth-mainnet.g.alchemy.com/v2/demo";
+        }
+        console.log(mainnetRpc);
+        uint256 mainnetFork = vm.createFork(mainnetRpc);
         vm.selectFork(mainnetFork);
         assertEq(vm.activeFork(), mainnetFork);
         console.log(block.number);
