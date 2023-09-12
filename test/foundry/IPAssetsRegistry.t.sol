@@ -8,6 +8,8 @@ import { LibIPAssetId } from "../../contracts/ip-assets/LibIPAssetId.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { IERC1967 } from "@openzeppelin/contracts/interfaces/IERC1967.sol";
 import { MockIPAssetEventEmitter } from "./mocks/MockIPAssetEventEmitter.sol";
+import { MockCollectNFT } from "./mocks/MockCollectNFT.sol";
+import { MockCollectModule } from "./mocks/MockCollectModule.sol";
 import { MockLicensingModule } from "./mocks/MockLicensingModule.sol";
 import "forge-std/Test.sol";
 
@@ -42,7 +44,9 @@ contract IPAssetRegistryTest is Test {
         factory = new IPAssetRegistryFactory();
         address mockEventEmitter = address(new MockIPAssetEventEmitter());
         mockLicenseModule = address(new MockLicensingModule());
-        factory.upgradeFranchises(address(new IPAssetRegistry(mockEventEmitter, mockLicenseModule, mockFranchiseRegistry)));
+        address mockCollectModule = address(new MockCollectModule(mockFranchiseRegistry, address(new MockCollectNFT())));
+
+        factory.upgradeFranchises(address(new IPAssetRegistry(mockEventEmitter, mockLicenseModule, mockFranchiseRegistry, mockCollectModule)));
         ipAssetRegistry = IPAssetRegistry(factory.createFranchiseIPAssets(1, "name", "symbol", "description"));
     }
 

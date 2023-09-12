@@ -68,6 +68,7 @@ abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModu
 
         // Only the IP asset registry may initialize its asset's collect module.
         address collectNFTImpl = initCollectParams.collectNFTImpl;
+
         if (msg.sender != FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId)) {
             revert CollectModuleCallerUnauthorized();
         }

@@ -9,7 +9,7 @@ import "./mocks/MockIPAssetEventEmitter.sol";
 
 contract IPAssetRegistryv2 is IPAssetRegistry {
 
-    constructor(address _eventEmitter, address licensingModule, address _franchiseRegistry) IPAssetRegistry(_eventEmitter, licensingModule, _franchiseRegistry) {
+    constructor(address _eventEmitter, address licensingModule, address _franchiseRegistry, address collectModule) IPAssetRegistry(_eventEmitter, licensingModule, _franchiseRegistry, collectModule) {
     }
 
     function version() virtual override external pure returns (string memory) {
@@ -28,13 +28,14 @@ contract IPAssetRegistryFactoryTest is Test {
     address private _mockEventEmitter = address(0x123123);
     address mockFranchiseRegistry = address(0x7474);
     address mockLicenseModule = address(0x7222274);
+    address mockCollectModule = address(0x43317);
 
     function setUp() public {
 
         factory = new IPAssetRegistryFactory();
         address eventEmitter = address(new MockIPAssetEventEmitter());
         
-        address ipAssetRegistry = address(new IPAssetRegistry(eventEmitter, mockLicenseModule, mockFranchiseRegistry));
+        address ipAssetRegistry = address(new IPAssetRegistry(eventEmitter, mockLicenseModule, mockFranchiseRegistry, mockCollectModule));
 
         factory.upgradeFranchises(ipAssetRegistry);
     }
@@ -59,7 +60,7 @@ contract IPAssetRegistryFactoryTest is Test {
     }
 
     function test_UpgradeCollections() public {
-        IPAssetRegistryv2 newImplementation = new IPAssetRegistryv2(_mockEventEmitter, mockLicenseModule, mockFranchiseRegistry);
+        IPAssetRegistryv2 newImplementation = new IPAssetRegistryv2(_mockEventEmitter, mockLicenseModule, mockFranchiseRegistry, mockCollectModule);
         //vm.expectEmit(true, true, true, true);
         //emit CollectionsUpgraded(address(newImplementation), "2.0.0");
         factory.upgradeFranchises(address(newImplementation));
@@ -68,7 +69,7 @@ contract IPAssetRegistryFactoryTest is Test {
     }
 
     function test_revertIfNotOwnerUpgrades() public {
-        IPAssetRegistryv2 newImplementation = new IPAssetRegistryv2(_mockEventEmitter, mockLicenseModule, mockFranchiseRegistry);
+        IPAssetRegistryv2 newImplementation = new IPAssetRegistryv2(_mockEventEmitter, mockLicenseModule, mockFranchiseRegistry, mockCollectModule);
         vm.prank(notOwner);
         vm.expectRevert("Ownable: caller is not the owner");
         factory.upgradeFranchises(address(newImplementation));

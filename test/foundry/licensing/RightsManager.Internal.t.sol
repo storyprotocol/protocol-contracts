@@ -16,12 +16,13 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
     RightsManagerHarness rightsManager;
     address constant mockEventEmitter = address(0x1234567);
     address constant mockLicensingModule = address(0x23445);
+    address constant mockCollectModule = address(0x13371);
     address constant licenseHolder = address(0x8073465);
     address constant revoker = address(0x123456722222);
     
     function setUp() public {
         mockFranchiseRegistry = new MockERC721();
-        RightsManagerHarness impl = new RightsManagerHarness(mockEventEmitter, mockLicensingModule, address(mockFranchiseRegistry));
+        RightsManagerHarness impl = new RightsManagerHarness(mockEventEmitter, mockLicensingModule, address(mockFranchiseRegistry), mockCollectModule);
         rightsManager = RightsManagerHarness(
             _deployUUPSProxy(
                 address(impl),

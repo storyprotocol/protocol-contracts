@@ -97,9 +97,22 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
             )
         );
 
+        // Deploy collect module and collect NFT impl
+        defaultCollectNFTImpl = address(new MockCollectNFT());
+        collectModuleImpl = address(new MockCollectModule(address(franchiseRegistry), defaultCollectNFTImpl));
+
+        collectModule = ICollectModule(
+            _deployUUPSProxy(
+                collectModuleImpl,
+                abi.encodeWithSelector(
+                    bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
+                )
+            )
+        );
+
         
         // upgrade factory to use new event emitter
-        ipAssetRegistryImpl = address(new IPAssetRegistry(eventEmitter, address(licensingModule), address(franchiseRegistry)));
+        ipAssetRegistryImpl = address(new IPAssetRegistry(eventEmitter, address(licensingModule), address(franchiseRegistry), address(collectModule)));
         factory.upgradeFranchises(ipAssetRegistryImpl);
         
         vm.startPrank(franchiseOwner);
@@ -129,18 +142,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
             )
         );
 
-        // Deploy collect module and collect NFT impl
-        defaultCollectNFTImpl = address(new MockCollectNFT());
-        collectModuleImpl = address(new MockCollectModule(address(franchiseRegistry), defaultCollectNFTImpl));
-
-        collectModule = ICollectModule(
-            _deployUUPSProxy(
-                collectModuleImpl,
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
-                )
-            )
-        );
         if (deployProcessors) {
             relationshipProcessor = new PermissionlessRelationshipProcessor(address(relationshipModule));
         }
