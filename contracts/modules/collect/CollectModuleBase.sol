@@ -3,6 +3,7 @@ pragma solidity ^0.8.18;
 
 import { Clones } from '@openzeppelin/contracts/proxy/Clones.sol';
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import { ICollectModule } from "contracts/interfaces/ICollectModule.sol";
 import { ICollectModuleEventsAndErrors } from "contracts/interfaces/ICollectModuleEventsAndErrors.sol";
@@ -20,7 +21,7 @@ import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
 ///         extended when creating collect modules for franchise IP assets.
 ///         A collect module allows users to bind enrolled IP assets to NFTs
 ///         that may be minted according to franchise configured collect rules.
-abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModule {
+abstract contract CollectModuleBase is UUPSUpgradeable, AccessControlledUpgradeable, ICollectModule {
 
     // The Story Protocol franchise registry - used for IP asset identification.
     FranchiseRegistry public immutable FRANCHISE_REGISTRY;
