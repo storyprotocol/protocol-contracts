@@ -156,7 +156,15 @@ Collect module allows users to mint duplicates of an IPA as a memento, way of su
 - Programable pre conditions for collection will be possible 🚧 (payment, approval)
 
 
-## Royalty Splits
+## Royalty Modules
+
+Although revenue/royalties is a complicated subject, we are building infrastructure to make it easier for proyects, since correct incentivization of participants in IP creation is such a core issue in web3 and the off chain enternainment industry.
+
+The first obvious case that can be enforced with these contracts are on-chain revenue and royalties, but we expect the community to build bridges to more traditional platforms/payment rails that can route value here.
+
+
+
+
 
 
 
