@@ -97,9 +97,22 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
             )
         );
 
+        // Deploy collect module and collect NFT impl
+        defaultCollectNFTImpl = address(new MockCollectNFT());
+        collectModuleImpl = address(new MockCollectModule(address(franchiseRegistry), defaultCollectNFTImpl));
+
+        collectModule = ICollectModule(
+            _deployUUPSProxy(
+                collectModuleImpl,
+                abi.encodeWithSelector(
+                    bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
+                )
+            )
+        );
+
         
         // upgrade factory to use new event emitter
-        ipAssetRegistryImpl = address(new IPAssetRegistry(eventEmitter, address(licensingModule), address(franchiseRegistry)));
+        ipAssetRegistryImpl = address(new IPAssetRegistry(eventEmitter, address(licensingModule), address(franchiseRegistry), address(collectModule)));
         factory.upgradeFranchises(ipAssetRegistryImpl);
         
         vm.startPrank(franchiseOwner);
@@ -129,18 +142,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
             )
         );
 
-        // Deploy collect module and collect NFT impl
-        defaultCollectNFTImpl = address(new MockCollectNFT());
-        collectModuleImpl = address(new MockCollectModule(address(franchiseRegistry), defaultCollectNFTImpl));
-
-        collectModule = ICollectModule(
-            _deployUUPSProxy(
-                collectModuleImpl,
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
-                )
-            )
-        );
         if (deployProcessors) {
             relationshipProcessor = new PermissionlessRelationshipProcessor(address(relationshipModule));
         }
@@ -179,21 +180,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     function _createIPAsset(address ipAssetOwner, uint8 ipAssetType) internal isValidReceiver(ipAssetOwner) returns (uint256) {
         vm.assume(ipAssetType > uint8(type(IPAsset).min));
         vm.assume(ipAssetType < uint8(type(IPAsset).max));
-        vm.assume(ipAssetOwner != address(0));
-        vm.assume(ipAssetOwner != address(franchiseRegistry));
-        vm.assume(ipAssetOwner != address(factory));
-        vm.assume(ipAssetOwner != address(relationshipModule));
-        vm.assume(ipAssetOwner != address(accessControl));
-        vm.assume(ipAssetOwner != address(accessControlSingletonImpl));
-        vm.assume(ipAssetOwner != address(collectModule));
-        vm.assume(ipAssetOwner != address(collectModuleImpl));
-        vm.assume(ipAssetOwner != address(defaultCollectNFTImpl));
-        vm.assume(ipAssetOwner != address(franchiseRegistryImpl));
-        vm.assume(ipAssetOwner != address(relationshipProcessor));
-        vm.assume(ipAssetOwner != address(ipAssetRegistry));
-        vm.assume(ipAssetOwner != address(relationshipModuleHarness));
-        vm.assume(ipAssetOwner != address(ipAssetRegistryImpl));
-        vm.assume(ipAssetOwner != address(eventEmitter));
         vm.prank(ipAssetOwner);
         return ipAssetRegistry.createIPAsset(IPAsset(ipAssetType), "name", "description", "mediaUrl", ipAssetOwner, 0);
     }

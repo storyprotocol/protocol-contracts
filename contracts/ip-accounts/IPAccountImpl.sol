@@ -5,9 +5,11 @@ import "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./IERC6551Account.sol";
 import "./IIPAccount.sol";
 
@@ -19,7 +21,13 @@ contract IPAccountImpl is
     IIPAccount,
     IERC1271
 {
+    using SafeERC20 for IERC20;
+
     uint256 public state;
+    // ERC20 token => amount
+    mapping(address => uint256) public entitled;
+    // ERC20 token => amount
+    mapping(address => uint256) public withdrawn;
 
     receive() external payable {}
 
@@ -101,6 +109,14 @@ contract IPAccountImpl is
         require(_isValidSigner(msg.sender), "Caller is not owner");
         ++state;
         IERC721(nftContract).safeTransferFrom(from, to, tokenId);
+    }
+
+    // TODO: authorization check that only the royaltyDistributor can call this function
+    function sendRoyaltyForDistribution(address distributor, address erc20) external {
+        IERC20(erc20).safeTransfer(
+            distributor,
+            IERC20(erc20).balanceOf(address(this)) + withdrawn[erc20] - entitled[erc20]
+        );
     }
 
     function onERC721Received(

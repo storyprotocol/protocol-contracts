@@ -10,8 +10,8 @@ import { ITermsProcessor } from "contracts/modules/licensing/terms/ITermsProcess
 
 contract RightsManagerHarness is IPAssetRegistry {
 
-    constructor(address _eventEmitter, address _licensingModule, address _franchiseRegistry)
-        IPAssetRegistry(_eventEmitter, _licensingModule, _franchiseRegistry) {
+    constructor(address _eventEmitter, address _licensingModule, address _franchiseRegistry, address _collectModule)
+        IPAssetRegistry(_eventEmitter, _licensingModule, _franchiseRegistry, _collectModule) {
         
     }
 
