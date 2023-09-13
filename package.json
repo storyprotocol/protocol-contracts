@@ -1,8 +1,8 @@
 {
-  "name": "solidity-template",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "@story-protocol/contracts",
+  "version": "0.1.0",
+  "description": "Story Protocol smart contracts",
+  "main": "",
   "directories": {
     "lib": "lib",
     "test": "test"
@@ -11,8 +11,9 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "StoryProtocol",
-  "license": "MIT",
+  "license": "BUSL-1.1",
   "devDependencies": {
+    "@changesets/cli": "^2.26.2",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
     "@nomiclabs/hardhat-etherscan": "^3.1.7",
     "@nomiclabs/hardhat-waffle": "^2.0.5",

@@ -3,7 +3,7 @@
 # Story Protocol Contracts
 
 # Architecture Diagram
-![image](https://github.com/storyprotocol/protocol-contracts/assets/2632384/b3912a23-adb9-4fd2-98b7-922e48a6ebb4)
+![image](https://github.com/storyprotocol/protocol-contracts/assets/2632384/ce60fecc-1904-4c35-a4c1-577c90060feb)
 
 # Core Components
 
@@ -171,7 +171,12 @@ The RoyaltyDistributor contract allows IPAsset owners and license TermsProcessor
 How the shares are configured is up to RoyaltyPolicies, and the actual shares are given by our RoyaltyNFT, an ERC-1155 wrapper over the [Split contracts of 0xSplits](https://www.0xsplits.xyz/)
 
 
+<<<<<<< HEAD
 
+=======
+# Deployed Contracts
+- [Goerli addresses](https://github.com/storyprotocol/protocol-contracts/blob/main/deployment-5.json)
+>>>>>>> main
 
 # Installing
 
@@ -221,17 +226,17 @@ Deploy local
 ```
 anvil
 (open other tab)
-forge script script/foundry/Deploy.s.sol:Deploy --fork-url=http://127.0.0.1:8545 
+forge script script/foundry/deployment/Main.s.sol:Main --fork-url=http://127.0.0.1:8545 
 ```
 
 Deploy to network dry run
 ```
-forge script script/Deploy.s.sol:Deploy --fork-url=<network rpc url url> -vvvv
+forge script script/foundry/deployment/Main.s.sol:Main --fork-url=<network rpc url url> -vvvv
 ```
 
 Deploy to network
 ```
-forge script script/foundry/Deploy.s.sol:Deploy --fork-url=<network rpc url url> -vvvv --broadcast --verify
+forge script script/foundry/deployment/Main.s.sol:Main --fork-url=<network rpc url url> -vvvv --broadcast --verify
 ```
 
 # Tasks
