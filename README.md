@@ -156,14 +156,17 @@ Collect module allows users to mint duplicates of an IPA as a memento, way of su
 - Programable pre conditions for collection will be possible 🚧 (payment, approval)
 
 
-## Royalty Modules
+## Royalties Module
 
 Although revenue/royalties is a complicated subject, we are building infrastructure to make it easier for proyects, since correct incentivization of participants in IP creation is such a core issue in web3 and the off chain enternainment industry.
 
-The first obvious case that can be enforced with these contracts are on-chain revenue and royalties, but we expect the community to build bridges to more traditional platforms/payment rails that can route value here.
+NOTE: We are using royalties and revenue in an informal and interchangeable way. This is a system to distribute shares of value, the technical source of it is out of scope at the moment. 🚧
 
+The first obvious case that can be enforced with these contracts are on-chain revenue and royalties, but we expect the community to build bridges to more traditional platforms and payment rails that can route value here.
 
+The RoyaltyDistributor contract allows IPAsset owners and license TermsProcessors to set revenue/royal shares.
 
+How the shares are configured is up to RoyaltyPolicies, and the actual shares are given by our RoyaltyNFT, an ERC-1155 wrapper over the [Split contracts of 0xSplits](https://www.0xsplits.xyz/)
 
 
 
