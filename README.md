@@ -3,7 +3,7 @@
 # Story Protocol Contracts
 
 # Architecture Diagram
-![image](https://github.com/storyprotocol/protocol-contracts/assets/2632384/b3912a23-adb9-4fd2-98b7-922e48a6ebb4)
+![image](https://github.com/storyprotocol/protocol-contracts/assets/2632384/ce60fecc-1904-4c35-a4c1-577c90060feb)
 
 # Core Components
 
