@@ -16,7 +16,7 @@ import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
  * @author Raul Martinez
  * @notice  IERC-5218 implementation.
     Allows us to grant 2 type of licenses:
-    1. Rights: Licenses tied to a tokenId (IPAsset id), in which the license holder is always the owner of the tokenId. Each tokenId can a commercial or non commercial license tied to it
+    1. Rights: Licenses tied to a tokenId (IPAsset id), in which the license holder is always the owner of the tokenId. Each tokenId can have commercial or non commercial license tied to it defining it.
     2. Tradeable Licenses): The license holder is the owner of the correspondent LicenseRegistry NFT. They are either:
     2.1 Franchise root license: LicenseRegistry enabled license minted by a Franchise owner to govern commercial or non commercial rights for all the IPAssetRegistries.
     2.2 Sublicense: a license coming from Rights or other Licenses, minted by the parent license owner. These would be the future "movie adaptation" type licenses that can be sold.
