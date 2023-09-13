@@ -1,3 +1,5 @@
+🚧🚧🚧🚧 **Repo in active development, expect things to break and change.** 🚧🚧🚧🚧
+
 # Story Protocol Contracts
 
 # Architecture Diagram
@@ -29,6 +31,8 @@ Ownership of a Franchise Registry token implies the power to:
 - Configure the licensing rules for the IPAssets created in the Franchise
 - Define possible Relationships between IPAssets of the same franchise 🚧
 
+Since this is an ERC721, ownership of the Franchise could be determined by an EOA, Multisig, Governor contracts or whatever available web3 coordination tool.
+
 
 ## IPAssetRegistry
 
@@ -58,14 +62,35 @@ We have represented the IP with our Core Components. Now let's look into the con
 
 A Relationship is an on-chain directional association between 2 IPAssets (or an IPAsset and an external NFT), identified by an ID and a set of pre conditions that gives it meaning.
 
+Relationships can have previous steps, defined by RelationshipProcessor contracts, that can be built to:
+
+- Check ownership over IPAssets being related.
+- Require payment in native currency, ERC20s...
+- Require the approval of the owner of one of the IPA
+- Any other interaction with other protocols, oracles...
+
 Since they are on-chain, they help compose with other modules or external protocols/contracts:
 - They can be created as a result of the execution of other modules (e.g agreeing on the Licensing terms for a Character creates an APPEARS_IN relationship between Character and Story)
 - They can be a condition for the correct execution of a module (IPA owner can emit commercial license of a Character IPA if said IPA has a EXTERNAL_PFP relation)
+- They can just have narrative meaning within the Franchise (two characters DID_HOOKUP, a story IS_SEQUEL of another) or some other community interation.
 
+There is going to be 2 levels for Relationships:
+- Protocol-wide relationships, defined by Governance and with interaction with protocol modules
+- Franchise level relationships, to be defined by Franchise Owner 🚧
+
+Protocol-wide relationships need to be proposed through a governance process, [like this one](https://github.com/storyprotocol/protocol-contracts/issues/33)
 
 ## Licensing
 
+The Licensing Module is at the heart of Story Protocol. It aims to 
+
 ## Collect
+
+Collect module allows users to mint duplicates of an IPA as a memento, way of supporting the creators, engagement metric...
+
+- Each IPA can configure custom CollectNFTs as result of the Collect action
+- Programable pre conditions for collection will be possible 🚧 (payment, approval)
+
 
 ## Royalty Splits
 
