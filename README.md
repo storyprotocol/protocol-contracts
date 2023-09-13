@@ -171,7 +171,8 @@ The RoyaltyDistributor contract allows IPAsset owners and license TermsProcessor
 How the shares are configured is up to RoyaltyPolicies, and the actual shares are given by our RoyaltyNFT, an ERC-1155 wrapper over the [Split contracts of 0xSplits](https://www.0xsplits.xyz/)
 
 
-
+# Deployed Contracts
+- [Goerli addresses](https://github.com/storyprotocol/protocol-contracts/blob/main/deployment-5.json)
 
 # Installing
 
