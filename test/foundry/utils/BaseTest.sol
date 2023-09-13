@@ -16,6 +16,7 @@ import "contracts/ip-assets/IPAssetRegistry.sol";
 import "contracts/IPAsset.sol";
 import "contracts/errors/General.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
+import "contracts/modules/relationships/processors/DstOwnerRelationshipProcessor.sol";
 import "contracts/modules/relationships/RelationshipModuleBase.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
@@ -35,6 +36,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     RelationshipModuleBase public relationshipModule;
     AccessControlSingleton accessControl;
     PermissionlessRelationshipProcessor public relationshipProcessor;
+    DstOwnerRelationshipProcessor public dstOwnerRelationshipProcessor;
     LicensingModule public licensingModule;
     ILicenseRegistry public licenseRegistry;
     MockTermsProcessor public nonCommercialTermsProcessor;
@@ -144,6 +146,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
 
         if (deployProcessors) {
             relationshipProcessor = new PermissionlessRelationshipProcessor(address(relationshipModule));
+            dstOwnerRelationshipProcessor = new DstOwnerRelationshipProcessor(address(relationshipModule));
         }
     }
 
