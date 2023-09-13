@@ -16,6 +16,11 @@ import "contracts/access-control/ProtocolRoles.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
 import "test/foundry/mocks/MockCollectNFT.sol";
 import "test/foundry/mocks/MockCollectModule.sol";
+import "contracts/modules/royalties/RoyaltyDistributor.sol";
+import "contracts/modules/royalties/policies/MutableRoyaltyProportionPolicy.sol";
+import "contracts/modules/royalties/RoyaltyNFT.sol";
+import "contracts/ip-accounts/IPAccountImpl.sol";
+import "contracts/ip-accounts/IPAccountRegistry.sol";
 
 contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
@@ -160,6 +165,45 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
         address collectModule = newAddress;
 
+
+        /// IP ACCOUNT REGISTRY
+        contractKey = "IPAccount-Impl";
+        console.log(string.concat("Deploying ", contractKey, "..."));
+
+        newAddress = address(new IPAccountImpl());
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+
+        contractKey = "IPAccountRegistry";
+        console.log(string.concat("Deploying ", contractKey, "..."));
+
+        newAddress = address(new IPAccountRegistry(newAddress));
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+
+        address ipAccountRegistry = newAddress;
+
+        /// ROYALTY MODULE
+        address SPLIT_MAIN = 0x2ed6c4B5dA6378c7897AC67Ba9e43102Feb694EE;
+        contractKey = "RoyaltyNFT";
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new RoyaltyNFT(SPLIT_MAIN));
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+
+        address royaltyNft = newAddress;
+
+        contractKey = "MutableRoyaltyProportionPolicy";
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new MutableRoyaltyProportionPolicy(royaltyNft));
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+
+        contractKey = "RoyaltyDistributor";
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new RoyaltyDistributor(ipAccountRegistry, royaltyNft));
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
         /// UPDATE BEACON
 
