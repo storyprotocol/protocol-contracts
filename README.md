@@ -62,7 +62,7 @@ We have represented the IP with our Core Components. Now let's look into the con
 
 A Relationship is an on-chain directional association between 2 IPAssets (or an IPAsset and an external NFT), identified by an ID and a set of pre conditions that gives it meaning.
 
-Relationships can have previous steps, defined by RelationshipProcessor contracts, that can be built to:
+Relationships can have **previous steps**, defined by **RelationshipProcessor** contracts, that can be built to:
 
 - Check ownership over IPAssets being related.
 - Require payment in native currency, ERC20s...
@@ -86,7 +86,7 @@ A system to dispute and revoke Relationships is in the works 🚧
 
 The Licensing Module is at the heart of Story Protocol. It aims to create a transparent, public and fair legal environment for Franchise Owners and Creators to develop an IP while capturing the value and ownership among different contributors in a novel way.
 
-It has several components
+It has several component contracts:
 
 ### RightsManager
 Every IPAssetRegistry is a RightsManager, which implements a modified version of [draft EIP-5218](https://eips.ethereum.org/EIPS/eip-5218).
@@ -94,8 +94,8 @@ Every IPAssetRegistry is a RightsManager, which implements a modified version of
 It manages trees of License structs and all their sublicenses. If a License is revoked (every License has a revoker address), all the licenses down the tree will be too.
 
 Every License can have none or many on-chain an off-chain terms, and both will be able to be composed from many "License Legos" 🚧
-- Off-chain terms are given by the License metadata and legal text files linked to the License struct (in the works, based in the Token Bound License)🚧. Off-chain terms will be enforced via a market of licensing flagger/revoker services, individuals and oracles or in worst case scenario, the legacy legal system.
-- On-chain terms are TermsProcessor contracts, that must be executed by the current License Holder in order to activate the License. These can include:
+- **Off-chain terms** are given by the License metadata and legal text files linked to the License struct (in the works, based in the Token Bound License)🚧. Off-chain terms will be enforced via a market of licensing flagger/revoker services, individuals and oracles or in worst case scenario, the legacy legal system.
+- **On-chain terms** are TermsProcessor contracts, that must be executed by the current License Holder in order to activate the License. These can include:
     - Time limitations, with or without renewal.
     - Setting revenue splits in the Royalty Module.
     - Payment.
@@ -105,12 +105,14 @@ Every License can have none or many on-chain an off-chain terms, and both will b
     - KYC Oracle
     - Other cases build by the community
 
-A RightsManager allows us to grant 2 type of License:
+A RightsManager allows us to grant 2 **type of License:**
 
 1. **Rights**: Licenses tied to a tokenId (IPAsset id), in which the license holder is always the owner of said tokenId. Each tokenId can have commercial or non commercial license tied to it. Transfering an IPAsset transfers the Rights too, so the previous owner will lose the ownership of the righst along the IPA.
 2. **Tradeable Licenses**: The license holder is the owner of the correspondent LicenseRegistry NFT. They are either:
-2.1 Franchise root license: license minted by a Franchise owner to govern commercial or non commercial rights for all the IPAssetRegistries.
-2.2 Sublicense: a license coming from IPA Rights or other Licenses, minted as an ERC721 by the parent license owner. These would be the future "movie adaptation to my story" or "merchandise rights for my PFP" type licenses that can be transferred or sold in NFT markets.
+
+    a. **Franchise root license**: license minted by a Franchise owner to govern commercial or non commercial rights for all the IPAssetRegistries.
+
+    b. **Sublicense**: a license coming from IPA Rights or other Licenses, minted as an ERC721 by the parent license owner. These would be the future "movie adaptation to my story" or "merchandise rights for my PFP" type licenses that can be transferred or sold in NFT markets.
 
 ### LicenseRegistry
 
@@ -121,14 +123,14 @@ Simple ERC721 NFT wrapper for Tradeable Licenses registered in a RightsManager. 
 Networked IPs with multiple stakeholders need to have compatible licensing terms and characteristics in order to be commercially develop in a feasible way.
 The Licensing Module contract is where Franchise Owners define this common legal framework.
 
-By design, with the idea of growing the IP, every IPA will have a license that will allow remixing it as long as the remixer:
+By design, with the idea of growing the IP, every IPA will have a license that will **allow remixing it as long as the remixer**:
 - Attributes the original creator
 - It's for non commercial (or within reasonable commercial assumptions 🚧)
 - It's minted back to the Franchise as a child IPA with the same non commercial terms
 
 Root IPAs have optional commercial rights, meaning that a commercial License might be bought/requested from the owner of the rights, to do a commercial remixes, adaptations, merch, etc, with benefits traversing as defined by revenue/royalty modules. 
 
-The configurable options are:
+**The configurable options are:**
 
 - For both commercial and non commercial rights of IPAs
   - can they sublicense (remix)?
@@ -137,7 +139,8 @@ The configurable options are:
 - Do root IPA have commercial rights on mint or not?
 - URI pointing to the Franchise Commercial Rights license text.
 
-We are going to have several ready-made templates for Franchise creators 🚧:
+We are going to have several **ready-made templates** for Franchise creators 🚧:
+
 - **Tight narrative/commercial direction:**
   - Commercial Licenses can only be granted by the owner of the Root Commercial License (minted by Franchise Owner)
   - Users can add and remix IPAs under Non Commercial terms.
@@ -145,7 +148,6 @@ We are going to have several ready-made templates for Franchise creators 🚧:
   
 - **Loose narrative/commercial direction:**
   - Every root IPA has commercial rights (under some terms, e.g owner of IPA is owner of external PFP NFT) and can emit commercial licenses around that IPA.
-
 
 
 ## Collect
