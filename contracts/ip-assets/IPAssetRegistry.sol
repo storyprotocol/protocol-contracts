@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import "forge-std/Test.sol";
 import { IIPAssetRegistry } from "./IIPAssetRegistry.sol";
 import { ICollectModule } from "contracts/interfaces/ICollectModule.sol";
 import { LibIPAssetId } from "./LibIPAssetId.sol";
@@ -126,8 +125,6 @@ contract IPAssetRegistry is
             _setCommercialRights(ipAssetId, _ROOT_IP_ASSET, to, config.revoker, config.commercialLicenseUri, config.commercialConfig, config.commercialTerms);
         }
         // TODO: Add collect NFT impl and data overrides
-        console.log("ADDRESS OF COLLECT MODULE:");
-        console.log(address(COLLECT_MODULE));
         COLLECT_MODULE.initCollect(InitCollectParams({
             franchiseId: _franchiseId,
             ipAssetId: ipAssetId,
