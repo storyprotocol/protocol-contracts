@@ -19,7 +19,7 @@ contract LicenseRegistryTest is BaseTest {
     function setUp() virtual override public {
         deployProcessors = false;
         super.setUp();
-        ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", licenseHolder, 0);
+        ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", licenseHolder, 0, "");
         parentLicenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, false);
         processor = getTermsProcessor();
     }

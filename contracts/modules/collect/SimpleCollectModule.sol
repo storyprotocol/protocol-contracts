@@ -7,7 +7,7 @@ import { CollectModuleBase } from "contracts/modules/collect/CollectModuleBase.s
 
 /// @title Simple Collect Module
 /// @notice This simple collect module binds IP assets to mintable NFTs.
-contract MockCollectModule is CollectModuleBase {
+contract SimpleCollectModule is CollectModuleBase {
 
     /// @notice Initializes a mock collect module.
     /// @param franchiseRegistry The protocol-wide franchise registry address.
@@ -29,4 +29,5 @@ contract MockCollectModule is CollectModuleBase {
 
     /// @dev Additional authorization necessitated by UUPS module upgrades.
     function _authorizeUpgrade(address newImplementation) internal override onlyRole(UPGRADER_ROLE) {}
+
 }

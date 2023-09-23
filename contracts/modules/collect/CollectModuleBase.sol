@@ -21,7 +21,7 @@ import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
 ///         extended when creating collect modules for franchise IP assets.
 ///         A collect module allows users to bind enrolled IP assets to NFTs
 ///         that may be minted according to franchise configured collect rules.
-abstract contract CollectModuleBase is UUPSUpgradeable, AccessControlledUpgradeable, ICollectModule {
+abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModule {
 
     // The Story Protocol franchise registry - used for IP asset identification.
     FranchiseRegistry public immutable FRANCHISE_REGISTRY;
@@ -98,7 +98,7 @@ abstract contract CollectModuleBase is UUPSUpgradeable, AccessControlledUpgradea
     ///      collect NFT is deployed based on its configuered NFT impl address.
     /// @return collectNFT The address of the collected NFT.
     /// @return collectNFTId The id of the collected collect NFT.
-    function collect(CollectParams calldata collectParams) public virtual returns (address collectNFT, uint256 collectNFTId) {
+    function collect(CollectParams calldata collectParams) public virtual payable returns (address collectNFT, uint256 collectNFTId) {
 
         // An IP asset is identified by the tuple (franchiseId, ipAssetId).
         uint256 franchiseId = collectParams.franchiseId;

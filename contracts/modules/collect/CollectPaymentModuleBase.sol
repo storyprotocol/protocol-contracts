@@ -25,7 +25,7 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
 
     // The ERC-1967 storage slot associated with the collect payment module:
     // keccak256("story-protocol.collect-paymnt-module.storage") - 1;
-    bytes32 private constant _COLLECT_PAYMENT_MODULE_STORAGE = 0x4dfab49ded706b2f2f30c864b856c7ede3dea7f2e0652ef85d5676b6e4568675;
+    bytes32 private constant _COLLECT_PAYMENT_MODULE_STORAGE = 0x5dfab49ded706b2f2f30c864b856c7ede3dea7f2e0652ef85d5676b6e4568675;
 
     /// @notice Instantiates a new collect payment module.
     /// @param franchiseRegistry The protocol-wide franchise registry address.
@@ -58,7 +58,7 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
     /// @return collectNFT The address of the collected NFT.
     /// @return collectNFTId The id of the collected collect NFT.
     /// TODO: Add payment reentrancy guard
-    function collect(CollectParams calldata collectParams) public virtual override(CollectModuleBase, ICollectPaymentModule) returns (address collectNFT, uint256 collectNFTId) {
+    function collect(CollectParams calldata collectParams) public virtual payable override(CollectModuleBase, ICollectPaymentModule) returns (address collectNFT, uint256 collectNFTId) {
         return super.collect(collectParams);
     }
 
@@ -72,6 +72,9 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
 
         // Validate that the payment information is valid.
         _validatePaymentInfo(paymentInfo);
+
+        CollectPaymentModuleStorage storage $ = _getCollectPaymentModuleStorage();
+        $.paymentInfo[initCollectParams.franchiseId][initCollectParams.ipAssetId] = paymentInfo;
     }
 
     /// @dev Perform collect module payment processing.
@@ -105,7 +108,7 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
 
         // Validate the passed in payment parameters.
         // TODO: Optimize struct re-use to be more memory efficient.
-        _validatePaymentProcessing(paymentInfo, paymentParams);
+        _validatePaymentProcessing(paymentInfo, paymentParams, collector);
 
         if (paymentInfo.paymentType == PaymentType.NATIVE) {
             _transferNativeTokens(
@@ -146,14 +149,14 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
     /// @dev Checks whether payment processing parameters are valid.
     /// @param paymentInfo Currently configured info for the collect payment.
     /// @param paymentParams Parameters passed for collect payment processing.
-    function _validatePaymentProcessing(CollectPaymentInfo memory paymentInfo, CollectPaymentParams memory paymentParams) internal virtual {
+    function _validatePaymentProcessing(CollectPaymentInfo memory paymentInfo, CollectPaymentParams memory paymentParams, address collector) internal virtual {
 
         uint256 paymentAmount = paymentInfo.paymentAmount;
         address paymentToken = paymentInfo.paymentToken;
         PaymentType paymentType = paymentInfo.paymentType;
 
         if (
-            paymentInfo.paymentType != paymentType     ||
+            paymentParams.paymentType != paymentType     ||
             paymentParams.paymentToken != paymentToken ||
             paymentParams.paymentAmount < paymentAmount
         ) {
@@ -167,6 +170,9 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
         } else if (paymentType == PaymentType.ERC20) {
             if (msg.value != 0) {
                 revert CollectPaymentModuleNativeTokenNotAllowed();
+            }
+            if (IERC20(paymentToken).balanceOf(collector) < paymentAmount) {
+                revert CollectPaymentModulePaymentInsufficient();
             }
         }
         // TODO: Add support for ERC-721 and ERC-1155 payment processing.
@@ -188,7 +194,6 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
         address payable to,
         uint256 amount
     ) internal {
-        // Perform an ERC-20 `transferFrom` call, collecting the returned data.
         (bool ok, ) = to.call{ value: amount }("");
 
         // If the call was unsuccessful, revert.

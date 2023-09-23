@@ -14,7 +14,6 @@ struct CollectPaymentInfo {
 /// @notice Parameters passed for collect payment processing for an IP asset.
 /// TODO: Add a signature field to accept signature-relayed collects.
 struct CollectPaymentParams {
-    address purchaser;        // The address that will pay for the collect.
     address paymentToken;     // The payment token address (if not native).
     PaymentType paymentType;  // The type of payment being made.
     uint256 paymentAmount;    // The required amount of the payment token.

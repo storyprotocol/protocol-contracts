@@ -28,6 +28,6 @@ interface ICollectPaymentModule is ICollectModule, ICollectPaymentModuleEventsAn
     ///         collector address, and collect payment module processing data.
     /// @return collectNFT The address of the collected NFT.
     /// @return collectNFTId The id of the collected collect NFT.
-    function collect(CollectParams calldata collectParams) external override(ICollectModule) returns (address collectNFT, uint256 collectNFTId);
+    function collect(CollectParams calldata collectParams) external payable override(ICollectModule) returns (address collectNFT, uint256 collectNFTId);
 
 }

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
+import "forge-std/Test.sol";
 import { IIPAssetRegistry } from "./IIPAssetRegistry.sol";
 import { ICollectModule } from "contracts/interfaces/ICollectModule.sol";
 import { LibIPAssetId } from "./LibIPAssetId.sol";
@@ -91,6 +92,7 @@ contract IPAssetRegistry is
      * @param mediaUrl url to the IPAsset media and metadata
      * @param to holder of the IPAsset (and thus the licenses)
      * @param parentIpAssetId 0 if this is a root IPAsset, if it is a derivative, set the parent IPAsset id
+     * @param collectData Additional data passed for collect module initialization
      * @return the created IPAsset id
      */
     function createIPAsset(
@@ -99,7 +101,8 @@ contract IPAssetRegistry is
         string calldata _description,
         string calldata mediaUrl,
         address to,
-        uint256 parentIpAssetId
+        uint256 parentIpAssetId,
+        bytes calldata collectData
     )
         public
         returns (uint256)
@@ -123,11 +126,13 @@ contract IPAssetRegistry is
             _setCommercialRights(ipAssetId, _ROOT_IP_ASSET, to, config.revoker, config.commercialLicenseUri, config.commercialConfig, config.commercialTerms);
         }
         // TODO: Add collect NFT impl and data overrides
+        console.log("ADDRESS OF COLLECT MODULE:");
+        console.log(address(COLLECT_MODULE));
         COLLECT_MODULE.initCollect(InitCollectParams({
             franchiseId: _franchiseId,
             ipAssetId: ipAssetId,
             collectNFTImpl: address(0), // Default collect module NFT impl
-            data: ""
+            data: collectData
         }));
         return ipAssetId;
     }
