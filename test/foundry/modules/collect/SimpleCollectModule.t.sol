@@ -12,7 +12,7 @@ contract SimpleCollectModuleTest is BaseCollectModuleTest {
         super.setUp();
     }
 
-    /// @notice Tests whether collect reverts if the registry of the IP asset being collected does not exist.
+    /// @notice Tests that unauthorized collects revert.
     function test_CollectModuleCollectUnauthorizedReverts(uint8 ipAssetType) createIPAsset(collector, ipAssetType) public {
         vm.prank(alice);
         vm.expectRevert(CollectModuleCollectUnauthorized.selector);
@@ -26,6 +26,7 @@ contract SimpleCollectModuleTest is BaseCollectModuleTest {
         }));
     }
 
+    /// @notice Tests that upgrades work as expected.
     function test_CollectModuleUpgrade() public {
         address newCollectModuleImpl = address(new SimpleCollectModule(address(franchiseRegistry), defaultCollectNFTImpl));
         vm.prank(upgrader);

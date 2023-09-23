@@ -36,6 +36,7 @@ contract BaseCollectModuleTest is BaseTest, ICollectModuleEventsAndErrors {
         _;
     }
 
+    /// @notice Sets up the base collect module for running tests.
     function setUp() public virtual override(BaseTest) { 
         super.setUp();
         collector = cal;

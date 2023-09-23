@@ -7,7 +7,6 @@ import { ICollectPaymentModuleEventsAndErrors } from "contracts/interfaces/IColl
 import { ICollectModule } from "contracts/interfaces/ICollectModule.sol";
 import { ICollectPaymentModule } from "contracts/interfaces/ICollectPaymentModule.sol";
 import { ICollectNFT } from "contracts/interfaces/ICollectNFT.sol";
-import { PaymentType } from "contracts/lib/CollectPaymentModuleEnums.sol";
 
 import { BaseCollectModuleTest } from "./BaseCollectModuleTest.sol";
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
@@ -18,8 +17,9 @@ import { MockCollectNFT } from "test/foundry/mocks/MockCollectNFT.sol";
 import { MockERC20 } from "test/foundry/mocks/MockERC20.sol";
 import { MockWETH } from "test/foundry/mocks/MockWETH.sol";
 
+import { PaymentType } from "contracts/lib/CollectPaymentModuleEnums.sol";
 import { InitCollectParams, CollectParams } from "contracts/lib/CollectModuleStructs.sol";
-import {CollectPaymentInfo, CollectPaymentParams} from "contracts/lib/CollectPaymentModuleStructs.sol";
+import { CollectPaymentInfo, CollectPaymentParams } from "contracts/lib/CollectPaymentModuleStructs.sol";
 
 /// @title Collect Payment Module Base Testing Contract
 /// @notice Tests all functionality provided by the base payment collect module.
@@ -37,6 +37,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
     CollectPaymentInfo paymentInfo;
     CollectPaymentParams paymentParams;
 
+    // Used for mocking suites of tests involving payment infos and params.
     CollectPaymentSet[] paymentSets;
 
     struct CollectPaymentSet {
@@ -44,6 +45,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         CollectPaymentParams params;
     }
 
+    /// @notice Parameterizes payment inputs and outputs for multiple test runs.
     modifier parameterizePaymentInfo(CollectPaymentSet[] memory paymentInfoSuite) {
         uint256 length = paymentInfoSuite.length;
         for (uint256 i = 0; i < length; ) {
@@ -55,10 +57,10 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         }
     }
 
-    /// @notice Modifier that creates an IP asset for normal collect testing.
+    /// @notice Modifier that creates an IP asset for normal collect testing,
+    ///         using the latest generated payment struct for collect encoding.
     /// @param ipAssetOwner The owner address for the new IP asset.
     /// @param ipAssetType The type of the IP asset being created.
-    /// TODO: Refactor to make better use of test parameterization.
     modifier createIPAsset(address ipAssetOwner, uint8 ipAssetType) override {
         ipAssetId = _createIPAsset(ipAssetOwner, ipAssetType, abi.encode(paymentInfo));
         _;
@@ -103,22 +105,23 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         assertEq(p.paymentRecipient, paymentInfo.paymentRecipient);
     }
 
+    /// @notice Tests that native payments with no sent funds revert.
     function test_CollectPaymentModuleZeroPaymentReverts() public {
-
         vm.prank(address(ipAssetRegistry));
         paymentInfo = CollectPaymentInfo(address(0), PaymentType.NATIVE, 0 ether, alice);
         vm.expectRevert(CollectPaymentModuleAmountInvalid.selector);
         _initCollectModule(franchiseId, defaultCollectNFTImpl);
     }
 
+    /// @notice Tests that payments with invalid settings revert.
     function test_CollectPaymentModuleInvalidSettingsReverts() public {
-
         vm.prank(address(ipAssetRegistry));
         paymentInfo = CollectPaymentInfo(address(erc20), PaymentType.NATIVE, 1 ether, alice);
         vm.expectRevert(CollectPaymentModuleInvalidSettings.selector);
         _initCollectModule(franchiseId, defaultCollectNFTImpl);
     }
 
+    /// @notice Tests that payments with invalid tokens revert.
     function test_CollectPaymentModuleInvalidTokenReverts() public {
 
         vm.prank(address(ipAssetRegistry));
@@ -127,6 +130,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         _initCollectModule(franchiseId, defaultCollectNFTImpl);
     }
 
+    /// @notice Tests that native payments work as expected.
     function test_CollectPaymentModuleNativeCollect() public parameterizePaymentInfo(paymentSuiteNative()) {
         uint256 recipientStartingBalance = paymentRecipient.balance;
         uint256 collectorStartingBalance = collector.balance;
@@ -136,6 +140,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         assertEq(paymentRecipient.balance, recipientStartingBalance + paymentAmount);
     }
 
+    /// @notice Tests that native payments that fail revert.
     function test_CollectPaymentModuleNativeTransferFailReverts() public {
         address payable throwingReceiver  = payable(address(new MockNativeTokenNonReceiver()));
 
@@ -164,6 +169,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         }));
     }
 
+    /// @notice Tests that payments with invalid parameters revert.
     function test_CollectPaymentModuleInvalidPaymentParamsReverts() public {
         paymentInfo = CollectPaymentInfo({
             paymentToken: address(erc20),
@@ -181,6 +187,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         _collect(franchiseId, ipAssetId);
     }
 
+    /// @notice Tests that ERC20 payments with failing transfers revert.
     function test_CollectPaymentModuleERC20TransferFailReverts() public {
         MockThrowingERC20 throwingERC20 = new MockThrowingERC20("Story Protocol Mock Token", "SP", 18, MockThrowingERC20.TransferBehavior.Fail);
         vm.prank(collector);
@@ -201,6 +208,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         _collect(franchiseId, ipAssetId);
     }
 
+    /// @notice Tests that ERC20 payments with invalid payments revert.
     function test_CollectPaymentModuleERC20InvalidPaymentReverts() public {
         paymentInfo = CollectPaymentInfo({
             paymentToken: address(erc20),
@@ -225,6 +233,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         }));
     }
 
+    /// @notice Tests that ERC20 payments with insufficient funds revert.
     function test_CollectPaymentModuleERC20InsufficientFundsReverts() public {
         paymentInfo = CollectPaymentInfo({
             paymentToken: address(erc20),
@@ -243,6 +252,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
 
     }
 
+    /// @notice Tests that ERC20 payments with invalid ABI encoding revert.
     function test_CollectPaymentModuleERC20TransferInvalidABIReverts() public {
         MockThrowingERC20 throwingERC20 = new MockThrowingERC20("Story Protocol Mock Token", "SP", 18, MockThrowingERC20.TransferBehavior.ReturnInvalidABI);
         vm.prank(collector);
@@ -263,6 +273,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         _collect(franchiseId, ipAssetId);
     }
 
+    /// @notice Tests that ERC20 payments with invalid return values revert.
     function test_CollectPaymentModuleERC20TransferInvalidReturnReverts() public {
         MockThrowingERC20 throwingERC20 = new MockThrowingERC20("Story Protocol Mock Token", "SP", 18, MockThrowingERC20.TransferBehavior.ReturnFalse);
         vm.prank(collector);
@@ -283,6 +294,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         _collect(franchiseId, ipAssetId);
     }
 
+    /// @notice Tests that ERC20 payments work as expected.
     function test_CollectPaymentModuleERC20Collect() public parameterizePaymentInfo(paymentSuiteERC20()) {
         uint256 recipientStartingBalance = erc20.balanceOf(paymentRecipient);
         uint256 collectorStartingBalance = erc20.balanceOf(collector);
@@ -292,6 +304,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         assertEq(erc20.balanceOf(collector), collectorStartingBalance - paymentAmount);
     }
 
+    /// @notice Tests that payments without sufficient funds revert.
     function test_CollectPaymentModuleInsufficientFunds() public {
         paymentInfo = CollectPaymentInfo({
             paymentToken: address(0),
@@ -318,7 +331,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         }));
     }
 
-    /// @notice Returns a list of collect payment infos for test parameterization.
+    /// @notice Returns a list of parameterized payment test cases.
     function paymentSuite() internal returns (CollectPaymentSet[] memory) {
         delete paymentSets;
         paymentSets.push(
@@ -342,7 +355,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         return paymentSets;
     }
 
-    /// @notice Returns a list of collect payment infos for test parameterization.
+    /// @notice Returns a list of parameterized native payment test cases.
     function paymentSuiteNative() internal returns (CollectPaymentSet[] memory) {
         delete paymentSets;
         paymentSets.push(
@@ -360,7 +373,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         return paymentSets;
     }
 
-    /// @notice Returns a list of collect payment infos for test parameterization.
+    /// @notice Returns a list of parameterized ERC20 payment test cases.
     function paymentSuiteERC20() internal returns (CollectPaymentSet[] memory) {
         delete paymentSets;
         paymentSets.push(
@@ -424,7 +437,6 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         );
 
         return address(collectPaymentModule);
-
     }
 
 }
