@@ -40,7 +40,7 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
     }
 
     function test_create_ip_asset_root_noncommercial() public {
-        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", ipAssetCreator, 0);
+        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", ipAssetCreator, 0, "");
         bool commercial = false;
         uint256 licenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, commercial);
         assertEq(licenseId, 1);
@@ -66,7 +66,7 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
 
     function test_create_ip_asset_noncommercial_and_commercial() public {
         _configFranchise(true, true, true);
-        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", ipAssetCreator, 0);
+        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", ipAssetCreator, 0, "");
         bool commercial = false;
         uint256 licenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, commercial);
         assertEq(licenseId, 1);
@@ -107,8 +107,8 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
     }
 
     function test_create_derivative_ip_asset_from_non_commercial() public {
-        uint256 rootIpAsset = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", ipAssetCreator, 0);
-        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name derv", "description deriv", "mediaUrl deriv", ipAssetCreator, rootIpAsset);
+        uint256 rootIpAsset = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", ipAssetCreator, 0, "");
+        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name derv", "description deriv", "mediaUrl deriv", ipAssetCreator, rootIpAsset, "");
         
         bool commercial = false;
         uint256 licenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, commercial);
@@ -136,8 +136,8 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
 
     function test_create_derivative_ip_asset_from_commercial() public {
         _configFranchise(true, true, true);
-        uint256 rootIpAsset = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", ipAssetCreator, 0);
-        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name derv", "description deriv", "mediaUrl deriv", ipAssetCreator, rootIpAsset);
+        uint256 rootIpAsset = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", ipAssetCreator, 0, "");
+        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name derv", "description deriv", "mediaUrl deriv", ipAssetCreator, rootIpAsset, "");
         
         bool commercial = false;
         uint256 licenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, commercial);
@@ -166,7 +166,7 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
     }
 
     function test_create_license() public {
-        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", licenseHolder, 0);
+        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", licenseHolder, 0, "");
         uint256 parentLicenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, false);
         bool commercial = false;
         vm.prank(licenseHolder);
@@ -199,7 +199,7 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
     }
 
     function test_revert_create_license_unauthorized() public {
-        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", ipAssetCreator, 0);
+        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", ipAssetCreator, 0, "");
         uint256 parentLicenseId = 1;
         (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
         vm.expectRevert(Unauthorized.selector);
@@ -254,7 +254,7 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
     }
 
     function test_revert_create_license_terms_mismatch() public {
-        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", ipAssetCreator, 0);
+        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", ipAssetCreator, 0, "");
         uint256 parentLicenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, false);
         bool commercial = true;
         vm.expectRevert(RightsManager.CommercialTermsMismatch.selector);

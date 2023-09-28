@@ -21,7 +21,7 @@ import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
 ///         extended when creating collect modules for franchise IP assets.
 ///         A collect module allows users to bind enrolled IP assets to NFTs
 ///         that may be minted according to franchise configured collect rules.
-abstract contract CollectModuleBase is UUPSUpgradeable, AccessControlledUpgradeable, ICollectModule {
+abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModule {
 
     // The Story Protocol franchise registry - used for IP asset identification.
     FranchiseRegistry public immutable FRANCHISE_REGISTRY;
@@ -30,7 +30,7 @@ abstract contract CollectModuleBase is UUPSUpgradeable, AccessControlledUpgradea
     address public immutable DEFAULT_COLLECT_NFT_IMPL;
 
     // The ERC-1967 storage slot associated with the collect module, given by:
-    // keccak256("story-protocol.simple-payment-collect-module.storage") - 1;
+    // keccak256("story-protocol.collect-module.storage") - 1;
     bytes32 private constant _COLLECT_MODULE_STORAGE = 0xd16687d5cf786234491b4cc484b2a64f24855aadee9b1b73824db1ed2840fd0b;
 
     // ERC-1967 style storage slots used for collect module storage.
@@ -62,7 +62,7 @@ abstract contract CollectModuleBase is UUPSUpgradeable, AccessControlledUpgradea
     ///        id, collect NFT impl address, and generic unformatted init data.
     /// @dev If no collect NFT impl address is passed, the default module-wide
     ///      collect NFT impl `DEFAULT_COLLECT_NFT_IMPL` will be used instead.
-    function initCollect(InitCollectParams calldata initCollectParams) external {
+    function initCollect(InitCollectParams calldata initCollectParams) public virtual {
 
         // An IP asset is identified by the tuple (franchiseId, ipAssetId).
         uint256 franchiseId = initCollectParams.franchiseId;
@@ -98,7 +98,7 @@ abstract contract CollectModuleBase is UUPSUpgradeable, AccessControlledUpgradea
     ///      collect NFT is deployed based on its configuered NFT impl address.
     /// @return collectNFT The address of the collected NFT.
     /// @return collectNFTId The id of the collected collect NFT.
-    function collect(CollectParams calldata collectParams) external returns (address collectNFT, uint256 collectNFTId){
+    function collect(CollectParams calldata collectParams) public virtual payable returns (address collectNFT, uint256 collectNFTId) {
 
         // An IP asset is identified by the tuple (franchiseId, ipAssetId).
         uint256 franchiseId = collectParams.franchiseId;

@@ -8,62 +8,46 @@ import { ICollectNFT } from "contracts/interfaces/ICollectNFT.sol";
 import { BaseTestUtils } from "test/foundry/utils/BaseTestUtils.sol";
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
 import { CollectNFTBaseTest } from "./nft/CollectNFTBase.t.sol";
-import { MockCollectModule, MockCollectModuleConstants } from "test/foundry/mocks/MockCollectModule.sol";
+import { MockCollectModule } from "test/foundry/mocks/MockCollectModule.sol";
 import { MockCollectNFT } from "test/foundry/mocks/MockCollectNFT.sol";
 
 import { IPAsset } from "contracts/IPAsset.sol";
 import { InitCollectParams, CollectParams } from "contracts/lib/CollectModuleStructs.sol";
 import { InitCollectNFTParams } from "contracts/lib/CollectNFTStructs.sol";
 
-/// @title Collect Module Base Testing Contract
-/// @notice Tests all functionality provided by the base collect module.
-contract CollectModuleBaseTest is BaseTest, ICollectModuleEventsAndErrors, MockCollectModuleConstants {
+
+/// @title Collect Module Base ERC-721 Testing Utility Contract
+/// @notice Provides a set of reusable tests for ERC-721 implementations.
+contract BaseCollectModuleTest is BaseTest, ICollectModuleEventsAndErrors {
 
     // In the base collect module, an IP asset configured with a zero address
     // collect NFT impl means that the module-wide default should be used.
     address public constant DEFAULT_COLLECT_NFT_IMPL_CONFIG = address(0);
 
-    function setUp() public virtual override(BaseTest) { 
-        super.setUp();
-    }
-
     // Id of IP asset which may differ per test based on testing constraints.
     uint256 ipAssetId;
+    address payable collector;
 
-    /// @notice Modifier that creates an IP asset for tsting.
+    /// @notice Modifier that creates an IP asset for testing.
     /// @param ipAssetOwner The owner address for the new IP asset.
     /// @param ipAssetType The type of the IP asset being created.
-    modifier createIPAsset(address ipAssetOwner, uint8 ipAssetType) {
-        ipAssetId = _createIPAsset(ipAssetOwner, ipAssetType);
+    modifier createIPAsset(address ipAssetOwner, uint8 ipAssetType) virtual {
+        ipAssetId = _createIPAsset(ipAssetOwner, ipAssetType, "");
         _;
     }
 
-    /// @notice Tests whether an unauthorized collect reverts.
-    function test_CollectModuleCollectUnauthorizedCallReverts(address collector, uint8 ipAssetType) createIPAsset(alice, ipAssetType) public {
-        vm.expectRevert(CollectModuleCollectUnauthorized.selector);
-        collectModule.collect(CollectParams({
-            franchiseId: UNAUTHORIZED_FRANCHISE_ID,
-            ipAssetId: ipAssetId,
-            collector: collector,
-            collectData: "",
-            collectNFTInitData: "",
-            collectNFTData: ""
-        }));
+    /// @notice Sets up the base collect module for running tests.
+    function setUp() public virtual override(BaseTest) { 
+        super.setUp();
+        collector = cal;
     }
 
     /// @notice Tests whether unitialized modules revert on invoking collect.
-    function test_CollectModuleCollectUninitializedReverts(address collector, uint8 ipAssetType) createIPAsset(alice, ipAssetType) public {
-        address uninitializedCollectModuleImpl = address(new MockCollectModule(address(franchiseRegistry), address(new MockCollectNFT())));
-        ICollectModule uninitializedCollectModule = ICollectModule(
-            _deployUUPSProxy(
-                collectModuleImpl,
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
-                )
-            )
-        );
-        vm.assume(franchiseId != UNAUTHORIZED_FRANCHISE_ID);
+    function test_CollectModuleCollectUninitializedReverts(uint8 ipAssetType) createIPAsset(collector, ipAssetType) public {
+        ICollectModule uninitializedCollectModule = ICollectModule(_deployCollectModule(defaultCollectNFTImpl));
+
         vm.expectRevert(CollectModuleCollectNotYetInitialized.selector);
+        vm.prank(collector);
         uninitializedCollectModule.collect(CollectParams({
             franchiseId: franchiseId,
             ipAssetId: ipAssetId,
@@ -75,55 +59,34 @@ contract CollectModuleBaseTest is BaseTest, ICollectModuleEventsAndErrors, MockC
     }
 
     /// @notice Tests whether collect reverts if the registry of the IP asset being collected does not exist.
-    function test_CollectModuleCollectNonExistentIPAssetRegistryReverts(uint256 nonExistentFranchiseId, uint8 ipAssetType) createIPAsset(alice, ipAssetType) public {
+    function test_CollectModuleCollectNonExistentIPAssetRegistryReverts(uint256 nonExistentFranchiseId, uint8 ipAssetType) createIPAsset(collector, ipAssetType) public virtual {
         vm.assume(nonExistentFranchiseId != franchiseId);
         vm.expectRevert(CollectModuleIPAssetRegistryNonExistent.selector);
-        _collect(nonExistentFranchiseId, ipAssetId, cal);
+        _collect(nonExistentFranchiseId, ipAssetId);
     }
 
     /// @notice Tests whether collect reverts if the IP asset being collected from does not exist.
-    function test_CollectModuleCollectNonExistentIPAssetReverts(uint256 nonExistentIPAssetId, uint8 ipAssetType) createIPAsset(alice, ipAssetType) public {
+    function test_CollectModuleCollectNonExistentIPAssetReverts(uint256 nonExistentIPAssetId, uint8 ipAssetType) createIPAsset(collector, ipAssetType) public virtual {
         vm.assume(nonExistentIPAssetId != ipAssetId);
-        vm.assume(nonExistentIPAssetId != UNAUTHORIZED_FRANCHISE_ID);
         vm.expectRevert(CollectModuleIPAssetNonExistent.selector);
-        collectModule.collect(CollectParams({
-            franchiseId: franchiseId,
-            ipAssetId: nonExistentIPAssetId,
-            collector: cal,
-            collectData: "",
-            collectNFTInitData: "",
-            collectNFTData: ""
-        }));
+        _collect(franchiseId, nonExistentIPAssetId);
     }
 
     /// @notice Tests that collects with the module-default collect NFT succeed.
-    function test_CollectModuleCollectDefaultCollectNFT(uint8 ipAssetType) createIPAsset(alice, ipAssetType) public {
+    function test_CollectModuleCollectDefaultCollectNFT(uint8 ipAssetType) createIPAsset(collector, ipAssetType) public {
         assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), address(0));
-        (address collectNFT, uint256 collectNFTId) = collectModule.collect(CollectParams({
-            franchiseId: franchiseId,
-            ipAssetId: ipAssetId,
-            collector: cal,
-            collectData: "",
-            collectNFTInitData: "",
-            collectNFTData: ""
-        }));
+        (address collectNFT, uint256 collectNFTId) = _collect(franchiseId, ipAssetId);
         assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), collectNFT);
         assertTrue(ICollectNFT(collectNFT).ownerOf(collectNFTId) == cal);
+        assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), collectNFT);
     }
 
     /// @notice Tests that collects with customized collect NFTs succeed.
-    function test_CollectModuleCollectCustomCollectNFT(uint8 ipAssetType) public createIPAsset(alice, ipAssetType) {
+    function test_CollectModuleCollectCustomCollectNFT(uint8 ipAssetType) public createIPAsset(collector, ipAssetType) {
         assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), address(0));
-        (address collectNFT, uint256 collectNFTId) = collectModule.collect(CollectParams({
-            franchiseId: franchiseId,
-            ipAssetId: ipAssetId,
-            collector: alice,
-            collectData: "",
-            collectNFTInitData: "",
-            collectNFTData: ""
-        }));
+        (address collectNFT, uint256 collectNFTId) = _collect(franchiseId, ipAssetId);
         assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), collectNFT);
-        assertTrue(ICollectNFT(collectNFT).ownerOf(collectNFTId) == alice);
+        assertTrue(ICollectNFT(collectNFT).ownerOf(collectNFTId) == cal);
     }
 
     /// @notice Tests expected behavior of the collect module constructor.
@@ -133,12 +96,12 @@ contract CollectModuleBaseTest is BaseTest, ICollectModuleEventsAndErrors, MockC
     }
 
     /// @notice Tests expected behavior of collect module initialization.
-    function test_CollectModuleInit(uint8 ipAssetType) public {
+    function test_CollectModuleInit() public {
         assertEq(address(0), collectModule.getCollectNFT(franchiseId, ipAssetId));
     }
 
     /// @notice Tests collect module reverts on unauthorized calls.
-    function test_CollectModuleInitCollectInvalidCallerReverts(uint256 nonExistentFranchiseId, uint8 ipAssetType) public createIPAsset(alice, ipAssetType)  {
+    function test_CollectModuleInitCollectInvalidCallerReverts(uint256 nonExistentFranchiseId, uint8 ipAssetType) public createIPAsset(collector, ipAssetType)  {
         vm.assume(nonExistentFranchiseId != franchiseId);
         vm.expectRevert(CollectModuleCallerUnauthorized.selector);
         vm.prank(address(this));
@@ -151,24 +114,16 @@ contract CollectModuleBaseTest is BaseTest, ICollectModuleEventsAndErrors, MockC
     }
 
     /// @notice Tests collect module reverts on duplicate initialization.
-    function test_CollectModuleDuplicateInitReverts(uint8 ipAssetType) createIPAsset(alice, ipAssetType) public {
-        vm.prank(address(ipAssetRegistry));
+    function test_CollectModuleDuplicateInitReverts(uint8 ipAssetType) createIPAsset(collector, ipAssetType) public {
         vm.expectRevert(CollectModuleIPAssetAlreadyInitialized.selector);
-        collectModule.initCollect(InitCollectParams({
-            franchiseId: franchiseId,
-            ipAssetId: ipAssetId,
-            collectNFTImpl: DEFAULT_COLLECT_NFT_IMPL_CONFIG,
-            data: ""
-        }));
+        vm.prank(address(ipAssetRegistry));
+        _initCollectModule(franchiseId, defaultCollectNFTImpl);
     }
 
     /// @dev Helper function that initializes a collect module.
     /// @param franchiseId The id of the franchise associated with the module.
-    /// @param ipAssetOwner Owner address of the module configured IP asset.
-    /// @param ipAssetType IP asset type of the module configured IP asset.
     /// @param collectNFTImpl Collect NFT impl address used for collecting.
-    function _initCollectModule(uint256 franchiseId, address ipAssetOwner, uint8 ipAssetType, address collectNFTImpl) internal createIPAsset(ipAssetOwner, ipAssetType) {
-        vm.prank(address(ipAssetRegistry));
+    function _initCollectModule(uint256 franchiseId, address collectNFTImpl) internal virtual {
         collectModule.initCollect(InitCollectParams({
             franchiseId: franchiseId,
             ipAssetId: ipAssetId,
@@ -180,10 +135,9 @@ contract CollectModuleBaseTest is BaseTest, ICollectModuleEventsAndErrors, MockC
     /// @dev Helper function that performs collect module collection.
     /// @param franchiseId The id of the franchise of the IP asset.
     /// @param ipAssetId_ The id of the IP asset being collected.
-    /// @param collector Address designated for the IP asset collection.
-    function _collect(uint256 franchiseId, uint256 ipAssetId_, address collector) internal {
-        vm.assume(franchiseId != UNAUTHORIZED_FRANCHISE_ID);
-        collectModule.collect(CollectParams({
+    function _collect(uint256 franchiseId, uint256 ipAssetId_) internal virtual returns (address, uint256) {
+        vm.prank(collector);
+        return collectModule.collect(CollectParams({
             franchiseId: franchiseId,
             ipAssetId: ipAssetId_,
             collector: collector,
@@ -192,4 +146,5 @@ contract CollectModuleBaseTest is BaseTest, ICollectModuleEventsAndErrors, MockC
             collectNFTData: ""
         }));
     }
+
 }

@@ -91,6 +91,7 @@ contract IPAssetRegistry is
      * @param mediaUrl url to the IPAsset media and metadata
      * @param to holder of the IPAsset (and thus the licenses)
      * @param parentIpAssetId 0 if this is a root IPAsset, if it is a derivative, set the parent IPAsset id
+     * @param collectData Additional data passed for collect module initialization
      * @return the created IPAsset id
      */
     function createIPAsset(
@@ -99,7 +100,8 @@ contract IPAssetRegistry is
         string calldata _description,
         string calldata mediaUrl,
         address to,
-        uint256 parentIpAssetId
+        uint256 parentIpAssetId,
+        bytes calldata collectData
     )
         public
         returns (uint256)
@@ -127,7 +129,7 @@ contract IPAssetRegistry is
             franchiseId: _franchiseId,
             ipAssetId: ipAssetId,
             collectNFTImpl: address(0), // Default collect module NFT impl
-            data: ""
+            data: collectData
         }));
         return ipAssetId;
     }

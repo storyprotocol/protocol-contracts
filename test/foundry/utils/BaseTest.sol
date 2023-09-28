@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSDL-1.1
 pragma solidity ^0.8.19;
 
-import "forge-std/Test.sol";
 import 'test/foundry/utils/ProxyHelper.sol';
 import 'test/foundry/utils/BaseTestUtils.sol';
 import "test/foundry/mocks/RelationshipModuleHarness.sol";
@@ -23,7 +22,6 @@ import "contracts/modules/licensing/LicensingModule.sol";
 import "contracts/modules/licensing/terms/ITermsProcessor.sol";
 import "contracts/modules/licensing/LicenseRegistry.sol";
 import "contracts/interfaces/ICollectModule.sol";
-
 import '../mocks/MockTermsProcessor.sol';
 
 contract BaseTest is BaseTestUtils, ProxyHelper {
@@ -52,6 +50,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     bool public deployProcessors = false;
 
     address constant admin = address(123);
+    address constant upgrader = address(6969);
     address constant franchiseOwner = address(456);
     address constant revoker = address(789);
     string constant NON_COMMERCIAL_LICENSE_URI = "https://noncommercial.license";
@@ -73,6 +72,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
                 )
             )
         );
+        vm.prank(admin);
+        accessControl.grantRole(UPGRADER_ROLE, upgrader);
         
         // Create Franchise Registry
         franchiseRegistryImpl = address(new FranchiseRegistry(address(factory)));
@@ -99,19 +100,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
             )
         );
 
-        // Deploy collect module and collect NFT impl
-        defaultCollectNFTImpl = address(new MockCollectNFT());
-        collectModuleImpl = address(new MockCollectModule(address(franchiseRegistry), defaultCollectNFTImpl));
-
-        collectModule = ICollectModule(
-            _deployUUPSProxy(
-                collectModuleImpl,
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
-                )
-            )
-        );
-
+        defaultCollectNFTImpl = _deployCollectNFTImpl();
+        collectModule = ICollectModule(_deployCollectModule(defaultCollectNFTImpl));
         
         // upgrade factory to use new event emitter
         ipAssetRegistryImpl = address(new IPAssetRegistry(eventEmitter, address(licensingModule), address(franchiseRegistry), address(collectModule)));
@@ -174,16 +164,30 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         });
     }
 
+    function _deployCollectNFTImpl() internal virtual returns (address) {
+        return address(new MockCollectNFT());
+    }
+
+    function _deployCollectModule(address collectNFTImpl) internal virtual returns (address) {
+        collectModuleImpl = address(new MockCollectModule(address(franchiseRegistry), collectNFTImpl));
+        return _deployUUPSProxy(
+                collectModuleImpl,
+                abi.encodeWithSelector(
+                    bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
+                )
+        );
+    }
 
     /// @dev Helper function for creating an IP asset for an owner and IP type.
     ///      TO-DO: Replace this with a simpler set of default owners that get
     ///      tested against. The reason this is currently added is that during
     ///      fuzz testing, foundry may plug existing contracts as potential
     ///      owners for IP asset creation.
-    function _createIPAsset(address ipAssetOwner, uint8 ipAssetType) internal isValidReceiver(ipAssetOwner) returns (uint256) {
+    function _createIPAsset(address ipAssetOwner, uint8 ipAssetType, bytes memory collectData) internal isValidReceiver(ipAssetOwner) returns (uint256) {
         vm.assume(ipAssetType > uint8(type(IPAsset).min));
         vm.assume(ipAssetType < uint8(type(IPAsset).max));
         vm.prank(ipAssetOwner);
-        return ipAssetRegistry.createIPAsset(IPAsset(ipAssetType), "name", "description", "mediaUrl", ipAssetOwner, 0);
+        return ipAssetRegistry.createIPAsset(IPAsset(ipAssetType), "name", "description", "mediaUrl", ipAssetOwner, 0, collectData);
     }
+
 }
