@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/utils/Create2.sol";
-import "./IIPAccountRegistry.sol";
+import { Create2} from "@openzeppelin/contracts/utils/Create2.sol";
+import { IIPAccountRegistry } from "./IIPAccountRegistry.sol";
 
 contract IPAccountRegistry is IIPAccountRegistry {
     address internal immutable IP_ACCOUNT_IMPL;

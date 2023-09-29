@@ -6,6 +6,7 @@ env:
   FOUNDRY_PROFILE: ci
 
 jobs:
+
   foundry-test:
     strategy:
       fail-fast: true

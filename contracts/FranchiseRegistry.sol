@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import { IPAsset } from "./IPAsset.sol";
 import { IPAssetRegistryFactory } from "./ip-assets/IPAssetRegistryFactory.sol";
 import { AccessControlledUpgradeable } from "./access-control/AccessControlledUpgradeable.sol";
 import { UPGRADER_ROLE } from "./access-control/ProtocolRoles.sol";
-import { ZeroAddress, Unauthorized } from "./errors/General.sol";
+import { ZeroAddress } from "./errors/General.sol";
 import { IVersioned } from "./utils/IVersioned.sol";
 import { IIPAssetRegistry } from "./ip-assets/IIPAssetRegistry.sol";
-import { LibIPAssetId } from "./ip-assets/LibIPAssetId.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract FranchiseRegistry is
     UUPSUpgradeable,
@@ -112,7 +109,6 @@ contract FranchiseRegistry is
             return false;
         }
     }
-
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         _requireMinted(tokenId);

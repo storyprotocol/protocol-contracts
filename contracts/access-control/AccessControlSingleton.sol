@@ -11,7 +11,12 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 
 // TODO: Evaluate making this contract AccessControlEnumerableUpgradeable so it could enforce unique roles
 // (as in only 1 address can have a role at a time)
-contract AccessControlSingleton is AccessControlUpgradeable, UUPSUpgradeable, Multicall, IVersioned {
+contract AccessControlSingleton is
+    AccessControlUpgradeable,
+    UUPSUpgradeable,
+    Multicall,
+    IVersioned
+    {
     
     string public constant version = "0.1.0";
 

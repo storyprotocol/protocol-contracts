@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import { IIPAssetRegistry } from "./IIPAssetRegistry.sol";
 import { ICollectModule } from "contracts/interfaces/ICollectModule.sol";
 import { LibIPAssetId } from "./LibIPAssetId.sol";
-import { Unauthorized, ZeroAmount, ZeroAddress } from "../errors/General.sol";
+import { ZeroAmount, ZeroAddress } from "../errors/General.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 import { InitCollectParams } from "contracts/lib/CollectModuleStructs.sol";
 import { IIPAssetEventEmitter } from "./events/IIPAssetEventEmitter.sol";
@@ -41,7 +41,12 @@ contract IPAssetRegistry is
     string private constant _VERSION = "0.1.0";
     uint256 private constant _ROOT_IP_ASSET = 0;
 
-    constructor(address _eventEmitter, address _licensingModule, address _franchiseRegistry, address _collectModule) RightsManager(_franchiseRegistry) {
+    constructor(
+        address _eventEmitter,
+        address _licensingModule,
+        address _franchiseRegistry,
+        address _collectModule)
+    RightsManager(_franchiseRegistry) {
         // TODO: should Franchise owner be able to change this?
         if (_eventEmitter == address(0)) revert ZeroAddress();
         EVENT_EMITTER = IIPAssetEventEmitter(_eventEmitter);
@@ -81,8 +86,10 @@ contract IPAssetRegistry is
     }
 
     /**
-     * Creates a new IPAsset, and assigns licenses (rights) to it, according to the Franchise config in LicensingModule.
-     * A Non commercial license is always assigned, and if the IPAsset is a root IPAsset, a commercial license may also be assigned.
+     * Creates a new IPAsset, and assigns licenses (rights) to it, according to the Franchise
+     * config in LicensingModule.
+     * A Non commercial license is always assigned, and if the IPAsset is a root IPAsset,
+     * a commercial license may also be assigned.
      * @dev reverts if LicensingModule is not configured for the Franchise.
      * Logs to IPAssetEventEmitter, common contract for all IPAsset registries.
      * @param ipAssetType the type of IPAsset to create
@@ -117,12 +124,27 @@ contract IPAssetRegistry is
         ILicensingModule.FranchiseConfig memory config = LICENSING_MODULE.getFranchiseConfig(_franchiseId);
         if (config.revoker == address(0)) revert LicensingNotConfigured();
 
-        _setNonCommercialRights(ipAssetId, parentIpAssetId, to, config.revoker, config.nonCommercialConfig, config.nonCommercialTerms);
+        _setNonCommercialRights(
+            ipAssetId,
+            parentIpAssetId,
+            to,
+            config.revoker,
+            config.nonCommercialConfig,
+            config.nonCommercialTerms
+        );
         // If non derivative IpAsset, then franchise config may dictate commercial rights
         // Derivative works do not have commercial rights unless a deal with the relevant licensor is made
         if (config.rootIpAssetHasCommercialRights && parentIpAssetId == 0) {
             // Commercial
-            _setCommercialRights(ipAssetId, _ROOT_IP_ASSET, to, config.revoker, config.commercialLicenseUri, config.commercialConfig, config.commercialTerms);
+            _setCommercialRights(
+                ipAssetId,
+                _ROOT_IP_ASSET,
+                to,
+                config.revoker,
+                config.commercialLicenseUri,
+                config.commercialConfig,
+                config.commercialTerms
+            );
         }
         // TODO: Add collect NFT impl and data overrides
         COLLECT_MODULE.initCollect(InitCollectParams({
@@ -144,8 +166,17 @@ contract IPAssetRegistry is
      * @param config Franchise config
      * @param terms for the license to be active
      */
-    function _setNonCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, ILicensingModule.IpAssetConfig memory config, TermsProcessorConfig memory terms) internal {
-        uint256 parentLicenseId = parentIpAssetId == 0 ? config.franchiseRootLicenseId : getLicenseIdByTokenId(parentIpAssetId, false);
+    function _setNonCommercialRights(
+        uint256 ipAssetId,
+        uint256 parentIpAssetId,
+        address holder,
+        address revoker,
+        ILicensingModule.IpAssetConfig memory config,
+        TermsProcessorConfig memory terms
+    ) internal {
+        uint256 parentLicenseId = parentIpAssetId == 0 ?
+            config.franchiseRootLicenseId :
+            getLicenseIdByTokenId(parentIpAssetId, false);
         _createLicense(
             ipAssetId,
             parentLicenseId,
@@ -169,8 +200,18 @@ contract IPAssetRegistry is
      * @param config Franchise config
      * @param terms for the license to be active
      */
-    function _setCommercialRights(uint256 ipAssetId, uint256 parentIpAssetId, address holder, address revoker, string memory licenseUri, ILicensingModule.IpAssetConfig memory config, TermsProcessorConfig memory terms) internal {
-        uint256 parentLicenseId = parentIpAssetId == _ROOT_IP_ASSET ? config.franchiseRootLicenseId : getLicenseIdByTokenId(parentIpAssetId, true);
+    function _setCommercialRights(
+        uint256 ipAssetId,
+        uint256 parentIpAssetId,
+        address holder,
+        address revoker,
+        string memory licenseUri,
+        ILicensingModule.IpAssetConfig memory config,
+        TermsProcessorConfig memory terms
+    ) internal {
+        uint256 parentLicenseId = parentIpAssetId == _ROOT_IP_ASSET ?
+            config.franchiseRootLicenseId :
+            getLicenseIdByTokenId(parentIpAssetId, true);
         _createLicense(
             ipAssetId,
             parentLicenseId,
