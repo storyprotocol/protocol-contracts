@@ -9,5 +9,9 @@ pragma solidity ^0.8.13;
  * breaking a circular dependency on creation and keeping the beacon immutable
  */
 contract RevertingIPAssetRegistry {
+    error DontUseThisContract();
 
+    function initialize() external pure {
+        revert DontUseThisContract();
+    }
 }

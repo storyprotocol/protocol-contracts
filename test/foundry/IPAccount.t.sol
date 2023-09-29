@@ -109,7 +109,7 @@ contract IPAccountTest is Test {
         address otherOwner = vm.addr(2);
 
         vm.prank(vm.addr(3));
-        vm.expectRevert("Caller is not owner");
+        vm.expectRevert(IPAccountImpl.CallerNotOwner.selector);
         ipAccount.safeTransferFrom(address(nft), account, otherOwner, subTokenId);
 
         vm.prank(owner);

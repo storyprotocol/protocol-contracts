@@ -3,7 +3,8 @@
 pragma solidity ^0.8.9;
 
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
+import { ERC165CheckerUpgradeable }
+    from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import { PROTOCOL_ADMIN_ROLE } from "./ProtocolRoles.sol";
 import { UnsupportedInterface } from "../errors/General.sol";
 
@@ -28,7 +29,8 @@ abstract contract AccessControlled {
     }
 
     constructor(address accessControl) {
-        if (!accessControl.supportsInterface(type(IAccessControl).interfaceId)) revert UnsupportedInterface("IAccessControl");
+        if (!accessControl.supportsInterface(type(IAccessControl).interfaceId))
+            revert UnsupportedInterface("IAccessControl");
         _accessControl = IAccessControl(accessControl);
         emit AccessControlUpdated(accessControl);
     }
@@ -48,7 +50,8 @@ abstract contract AccessControlled {
      * @param accessControl address of the new instance of AccessControlSingleton.
      */
     function setAccessControl(address accessControl) public onlyRole(PROTOCOL_ADMIN_ROLE) {
-        if (!accessControl.supportsInterface(type(IAccessControl).interfaceId)) revert UnsupportedInterface("IAccessControl");
+        if (!accessControl.supportsInterface(type(IAccessControl).interfaceId))
+            revert UnsupportedInterface("IAccessControl");
         _accessControl = IAccessControl(accessControl);
         emit AccessControlUpdated(accessControl);
     }

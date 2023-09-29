@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/interfaces/IERC1271.sol";
-import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./IERC6551Account.sol";
-import "./IIPAccount.sol";
+import { IERC1271 } from "@openzeppelin/contracts/interfaces/IERC1271.sol";
+import { SignatureChecker } from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import { IERC1155Receiver } from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC6551Account } from "./IERC6551Account.sol";
+import { IIPAccount } from "./IIPAccount.sol";
 
 /**
  * @title IPAccountImpl
@@ -22,6 +21,8 @@ contract IPAccountImpl is
     IERC1271
 {
     using SafeERC20 for IERC20;
+
+    error CallerNotOwner();
 
     uint256 public state;
     // ERC20 token => amount
@@ -106,7 +107,7 @@ contract IPAccountImpl is
      * @dev {See IIPAccount-safeTransferFrom}
      */
     function safeTransferFrom(address nftContract, address from, address to, uint256 tokenId) external {
-        require(_isValidSigner(msg.sender), "Caller is not owner");
+        if (!_isValidSigner(msg.sender)) revert  CallerNotOwner();
         ++state;
         IERC721(nftContract).safeTransferFrom(from, to, tokenId);
     }

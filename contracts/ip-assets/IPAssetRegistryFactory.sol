@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 
 import { IIPAssetRegistry } from "./IIPAssetRegistry.sol";
 import { IPAssetRegistry } from "./IPAssetRegistry.sol";
-import { ZeroAddress } from "../errors/General.sol";
 import { IVersioned } from "../utils/IVersioned.sol";
 import { UnsupportedInterface } from "../errors/General.sol";
 import { LicenseRegistry } from "../modules/licensing/LicenseRegistry.sol";
@@ -41,7 +40,11 @@ contract IPAssetRegistryFactory is Ownable {
             description
         );
         address proxy = address(new BeaconProxy(address(BEACON), data));
-        LicenseRegistry licenseRegistry = new LicenseRegistry(proxy, string.concat("Licenses for ", name), string.concat("sl", symbol));
+        LicenseRegistry licenseRegistry = new LicenseRegistry(
+            proxy,
+            string.concat("Licenses for ", name),
+            string.concat("sl", symbol)
+        );
         IPAssetRegistry(proxy).setLicenseRegistry(address(licenseRegistry));
         
         emit FranchiseCreated(proxy, name, symbol);
@@ -49,7 +52,8 @@ contract IPAssetRegistryFactory is Ownable {
     }
 
     function upgradeFranchises(address newImplementation) external onlyOwner {
-        if (!newImplementation.supportsInterface(type(IIPAssetRegistry).interfaceId)) revert UnsupportedInterface("IIPAssetRegistry");
+        if (!newImplementation.supportsInterface(type(IIPAssetRegistry).interfaceId))
+            revert UnsupportedInterface("IIPAssetRegistry");
         BEACON.upgradeTo(newImplementation);
         emit FranchisesUpgraded(address(newImplementation), IVersioned(newImplementation).version());
     }

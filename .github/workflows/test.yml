@@ -6,6 +6,7 @@ env:
   FOUNDRY_PROFILE: ci
 
 jobs:
+
   foundry-test:
     strategy:
       fail-fast: true
@@ -20,11 +21,11 @@ jobs:
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}
-
-      - uses: chill-viking/npm-ci@latest
-        name: Install NPM Dependencies
+  
+      - name: Run install
+        uses: borales/actions-yarn@v4
         with:
-          working_directory: ${{ github.workspace }}
+          cmd: install # will run `yarn install` command
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
