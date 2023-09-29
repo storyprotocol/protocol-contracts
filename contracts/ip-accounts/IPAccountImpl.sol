@@ -22,7 +22,7 @@ contract IPAccountImpl is
 {
     using SafeERC20 for IERC20;
 
-    error CalletNotOwner();
+    error CallerNotOwner();
 
     uint256 public state;
     // ERC20 token => amount
@@ -107,7 +107,7 @@ contract IPAccountImpl is
      * @dev {See IIPAccount-safeTransferFrom}
      */
     function safeTransferFrom(address nftContract, address from, address to, uint256 tokenId) external {
-        if (!_isValidSigner(msg.sender)) revert  CalletNotOwner();
+        if (!_isValidSigner(msg.sender)) revert  CallerNotOwner();
         ++state;
         IERC721(nftContract).safeTransferFrom(from, to, tokenId);
     }
