@@ -9,7 +9,7 @@ import { IPAsset } from "contracts/IPAsset.sol";
 import { InitCollectParams } from "contracts/lib/CollectModuleStructs.sol";
 import { IIPAssetEventEmitter } from "./events/IIPAssetEventEmitter.sol";
 import { IPAssetDataManager } from "./storage/IPAssetDataManager.sol";
-import { ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { MulticallUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 import { RightsManager } from "../modules/licensing/RightsManager.sol";
@@ -45,8 +45,8 @@ contract IPAssetRegistry is
         address _eventEmitter,
         address _licensingModule,
         address _franchiseRegistry,
-        address _collectModule)
-    RightsManager(_franchiseRegistry) {
+        address _collectModule
+    ) RightsManager(_franchiseRegistry) {
         // TODO: should Franchise owner be able to change this?
         if (_eventEmitter == address(0)) revert ZeroAddress();
         EVENT_EMITTER = IIPAssetEventEmitter(_eventEmitter);
@@ -109,21 +109,17 @@ contract IPAssetRegistry is
         address to,
         uint256 parentIpAssetId,
         bytes calldata collectData
-    )
-        public
-        returns (uint256)
-    {
+    ) public returns (uint256) {
         if (ipAssetType == IPAsset.UNDEFINED) revert InvalidBlockType();
         uint256 ipAssetId = _mintBlock(to, ipAssetType);
         _writeIPAsset(ipAssetId, name, _description, mediaUrl);
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
         uint256 _franchiseId = $.franchiseId;
         EVENT_EMITTER.emitIPAssetCreation(_franchiseId, ipAssetId);
-        
         // Non commercial
-        ILicensingModule.FranchiseConfig memory config = LICENSING_MODULE.getFranchiseConfig(_franchiseId);
+        ILicensingModule.FranchiseConfig memory config = LICENSING_MODULE
+            .getFranchiseConfig(_franchiseId);
         if (config.revoker == address(0)) revert LicensingNotConfigured();
-
         _setNonCommercialRights(
             ipAssetId,
             parentIpAssetId,
@@ -147,12 +143,14 @@ contract IPAssetRegistry is
             );
         }
         // TODO: Add collect NFT impl and data overrides
-        COLLECT_MODULE.initCollect(InitCollectParams({
-            franchiseId: _franchiseId,
-            ipAssetId: ipAssetId,
-            collectNFTImpl: address(0), // Default collect module NFT impl
-            data: collectData
-        }));
+        COLLECT_MODULE.initCollect(
+            InitCollectParams({
+                franchiseId: _franchiseId,
+                ipAssetId: ipAssetId,
+                collectNFTImpl: address(0), // Default collect module NFT impl
+                data: collectData
+            })
+        );
         return ipAssetId;
     }
 
@@ -174,9 +172,9 @@ contract IPAssetRegistry is
         ILicensingModule.IpAssetConfig memory config,
         TermsProcessorConfig memory terms
     ) internal {
-        uint256 parentLicenseId = parentIpAssetId == 0 ?
-            config.franchiseRootLicenseId :
-            getLicenseIdByTokenId(parentIpAssetId, false);
+        uint256 parentLicenseId = parentIpAssetId == 0
+            ? config.franchiseRootLicenseId
+            : getLicenseIdByTokenId(parentIpAssetId, false);
         _createLicense(
             ipAssetId,
             parentLicenseId,
@@ -209,9 +207,9 @@ contract IPAssetRegistry is
         ILicensingModule.IpAssetConfig memory config,
         TermsProcessorConfig memory terms
     ) internal {
-        uint256 parentLicenseId = parentIpAssetId == _ROOT_IP_ASSET ?
-            config.franchiseRootLicenseId :
-            getLicenseIdByTokenId(parentIpAssetId, true);
+        uint256 parentLicenseId = parentIpAssetId == _ROOT_IP_ASSET
+            ? config.franchiseRootLicenseId
+            : getLicenseIdByTokenId(parentIpAssetId, true);
         _createLicense(
             ipAssetId,
             parentLicenseId,
@@ -279,5 +277,4 @@ contract IPAssetRegistry is
             interfaceId == type(IIPAssetRegistry).interfaceId ||
             super.supportsInterface(interfaceId);
     }
-
 }

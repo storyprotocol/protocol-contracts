@@ -10,13 +10,17 @@ import { LicenseRegistry } from "../modules/licensing/LicenseRegistry.sol";
 import { RevertingIPAssetRegistry } from "contracts/utils/RevertingIPAssetRegistry.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol"; 
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
 contract IPAssetRegistryFactory is Ownable {
     using ERC165Checker for address;
 
-    event FranchiseCreated(address indexed collection, string name, string indexed symbol);
+    event FranchiseCreated(
+        address indexed collection,
+        string name,
+        string indexed symbol
+    );
     event FranchisesUpgraded(address indexed newImplementation, string version);
 
     UpgradeableBeacon public immutable BEACON;
@@ -33,7 +37,9 @@ contract IPAssetRegistryFactory is Ownable {
         string calldata description
     ) external returns (address) {
         bytes memory data = abi.encodeWithSelector(
-            bytes4(keccak256(bytes("initialize(uint256,string,string,string)"))),
+            bytes4(
+                keccak256(bytes("initialize(uint256,string,string,string)"))
+            ),
             franchiseId,
             name,
             symbol,
@@ -46,15 +52,22 @@ contract IPAssetRegistryFactory is Ownable {
             string.concat("sl", symbol)
         );
         IPAssetRegistry(proxy).setLicenseRegistry(address(licenseRegistry));
-        
         emit FranchiseCreated(proxy, name, symbol);
         return proxy;
     }
 
     function upgradeFranchises(address newImplementation) external onlyOwner {
-        if (!newImplementation.supportsInterface(type(IIPAssetRegistry).interfaceId))
+        if (
+            !newImplementation.supportsInterface(
+                type(IIPAssetRegistry).interfaceId
+            )
+        ) {
             revert UnsupportedInterface("IIPAssetRegistry");
+        }
         BEACON.upgradeTo(newImplementation);
-        emit FranchisesUpgraded(address(newImplementation), IVersioned(newImplementation).version());
+        emit FranchisesUpgraded(
+            address(newImplementation),
+            IVersioned(newImplementation).version()
+        );
     }
 }

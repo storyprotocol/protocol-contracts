@@ -3,7 +3,6 @@ pragma solidity ^0.8.18;
 
 /// @title Collect Module Events & Errors Interface
 interface ICollectModuleEventsAndErrors {
-
     /// @notice Collect module caller is unauthorized.
     error CollectModuleCallerUnauthorized();
 
@@ -21,5 +20,4 @@ interface ICollectModuleEventsAndErrors {
 
     /// @notice Collect module provided IP asset registry does not exist.
     error CollectModuleIPAssetRegistryNonExistent();
-
 }

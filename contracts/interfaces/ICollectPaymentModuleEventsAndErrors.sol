@@ -4,8 +4,9 @@ pragma solidity ^0.8.18;
 import { ICollectModuleEventsAndErrors } from "contracts/interfaces/ICollectModuleEventsAndErrors.sol";
 
 /// @title Collect Payment Module Events & Errors Interface
-interface ICollectPaymentModuleEventsAndErrors is ICollectModuleEventsAndErrors {
-
+interface ICollectPaymentModuleEventsAndErrors is
+    ICollectModuleEventsAndErrors
+{
     /// @notice The configured collect module payment amount is invalid.
     error CollectPaymentModuleAmountInvalid();
 
@@ -35,5 +36,4 @@ interface ICollectPaymentModuleEventsAndErrors is ICollectModuleEventsAndErrors 
 
     /// @notice The token provided for the payment collect is invalid.
     error CollectPaymentModuleTokenInvalid();
-
 }
