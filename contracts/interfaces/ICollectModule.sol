@@ -8,7 +8,6 @@ import { ICollectModuleEventsAndErrors } from "./ICollectModuleEventsAndErrors.s
 /// @notice The collect module enables IP assets to be minted as NFTs mirroring
 ///         their binding IP assets in a franchise-configurable format.
 interface ICollectModule is ICollectModuleEventsAndErrors {
-
     /// @notice Initializes the collect module for a specific IP asset.
     /// @param initCollectParams Collect module init data, including IP asset
     ///        id, collect NFT impl address, and generic unformatted init data.
@@ -19,15 +18,16 @@ interface ICollectModule is ICollectModuleEventsAndErrors {
     ///         collector address, and generic unformatted collect and NFT data.
     /// @return collectNFT The address of the collected NFT.
     /// @return collectNFTId The id of the collected collect NFT.
-    function collect(CollectParams calldata collectParams)
-        external
-        payable
-        returns (address collectNFT, uint256 collectNFTId);
+    function collect(
+        CollectParams calldata collectParams
+    ) external payable returns (address collectNFT, uint256 collectNFTId);
 
     /// @notice Returns the collect NFT address associated with an IP asset.
     /// @param  franchiseId The id of the franchise of the specified IP asset.
     /// @param  ipAssetId The id of the specified IP asset within the franchise.
     /// @return The Collect NFT address if it exists, else the zero address.
-    function getCollectNFT(uint256 franchiseId, uint256 ipAssetId) external returns (address);
-
+    function getCollectNFT(
+        uint256 franchiseId,
+        uint256 ipAssetId
+    ) external returns (address);
 }

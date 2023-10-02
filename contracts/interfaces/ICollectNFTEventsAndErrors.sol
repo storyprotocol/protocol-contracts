@@ -2,7 +2,6 @@
 pragma solidity ^0.8.18;
 
 interface ICollectNFTEventsAndErrors {
-
     /// @notice Collect NFT has already been initialized.
     error CollectNFTAlreadyInitialized();
 
@@ -14,5 +13,4 @@ interface ICollectNFTEventsAndErrors {
 
     /// @notice IP asset bound to the Collect NFT does not exist.
     error CollectNFTIPAssetNonExistent();
-
 }

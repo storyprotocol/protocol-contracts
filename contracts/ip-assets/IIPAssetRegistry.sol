@@ -23,5 +23,4 @@ interface IIPAssetRegistry is
         address to,
         uint256 parentIpAssetId
     ) external returns (uint256);
-
 }

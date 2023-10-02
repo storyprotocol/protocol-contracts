@@ -15,11 +15,7 @@ import { IIPAccount } from "./IIPAccount.sol";
 /**
  * @title IPAccountImpl
  */
-contract IPAccountImpl is
-    IERC165,
-    IIPAccount,
-    IERC1271
-{
+contract IPAccountImpl is IERC165, IIPAccount, IERC1271 {
     using SafeERC20 for IERC20;
 
     error CallerNotOwner();
@@ -32,7 +28,9 @@ contract IPAccountImpl is
 
     receive() external payable {}
 
-    function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) external pure returns (bool) {
         return (interfaceId == type(IERC6551Account).interfaceId ||
             interfaceId == type(IERC1155Receiver).interfaceId ||
             interfaceId == type(IERC721Receiver).interfaceId ||
@@ -42,16 +40,7 @@ contract IPAccountImpl is
     /**
      * @dev {See IERC6551Account-token}
      */
-    function token()
-        public
-        view
-        override
-        returns (
-            uint256,
-            address,
-            uint256
-        )
-    {
+    function token() public view override returns (uint256, address, uint256) {
         bytes memory footer = new bytes(0x60);
         // 0x4d = 77 bytes (ERC-1167 Header, address, ERC-1167 Footer, salt)
         // 0x60 = 96 bytes (chainId, tokenContract, tokenId)
@@ -69,12 +58,15 @@ contract IPAccountImpl is
         return abi.decode(footer, (uint256, address, uint256));
     }
 
-    function isValidSignature(bytes32 hash, bytes memory signature)
-        external
-        view
-        returns (bytes4 magicValue)
-    {
-        bool isValid = SignatureChecker.isValidSignatureNow(owner(), hash, signature);
+    function isValidSignature(
+        bytes32 hash,
+        bytes memory signature
+    ) external view returns (bytes4 magicValue) {
+        bool isValid = SignatureChecker.isValidSignatureNow(
+            owner(),
+            hash,
+            signature
+        );
         if (isValid) {
             return IERC1271.isValidSignature.selector;
         }
@@ -85,7 +77,10 @@ contract IPAccountImpl is
     /**
      * @dev {See IERC6551Account-isValidSigner}
      */
-    function isValidSigner(address signer, bytes calldata) external view returns (bytes4) {
+    function isValidSigner(
+        address signer,
+        bytes calldata
+    ) external view returns (bytes4) {
         if (_isValidSigner(signer)) {
             return IERC6551Account.isValidSigner.selector;
         }
@@ -106,17 +101,27 @@ contract IPAccountImpl is
     /**
      * @dev {See IIPAccount-safeTransferFrom}
      */
-    function safeTransferFrom(address nftContract, address from, address to, uint256 tokenId) external {
-        if (!_isValidSigner(msg.sender)) revert  CallerNotOwner();
+    function safeTransferFrom(
+        address nftContract,
+        address from,
+        address to,
+        uint256 tokenId
+    ) external {
+        if (!_isValidSigner(msg.sender)) revert CallerNotOwner();
         ++state;
         IERC721(nftContract).safeTransferFrom(from, to, tokenId);
     }
 
     // TODO: authorization check that only the royaltyDistributor can call this function
-    function sendRoyaltyForDistribution(address distributor, address erc20) external {
+    function sendRoyaltyForDistribution(
+        address distributor,
+        address erc20
+    ) external {
         IERC20(erc20).safeTransfer(
             distributor,
-            IERC20(erc20).balanceOf(address(this)) + withdrawn[erc20] - entitled[erc20]
+            IERC20(erc20).balanceOf(address(this)) +
+                withdrawn[erc20] -
+                entitled[erc20]
         );
     }
 

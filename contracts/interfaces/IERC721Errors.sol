@@ -3,7 +3,6 @@ pragma solidity ^0.8.18;
 
 /// @title ERC-721 Errors Interface
 interface IERC721Errors {
-
     /// @notice Originating address does not own the NFT.
     error ERC721OwnerInvalid();
 
@@ -21,5 +20,4 @@ interface IERC721Errors {
 
     /// @notice NFT does not exist.
     error ERC721TokenNonExistent();
-
 }

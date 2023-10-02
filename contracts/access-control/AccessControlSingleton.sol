@@ -16,8 +16,7 @@ contract AccessControlSingleton is
     UUPSUpgradeable,
     Multicall,
     IVersioned
-    {
-    
+{
     string public constant version = "0.1.0";
 
     /**
@@ -36,15 +35,18 @@ contract AccessControlSingleton is
      * @param role id of the new role. Should be keccak256("<ROLE_NAME>").
      * @param admin role id that will be the role admin for the new role.
      */
-    function setRoleAdmin(bytes32 role, bytes32 admin) external onlyRole(PROTOCOL_ADMIN_ROLE) {
+    function setRoleAdmin(
+        bytes32 role,
+        bytes32 admin
+    ) external onlyRole(PROTOCOL_ADMIN_ROLE) {
         _setRoleAdmin(role, admin);
     }
 
     /**
      * @notice Access control for the upgrade process (UPGRADER_ROLE)
      * @param newImplementation address of the new deployed implementation.
-     */ 
-    function _authorizeUpgrade(address newImplementation) internal virtual override onlyRole(UPGRADER_ROLE) {
-    }
-
+     */
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal virtual override onlyRole(UPGRADER_ROLE) {}
 }

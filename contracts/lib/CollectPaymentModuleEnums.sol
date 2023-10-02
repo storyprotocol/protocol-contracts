@@ -5,6 +5,5 @@ pragma solidity ^0.8.18;
 /// TODO: Add ERC-721 and ERC-1155 as configurable payment types.
 enum PaymentType {
     NATIVE, // Utilize the native token (e.g. ETH on Ethereum or OP on Optimism)
-    ERC20   // Utilize an ERC-20 token
+    ERC20 // Utilize an ERC-20 token
 }
-
