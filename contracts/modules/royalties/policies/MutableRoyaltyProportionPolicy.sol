@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import {IRoyaltyProportionPolicy} from "./IRoyaltyProportionPolicy.sol";
+import {IRoyaltyProportionPolicy} from "contracts/interfaces/modules/royalties/policies/IRoyaltyProportionPolicy.sol";
 import { RoyaltyNFT } from "contracts/modules/royalties/RoyaltyNFT.sol";
 
 

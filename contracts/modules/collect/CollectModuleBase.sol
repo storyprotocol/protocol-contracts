@@ -5,15 +5,15 @@ import { Clones } from '@openzeppelin/contracts/proxy/Clones.sol';
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import { ICollectModule } from "contracts/interfaces/ICollectModule.sol";
-import { ICollectModuleEventsAndErrors } from "contracts/interfaces/ICollectModuleEventsAndErrors.sol";
-import { ICollectNFT } from "contracts/interfaces/ICollectNFT.sol";
+import { ICollectModule } from "contracts/interfaces/modules/collect/ICollectModule.sol";
+import { ICollectModuleEventsAndErrors } from "contracts/interfaces/modules/collect/ICollectModuleEventsAndErrors.sol";
+import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.sol";
 
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { CollectInfo, InitCollectParams, CollectParams } from "contracts/lib/CollectModuleStructs.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { InitCollectNFTParams } from "contracts/lib/CollectNFTStructs.sol";
-import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
+import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
 
 
 /// @title Collect Module Base Implementation

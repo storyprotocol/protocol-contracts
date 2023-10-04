@@ -2,8 +2,8 @@
 pragma solidity ^0.8.18;
 
 import { ICollectModule } from "./ICollectModule.sol";
-import { CollectPaymentInfo } from "../lib/CollectPaymentModuleStructs.sol";
-import { InitCollectParams, CollectParams } from "../lib/CollectModuleStructs.sol";
+import { CollectPaymentInfo } from "contracts/lib/CollectPaymentModuleStructs.sol";
+import { InitCollectParams, CollectParams } from "contracts/lib/CollectModuleStructs.sol";
 import { ICollectPaymentModuleEventsAndErrors } from "./ICollectPaymentModuleEventsAndErrors.sol";
 
 /// @title Collect Payment Module Interface

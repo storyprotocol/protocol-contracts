@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import { IIPAssetEventEmitter } from "./IIPAssetEventEmitter.sol";
+import { IIPAssetEventEmitter } from "contracts/interfaces/ip-assets/events/IIPAssetEventEmitter.sol";
 import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { ZeroAddress, Unauthorized } from "contracts/errors/General.sol";

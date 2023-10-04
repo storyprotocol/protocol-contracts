@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.18;
 
-import { ICollectModuleEventsAndErrors } from "contracts/interfaces/ICollectModuleEventsAndErrors.sol";
-import { ICollectModule } from "contracts/interfaces/ICollectModule.sol";
-import { ICollectNFT } from "contracts/interfaces/ICollectNFT.sol";
+import { ICollectModuleEventsAndErrors } from "contracts/interfaces/modules/collect/ICollectModuleEventsAndErrors.sol";
+import { ICollectModule } from "contracts/interfaces/modules/collect/ICollectModule.sol";
+import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.sol";
 
 import { BaseTestUtils } from "test/foundry/utils/BaseTestUtils.sol";
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";

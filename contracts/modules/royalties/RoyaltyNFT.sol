@@ -8,8 +8,8 @@ import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
-import { IIPAccount } from "contracts/ip-accounts/IIPAccount.sol";
-import { ISplitMain } from "./ISplitMain.sol";
+import { IIPAccount } from "contracts/interfaces/ip-accounts/IIPAccount.sol";
+import { ISplitMain } from "contracts/interfaces/modules/royalties/ISplitMain.sol";
 
 error AccountsAndAllocationsMismatch(
     uint256 accountsLength,

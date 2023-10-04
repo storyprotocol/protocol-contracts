@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.18;
 
-import { ICollectModule } from "contracts/interfaces/ICollectModule.sol";
-import { ICollectNFT } from "contracts/interfaces/ICollectNFT.sol";
-import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
+import { ICollectModule } from "contracts/interfaces/modules/collect/ICollectModule.sol";
+import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.sol";
+import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
 
 import { InitCollectNFTParams } from "contracts/lib/CollectNFTStructs.sol";
 import { ERC721 } from "./ERC721.sol";

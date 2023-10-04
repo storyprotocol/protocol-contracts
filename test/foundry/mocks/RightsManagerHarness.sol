@@ -3,9 +3,9 @@ pragma solidity ^0.8.13;
 
 import { IPAssetRegistry } from "contracts/ip-assets/IPAssetRegistry.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
-import { ILicensingModule } from "contracts/modules/licensing/ILicensingModule.sol";
-import { IERC5218 } from "contracts/modules/licensing/IERC5218.sol";
-import { ITermsProcessor } from "contracts/modules/licensing/terms/ITermsProcessor.sol";
+import { ILicensingModule } from "contracts/interfaces/modules/licensing/ILicensingModule.sol";
+import { IERC5218 } from "contracts/interfaces/modules/licensing/IERC5218.sol";
+import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
 
 
 contract RightsManagerHarness is IPAssetRegistry {

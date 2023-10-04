@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import 'test/foundry/utils/BaseTest.sol';
 import "contracts/errors/General.sol";
-import "contracts/modules/licensing/terms/ITermsProcessor.sol";
+import "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
 import "contracts/modules/licensing/terms/TimeTermsProcessor.sol";
 import "contracts/modules/timing/LibDuration.sol";
 

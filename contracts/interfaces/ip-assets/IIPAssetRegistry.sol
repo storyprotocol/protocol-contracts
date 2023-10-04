@@ -5,7 +5,7 @@ import { IVersioned } from "../utils/IVersioned.sol";
 import { IIPAssetDataManager } from "./storage/IIPAssetDataManager.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { IERC5218 } from "../modules/licensing/IERC5218.sol";
-import { IPAsset } from "../IPAsset.sol";
+import { IPAsset } from "contracts/IPAsset.sol";
 
 interface IIPAssetRegistry is
     IVersioned,

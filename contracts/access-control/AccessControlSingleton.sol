@@ -3,14 +3,16 @@
 pragma solidity ^0.8.13;
 
 import { PROTOCOL_ADMIN_ROLE, UPGRADER_ROLE } from "./ProtocolRoles.sol";
-import { IVersioned } from "../utils/IVersioned.sol";
+import { IVersioned } from "contracts/interfaces/utils/IVersioned.sol";
 import { ZeroAddress } from "../errors/General.sol";
 import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-// TODO: Evaluate making this contract AccessControlEnumerableUpgradeable so it could enforce unique roles
-// (as in only 1 address can have a role at a time)
+/// @notice AccessControlSingleton contract. Manages protocol admin keys. Other contracts might inherit
+/// AccessControlled or its upgradeable version to use the onlyRole modifier.
+/// TODO: Evaluate making this contract AccessControlEnumerableUpgradeable so it could enforce unique roles
+/// (as in only 1 address can have a role at a time)
 contract AccessControlSingleton is
     AccessControlUpgradeable,
     UUPSUpgradeable,

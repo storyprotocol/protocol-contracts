@@ -3,8 +3,8 @@ pragma solidity ^0.8.18;
 
 import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 
-import { IERC721Events } from "contracts/interfaces/IERC721Events.sol";
-import { IERC721Errors } from "contracts/interfaces/IERC721Errors.sol";
+import { IERC721Events } from "contracts/interfaces/modules/collect/IERC721Events.sol";
+import { IERC721Errors } from "contracts/interfaces/modules/collect/nft/IERC721Errors.sol";
 
 /// @title Mock ERC-721 Receiver
 /// @notice This contract is used to test ERC-721 safe transfers.

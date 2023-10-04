@@ -4,12 +4,12 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { LibDuration } from "../timing/LibDuration.sol";
 import { UPGRADER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
-import { IERC5218 } from "./IERC5218.sol";
-import { ILicenseRegistry } from "./ILicenseRegistry.sol";
+import { IERC5218 } from "contracts/interfaces/modules/licensing/IERC5218.sol";
+import { ILicenseRegistry } from "contracts/interfaces/modules/licensing/ILicenseRegistry.sol";
 import { NonExistentID, Unauthorized, ZeroAddress, UnsupportedInterface } from "contracts/errors/General.sol";
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
+import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
 
 /**
  * @title RightsManager

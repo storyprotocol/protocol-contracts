@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import { IIPAssetRegistry } from "./IIPAssetRegistry.sol";
-import { ICollectModule } from "contracts/interfaces/ICollectModule.sol";
+import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
+import { ICollectModule } from "contracts/interfaces/modules/collect/ICollectModule.sol";
 import { LibIPAssetId } from "./LibIPAssetId.sol";
 import { ZeroAmount, ZeroAddress } from "../errors/General.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 import { InitCollectParams } from "contracts/lib/CollectModuleStructs.sol";
-import { IIPAssetEventEmitter } from "./events/IIPAssetEventEmitter.sol";
+import { IIPAssetEventEmitter } from "contracts/interfaces/ip-assets/events/IIPAssetEventEmitter.sol";
 import { IPAssetDataManager } from "./storage/IPAssetDataManager.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { MulticallUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 import { RightsManager } from "../modules/licensing/RightsManager.sol";
-import { ILicensingModule } from "../modules/licensing/ILicensingModule.sol";
+import { ILicensingModule } from "contracts/interfaces/modules/licensing/ILicensingModule.sol";
 
 contract IPAssetRegistry is
     IPAssetDataManager,

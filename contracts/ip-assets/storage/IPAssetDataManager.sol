@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
 import { Unauthorized, NonExistentID, ZeroAddress } from "contracts/errors/General.sol";
-import { IIPAssetDataManager } from "./IIPAssetDataManager.sol";
+import { IIPAssetDataManager } from "contracts/interfaces/ip-assets/storage/IIPAssetDataManager.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 

@@ -19,9 +19,9 @@ import "contracts/modules/relationships/processors/DstOwnerRelationshipProcessor
 import "contracts/modules/relationships/RelationshipModuleBase.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
-import "contracts/modules/licensing/terms/ITermsProcessor.sol";
+import "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
 import "contracts/modules/licensing/LicenseRegistry.sol";
-import "contracts/interfaces/ICollectModule.sol";
+import "contracts/interfaces/modules/collect/ICollectModule.sol";
 import '../mocks/MockTermsProcessor.sol';
 
 contract BaseTest is BaseTestUtils, ProxyHelper {

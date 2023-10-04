@@ -3,10 +3,10 @@ pragma solidity ^0.8.18;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { ICollectPaymentModuleEventsAndErrors } from "contracts/interfaces/ICollectPaymentModuleEventsAndErrors.sol";
-import { ICollectModule } from "contracts/interfaces/ICollectModule.sol";
-import { ICollectPaymentModule } from "contracts/interfaces/ICollectPaymentModule.sol";
-import { ICollectNFT } from "contracts/interfaces/ICollectNFT.sol";
+import { ICollectPaymentModuleEventsAndErrors } from "contracts/interfaces/modules/collect/ICollectPaymentModuleEventsAndErrors.sol";
+import { ICollectModule } from "contracts/interfaces/modules/collect/ICollectModule.sol";
+import { ICollectPaymentModule } from "contracts/interfaces/modules/collect/ICollectPaymentModule.sol";
+import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.sol";
 
 import { BaseCollectModuleTest } from "./BaseCollectModuleTest.sol";
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
