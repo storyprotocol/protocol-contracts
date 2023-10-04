@@ -27,9 +27,9 @@ contract SetTestRelationship is Script, BroadcastManager, JsonDeploymentHandler 
         }
         protocolRelationshipModule = ProtocolRelationshipModule(relModule);
 
-        IPAsset[] memory allIPAssets = new IPAsset[](6);
+        IPAsset[] memory allIpAssets = new IPAsset[](6);
         for (uint8 i = 0; i < 6; i++) {
-            allIPAssets[i] = IPAsset(i + 1);
+            allIpAssets[i] = IPAsset(i + 1);
         }
 
         address processor = _readAddress(".relationship-processors.PermissionlessRelationshipProcessor");
@@ -38,16 +38,16 @@ contract SetTestRelationship is Script, BroadcastManager, JsonDeploymentHandler 
         }
 
         IRelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
-            sourceIPAssets: allIPAssets,
+            sourceIpAssets: allIpAssets,
             allowedExternalSource: true,
-            destIPAssets: allIPAssets,
+            destIpAssets: allIpAssets,
             allowedExternalDest: true,
             onlySameFranchise: true,
             processor: processor,
             disputer: admin,
             timeConfig: IRelationshipModule.TimeConfig({
-                maxTTL: 0,
-                minTTL: 0,
+                maxTtl: 0,
+                minTtl: 0,
                 renewable: false
             })
         });

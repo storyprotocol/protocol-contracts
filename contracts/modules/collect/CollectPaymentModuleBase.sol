@@ -29,11 +29,11 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
 
     /// @notice Instantiates a new collect payment module.
     /// @param franchiseRegistry The protocol-wide franchise registry address.
-    /// @param defaultCollectNFTImpl The default collect NFT impl address.
+    /// @param defaultCollectNftImpl The default collect NFT impl address.
     constructor(
         address franchiseRegistry,
-        address defaultCollectNFTImpl
-    ) CollectModuleBase(franchiseRegistry, defaultCollectNFTImpl) {}
+        address defaultCollectNftImpl
+    ) CollectModuleBase(franchiseRegistry, defaultCollectNftImpl) {}
 
     /// @notice Returns the collect payment info associated with an IP asset.
     /// @param  franchiseId The id of the franchise of the specified IP asset.
@@ -55,10 +55,10 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
     ///         configured payment in the process.
     /// @param collectParams Collect module collect data, including IP asset id,
     ///         collector address, and collect payment module processing data.
-    /// @return collectNFT The address of the collected NFT.
-    /// @return collectNFTId The id of the collected collect NFT.
+    /// @return collectNft The address of the collected NFT.
+    /// @return collectNftId The id of the collected collect NFT.
     /// TODO: Add payment reentrancy guard
-    function collect(CollectParams calldata collectParams) public virtual payable override(CollectModuleBase, ICollectPaymentModule) returns (address collectNFT, uint256 collectNFTId) {
+    function collect(CollectParams calldata collectParams) public virtual payable override(CollectModuleBase, ICollectPaymentModule) returns (address collectNft, uint256 collectNftId) {
         return super.collect(collectParams);
     }
 

@@ -32,16 +32,16 @@ contract RelationshipModuleRelationshipTest is BaseTest {
         deployProcessors = true;
         super.setUp();
       
-        IPAsset[] memory sourceIPAssets = new IPAsset[](1);
-        sourceIPAssets[0] = IPAsset.STORY;
-        IPAsset[] memory destIPAssets = new IPAsset[](2);
-        destIPAssets[0] = IPAsset.CHARACTER;
-        destIPAssets[1] = IPAsset.ART;
+        IPAsset[] memory sourceIpAssets = new IPAsset[](1);
+        sourceIpAssets[0] = IPAsset.STORY;
+        IPAsset[] memory destIpAssets = new IPAsset[](2);
+        destIpAssets[0] = IPAsset.CHARACTER;
+        destIpAssets[1] = IPAsset.ART;
 
         IRelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
-            sourceIPAssets: sourceIPAssets,
+            sourceIpAssets: sourceIpAssets,
             allowedExternalSource: false,
-            destIPAssets: destIPAssets,
+            destIpAssets: destIpAssets,
             allowedExternalDest: true,
             onlySameFranchise: true,
             processor: address(relationshipProcessor),

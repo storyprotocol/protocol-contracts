@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import { IPAsset, EXTERNAL_ASSET } from "contracts/IPAsset.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { LibipAssetId } from "contracts/ip-assets/LibipAssetId.sol";
+import { LibIPAssetID } from "contracts/ip-assets/LibIPAssetID.sol";
 import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
 
 /**
@@ -73,7 +73,7 @@ library LibIPAssetMask {
      */
     function _checkRelationshipNode(bool isAssetRegistry, uint256 assetId, uint256 assetTypeMask) internal pure returns (bool result) {
         if (isAssetRegistry) {
-            result = LibIPAssetMask._supportsIPAssetType(assetTypeMask, uint8(LibipAssetId._ipAssetTypeFor(assetId)));
+            result = LibIPAssetMask._supportsIPAssetType(assetTypeMask, uint8(LibIPAssetID._ipAssetTypeFor(assetId)));
         } else {
             result = LibIPAssetMask._supportsIPAssetType(assetTypeMask, EXTERNAL_ASSET);
         }

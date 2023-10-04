@@ -44,7 +44,7 @@ contract BaseCollectModuleTest is BaseTest, ICollectModuleEventsAndErrors {
 
     /// @notice Tests whether unitialized modules revert on invoking collect.
     function test_CollectModuleCollectUninitializedReverts(uint8 ipAssetType) createIpAsset(collector, ipAssetType) public {
-        ICollectModule uninitializedCollectModule = ICollectModule(_deployCollectModule(defaultCollectNFTImpl));
+        ICollectModule uninitializedCollectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));
 
         vm.expectRevert(CollectModuleCollectNotYetInitialized.selector);
         vm.prank(collector);
@@ -53,8 +53,8 @@ contract BaseCollectModuleTest is BaseTest, ICollectModuleEventsAndErrors {
             ipAssetId: ipAssetId,
             collector: collector,
             collectData: "",
-            collectNFTInitData: "",
-            collectNFTData: ""
+            collectNftInitData: "",
+            collectNftData: ""
         }));
     }
 
@@ -75,23 +75,23 @@ contract BaseCollectModuleTest is BaseTest, ICollectModuleEventsAndErrors {
     /// @notice Tests that collects with the module-default collect NFT succeed.
     function test_CollectModuleCollectDefaultCollectNFT(uint8 ipAssetType) createIpAsset(collector, ipAssetType) public {
         assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), address(0));
-        (address collectNFT, uint256 collectNFTId) = _collect(franchiseId, ipAssetId);
-        assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), collectNFT);
-        assertTrue(ICollectNFT(collectNFT).ownerOf(collectNFTId) == cal);
-        assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), collectNFT);
+        (address collectNft, uint256 collectNftId) = _collect(franchiseId, ipAssetId);
+        assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), collectNft);
+        assertTrue(ICollectNFT(collectNft).ownerOf(collectNftId) == cal);
+        assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), collectNft);
     }
 
     /// @notice Tests that collects with customized collect NFTs succeed.
     function test_CollectModuleCollectCustomCollectNFT(uint8 ipAssetType) public createIpAsset(collector, ipAssetType) {
         assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), address(0));
-        (address collectNFT, uint256 collectNFTId) = _collect(franchiseId, ipAssetId);
-        assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), collectNFT);
-        assertTrue(ICollectNFT(collectNFT).ownerOf(collectNFTId) == cal);
+        (address collectNft, uint256 collectNftId) = _collect(franchiseId, ipAssetId);
+        assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), collectNft);
+        assertTrue(ICollectNFT(collectNft).ownerOf(collectNftId) == cal);
     }
 
     /// @notice Tests expected behavior of the collect module constructor.
     function test_CollectModuleConstructor() public {
-        MockCollectModule mockCollectModule = new MockCollectModule(address(franchiseRegistry), defaultCollectNFTImpl);
+        MockCollectModule mockCollectModule = new MockCollectModule(address(franchiseRegistry), defaultCollectNftImpl);
         assertEq(address(mockCollectModule.FRANCHISE_REGISTRY()), address(franchiseRegistry));
     }
 
@@ -108,7 +108,7 @@ contract BaseCollectModuleTest is BaseTest, ICollectModuleEventsAndErrors {
         collectModule.initCollect(InitCollectParams({
             franchiseId: franchiseId,
             ipAssetId: ipAssetId,
-            collectNFTImpl: defaultCollectNFTImpl,
+            collectNftImpl: defaultCollectNftImpl,
             data: ""
         }));
     }
@@ -117,17 +117,17 @@ contract BaseCollectModuleTest is BaseTest, ICollectModuleEventsAndErrors {
     function test_CollectModuleDuplicateInitReverts(uint8 ipAssetType) createIpAsset(collector, ipAssetType) public {
         vm.expectRevert(CollectModuleIPAssetAlreadyInitialized.selector);
         vm.prank(address(ipAssetRegistry));
-        _initCollectModule(franchiseId, defaultCollectNFTImpl);
+        _initCollectModule(franchiseId, defaultCollectNftImpl);
     }
 
     /// @dev Helper function that initializes a collect module.
     /// @param franchiseId The id of the franchise associated with the module.
-    /// @param collectNFTImpl Collect NFT impl address used for collecting.
-    function _initCollectModule(uint256 franchiseId, address collectNFTImpl) internal virtual {
+    /// @param collectNftImpl Collect NFT impl address used for collecting.
+    function _initCollectModule(uint256 franchiseId, address collectNftImpl) internal virtual {
         collectModule.initCollect(InitCollectParams({
             franchiseId: franchiseId,
             ipAssetId: ipAssetId,
-            collectNFTImpl: collectNFTImpl,
+            collectNftImpl: collectNftImpl,
             data: ""
         }));
     }
@@ -142,8 +142,8 @@ contract BaseCollectModuleTest is BaseTest, ICollectModuleEventsAndErrors {
             ipAssetId: ipAssetId_,
             collector: collector,
             collectData: "",
-            collectNFTInitData: "",
-            collectNFTData: ""
+            collectNftInitData: "",
+            collectNftData: ""
         }));
     }
 

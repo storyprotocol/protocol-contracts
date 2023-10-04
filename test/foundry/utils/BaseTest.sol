@@ -43,7 +43,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     RelationshipModuleHarness public relationshipModuleHarness;
     address eventEmitter;
     address public franchiseRegistryImpl;
-    address public defaultCollectNFTImpl;
+    address public defaultCollectNftImpl;
     address public collectModuleImpl;
     address public accessControlSingletonImpl;
 
@@ -100,8 +100,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
             )
         );
 
-        defaultCollectNFTImpl = _deployCollectNFTImpl();
-        collectModule = ICollectModule(_deployCollectModule(defaultCollectNFTImpl));
+        defaultCollectNftImpl = _deployCollectNFTImpl();
+        collectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));
         
         // upgrade factory to use new event emitter
         ipAssetRegistryImpl = address(new IPAssetRegistry(eventEmitter, address(licensingModule), address(franchiseRegistry), address(collectModule)));
@@ -168,8 +168,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         return address(new MockCollectNFT());
     }
 
-    function _deployCollectModule(address collectNFTImpl) internal virtual returns (address) {
-        collectModuleImpl = address(new MockCollectModule(address(franchiseRegistry), collectNFTImpl));
+    function _deployCollectModule(address collectNftImpl) internal virtual returns (address) {
+        collectModuleImpl = address(new MockCollectModule(address(franchiseRegistry), collectNftImpl));
         return _deployUUPSProxy(
                 collectModuleImpl,
                 abi.encodeWithSelector(

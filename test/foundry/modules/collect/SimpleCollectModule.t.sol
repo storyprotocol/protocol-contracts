@@ -21,14 +21,14 @@ contract SimpleCollectModuleTest is BaseCollectModuleTest {
             ipAssetId: ipAssetId,
             collector: collector,
             collectData: "",
-            collectNFTInitData: "",
-            collectNFTData: ""
+            collectNftInitData: "",
+            collectNftData: ""
         }));
     }
 
     /// @notice Tests that upgrades work as expected.
     function test_CollectModuleUpgrade() public {
-        address newCollectModuleImpl = address(new SimpleCollectModule(address(franchiseRegistry), defaultCollectNFTImpl));
+        address newCollectModuleImpl = address(new SimpleCollectModule(address(franchiseRegistry), defaultCollectNftImpl));
         vm.prank(upgrader);
 
         bytes memory data = abi.encodeWithSelector(
@@ -60,8 +60,8 @@ contract SimpleCollectModuleTest is BaseCollectModuleTest {
     }
 
     /// @notice Changes the base testing collect module deployment to deploy the mock payment collect module instead.
-    function _deployCollectModule(address collectNFTImpl) internal virtual override  returns (address) {
-        collectModuleImpl = address(new SimpleCollectModule(address(franchiseRegistry), collectNFTImpl));
+    function _deployCollectModule(address collectNftImpl) internal virtual override  returns (address) {
+        collectModuleImpl = address(new SimpleCollectModule(address(franchiseRegistry), collectNftImpl));
 
         return _deployUUPSProxy(
                 collectModuleImpl,

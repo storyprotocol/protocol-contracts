@@ -8,7 +8,6 @@ import { AccessControlledUpgradeable } from "contracts/access-control/AccessCont
 import { ZeroAddress, UnsupportedInterface, Unauthorized } from "contracts/errors/General.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
-import { LibipAssetId } from "contracts/ip-assets/LibipAssetId.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 import { LibIPAssetMask } from "./LibIPAssetMask.sol";
 import { IRelationshipModule } from "contracts/interfaces/modules/relationships/IRelationshipModule.sol";
@@ -26,7 +25,7 @@ import { IRelationshipProcessor } from "contracts/interfaces/modules/relationshi
  * - The IPAsset types that can be related as source and destination.
  * - The processor that will be called when a relationship is set, which can be used to perform additional checks or actions (checking ownership, asking for fees...).
  * - The disputer, which is the address that can unset a relationship.
- * - The time config, which defines the maximum and minimum TTL (time to live) for the relationship, and if it can be renewed. (maxTTL = 0 means no expiration)
+ * - The time config, which defines the maximum and minimum TTL (time to live) for the relationship, and if it can be renewed. (maxTtl = 0 means no expiration)
  * - If the relationship can only be set between IPAssets of the same franchise, or it could link to IPAssets of other franchises.
  * 
  * It's up to subclasses to define which addresses can set relationship configs.
@@ -51,8 +50,8 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
      */
     modifier onlyValidTTL(RelationshipParams calldata params) {
         RelationshipConfig storage relConfig = _getRelationshipModuleStorage().relConfigs[params.relationshipId];
-        if (relConfig.timeConfig.maxTTL != 0 && params.ttl != 0) {
-            if (params.ttl > relConfig.timeConfig.maxTTL || params.ttl < relConfig.timeConfig.minTTL) revert InvalidEndTimestamp();
+        if (relConfig.timeConfig.maxTtl != 0 && params.ttl != 0) {
+            if (params.ttl > relConfig.timeConfig.maxTtl || params.ttl < relConfig.timeConfig.minTtl) revert InvalidEndTimestamp();
         }
         _;
     }
@@ -109,7 +108,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
      */
     function _updateEndTime(bytes32 relKey, TimeConfig memory timeConfig, uint256 ttl) private returns (uint256) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
-        if (timeConfig.maxTTL != 0) {
+        if (timeConfig.maxTtl != 0) {
             uint256 endTime = $.relationshipExpirations[relKey];
             if (endTime == 0 || timeConfig.renewable) {
                 endTime = block.timestamp + ttl;
@@ -161,10 +160,10 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
      * @param relConfig the relationship config
      */
     function _verifyRelationshipParams(RelationshipParams calldata params, RelationshipConfig memory relConfig) private view {
-        if (relConfig.sourceIPAssetTypeMask == 0) revert NonExistingRelationship();
-        (bool sourceResult, bool sourceIsAssetRegistry) = _checkRelationshipNode(params.sourceContract, params.sourceId, relConfig.sourceIPAssetTypeMask);
+        if (relConfig.sourceIpAssetTypeMask == 0) revert NonExistingRelationship();
+        (bool sourceResult, bool sourceIsAssetRegistry) = _checkRelationshipNode(params.sourceContract, params.sourceId, relConfig.sourceIpAssetTypeMask);
         if (!sourceResult) revert UnsupportedRelationshipSrc();
-        (bool destResult, bool destIsAssetRegistry) = _checkRelationshipNode(params.destContract, params.destId, relConfig.destIPAssetTypeMask);
+        (bool destResult, bool destIsAssetRegistry) = _checkRelationshipNode(params.destContract, params.destId, relConfig.destIpAssetTypeMask);
         if (!destResult) revert UnsupportedRelationshipDst();
         if(sourceIsAssetRegistry && destIsAssetRegistry && params.sourceContract != params.destContract && relConfig.onlySameFranchise) revert CannotRelateToOtherFranchise();
     }
@@ -212,12 +211,12 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
         emit RelationshipConfigSet(
             name,
             relationshipId,
-            relConfig.sourceIPAssetTypeMask,
-            relConfig.destIPAssetTypeMask,
+            relConfig.sourceIpAssetTypeMask,
+            relConfig.destIpAssetTypeMask,
             relConfig.onlySameFranchise,
             params.processor,
-            relConfig.timeConfig.maxTTL,
-            relConfig.timeConfig.minTTL,
+            relConfig.timeConfig.maxTtl,
+            relConfig.timeConfig.minTtl,
             relConfig.timeConfig.renewable
         );
         return relationshipId;
@@ -230,7 +229,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     function _unsetRelationshipConfig(bytes32 relationshipId) internal {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         if (
-            $.relConfigs[relationshipId].sourceIPAssetTypeMask == 0
+            $.relConfigs[relationshipId].sourceIpAssetTypeMask == 0
         ) revert NonExistingRelationship();
         delete $.relConfigs[relationshipId];
         emit RelationshipConfigUnset(relationshipId);
@@ -248,11 +247,11 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
      */
     function _convertRelParams(SetRelationshipConfigParams calldata params) private view returns(RelationshipConfig memory) {
         if (!params.processor.supportsInterface(type(IRelationshipProcessor).interfaceId)) revert UnsupportedInterface("IRelationshipProcessor");
-        if (params.timeConfig.maxTTL < params.timeConfig.minTTL) revert InvalidTTL();
+        if (params.timeConfig.maxTtl < params.timeConfig.minTtl) revert InvalidTTL();
         if (params.disputer == address(0)) revert ZeroAddress();
         return RelationshipConfig(
-            LibIPAssetMask._convertToMask(params.sourceIPAssets, params.allowedExternalSource),
-            LibIPAssetMask._convertToMask(params.destIPAssets, params.allowedExternalDest),
+            LibIPAssetMask._convertToMask(params.sourceIpAssets, params.allowedExternalSource),
+            LibIPAssetMask._convertToMask(params.destIpAssets, params.allowedExternalDest),
             params.onlySameFranchise,
             IRelationshipProcessor(params.processor),
             params.disputer,
@@ -274,12 +273,12 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
      */ 
     function getRelationshipConfigDecoded(bytes32 relationshipId) external view returns(SetRelationshipConfigParams memory) {
         RelationshipConfig memory relConfig = getRelationshipConfig(relationshipId);
-        (IPAsset[] memory sourceIPAssets, bool sourceSupportsExternal) = LibIPAssetMask._convertFromMask(relConfig.sourceIPAssetTypeMask);
-        (IPAsset[] memory destIPAssets, bool destSupportsExternal) = LibIPAssetMask._convertFromMask(relConfig.destIPAssetTypeMask);
+        (IPAsset[] memory sourceIpAssets, bool sourceSupportsExternal) = LibIPAssetMask._convertFromMask(relConfig.sourceIpAssetTypeMask);
+        (IPAsset[] memory destIpAssets, bool destSupportsExternal) = LibIPAssetMask._convertFromMask(relConfig.destIpAssetTypeMask);
         return SetRelationshipConfigParams(
-            sourceIPAssets,
+            sourceIpAssets,
             sourceSupportsExternal,
-            destIPAssets,
+            destIpAssets,
             destSupportsExternal,
             relConfig.onlySameFranchise,
             address(relConfig.processor),

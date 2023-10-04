@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
 import { ICollectModule } from "contracts/interfaces/modules/collect/ICollectModule.sol";
-import { LibipAssetId } from "./LibipAssetId.sol";
+import { LibIPAssetID } from "./LibIPAssetID.sol";
 import { ZeroAmount, ZeroAddress } from "../errors/General.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 import { InitCollectParams } from "contracts/lib/CollectModuleStructs.sol";
@@ -147,7 +147,7 @@ contract IPAssetRegistry is
             InitCollectParams({
                 franchiseId: _franchiseId,
                 ipAssetId: ipAssetId,
-                collectNFTImpl: address(0), // Default collect module NFT impl
+                collectNftImpl: address(0), // Default collect module NFT impl
                 data: collectData
             })
         );
@@ -226,22 +226,22 @@ contract IPAssetRegistry is
     /**
      * mints the IPAsset block, and assigns the next id to it.
      * @param to holder
-     * @param sb ip asset type
+     * @param ipAssetId ip asset type
      */
-    function _mintBlock(address to, IPAsset sb) private returns (uint256) {
-        uint256 nextId = currentIdFor(sb) + 1;
-        if (nextId > LibipAssetId._lastId(sb)) revert IdOverBounds();
+    function _mintBlock(address to, IPAsset ipAssetId) private returns (uint256) {
+        uint256 nextId = currentIdFor(ipAssetId) + 1;
+        if (nextId > LibIPAssetID._lastId(ipAssetId)) revert IdOverBounds();
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
-        $.ids[sb] = nextId;
+        $.ids[ipAssetId] = nextId;
         _safeMint(to, nextId);
         return nextId;
     }
 
-    function currentIdFor(IPAsset sb) public view returns (uint256) {
+    function currentIdFor(IPAsset ipAssetId) public view returns (uint256) {
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
-        uint256 currentId = $.ids[sb];
+        uint256 currentId = $.ids[ipAssetId];
         if (currentId == 0) {
-            return LibipAssetId._zeroId(sb);
+            return LibIPAssetID._zeroId(ipAssetId);
         } else {
             return currentId;
         }

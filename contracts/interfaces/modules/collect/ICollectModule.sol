@@ -16,11 +16,11 @@ interface ICollectModule is ICollectModuleEventsAndErrors {
     /// @notice Performs a collect on a specific IP asset for a collector.
     /// @param collectParams Collect module collect data, including IP asset id,
     ///         collector address, and generic unformatted collect and NFT data.
-    /// @return collectNFT The address of the collected NFT.
-    /// @return collectNFTId The id of the collected collect NFT.
+    /// @return collectNft The address of the collected NFT.
+    /// @return collectNftId The id of the collected collect NFT.
     function collect(
         CollectParams calldata collectParams
-    ) external payable returns (address collectNFT, uint256 collectNFTId);
+    ) external payable returns (address collectNft, uint256 collectNftId);
 
     /// @notice Returns the collect NFT address associated with an IP asset.
     /// @param  franchiseId The id of the franchise of the specified IP asset.
