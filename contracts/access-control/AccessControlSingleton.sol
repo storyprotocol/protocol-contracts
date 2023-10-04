@@ -9,6 +9,8 @@ import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
+/// @notice AccessControlSingleton contract. Manages protocol admin keys. Other contracts might inherit
+/// AccessControlled or its upgradeable version to use the onlyRole modifier.
 /// TODO: Evaluate making this contract AccessControlEnumerableUpgradeable so it could enforce unique roles
 /// (as in only 1 address can have a role at a time)
 contract AccessControlSingleton is
