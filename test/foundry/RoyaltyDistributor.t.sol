@@ -7,7 +7,7 @@ import "contracts/ip-accounts/IPAccountRegistry.sol";
 import "test/foundry/mocks/MockIPAccount.sol";
 import "contracts/modules/royalties/RoyaltyDistributor.sol";
 import "contracts/modules/royalties/RoyaltyNFT.sol";
-import "contracts/modules/royalties/ISplitMain.sol";
+import "contracts/interfaces/modules/royalties/ISplitMain.sol";
 import "./mocks/MockSplitMain.sol";
 import "./mocks/MockERC20.sol";
 import "test/foundry/mocks/MockSplitMain.sol";

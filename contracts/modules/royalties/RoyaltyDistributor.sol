@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import { IRoyaltyDistributor } from "./IRoyaltyDistributor.sol";
+import { IRoyaltyDistributor } from "contracts/interfaces/modules/royalties/IRoyaltyDistributor.sol";
 import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
-import { IIPAccountRegistry } from "contracts/ip-accounts/IIPAccountRegistry.sol";
-import { IRoyaltyPolicy } from "contracts/modules/royalties/policies/IRoyaltyPolicy.sol";
+import { IIPAccountRegistry } from "contracts/interfaces/ip-accounts/IIPAccountRegistry.sol";
+import { IRoyaltyPolicy } from "contracts/interfaces/modules/royalties/policies/IRoyaltyPolicy.sol";
 import { RoyaltyNFT } from "contracts/modules/royalties/RoyaltyNFT.sol";
 import { UPGRADER_ROLE, PROTOCOL_ADMIN_ROLE } from "contracts/access-control/ProtocolRoles.sol";
 

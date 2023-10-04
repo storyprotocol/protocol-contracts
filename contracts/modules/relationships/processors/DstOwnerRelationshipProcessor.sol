@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import { BaseRelationshipProcessor } from "./BaseRelationshipProcessor.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { Unauthorized } from "contracts/errors/General.sol";
-import { IRelationshipModule } from "../IRelationshipModule.sol";
+import { IRelationshipModule } from "contracts/interfaces/modules/relationships/IRelationshipModule.sol";
 
 /**
  * @title DstOwnerRelationshipProcessor

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import { IRelationshipProcessor } from "./IRelationshipProcessor.sol";
+import { IRelationshipProcessor } from "contracts/interfaces/modules/relationships/processors/IRelationshipProcessor.sol";
 import { ZeroAddress } from "contracts/errors/General.sol";
-import { IRelationshipModule } from "../IRelationshipModule.sol";
+import { IRelationshipModule } from "contracts/interfaces/modules/relationships/IRelationshipModule.sol";
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /**

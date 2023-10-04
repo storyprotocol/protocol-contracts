@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import { IIPAssetEventEmitter } from "contracts/ip-assets/events/IIPAssetEventEmitter.sol";
+import { IIPAssetEventEmitter } from "contracts/interfaces/ip-assets/events/IIPAssetEventEmitter.sol";
 
 contract MockIPAssetEventEmitter is IIPAssetEventEmitter  {
 

@@ -5,9 +5,9 @@ import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { UPGRADER_ROLE, LICENSING_MANAGER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
-import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
-import { IERC5218 } from "./IERC5218.sol";
-import { ILicensingModule } from "./ILicensingModule.sol";
+import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
+import { IERC5218 } from "contracts/interfaces/modules/licensing/IERC5218.sol";
+import { ILicensingModule } from "contracts/interfaces/modules/licensing/ILicensingModule.sol";
 
 /**
  * @title LicensingModule

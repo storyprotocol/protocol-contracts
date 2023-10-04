@@ -3,7 +3,7 @@
 pragma solidity ^0.8.13;
 
 import { PROTOCOL_ADMIN_ROLE, UPGRADER_ROLE } from "./ProtocolRoles.sol";
-import { IVersioned } from "../utils/IVersioned.sol";
+import { IVersioned } from "contracts/interfaces/utils/IVersioned.sol";
 import { ZeroAddress } from "../errors/General.sol";
 import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";

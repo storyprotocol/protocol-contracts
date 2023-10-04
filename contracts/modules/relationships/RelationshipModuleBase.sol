@@ -7,12 +7,12 @@ import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { ZeroAddress, UnsupportedInterface, Unauthorized } from "contracts/errors/General.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
-import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
+import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
 import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 import { LibIPAssetMask } from "./LibIPAssetMask.sol";
-import { IRelationshipModule } from "./IRelationshipModule.sol";
-import { IRelationshipProcessor } from "./processors/IRelationshipProcessor.sol";
+import { IRelationshipModule } from "contracts/interfaces/modules/relationships/IRelationshipModule.sol";
+import { IRelationshipProcessor } from "contracts/interfaces/modules/relationships/processors/IRelationshipProcessor.sol";
 
 
 /**

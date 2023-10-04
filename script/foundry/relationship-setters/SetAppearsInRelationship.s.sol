@@ -7,7 +7,7 @@ import "script/foundry/utils/JsonDeploymentHandler.s.sol";
 import "script/foundry/utils/BroadcastManager.s.sol";
 import "contracts/IPAsset.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
-import "contracts/modules/relationships/IRelationshipModule.sol";
+import "contracts/interfaces/modules/relationships/IRelationshipModule.sol";
 
 contract SetAppearsInRelationship is Script, BroadcastManager, JsonDeploymentHandler {
 

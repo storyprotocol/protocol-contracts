@@ -5,8 +5,8 @@ import { IPAssetRegistryFactory } from "./ip-assets/IPAssetRegistryFactory.sol";
 import { AccessControlledUpgradeable } from "./access-control/AccessControlledUpgradeable.sol";
 import { UPGRADER_ROLE } from "./access-control/ProtocolRoles.sol";
 import { ZeroAddress } from "./errors/General.sol";
-import { IVersioned } from "./utils/IVersioned.sol";
-import { IIPAssetRegistry } from "./ip-assets/IIPAssetRegistry.sol";
+import { IVersioned } from "contracts/interfaces/utils/IVersioned.sol";
+import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 

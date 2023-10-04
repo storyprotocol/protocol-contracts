@@ -9,8 +9,8 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import { IERC1155Receiver } from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IERC6551Account } from "./IERC6551Account.sol";
-import { IIPAccount } from "./IIPAccount.sol";
+import { IERC6551Account } from "contracts/interfaces/ip-accounts/IERC6551Account.sol";
+import { IIPAccount } from "contracts/interfaces/ip-accounts/IIPAccount.sol";
 
 /**
  * @title IPAccountImpl

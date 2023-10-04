@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSDL-1.1
 pragma solidity ^0.8.13;
 
-import "contracts/modules/licensing/terms/ITermsProcessor.sol";
+import "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 

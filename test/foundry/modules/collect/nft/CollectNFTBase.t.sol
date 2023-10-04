@@ -3,8 +3,8 @@ pragma solidity ^0.8.18;
 
 import { Clones } from '@openzeppelin/contracts/proxy/Clones.sol';
 
-import { ICollectNFT } from "contracts/interfaces/ICollectNFT.sol";
-import { ICollectNFTEventsAndErrors } from "contracts/interfaces/ICollectNFTEventsAndErrors.sol";
+import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.sol";
+import { ICollectNFTEventsAndErrors } from "contracts/interfaces/modules/collect/ICollectNFTEventsAndErrors.sol";
 
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
 import { BaseERC721Test } from "./BaseERC721Test.sol";

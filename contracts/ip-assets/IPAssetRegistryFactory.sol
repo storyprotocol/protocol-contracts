@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.13;
 
-import { IIPAssetRegistry } from "./IIPAssetRegistry.sol";
+import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
 import { IPAssetRegistry } from "./IPAssetRegistry.sol";
-import { IVersioned } from "../utils/IVersioned.sol";
+import { IVersioned } from "contracts/interfaces/utils/IVersioned.sol";
 import { UnsupportedInterface } from "../errors/General.sol";
 import { LicenseRegistry } from "../modules/licensing/LicenseRegistry.sol";
 import { RevertingIPAssetRegistry } from "contracts/utils/RevertingIPAssetRegistry.sol";

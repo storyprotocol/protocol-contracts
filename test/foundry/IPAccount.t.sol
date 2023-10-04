@@ -5,8 +5,8 @@ import "forge-std/Test.sol";
 
 import "contracts/ip-accounts/IPAccountRegistry.sol";
 import "contracts/ip-accounts/IPAccountImpl.sol";
-import "contracts/ip-accounts/IIPAccount.sol";
-import "contracts/ip-accounts/IERC6551Account.sol";
+import "contracts/interfaces/ip-accounts/IIPAccount.sol";
+import "contracts/interfaces/ip-accounts/IERC6551Account.sol";
 import "test/foundry/mocks/MockERC721.sol";
 
 contract IPAccountTest is Test {

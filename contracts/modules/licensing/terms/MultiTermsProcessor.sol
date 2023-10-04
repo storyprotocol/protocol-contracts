@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import { ITermsProcessor } from "./ITermsProcessor.sol";
+import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
 import { BaseTermsProcessor } from "./BaseTermsProcessor.sol";
 import { EmptyArray, LengthMismatch } from "contracts/errors/General.sol";
 

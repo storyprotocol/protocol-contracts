@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
-import { IIPAccountRegistry } from "./IIPAccountRegistry.sol";
+import { IIPAccountRegistry } from "contracts/interfaces/ip-accounts/IIPAccountRegistry.sol";
 
 contract IPAccountRegistry is IIPAccountRegistry {
     address internal immutable IP_ACCOUNT_IMPL;

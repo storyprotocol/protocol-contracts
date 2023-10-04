@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { ZeroAddress, Unauthorized } from "contracts/errors/General.sol";
-import { IERC5218 } from "./IERC5218.sol";
-import { ILicenseRegistry } from "./ILicenseRegistry.sol";
+import { IERC5218 } from "contracts/interfaces/modules/licensing/IERC5218.sol";
+import { ILicenseRegistry } from "contracts/interfaces/modules/licensing/ILicenseRegistry.sol";
 
 /**
  * @title LicenseRegistry
