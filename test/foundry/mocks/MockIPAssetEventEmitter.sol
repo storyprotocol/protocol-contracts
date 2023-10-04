@@ -5,7 +5,7 @@ import { IIPAssetEventEmitter } from "contracts/interfaces/ip-assets/events/IIPA
 
 contract MockIPAssetEventEmitter is IIPAssetEventEmitter  {
 
-    function emitIPAssetCreation(uint256, uint256) override external {
+    function emitIpAssetCreation(uint256, uint256) override external {
         // no-op
     }
 

@@ -30,7 +30,7 @@ contract IPAssetRegistryFactory is Ownable {
         BEACON = new UpgradeableBeacon(address(new RevertingIPAssetRegistry()));
     }
 
-    function createFranchiseIPAssets(
+    function createFranchiseIpAssets(
         uint256 franchiseId,
         string calldata name,
         string calldata symbol,

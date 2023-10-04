@@ -51,9 +51,9 @@ contract RelationshipModuleRelationshipTest is BaseTest {
         
         relationshipId = relationshipModule.setRelationshipConfig("RELATIONSHIP_ID", params);
         vm.startPrank(address(franchiseRegistry));
-        ipAssetIds[uint8(IPAsset.STORY)] = ipAssetRegistry.createIPAsset(IPAsset.STORY, "name", "description", "mediaUrl", ipAssetOwner, 0, "");
-        ipAssetIds[uint8(IPAsset.CHARACTER)] = ipAssetRegistry.createIPAsset(IPAsset.CHARACTER, "name", "description", "mediaUrl", ipAssetOwner, 0, "");
-        ipAssetIds[uint8(IPAsset.ART)] = ipAssetRegistry.createIPAsset(IPAsset.ART, "name", "description", "mediaUrl", ipAssetOwner, 0, "");
+        ipAssetIds[uint8(IPAsset.STORY)] = ipAssetRegistry.createIpAsset(IPAsset.STORY, "name", "description", "mediaUrl", ipAssetOwner, 0, "");
+        ipAssetIds[uint8(IPAsset.CHARACTER)] = ipAssetRegistry.createIpAsset(IPAsset.CHARACTER, "name", "description", "mediaUrl", ipAssetOwner, 0, "");
+        ipAssetIds[uint8(IPAsset.ART)] = ipAssetRegistry.createIpAsset(IPAsset.ART, "name", "description", "mediaUrl", ipAssetOwner, 0, "");
         vm.stopPrank();
 
         vm.startPrank(ipAssetOwner);
@@ -142,7 +142,7 @@ contract RelationshipModuleRelationshipTest is BaseTest {
         vm.stopPrank();
         IPAssetRegistry otherIPAssetRegistry = IPAssetRegistry(otherIPAssets);
         vm.prank(address(franchiseRegistry));
-        uint256 otherId = otherIPAssetRegistry.createIPAsset(IPAsset.CHARACTER, "name", "description", "mediaUrl", ipAssetOwner, 0, "");
+        uint256 otherId = otherIPAssetRegistry.createIpAsset(IPAsset.CHARACTER, "name", "description", "mediaUrl", ipAssetOwner, 0, "");
         vm.expectRevert(IRelationshipModule.CannotRelateToOtherFranchise.selector);
         relationshipModule.relate(
             IRelationshipModule.RelationshipParams(
@@ -154,7 +154,7 @@ contract RelationshipModuleRelationshipTest is BaseTest {
 
     function test_revert_relateUnsupportedSource() public {
         vm.prank(address(franchiseRegistry));
-        uint256 wrongId = ipAssetRegistry.createIPAsset(IPAsset.GROUP, "name", "description", "mediaUrl", ipAssetOwner, 0, "");
+        uint256 wrongId = ipAssetRegistry.createIpAsset(IPAsset.GROUP, "name", "description", "mediaUrl", ipAssetOwner, 0, "");
         vm.expectRevert(IRelationshipModule.UnsupportedRelationshipSrc.selector);
         relationshipModule.relate(
             IRelationshipModule.RelationshipParams(
@@ -166,7 +166,7 @@ contract RelationshipModuleRelationshipTest is BaseTest {
 
     function test_revert_relateUnsupportedDestination() public {
         vm.prank(address(franchiseRegistry));
-        uint256 wrongId = ipAssetRegistry.createIPAsset(IPAsset.GROUP, "name", "description", "mediaUrl", ipAssetOwner, 0, "");
+        uint256 wrongId = ipAssetRegistry.createIpAsset(IPAsset.GROUP, "name", "description", "mediaUrl", ipAssetOwner, 0, "");
         vm.expectRevert(IRelationshipModule.UnsupportedRelationshipDst.selector);
         relationshipModule.relate(
             IRelationshipModule.RelationshipParams(

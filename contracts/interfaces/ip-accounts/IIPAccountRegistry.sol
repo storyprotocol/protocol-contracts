@@ -32,5 +32,5 @@ interface IIPAccountRegistry {
      *
      * @return address The IPAccount implementation address.
      */
-    function getIPAccountImpl() external view returns (address);
+    function getIpAccountImpl() external view returns (address);
 }

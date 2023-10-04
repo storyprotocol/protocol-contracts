@@ -13,7 +13,7 @@ contract SimpleCollectModuleTest is BaseCollectModuleTest {
     }
 
     /// @notice Tests that unauthorized collects revert.
-    function test_CollectModuleCollectUnauthorizedReverts(uint8 ipAssetType) createIPAsset(collector, ipAssetType) public {
+    function test_CollectModuleCollectUnauthorizedReverts(uint8 ipAssetType) createIpAsset(collector, ipAssetType) public {
         vm.prank(alice);
         vm.expectRevert(CollectModuleCollectUnauthorized.selector);
         collectModule.collect(CollectParams({
@@ -45,7 +45,7 @@ contract SimpleCollectModuleTest is BaseCollectModuleTest {
     }
 
     /// @notice Tests whether collect reverts if the registry of the IP asset being collected does not exist.
-    function test_CollectModuleCollectNonExistentIPAssetRegistryReverts(uint256 nonExistentFranchiseId, uint8 ipAssetType) createIPAsset(collector, ipAssetType) public virtual override {
+    function test_CollectModuleCollectNonExistentIPAssetRegistryReverts(uint256 nonExistentFranchiseId, uint8 ipAssetType) createIpAsset(collector, ipAssetType) public virtual override {
         vm.assume(nonExistentFranchiseId != franchiseId);
         vm.expectRevert();
         _collect(nonExistentFranchiseId, ipAssetId);
@@ -53,10 +53,10 @@ contract SimpleCollectModuleTest is BaseCollectModuleTest {
 
 
     /// @notice Tests whether collect reverts if the IP asset being collected from does not exist.
-    function test_CollectModuleCollectNonExistentIPAssetReverts(uint256 nonExistentIPAssetId, uint8 ipAssetType) createIPAsset(collector, ipAssetType) public virtual override {
-        vm.assume(nonExistentIPAssetId != ipAssetId);
+    function test_CollectModuleCollectNonExistentIPAssetReverts(uint256 nonExistentipAssetId, uint8 ipAssetType) createIpAsset(collector, ipAssetType) public virtual override {
+        vm.assume(nonExistentipAssetId != ipAssetId);
         vm.expectRevert();
-        _collect(franchiseId, nonExistentIPAssetId);
+        _collect(franchiseId, nonExistentipAssetId);
     }
 
     /// @notice Changes the base testing collect module deployment to deploy the mock payment collect module instead.

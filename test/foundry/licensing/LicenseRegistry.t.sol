@@ -19,7 +19,7 @@ contract LicenseRegistryTest is BaseTest {
         deployProcessors = false;
         super.setUp();
         vm.prank(licenseHolder);
-        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", licenseHolder, 0, "");
+        uint256 ipAssetId = ipAssetRegistry.createIpAsset(IPAsset(1), "name", "description", "mediaUrl", licenseHolder, 0, "");
         uint256 parentLicenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, false);
         (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
         vm.prank(licenseHolder);

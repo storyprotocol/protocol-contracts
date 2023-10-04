@@ -6,7 +6,7 @@ import { IPAsset } from "contracts/IPAsset.sol";
 interface IIPAssetDataManager  {
 
     event IPAssetWritten(
-        uint256 indexed IPAssetId,
+        uint256 indexed ipAssetId,
         IPAsset indexed blockType,
         string name,
         string description,
@@ -20,6 +20,6 @@ interface IIPAssetDataManager  {
         IPAsset blockType;
     }
     
-    function readIPAsset(uint256 IPAssetId) external view returns (IPAssetData memory);
+    function readIPAsset(uint256 ipAssetId) external view returns (IPAssetData memory);
     
 }

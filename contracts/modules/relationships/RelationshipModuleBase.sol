@@ -8,7 +8,7 @@ import { AccessControlledUpgradeable } from "contracts/access-control/AccessCont
 import { ZeroAddress, UnsupportedInterface, Unauthorized } from "contracts/errors/General.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
-import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
+import { LibipAssetId } from "contracts/ip-assets/LibipAssetId.sol";
 import { IPAsset } from "contracts/IPAsset.sol";
 import { LibIPAssetMask } from "./LibIPAssetMask.sol";
 import { IRelationshipModule } from "contracts/interfaces/modules/relationships/IRelationshipModule.sol";

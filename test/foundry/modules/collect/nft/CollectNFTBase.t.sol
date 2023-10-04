@@ -28,7 +28,7 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest, ICollectNFTEventsAndErr
     /// @param ipAssetOwner The owner address for the new IP asset.
     /// @param ipAssetType The type of the IP asset being created.
     modifier createCollectNFT(address ipAssetOwner, uint8 ipAssetType) {
-        ipAssetId = _createIPAsset(ipAssetOwner, ipAssetType, "");
+        ipAssetId = _createIpAsset(ipAssetOwner, ipAssetType, "");
         collectNFT = ICollectNFT(Clones.clone(defaultCollectNFTImpl));
         vm.prank(address(collectModule));
         collectNFT.initialize(InitCollectNFTParams({

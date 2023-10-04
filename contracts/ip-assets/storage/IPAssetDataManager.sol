@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
+import { LibipAssetId } from "contracts/ip-assets/LibipAssetId.sol";
 import { Unauthorized, NonExistentID, ZeroAddress } from "contracts/errors/General.sol";
 import { IIPAssetDataManager } from "contracts/interfaces/ip-assets/storage/IIPAssetDataManager.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -36,7 +36,7 @@ abstract contract IPAssetDataManager is Initializable, IIPAssetDataManager {
         IPAssetDataStorage storage $ = _getIPAssetDataStorage();
         IPAssetData storage sbd = $.ipAssetsData[ipAssetId];
         if (sbd.blockType == IPAsset.UNDEFINED) {
-            sbd.blockType = LibIPAssetId._ipAssetTypeFor(ipAssetId);
+            sbd.blockType = LibipAssetId._ipAssetTypeFor(ipAssetId);
         }
         sbd.name = name;
         sbd.description = description;
