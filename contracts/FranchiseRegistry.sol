@@ -43,7 +43,8 @@ contract FranchiseRegistry is
 
     IPAssetRegistryFactory public immutable FACTORY;
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.franchise-registry.storage")) - 1)))
-    bytes32 private constant _STORAGE_LOCATION = 0x5648324915b730d22cca7279385130ad43fd4829d795fb20e9ab398bfe537e8f;
+    bytes32 private constant _STORAGE_LOCATION =
+        0x5648324915b730d22cca7279385130ad43fd4829d795fb20e9ab398bfe537e8f;
     uint256 public constant PROTOCOL_ROOT_ID = 0;
     address public constant PROTOCOL_ROOT_ADDRESS = address(0);
     string private constant _VERSION = "0.1.0";
@@ -60,7 +61,11 @@ contract FranchiseRegistry is
         __ERC721_init("Story Protocol", "SP");
     }
 
-    function _getFranchiseStorage() private pure returns (FranchiseStorage storage $) {
+    function _getFranchiseStorage()
+        private
+        pure
+        returns (FranchiseStorage storage $)
+    {
         assembly {
             $.slot := _STORAGE_LOCATION
         }
@@ -70,7 +75,9 @@ contract FranchiseRegistry is
         return _VERSION;
     }
 
-    function registerFranchise(FranchiseCreationParams calldata params) external returns (uint256, address) {
+    function registerFranchise(
+        FranchiseCreationParams calldata params
+    ) external returns (uint256, address) {
         FranchiseStorage storage $ = _getFranchiseStorage();
         uint256 nextId = ++$.franchiseIds;
         address ipAssetRegistry = FACTORY.createFranchiseIPAssets(
@@ -83,9 +90,16 @@ contract FranchiseRegistry is
         $.tokenURIs[nextId] = params.tokenURI;
         _safeMint(msg.sender, nextId);
         // TODO: set licensing restrictions per franchise, maybe grant commercial root license to the franchise NFT
-        
-        emit FranchiseRegistered(msg.sender, nextId, ipAssetRegistry, params.name, params.symbol, params.tokenURI);
-        
+
+        emit FranchiseRegistered(
+            msg.sender,
+            nextId,
+            ipAssetRegistry,
+            params.name,
+            params.symbol,
+            params.tokenURI
+        );
+
         return (nextId, ipAssetRegistry);
     }
 
@@ -96,28 +110,32 @@ contract FranchiseRegistry is
         return $.ipAssetRegistries[franchiseId];
     }
 
-    
     /**
      * @notice checks if an address is a valid SP IPAssetRegistry.
      * @param ipAssetRegistry the address to check
      * @return true if it's a valid SP IPAssetRegistry, false otherwise
      */
-    function isIpAssetRegistry(address ipAssetRegistry) external view returns(bool) {
-        try IIPAssetRegistry(ipAssetRegistry).franchiseId() returns (uint256 franchiseId) {
+    function isIpAssetRegistry(
+        address ipAssetRegistry
+    ) external view returns (bool) {
+        try IIPAssetRegistry(ipAssetRegistry).franchiseId() returns (
+            uint256 franchiseId
+        ) {
             return ipAssetRegistryForId(franchiseId) == ipAssetRegistry;
         } catch {
             return false;
         }
     }
 
-    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+    function tokenURI(
+        uint256 tokenId
+    ) public view virtual override returns (string memory) {
         _requireMinted(tokenId);
         FranchiseStorage storage $ = _getFranchiseStorage();
         return $.tokenURIs[tokenId];
-    } 
+    }
 
     function _authorizeUpgrade(
         address newImplementation
     ) internal virtual override onlyRole(UPGRADER_ROLE) {}
-
 }

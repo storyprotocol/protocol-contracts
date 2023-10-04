@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-
 enum IPAsset {
     UNDEFINED,
     STORY,
@@ -11,5 +10,5 @@ enum IPAsset {
     LOCATION,
     ITEM
 }
-    
-uint8 constant EXTERNAL_ASSET = type(uint8).max; 
+
+uint8 constant EXTERNAL_ASSET = type(uint8).max;

@@ -9,8 +9,8 @@ import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-// TODO: Evaluate making this contract AccessControlEnumerableUpgradeable so it could enforce unique roles
-// (as in only 1 address can have a role at a time)
+/// TODO: Evaluate making this contract AccessControlEnumerableUpgradeable so it could enforce unique roles
+/// (as in only 1 address can have a role at a time)
 contract AccessControlSingleton is
     AccessControlUpgradeable,
     UUPSUpgradeable,
