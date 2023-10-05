@@ -12,9 +12,8 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IERC6551Account } from "contracts/interfaces/ip-accounts/IERC6551Account.sol";
 import { IIPAccount } from "contracts/interfaces/ip-accounts/IIPAccount.sol";
 
-/**
- * @title IPAccountImpl
- */
+
+/// @title IPAccountImpl
 contract IPAccountImpl is IERC165, IIPAccount, IERC1271 {
     using SafeERC20 for IERC20;
 
@@ -37,9 +36,8 @@ contract IPAccountImpl is IERC165, IIPAccount, IERC1271 {
             interfaceId == type(IERC165).interfaceId);
     }
 
-    /**
-     * @dev {See IERC6551Account-token}
-     */
+    
+    /// @dev {See IERC6551Account-token}
     function token() public view override returns (uint256, address, uint256) {
         bytes memory footer = new bytes(0x60);
         // 0x4d = 77 bytes (ERC-1167 Header, address, ERC-1167 Footer, salt)
@@ -74,9 +72,8 @@ contract IPAccountImpl is IERC165, IIPAccount, IERC1271 {
         return "";
     }
 
-    /**
-     * @dev {See IERC6551Account-isValidSigner}
-     */
+    
+    /// @dev {See IERC6551Account-isValidSigner}
     function isValidSigner(
         address signer,
         bytes calldata
@@ -98,9 +95,8 @@ contract IPAccountImpl is IERC165, IIPAccount, IERC1271 {
         return signer == owner();
     }
 
-    /**
-     * @dev {See IIPAccount-safeTransferFrom}
-     */
+    
+    /// @dev {See IIPAccount-safeTransferFrom}
     function safeTransferFrom(
         address nftContract,
         address from,

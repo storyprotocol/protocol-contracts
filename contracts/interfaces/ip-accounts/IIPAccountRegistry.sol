@@ -27,10 +27,8 @@ interface IIPAccountRegistry {
         uint256 tokenId
     ) external view returns (address);
 
-    /**
-     * @notice Returns the IPAccount implementation address.
-     *
-     * @return address The IPAccount implementation address.
-     */
+    
+    /// @notice Returns the IPAccount implementation address.
+    /// @return address The IPAccount implementation address.
     function getIpAccountImpl() external view returns (address);
 }

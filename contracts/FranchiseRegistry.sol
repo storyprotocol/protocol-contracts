@@ -110,11 +110,10 @@ contract FranchiseRegistry is
         return $.ipAssetRegistries[franchiseId];
     }
 
-    /**
-     * @notice checks if an address is a valid SP IPAssetRegistry.
-     * @param ipAssetRegistry the address to check
-     * @return true if it's a valid SP IPAssetRegistry, false otherwise
-     */
+    
+    /// @notice checks if an address is a valid SP IPAssetRegistry.
+    /// @param ipAssetRegistry the address to check
+    /// @return true if it's a valid SP IPAssetRegistry, false otherwise
     function isIpAssetRegistry(
         address ipAssetRegistry
     ) external view returns (bool) {

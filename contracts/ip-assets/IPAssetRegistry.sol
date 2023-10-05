@@ -85,22 +85,21 @@ contract IPAssetRegistry is
         return _VERSION;
     }
 
-    /**
-     * Creates a new IPAsset, and assigns licenses (rights) to it, according to the Franchise
-     * config in LicensingModule.
-     * A Non commercial license is always assigned, and if the IPAsset is a root IPAsset,
-     * a commercial license may also be assigned.
-     * @dev reverts if LicensingModule is not configured for the Franchise.
-     * Logs to IPAssetEventEmitter, common contract for all IPAsset registries.
-     * @param ipAssetType the type of IPAsset to create
-     * @param name IPAsset name
-     * @param _description short description of the IPAsset
-     * @param mediaUrl url to the IPAsset media and metadata
-     * @param to holder of the IPAsset (and thus the licenses)
-     * @param parentIpAssetId 0 if this is a root IPAsset, if it is a derivative, set the parent IPAsset id
-     * @param collectData Additional data passed for collect module initialization
-     * @return the created IPAsset id
-     */
+    
+    /// Creates a new IPAsset, and assigns licenses (rights) to it, according to the Franchise
+    /// config in LicensingModule.
+    /// A Non commercial license is always assigned, and if the IPAsset is a root IPAsset,
+    /// a commercial license may also be assigned.
+    /// @dev reverts if LicensingModule is not configured for the Franchise.
+    /// Logs to IPAssetEventEmitter, common contract for all IPAsset registries.
+    /// @param ipAssetType the type of IPAsset to create
+    /// @param name IPAsset name
+    /// @param _description short description of the IPAsset
+    /// @param mediaUrl url to the IPAsset media and metadata
+    /// @param to holder of the IPAsset (and thus the licenses)
+    /// @param parentIpAssetId 0 if this is a root IPAsset, if it is a derivative, set the parent IPAsset id
+    /// @param collectData Additional data passed for collect module initialization
+    /// @return the created IPAsset id
     function createIpAsset(
         IPAsset ipAssetType,
         string calldata name,
@@ -154,16 +153,15 @@ contract IPAssetRegistry is
         return ipAssetId;
     }
 
-    /**
-     * Sets the non commercial rights for an IPAsset, with terms from the Franchise config in LicensingModule.
-     * If no parent asset id is provided, the root IPAsset id is used if it exists in the Franchise config.
-     * @param ipAssetId the IPAsset id
-     * @param parentIpAssetId in case this is a derivative IPAsset, set the parent IPAsset id, 0 otherwise
-     * @param holder of the IPAsset and licenses
-     * @param revoker of the license. Can't be zero or changed later
-     * @param config Franchise config
-     * @param terms for the license to be active
-     */
+    
+    /// Sets the non commercial rights for an IPAsset, with terms from the Franchise config in LicensingModule.
+    /// If no parent asset id is provided, the root IPAsset id is used if it exists in the Franchise config.
+    /// @param ipAssetId the IPAsset id
+    /// @param parentIpAssetId in case this is a derivative IPAsset, set the parent IPAsset id, 0 otherwise
+    /// @param holder of the IPAsset and licenses
+    /// @param revoker of the license. Can't be zero or changed later
+    /// @param config Franchise config
+    /// @param terms for the license to be active
     function _setNonCommercialRights(
         uint256 ipAssetId,
         uint256 parentIpAssetId,
@@ -188,16 +186,15 @@ contract IPAssetRegistry is
         );
     }
 
-    /**
-     * Sets the commercial rights for an IPAsset, with terms from the Franchise config in LicensingModule.
-     * If no parent asset id is provided, the root IPAsset id is used if it exists in the Franchise config.
-     * @param ipAssetId the IPAsset id
-     * @param parentIpAssetId in case this is a derivative IPAsset, set the parent IPAsset id, 0 otherwise
-     * @param holder of the IPAsset and licenses
-     * @param revoker of the license. Can't be zero or changed later
-     * @param config Franchise config
-     * @param terms for the license to be active
-     */
+    
+    /// Sets the commercial rights for an IPAsset, with terms from the Franchise config in LicensingModule.
+    /// If no parent asset id is provided, the root IPAsset id is used if it exists in the Franchise config.
+    /// @param ipAssetId the IPAsset id
+    /// @param parentIpAssetId in case this is a derivative IPAsset, set the parent IPAsset id, 0 otherwise
+    /// @param holder of the IPAsset and licenses
+    /// @param revoker of the license. Can't be zero or changed later
+    /// @param config Franchise config
+    /// @param terms for the license to be active
     function _setCommercialRights(
         uint256 ipAssetId,
         uint256 parentIpAssetId,
@@ -223,11 +220,10 @@ contract IPAssetRegistry is
         );
     }
 
-    /**
-     * mints the IPAsset block, and assigns the next id to it.
-     * @param to holder
-     * @param ipAssetId ip asset type
-     */
+    
+    /// mints the IPAsset block, and assigns the next id to it.
+    /// @param to holder
+    /// @param ipAssetId ip asset type
     function _mintBlock(address to, IPAsset ipAssetId) private returns (uint256) {
         uint256 nextId = currentIdFor(ipAssetId) + 1;
         if (nextId > LibIPAssetID._lastId(ipAssetId)) revert IdOverBounds();

@@ -4,17 +4,16 @@ pragma solidity ^0.8.19;
 import { BaseTermsProcessor } from "./BaseTermsProcessor.sol";
 import { LibDuration } from "../../timing/LibDuration.sol";
 
-/**
- * @title TimeTermsProcessor
- * @author Raul Martinez
- * @notice Processor to set time limits to Licenses up to a Time To Live (TTL). It has 2 modes of operation:
- * 1- Timer starts on a specific date set on License creation, and ends after a certain amount of time.
- * To do this, set startTime to a timestemp when encoding the terms in createLicense().
- * 2- Timer starts on License execution, and ends after a certain amount of time.
- * To do this, set startTime to LibDuration.START_TIME_NOT_SET (0) when encoding the terms in createLicense().
- * The processor will set the startTime to the block.timestamp when the terms are executed.
- * Use case for this would be to indicate "this license is valid within 1 year after the first time it is used"
- */
+
+/// @title TimeTermsProcessor
+/// @author Raul Martinez
+/// @notice Processor to set time limits to Licenses up to a Time To Live (TTL). It has 2 modes of operation:
+/// 1- Timer starts on a specific date set on License creation, and ends after a certain amount of time.
+/// To do this, set startTime to a timestemp when encoding the terms in createLicense().
+/// 2- Timer starts on License execution, and ends after a certain amount of time.
+/// To do this, set startTime to LibDuration.START_TIME_NOT_SET (0) when encoding the terms in createLicense().
+/// The processor will set the startTime to the block.timestamp when the terms are executed.
+/// Use case for this would be to indicate "this license is valid within 1 year after the first time it is used"
 contract TimeTermsProcessor is BaseTermsProcessor {
     using LibDuration for LibDuration.TimeConfig;
 

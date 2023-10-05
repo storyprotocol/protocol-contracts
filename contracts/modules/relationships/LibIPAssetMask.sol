@@ -6,21 +6,19 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { LibIPAssetID } from "contracts/ip-assets/LibIPAssetID.sol";
 import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
 
-/**
- * @title LibIPAssetMask
- * @dev Gives tools to check if the "endpoints" of a relationship are valid, according to the allowed asset types set in the relationship config.
- */
+
+/// @title LibIPAssetMask
+/// @dev Gives tools to check if the "endpoints" of a relationship are valid, according to the allowed asset types set in the relationship config.
 library LibIPAssetMask {
 
     error InvalidIPAssetArray();
 
-    /**
-     * @dev converts an array of IPAssets types and the allows external flag to a mask, by setting the bits corresponding
-     * to the uint8 equivalent of the IPAsset types to 1.
-     * @param ipAssets The array of IPAsset types
-     * @param allowsExternal Whether the relationship config allows external (non SP ERC721) assets
-     * @return mask The mask representing the IPAsset types and the allows external flag
-     */
+    
+    /// @dev converts an array of IPAssets types and the allows external flag to a mask, by setting the bits corresponding
+    /// to the uint8 equivalent of the IPAsset types to 1.
+    /// @param ipAssets The array of IPAsset types
+    /// @param allowsExternal Whether the relationship config allows external (non SP ERC721) assets
+    /// @return mask The mask representing the IPAsset types and the allows external flag
     function _convertToMask(IPAsset[] calldata ipAssets, bool allowsExternal) internal pure returns (uint256) {
         if (ipAssets.length == 0) revert InvalidIPAssetArray();
         uint256 mask = 0;
@@ -37,14 +35,13 @@ library LibIPAssetMask {
         return mask;
     }
 
-    /**
-     * @dev converts a mask to an array of IPAsset types and the allows external flag, by checking the bits corresponding
-     * to the uint8 equivalent of the IPAsset types.
-     * NOTE: Caller must ignore the array elements of value 0
-     * @param mask The mask representing the IPAsset types and the allows external flag
-     * @return ipAssets The array of IPAsset types. NOTE: Ignore the array elements of value 0
-     * @return allowsExternal Whether the relationship config allows external (non SP ERC721) assets
-     */
+    
+    /// @dev converts a mask to an array of IPAsset types and the allows external flag, by checking the bits corresponding
+    /// to the uint8 equivalent of the IPAsset types.
+    /// NOTE: Caller must ignore the array elements of value 0
+    /// @param mask The mask representing the IPAsset types and the allows external flag
+    /// @return ipAssets The array of IPAsset types. NOTE: Ignore the array elements of value 0
+    /// @return allowsExternal Whether the relationship config allows external (non SP ERC721) assets
     function _convertFromMask(uint256 mask) internal pure returns (IPAsset[] memory ipAssets, bool allowsExternal) {
         ipAssets = new IPAsset[](8);
         uint256 index = 0;
@@ -64,13 +61,12 @@ library LibIPAssetMask {
         return mask & (1 << (uint256(assetType) & 0xff)) != 0;
     }
 
-    /**
-     * @dev checks if the asset type of the asset is supported by the mask
-     * @param isAssetRegistry Whether the asset is an SP asset registry or an external asset
-     * @param assetId The asset id
-     * @param assetTypeMask The mask representing the IPAsset types and the allows external flag
-     * @return result true if mask test passes, false otherwise
-     */
+    
+    /// @dev checks if the asset type of the asset is supported by the mask
+    /// @param isAssetRegistry Whether the asset is an SP asset registry or an external asset
+    /// @param assetId The asset id
+    /// @param assetTypeMask The mask representing the IPAsset types and the allows external flag
+    /// @return result true if mask test passes, false otherwise
     function _checkRelationshipNode(bool isAssetRegistry, uint256 assetId, uint256 assetTypeMask) internal pure returns (bool result) {
         if (isAssetRegistry) {
             result = LibIPAssetMask._supportsIPAssetType(assetTypeMask, uint8(LibIPAssetID._ipAssetTypeFor(assetId)));

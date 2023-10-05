@@ -16,10 +16,8 @@ abstract contract AccessControlled {
     event AccessControlUpdated(address indexed accessControl);
     error MissingRole(bytes32 role, address account);
 
-    /**
-     * @notice Checks if msg.sender has `role`, reverts if not.
-     * @param role the role to be tested, defined in Roles.sol and set in AccessManager instance.
-     */
+    /// @notice Checks if msg.sender has `role`, reverts if not.
+    /// @param role the role to be tested, defined in Roles.sol and set in AccessManager instance.
     modifier onlyRole(bytes32 role) {
         if (!hasRole(role, msg.sender)) {
             revert MissingRole(role, msg.sender);
@@ -34,12 +32,11 @@ abstract contract AccessControlled {
         emit AccessControlUpdated(accessControl);
     }
 
-    /**
-     * @notice Checks if `account has `role` assigned.
-     * @param role the role to be tested, defined in Roles.sol and set in AccessManager instance.
-     * @param account the address to be tested for the role.
-     * @return return true if account has role, false otherwise.
-     */
+    
+    /// @notice Checks if `account has `role` assigned.
+    /// @param role the role to be tested, defined in Roles.sol and set in AccessManager instance.
+    /// @param account the address to be tested for the role.
+    /// @return return true if account has role, false otherwise.
     function hasRole(
         bytes32 role,
         address account
@@ -47,10 +44,9 @@ abstract contract AccessControlled {
         return _accessControl.hasRole(role, account);
     }
 
-    /**
-     * @notice Sets AccessManager instance. Restricted to PROTOCOL_ADMIN_ROLE
-     * @param accessControl address of the new instance of AccessControlSingleton.
-     */
+    
+    /// @notice Sets AccessManager instance. Restricted to PROTOCOL_ADMIN_ROLE
+    /// @param accessControl address of the new instance of AccessControlSingleton.
     function setAccessControl(
         address accessControl
     ) public onlyRole(PROTOCOL_ADMIN_ROLE) {
