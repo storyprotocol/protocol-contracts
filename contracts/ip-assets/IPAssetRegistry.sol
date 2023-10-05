@@ -84,7 +84,6 @@ contract IPAssetRegistry is
     function version() external pure virtual returns (string memory) {
         return _VERSION;
     }
-
     
     /// Creates a new IPAsset, and assigns licenses (rights) to it, according to the Franchise
     /// config in LicensingModule.
