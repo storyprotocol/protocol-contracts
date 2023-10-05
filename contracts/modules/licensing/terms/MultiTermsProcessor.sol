@@ -5,13 +5,12 @@ import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/IT
 import { BaseTermsProcessor } from "./BaseTermsProcessor.sol";
 import { EmptyArray, LengthMismatch } from "contracts/errors/General.sol";
 
-/**
- * NOTE: this contract is not tested yet, do not use.
- * @title MultiTermsProcessor
- * @author Raul Martinez
- * @notice Contract that allow to compose multiple terms processors into one, to allow for complex license arrangements.
- * Either all processors are executed successfully, or none are.
- */
+
+/// NOTE: this contract is not tested yet, do not use.
+/// @title MultiTermsProcessor
+/// @author Raul Martinez
+/// @notice Contract that allow to compose multiple terms processors into one, to allow for complex license arrangements.
+/// Either all processors are executed successfully, or none are.
 contract MultiTermsProcessor is BaseTermsProcessor {
     error TooManyTermsProcessors();
 
@@ -35,12 +34,11 @@ contract MultiTermsProcessor is BaseTermsProcessor {
         emit ProcessorsSet(_processors);
     }
 
-    /**
-     * Decode the data into an array of bytes with length == processors length, and execute each processor in order.
-     * Encode the results into a new array of bytes and return it.
-     * @param data must be decodable into an array of bytes with length == processors length.
-     * @return newData the encoded bytes array with the results of each processor execution.
-     */
+    
+    /// Decode the data into an array of bytes with length == processors length, and execute each processor in order.
+    /// Encode the results into a new array of bytes and return it.
+    /// @param data must be decodable into an array of bytes with length == processors length.
+    /// @return newData the encoded bytes array with the results of each processor execution.
     function _executeTerms(bytes calldata data) internal override returns (bytes memory newData) {
         uint256 length = processors.length;
         bytes[] memory encodedTerms = new bytes[](length);

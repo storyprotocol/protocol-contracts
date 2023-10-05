@@ -6,10 +6,9 @@ import { IRelationshipModule } from "contracts/interfaces/modules/relationships/
 import { Unauthorized } from "contracts/errors/General.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-/**
- * @title SrcRequestOrDstOwnerRelationshipProcessor
- * @dev Relationship processor that returns true if owner of destination, false if owner of source, reverts otherwise.
- */
+
+/// @title SrcRequestOrDstOwnerRelationshipProcessor
+/// @dev Relationship processor that returns true if owner of destination, false if owner of source, reverts otherwise.
 contract SrcRequestOrDstOwnerRelationshipProcessor is BaseRelationshipProcessor {
 
     constructor(address relationshipModule) BaseRelationshipProcessor(relationshipModule) {}

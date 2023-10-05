@@ -4,14 +4,13 @@ pragma solidity ^0.8.13;
 import { RelationshipModuleBase } from "./RelationshipModuleBase.sol";
 import { UPGRADER_ROLE, RELATIONSHIP_MANAGER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
 
-/**
- * @title ProtocolRelationshipModule
- * @dev Implementation of RelationshipModuleBase that allows relationship configs that will be used protocol wide.
- * The meaning and parameters of the relationships are to be defined in Story Protocol Improvement Proposals.
- * Example: https://github.com/storyprotocol/protocol-contracts/issues/33
- * The relationship configs are set by the RELATIONSHIP_MANAGER_ROLE.
- * Upgrades are done by the UPGRADER_ROLE.
- */
+
+/// @title ProtocolRelationshipModule
+/// @dev Implementation of RelationshipModuleBase that allows relationship configs that will be used protocol wide.
+/// The meaning and parameters of the relationships are to be defined in Story Protocol Improvement Proposals.
+/// Example: https://github.com/storyprotocol/protocol-contracts/issues/33
+/// The relationship configs are set by the RELATIONSHIP_MANAGER_ROLE.
+/// Upgrades are done by the UPGRADER_ROLE.
 contract ProtocolRelationshipModule is RelationshipModuleBase {
 
     constructor(address _franchiseRegistry) RelationshipModuleBase(_franchiseRegistry) {}

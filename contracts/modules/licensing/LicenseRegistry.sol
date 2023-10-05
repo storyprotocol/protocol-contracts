@@ -5,11 +5,10 @@ import { ZeroAddress, Unauthorized } from "contracts/errors/General.sol";
 import { IERC5218 } from "contracts/interfaces/modules/licensing/IERC5218.sol";
 import { ILicenseRegistry } from "contracts/interfaces/modules/licensing/ILicenseRegistry.sol";
 
-/**
- * @title LicenseRegistry
- * @author Raul Martinez
- * @notice Simple NFT tracking the ownership of tradeable Licenses emitted by a RightsManager.
- */
+
+/// @title LicenseRegistry
+/// @author Raul Martinez
+/// @notice Simple NFT tracking the ownership of tradeable Licenses emitted by a RightsManager.
 contract LicenseRegistry is ILicenseRegistry, ERC721 {
 
     IERC5218 private immutable _RIGHTS_MANAGER;
@@ -26,11 +25,10 @@ contract LicenseRegistry is ILicenseRegistry, ERC721 {
         _;
     }
 
-    /**
-     * @notice Mint a License to the given address. Only caller allowed is the RightsManager.
-     * @param to The address to mint the License to.
-     * @param tokenId The ID of the License to mint.
-     */
+    
+    /// @notice Mint a License to the given address. Only caller allowed is the RightsManager.
+    /// @param to The address to mint the License to.
+    /// @param tokenId The ID of the License to mint.
     function mint(address to, uint256 tokenId) external onlyRightsManager {
         _mint(to, tokenId);
     }

@@ -9,13 +9,12 @@ import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/IT
 import { IERC5218 } from "contracts/interfaces/modules/licensing/IERC5218.sol";
 import { ILicensingModule } from "contracts/interfaces/modules/licensing/ILicensingModule.sol";
 
-/**
- * @title LicensingModule
- * @author Raul Martinez
- * @notice Contract for configuring and managing licensing for a Franchise.
- * A licensing framework may be definbed through a FranchiseConfig, which is set by the Franchise owner.
- * The non commercial license URI is set by a protocol admin key, since it will be common for all Story Protocol
- */
+
+/// @title LicensingModule
+/// @author Raul Martinez
+/// @notice Contract for configuring and managing licensing for a Franchise.
+/// A licensing framework may be definbed through a FranchiseConfig, which is set by the Franchise owner.
+/// The non commercial license URI is set by a protocol admin key, since it will be common for all Story Protocol
 contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
 
     struct LicensingModuleStorage {
@@ -59,22 +58,20 @@ contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
         return _getLicensingModuleStorage().nonCommercialLicenseURI;
     }
 
-    /**
-     * Set the URI for non-commercial licenses across Story Protocol. Setting this does NOT affect existing licenses, only new ones.
-     * @param _nonCommercialLicenseURI The URI to set for non-commercial licenses
-     */
+    
+    /// Set the URI for non-commercial licenses across Story Protocol. Setting this does NOT affect existing licenses, only new ones.
+    /// @param _nonCommercialLicenseURI The URI to set for non-commercial licenses
     function setNonCommercialLicenseURI(string calldata _nonCommercialLicenseURI) external onlyRole(LICENSING_MANAGER_ROLE) {
         _getLicensingModuleStorage().nonCommercialLicenseURI = _nonCommercialLicenseURI;
         emit NonCommercialLicenseUriSet(_nonCommercialLicenseURI);
     }
 
-    /**
-     * Set the FranchiseConfig for a Franchise, configuring its licensing framework.
-     * @dev if setting root licenses, they should be active. A revoker address must be set, and it will be
-     * common for all licenses in the Franchise.
-     * @param franchiseId The ID of the Franchise to set the config for
-     * @param config The FranchiseConfig to set
-     */
+    
+    /// Set the FranchiseConfig for a Franchise, configuring its licensing framework.
+    /// @dev if setting root licenses, they should be active. A revoker address must be set, and it will be
+    /// common for all licenses in the Franchise.
+    /// @param franchiseId The ID of the Franchise to set the config for
+    /// @param config The FranchiseConfig to set
     function configureFranchiseLicensing(uint256 franchiseId, FranchiseConfig memory config) external {
         if (msg.sender != FRANCHISE_REGISTRY.ownerOf(franchiseId)) {
             revert Unauthorized();
