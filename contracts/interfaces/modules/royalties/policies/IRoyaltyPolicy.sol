@@ -6,17 +6,17 @@ pragma solidity ^0.8.19;
 interface IRoyaltyPolicy {
 
     /// @notice initialize the royalty policy for the specified IP Account
-    /// @param account IP Account associated with the policy.
-    /// @param data The initial data of the royalty distribution policy.
-    function initPolicy(address account, bytes calldata data) external;
+    /// @param account_ IP Account associated with the policy.
+    /// @param data_ The initial data of the royalty distribution policy.
+    function initPolicy(address account_, bytes calldata data_) external;
 
     /// @notice update distribute plan for the specified IP Account
-    /// @param account IP Account associated with the policy.
-    /// @param data The distribution plan data.
-    function updateDistribution(address account, bytes calldata data) external;
+    /// @param account_ IP Account associated with the policy.
+    /// @param data_ The distribution plan data.
+    function updateDistribution(address account_, bytes calldata data_) external;
 
     /// @notice Distribute royalty to each recipient according to royalty distribution plan for given IP Asset.
-    /// @param account IP Account associated with the policy.
-    /// @param token The ERC20 token for royalty.
-    function distribute(address account, address token) external;
+    /// @param account_ IP Account associated with the policy.
+    /// @param token_ The ERC20 token for royalty.
+    function distribute(address account_, address token_) external;
 }

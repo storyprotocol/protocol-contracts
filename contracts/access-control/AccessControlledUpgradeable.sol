@@ -13,7 +13,7 @@ abstract contract AccessControlledUpgradeable is UUPSUpgradeable {
     using ERC165CheckerUpgradeable for address;
 
     event AccessControlUpdated(address indexed accessControl);
-    error MissingRole(bytes32 role, address account);
+    error MissingRole(bytes32 role_, address account_);
 
     /// @custom:storage-location erc7201:story-protocol.access-controlled-upgradeable.storage
     struct AccessControlledStorage {
@@ -25,24 +25,24 @@ abstract contract AccessControlledUpgradeable is UUPSUpgradeable {
         0x06c308ca3b780cede1217f5877d0c7fbf50796d93f836cb3b60e6457b0cf03b6;
 
     /// @notice Checks if msg.sender has `role`, reverts if not.
-    /// @param role the role to be tested, defined in Roles.sol and set in AccessManager instance.
-    modifier onlyRole(bytes32 role) {
-        if (!hasRole(role, msg.sender)) {
-            revert MissingRole(role, msg.sender);
+    /// @param role_ the role to be tested, defined in Roles.sol and set in AccessManager instance.
+    modifier onlyRole(bytes32 role_) {
+        if (!hasRole(role_, msg.sender)) {
+            revert MissingRole(role_, msg.sender);
         }
         _;
     }
 
     /// @notice Initializer method, access point to initialize inheritance tree.
-    /// @param accessControl address of AccessManager.
+    /// @param accessControl_ address of AccessManager.
     function __AccessControlledUpgradeable_init(
-        address accessControl
+        address accessControl_
     ) internal initializer {
-        if (!accessControl.supportsInterface(type(IAccessControl).interfaceId))
+        if (!accessControl_.supportsInterface(type(IAccessControl).interfaceId))
             revert UnsupportedInterface("IAccessControl");
         AccessControlledStorage storage $ = _getAccessControlledUpgradeable();
-        $.accessControl = IAccessControl(accessControl);
-        emit AccessControlUpdated(accessControl);
+        $.accessControl = IAccessControl(accessControl_);
+        emit AccessControlUpdated(accessControl_);
     }
 
     function _getAccessControlledUpgradeable()
@@ -56,27 +56,27 @@ abstract contract AccessControlledUpgradeable is UUPSUpgradeable {
     }
 
     /// @notice Checks if `account has `role` assigned.
-    /// @param role the role to be tested, defined in Roles.sol and set in AccessManager instance.
-    /// @param account the address to be tested for the role.
+    /// @param role_ the role to be tested, defined in Roles.sol and set in AccessManager instance.
+    /// @param account_ the address to be tested for the role.
     /// @return return true if account has role, false otherwise.
     function hasRole(
-        bytes32 role,
-        address account
+        bytes32 role_,
+        address account_
     ) internal view returns (bool) {
         AccessControlledStorage storage $ = _getAccessControlledUpgradeable();
-        return $.accessControl.hasRole(role, account);
+        return $.accessControl.hasRole(role_, account_);
     }
 
     /// @notice Sets AccessManager instance. Restricted to PROTOCOL_ADMIN_ROLE
-    /// @param accessControl address of the new instance of AccessControlSingleton.
+    /// @param accessControl_ address of the new instance of AccessControlSingleton.
     function setAccessControl(
-        address accessControl
+        address accessControl_
     ) public onlyRole(PROTOCOL_ADMIN_ROLE) {
-        if (!accessControl.supportsInterface(type(IAccessControl).interfaceId))
+        if (!accessControl_.supportsInterface(type(IAccessControl).interfaceId))
             revert UnsupportedInterface("IAccessControl");
         AccessControlledStorage storage $ = _getAccessControlledUpgradeable();
-        $.accessControl = IAccessControl(accessControl);
-        emit AccessControlUpdated(accessControl);
+        $.accessControl = IAccessControl(accessControl_);
+        emit AccessControlUpdated(accessControl_);
     }
 
     function getAccessControl() public view returns (address) {

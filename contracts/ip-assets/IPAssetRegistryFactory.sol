@@ -31,43 +31,43 @@ contract IPAssetRegistryFactory is Ownable {
     }
 
     function createFranchiseIpAssets(
-        uint256 franchiseId,
-        string calldata name,
-        string calldata symbol,
-        string calldata description
+        uint256 franchiseId_,
+        string calldata name_,
+        string calldata symbol_,
+        string calldata description_
     ) external returns (address) {
         bytes memory data = abi.encodeWithSelector(
             bytes4(
                 keccak256(bytes("initialize(uint256,string,string,string)"))
             ),
-            franchiseId,
-            name,
-            symbol,
-            description
+            franchiseId_,
+            name_,
+            symbol_,
+            description_
         );
         address proxy = address(new BeaconProxy(address(BEACON), data));
         LicenseRegistry licenseRegistry = new LicenseRegistry(
             proxy,
-            string.concat("Licenses for ", name),
-            string.concat("sl", symbol)
+            string.concat("Licenses for ", name_),
+            string.concat("sl", symbol_)
         );
         IPAssetRegistry(proxy).setLicenseRegistry(address(licenseRegistry));
-        emit FranchiseCreated(proxy, name, symbol);
+        emit FranchiseCreated(proxy, name_, symbol_);
         return proxy;
     }
 
-    function upgradeFranchises(address newImplementation) external onlyOwner {
+    function upgradeFranchises(address newImplementation_) external onlyOwner {
         if (
-            !newImplementation.supportsInterface(
+            !newImplementation_.supportsInterface(
                 type(IIPAssetRegistry).interfaceId
             )
         ) {
             revert UnsupportedInterface("IIPAssetRegistry");
         }
-        BEACON.upgradeTo(newImplementation);
+        BEACON.upgradeTo(newImplementation_);
         emit FranchisesUpgraded(
-            address(newImplementation),
-            IVersioned(newImplementation).version()
+            address(newImplementation_),
+            IVersioned(newImplementation_).version()
         );
     }
 }

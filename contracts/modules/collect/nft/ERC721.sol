@@ -38,45 +38,45 @@ abstract contract ERC721 is IERC721, IERC721Errors {
     bytes4 private constant _ERC721_INTERFACE_ID = 0x80ac58cd;
 
     /// @notice Sets the operator for `msg.sender` to `operator`.
-    /// @param operator The operator address managing NFTs of `msg.sender`.
-    /// @param approved Whether operator can manage NFTs of `msg.sender`.
-    function setApprovalForAll(address operator, bool approved) external {
-        isApprovedForAll[msg.sender][operator] = approved;
-        emit ApprovalForAll(msg.sender, operator, approved);
+    /// @param operator_ The operator address managing NFTs of `msg.sender`.
+    /// @param approved_ Whether operator can manage NFTs of `msg.sender`.
+    function setApprovalForAll(address operator_, bool approved_) external {
+        isApprovedForAll[msg.sender][operator_] = approved_;
+        emit ApprovalForAll(msg.sender, operator_, approved_);
     }
 
     /// @notice Sets approved address of NFT `id` to address `approved`.
-    /// @param approved The new approved address for the NFT.
-    /// @param tokenId The id of the NFT to approve.
-    function approve(address approved, uint256 tokenId) public virtual {
-        address owner = ownerOf[tokenId];
+    /// @param approved_ The new approved address for the NFT.
+    /// @param tokenId_ The id of the NFT to approve.
+    function approve(address approved_, uint256 tokenId_) public virtual {
+        address owner = ownerOf[tokenId_];
 
         // Revert unless msg.sender is the owner or approved operator.
         if (msg.sender != owner && !isApprovedForAll[owner][msg.sender]) {
             revert ERC721SenderUnauthorized();
         }
 
-        getApproved[tokenId] = approved;
-        emit Approval(owner, approved, tokenId);
+        getApproved[tokenId_] = approved_;
+        emit Approval(owner, approved_, tokenId_);
     }
 
     /// @notice Transfers NFT of id `id` from address `from` to address `to`,
     ///  with safety checks ensuring `to` is capable of receiving the NFT.
     /// @dev Safety checks are only performed if `to` is a smart contract.
-    /// @param from The existing owner address of the NFT to be transferred.
-    /// @param to The new owner address of the NFT being transferred.
-    /// @param data Additional data in bytes to pass to the receiver.
-    /// @param tokenId The id of the NFT being transferred.
+    /// @param from_ The existing owner address of the NFT to be transferred.
+    /// @param to_ The new owner address of the NFT being transferred.
+    /// @param data_ Additional data in bytes to pass to the receiver.
+    /// @param tokenId_ The id of the NFT being transferred.
     function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes memory data
+        address from_,
+        address to_,
+        uint256 tokenId_,
+        bytes memory data_
     ) external {
-        transferFrom(from, to, tokenId);
+        transferFrom(from_, to_, tokenId_);
         if (
-            to.code.length != 0 &&
-                IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, data)
+            to_.code.length != 0 &&
+                IERC721Receiver(to_).onERC721Received(msg.sender, from_, tokenId_, data_)
                 !=
                 IERC721Receiver.onERC721Received.selector
         ) {
@@ -87,18 +87,18 @@ abstract contract ERC721 is IERC721, IERC721Errors {
     /// @notice Transfers NFT of id `id` from address `from` to address `to`,
     ///  with safety checks ensuring `to` is capable of receiving the NFT.
     /// @dev Safety checks are only performed if `to` is a smart contract.
-    /// @param from The existing owner address of the NFT to be transferred.
-    /// @param to The new owner address of the NFT being transferred.
-    /// @param tokenId The id of the NFT being transferred.
+    /// @param from_ The existing owner address of the NFT to be transferred.
+    /// @param to_ The new owner address of the NFT being transferred.
+    /// @param tokenId_ The id of the NFT being transferred.
     function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
+        address from_,
+        address to_,
+        uint256 tokenId_
     ) external {
-        transferFrom(from, to, tokenId);
+        transferFrom(from_, to_, tokenId_);
         if (
-            to.code.length != 0 &&
-                IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, "")
+            to_.code.length != 0 &&
+                IERC721Receiver(to_).onERC721Received(msg.sender, from_, tokenId_, "")
                 !=
                 IERC721Receiver.onERC721Received.selector
         ) {
@@ -110,74 +110,74 @@ abstract contract ERC721 is IERC721, IERC721Errors {
     ///  without performing any safety checks.
     /// @dev Existence of an NFT is inferred by having a non-zero owner address.
     ///  Transfers clear owner approvals without `Approval` events emitted.
-    /// @param from The existing owner address of the NFT being transferred.
-    /// @param to The new owner address of the NFT being transferred.
-    /// @param tokenId The id of the NFT being transferred.
+    /// @param from_ The existing owner address of the NFT being transferred.
+    /// @param to_ The new owner address of the NFT being transferred.
+    /// @param tokenId_ The id of the NFT being transferred.
     function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
+        address from_,
+        address to_,
+        uint256 tokenId_
     ) public virtual {
-        if (from != ownerOf[tokenId]) {
+        if (from_ != ownerOf[tokenId_]) {
             revert ERC721OwnerInvalid();
         }
 
         if (
-            msg.sender != from &&
-            msg.sender != getApproved[tokenId] &&
-            !isApprovedForAll[from][msg.sender]
+            msg.sender != from_ &&
+            msg.sender != getApproved[tokenId_] &&
+            !isApprovedForAll[from_][msg.sender]
         ) {
             revert ERC721SenderUnauthorized();
         }
 
-        if (to == address(0)) {
+        if (to_ == address(0)) {
             revert ERC721ReceiverInvalid();
         }
 
-        delete getApproved[tokenId];
+        delete getApproved[tokenId_];
 
         unchecked {
-            balanceOf[from]--;
-            balanceOf[to]++;
+            balanceOf[from_]--;
+            balanceOf[to_]++;
         }
 
-        ownerOf[tokenId] = to;
-        emit Transfer(from, to, tokenId);
+        ownerOf[tokenId_] = to_;
+        emit Transfer(from_, to_, tokenId_);
     }
 
     /// @notice Checks if interface of identifier `id` is supported.
-    /// @param id The ERC-165 interface identifier.
+    /// @param id_ The ERC-165 interface identifier.
     /// @return True if interface id `id` is supported, false otherwise.
-    function supportsInterface(bytes4 id) public view virtual override(IERC165) returns (bool) {
-        return id == _ERC165_INTERFACE_ID ||
-               id == _ERC721_INTERFACE_ID;
+    function supportsInterface(bytes4 id_) public view virtual override(IERC165) returns (bool) {
+        return id_ == _ERC165_INTERFACE_ID ||
+               id_ == _ERC721_INTERFACE_ID;
     }
 
     /// @dev Mints an NFT of identifier `tokenId` to recipient address `to`.
-    /// @param to Address of the new NFT owner.
-    /// @param tokenId Id of the NFT being minted.
-    function _mint(address to, uint256 tokenId) internal virtual {
-        if (to == address(0)) {
+    /// @param to_ Address of the new NFT owner.
+    /// @param tokenId_ Id of the NFT being minted.
+    function _mint(address to_, uint256 tokenId_) internal virtual {
+        if (to_ == address(0)) {
             revert ERC721ReceiverInvalid();
         }
 
-        if (ownerOf[tokenId] != address(0)) {
+        if (ownerOf[tokenId_] != address(0)) {
             revert ERC721TokenAlreadyMinted();
         }
 
         unchecked {
             _totalSupply++;
-            balanceOf[to]++;
+            balanceOf[to_]++;
         }
 
-        ownerOf[tokenId] = to;
-        emit Transfer(address(0), to, tokenId);
+        ownerOf[tokenId_] = to_;
+        emit Transfer(address(0), to_, tokenId_);
     }
 
     /// @dev Burns an NFT with identifier `tokenId`.
-    /// @param tokenId The id of the NFT being burned.
-    function _burn(uint256 tokenId) internal virtual {
-        address owner = ownerOf[tokenId];
+    /// @param tokenId_ The id of the NFT being burned.
+    function _burn(uint256 tokenId_) internal virtual {
+        address owner = ownerOf[tokenId_];
 
         if (owner == address(0)) {
             revert ERC721TokenNonExistent();
@@ -188,8 +188,8 @@ abstract contract ERC721 is IERC721, IERC721Errors {
             balanceOf[owner]--;
         }
 
-        delete ownerOf[tokenId];
-        delete getApproved[tokenId];
-        emit Transfer(owner, address(0), tokenId);
+        delete ownerOf[tokenId_];
+        delete getApproved[tokenId_];
+        emit Transfer(owner, address(0), tokenId_);
     }
 }

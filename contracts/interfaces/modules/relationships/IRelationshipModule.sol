@@ -87,13 +87,13 @@ interface IRelationshipModule {
         uint256 ttl;
     }
 
-    function relate(RelationshipParams calldata params, bytes calldata data) external;
-    function unrelate(RelationshipParams calldata params) external;
-    function areTheyRelated(RelationshipParams calldata params) external view returns (bool);
-    function isRelationshipExpired(RelationshipParams calldata params) external view returns (bool);
-    function setRelationshipConfig(string calldata name, SetRelationshipConfigParams calldata params) external returns(bytes32 relationshipId);
-    function getRelationshipId(string calldata name) external view returns (bytes32);
-    function unsetRelationshipConfig(bytes32 relationshipId) external;
-    function getRelationshipConfig(bytes32 relationshipId) external view returns (RelationshipConfig memory);
-    function getRelationshipConfigDecoded(bytes32 relationshipId) external view returns (SetRelationshipConfigParams memory);
+    function relate(RelationshipParams calldata params_, bytes calldata data_) external;
+    function unrelate(RelationshipParams calldata params_) external;
+    function areTheyRelated(RelationshipParams calldata params_) external view returns (bool);
+    function isRelationshipExpired(RelationshipParams calldata params_) external view returns (bool);
+    function setRelationshipConfig(string calldata name_, SetRelationshipConfigParams calldata params_) external returns(bytes32 relationshipId);
+    function getRelationshipId(string calldata name_) external view returns (bytes32);
+    function unsetRelationshipConfig(bytes32 relationshipId_) external;
+    function getRelationshipConfig(bytes32 relationshipId_) external view returns (RelationshipConfig memory);
+    function getRelationshipConfigDecoded(bytes32 relationshipId_) external view returns (SetRelationshipConfigParams memory);
 }

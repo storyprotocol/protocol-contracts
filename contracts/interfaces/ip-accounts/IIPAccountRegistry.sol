@@ -15,16 +15,16 @@ interface IIPAccountRegistry {
     error IpAccountInitializationFailed();
 
     function createAccount(
-        uint256 chainId,
-        address tokenContract,
-        uint256 tokenId,
+        uint256 chainId_,
+        address tokenContract_,
+        uint256 tokenId_,
         bytes calldata initData
     ) external returns (address);
 
     function account(
-        uint256 chainId,
-        address tokenContract,
-        uint256 tokenId
+        uint256 chainId_,
+        address tokenContract_,
+        uint256 tokenId_
     ) external view returns (address);
 
     

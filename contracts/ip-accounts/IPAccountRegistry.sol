@@ -8,23 +8,23 @@ contract IPAccountRegistry is IIPAccountRegistry {
     address internal immutable IP_ACCOUNT_IMPL;
     uint256 internal immutable IP_ACCOUNT_SALT;
 
-    constructor(address ipAccountImpl) {
-        if (ipAccountImpl == address(0)) revert NonExistIpAccountImpl();
-        IP_ACCOUNT_IMPL = ipAccountImpl;
+    constructor(address ipAccountImpl_) {
+        if (ipAccountImpl_ == address(0)) revert NonExistIpAccountImpl();
+        IP_ACCOUNT_IMPL = ipAccountImpl_;
         IP_ACCOUNT_SALT = 0;
     }
 
     function createAccount(
-        uint256 chainId,
-        address tokenContract,
-        uint256 tokenId,
-        bytes calldata initData
+        uint256 chainId_,
+        address tokenContract_,
+        uint256 tokenId_,
+        bytes calldata initData_
     ) external returns (address) {
         bytes memory code = _getCreationCode(
             IP_ACCOUNT_IMPL,
-            chainId,
-            tokenContract,
-            tokenId,
+            chainId_,
+            tokenContract_,
+            tokenId_,
             IP_ACCOUNT_SALT
         );
 
@@ -38,16 +38,16 @@ contract IPAccountRegistry is IIPAccountRegistry {
         emit AccountCreated(
             _account,
             IP_ACCOUNT_IMPL,
-            chainId,
-            tokenContract,
-            tokenId,
+            chainId_,
+            tokenContract_,
+            tokenId_,
             IP_ACCOUNT_SALT
         );
 
         _account = Create2.deploy(0, bytes32(IP_ACCOUNT_SALT), code);
 
-        if (initData.length != 0) {
-            (bool success, ) = _account.call(initData);
+        if (initData_.length != 0) {
+            (bool success, ) = _account.call(initData_);
             if (!success) revert IpAccountInitializationFailed();
         }
 
@@ -55,16 +55,16 @@ contract IPAccountRegistry is IIPAccountRegistry {
     }
 
     function account(
-        uint256 chainId,
-        address tokenContract,
-        uint256 tokenId
+        uint256 chainId_,
+        address tokenContract_,
+        uint256 tokenId_
     ) external view returns (address) {
         bytes32 bytecodeHash = keccak256(
             _getCreationCode(
                 IP_ACCOUNT_IMPL,
-                chainId,
-                tokenContract,
-                tokenId,
+                chainId_,
+                tokenContract_,
+                tokenId_,
                 IP_ACCOUNT_SALT
             )
         );

@@ -7,14 +7,14 @@ import { IERC6551Account } from "./IERC6551Account.sol";
 
 interface IIPAccount is IERC6551Account, IERC721Receiver, IERC1155Receiver {
     function safeTransferFrom(
-        address nftContract,
-        address from,
-        address to,
-        uint256 tokenId
+        address nftContract_,
+        address from_,
+        address to_,
+        uint256 tokenId_
     ) external;
 
     function sendRoyaltyForDistribution(
-        address distributor,
-        address token
+        address distributor_,
+        address token_
     ) external;
 }

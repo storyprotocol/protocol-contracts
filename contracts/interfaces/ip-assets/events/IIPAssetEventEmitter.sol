@@ -12,6 +12,6 @@ interface IIPAssetEventEmitter  {
         IPAsset ipAssetType
     );
 
-    function emitIpAssetCreation(uint256 franchiseId, uint256 ipAssetId) external;
+    function emitIpAssetCreation(uint256 franchiseId_, uint256 ipAssetId_) external;
 
 }

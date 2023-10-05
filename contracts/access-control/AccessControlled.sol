@@ -25,32 +25,32 @@ abstract contract AccessControlled {
         _;
     }
 
-    constructor(address accessControl) {
-        if (!accessControl.supportsInterface(type(IAccessControl).interfaceId))
+    constructor(address accessControl_) {
+        if (!accessControl_.supportsInterface(type(IAccessControl).interfaceId))
             revert UnsupportedInterface("IAccessControl");
-        _accessControl = IAccessControl(accessControl);
-        emit AccessControlUpdated(accessControl);
+        _accessControl = IAccessControl(accessControl_);
+        emit AccessControlUpdated(accessControl_);
     }
 
     /// @notice Checks if `account has `role` assigned.
-    /// @param role the role to be tested, defined in Roles.sol and set in AccessManager instance.
-    /// @param account the address to be tested for the role.
+    /// @param role_ the role to be tested, defined in Roles.sol and set in AccessManager instance.
+    /// @param account_ the address to be tested for the role.
     /// @return return true if account has role, false otherwise.
     function hasRole(
-        bytes32 role,
-        address account
+        bytes32 role_,
+        address account_
     ) internal view returns (bool) {
-        return _accessControl.hasRole(role, account);
+        return _accessControl.hasRole(role_, account_);
     }
 
     /// @notice Sets AccessManager instance. Restricted to PROTOCOL_ADMIN_ROLE
-    /// @param accessControl address of the new instance of AccessControlSingleton.
+    /// @param accessControl_ address of the new instance of AccessControlSingleton.
     function setAccessControl(
-        address accessControl
+        address accessControl_
     ) public onlyRole(PROTOCOL_ADMIN_ROLE) {
-        if (!accessControl.supportsInterface(type(IAccessControl).interfaceId))
+        if (!accessControl_.supportsInterface(type(IAccessControl).interfaceId))
             revert UnsupportedInterface("IAccessControl");
-        _accessControl = IAccessControl(accessControl);
-        emit AccessControlUpdated(accessControl);
+        _accessControl = IAccessControl(accessControl_);
+        emit AccessControlUpdated(accessControl_);
     }
 }

@@ -13,9 +13,9 @@ interface ITermsProcessor is IERC165 {
     /// @notice Executes the terms set on a license on creation.
     /// This should be called after decodeTerms()
     /// @return newData the new data to be set on the license
-    function executeTerms(bytes calldata data) external returns(bytes memory newData);
+    function executeTerms(bytes calldata data_) external returns(bytes memory newData);
 
     /// returns true if the terms have been executed successfully or they don't need to be executed, false otherwise
-    function termsExecutedSuccessfully(bytes calldata data) external view returns(bool);
+    function termsExecutedSuccessfully(bytes calldata data_) external view returns(bool);
 
 }

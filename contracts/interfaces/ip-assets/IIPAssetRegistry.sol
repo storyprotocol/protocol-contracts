@@ -16,11 +16,11 @@ interface IIPAssetRegistry is
     function franchiseId() external view returns (uint256);
 
     function createIpAsset(
-        IPAsset ipAsset,
-        string calldata name,
-        string calldata _description,
-        string calldata mediaUrl,
-        address to,
-        uint256 parentIpAssetId
+        IPAsset ipAsset_,
+        string calldata name_,
+        string calldata description_,
+        string calldata mediaUrl_,
+        address to_,
+        uint256 parentIpAssetId_
     ) external returns (uint256);
 }

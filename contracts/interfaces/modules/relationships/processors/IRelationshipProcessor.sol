@@ -17,5 +17,5 @@ interface IRelationshipProcessor {
     /// - return false if the relationship is valid but there is need for further processing. 
     ///   In this case, the relationship module will emit a RelationPendingProcessor event.
     ///   This can be leveraged for multi-step relationship setting, e.g. for a relationship that requires approval from the destination IP Asset owner.
-    function processRelationship(IRelationshipModule.RelationshipParams memory params, bytes calldata data, address caller) external returns(bool);
+    function processRelationship(IRelationshipModule.RelationshipParams memory params_, bytes calldata data_, address caller_) external returns(bool);
 }

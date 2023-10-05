@@ -43,33 +43,33 @@ interface IRoyaltyDistributor {
     event UpdateDistribution(address indexed account);
 
     /// @notice Set royalty policy to specified IP Asset.
-    /// @param nftContract address of NFT collection contract.
-    /// @param tokenId The NFT token Id of NFT collection contract.
-    /// @param royaltyPolicy  The royalty distribution policy.
-    /// @param data The initial data of the royalty distribution policy.
-    function setRoyaltyPolicy(address nftContract, uint256 tokenId, address royaltyPolicy, bytes calldata data) external;
+    /// @param nftContract_ address of NFT collection contract.
+    /// @param tokenId_ The NFT token Id of NFT collection contract.
+    /// @param royaltyPolicy_  The royalty distribution policy.
+    /// @param data_ The initial data of the royalty distribution policy.
+    function setRoyaltyPolicy(address nftContract_, uint256 tokenId_, address royaltyPolicy_, bytes calldata data_) external;
 
     /// @notice Get royalty policy for specified IP Asset.
-    /// @param nftContract address of NFT collection contract.
-    /// @param tokenId The NFT token Id of NFT collection contract.
+    /// @param nftContract_ address of NFT collection contract.
+    /// @param tokenId_ The NFT token Id of NFT collection contract.
     /// @return  The address of royalty distribution policy.
-    function getRoyaltyPolicy(address nftContract, uint256 tokenId) external view returns (address);
+    function getRoyaltyPolicy(address nftContract_, uint256 tokenId_) external view returns (address);
 
     /// @notice update royalty distribution plan for given IP Asset.
-    /// @param nftContract address of NFT collection contract.
-    /// @param tokenId The NFT token Id of NFT collection contract.
-    /// @param data The royalty distribution plan data.
-    function updateDistribution(address nftContract, uint256 tokenId, bytes calldata data) external;
+    /// @param nftContract_ address of NFT collection contract.
+    /// @param tokenId_ The NFT token Id of NFT collection contract.
+    /// @param data_ The royalty distribution plan data.
+    function updateDistribution(address nftContract_, uint256 tokenId_, bytes calldata data_) external;
 
     /// @notice distribute royalty to each recipient according to royalty distribution plan for given IP Asset.
-    /// @param nftContract address of NFT collection contract.
-    /// @param tokenId The NFT token Id of NFT collection contract.
-    /// @param token The ERC20 token for royalty.
-    function distribute(address nftContract, uint256 tokenId, address token) external;
+    /// @param nftContract_ address of NFT collection contract.
+    /// @param tokenId_ The NFT token Id of NFT collection contract.
+    /// @param token_ The ERC20 token for royalty.
+    function distribute(address nftContract_, uint256 tokenId_, address token_) external;
 
     /// @notice claim royalty to account.
-    /// @param account address of the account to which withdraw royalty which distributed before.
-    function claim(address account, address token) external;
+    /// @param account_ address of the account to which withdraw royalty which distributed before.
+    function claim(address account_, address token_) external;
 
     /// @notice pause the royalty distribution.
     function pause() external;
