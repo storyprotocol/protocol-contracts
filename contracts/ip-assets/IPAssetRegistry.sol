@@ -84,7 +84,7 @@ contract IPAssetRegistry is
     function version() external pure virtual returns (string memory) {
         return _VERSION;
     }
-    
+
     /// Creates a new IPAsset, and assigns licenses (rights) to it, according to the Franchise
     /// config in LicensingModule.
     /// A Non commercial license is always assigned, and if the IPAsset is a root IPAsset,
@@ -152,7 +152,6 @@ contract IPAssetRegistry is
         return ipAssetId;
     }
 
-    
     /// Sets the non commercial rights for an IPAsset, with terms from the Franchise config in LicensingModule.
     /// If no parent asset id is provided, the root IPAsset id is used if it exists in the Franchise config.
     /// @param ipAssetId the IPAsset id
@@ -185,7 +184,6 @@ contract IPAssetRegistry is
         );
     }
 
-    
     /// Sets the commercial rights for an IPAsset, with terms from the Franchise config in LicensingModule.
     /// If no parent asset id is provided, the root IPAsset id is used if it exists in the Franchise config.
     /// @param ipAssetId the IPAsset id
@@ -219,11 +217,13 @@ contract IPAssetRegistry is
         );
     }
 
-    
     /// mints the IPAsset block, and assigns the next id to it.
     /// @param to holder
     /// @param ipAssetId ip asset type
-    function _mintBlock(address to, IPAsset ipAssetId) private returns (uint256) {
+    function _mintBlock(
+        address to,
+        IPAsset ipAssetId
+    ) private returns (uint256) {
         uint256 nextId = currentIdFor(ipAssetId) + 1;
         if (nextId > LibIPAssetID._lastId(ipAssetId)) revert IdOverBounds();
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();

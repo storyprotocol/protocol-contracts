@@ -32,7 +32,6 @@ abstract contract AccessControlled {
         emit AccessControlUpdated(accessControl);
     }
 
-    
     /// @notice Checks if `account has `role` assigned.
     /// @param role the role to be tested, defined in Roles.sol and set in AccessManager instance.
     /// @param account the address to be tested for the role.
@@ -44,7 +43,6 @@ abstract contract AccessControlled {
         return _accessControl.hasRole(role, account);
     }
 
-    
     /// @notice Sets AccessManager instance. Restricted to PROTOCOL_ADMIN_ROLE
     /// @param accessControl address of the new instance of AccessControlSingleton.
     function setAccessControl(

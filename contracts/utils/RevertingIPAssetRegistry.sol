@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.13;
 
-
 /// @title RevertingIPAssetRegistry
 /// @author Raul Martinez
 /// @notice Only used to initialize the beacon in IPAssetRegistryFactor,

@@ -21,7 +21,6 @@ contract AccessControlSingleton is
 {
     string public constant version = "0.1.0";
 
-    
     /// @notice Initializer method, access point to initialize inheritance tree.
     /// @param _admin address to be the PROTOCOL_ADMIN_ROLE.
     function initialize(address _admin) external initializer {
@@ -31,7 +30,6 @@ contract AccessControlSingleton is
         _grantRole(PROTOCOL_ADMIN_ROLE, _admin);
     }
 
-    
     /// @notice Method for PROTOCOL_ADMIN_ROLE to create new roles, and define their role admin.
     /// @param role id of the new role. Should be keccak256("<ROLE_NAME>").
     /// @param admin role id that will be the role admin for the new role.
@@ -42,7 +40,6 @@ contract AccessControlSingleton is
         _setRoleAdmin(role, admin);
     }
 
-    
     /// @notice Access control for the upgrade process (UPGRADER_ROLE)
     /// @param newImplementation address of the new deployed implementation.
     function _authorizeUpgrade(
