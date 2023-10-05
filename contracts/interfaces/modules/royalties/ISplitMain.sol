@@ -7,32 +7,32 @@ interface ISplitMain {
     error InvalidSplit__TooFewAccounts(uint256 accountsLength);
 
     function createSplit(
-        address[] calldata accounts_,
-        uint32[] calldata percentAllocations_,
-        uint32 distributorFee_,
-        address controller_
+        address[] calldata accounts,
+        uint32[] calldata percentAllocations,
+        uint32 distributorFee,
+        address controller
     ) external returns (address);
 
     function updateAndDistributeETH(
-        address split_,
-        address[] calldata accounts_,
-        uint32[] calldata percentAllocations_,
-        uint32 distributorFee_,
-        address distributorAddress_
+        address split,
+        address[] calldata accounts,
+        uint32[] calldata percentAllocations,
+        uint32 distributorFee,
+        address distributorAddress
     ) external;
 
     function updateAndDistributeERC20(
-        address split_,
-        ERC20 token_,
-        address[] calldata accounts_,
-        uint32[] calldata percentAllocations_,
-        uint32 distributorFee_,
-        address distributorAddress_
+        address split,
+        ERC20 token,
+        address[] calldata accounts,
+        uint32[] calldata percentAllocations,
+        uint32 distributorFee,
+        address distributorAddress
     ) external;
 
-    function getETHBalance(address account_) external view returns (uint256);
+    function getETHBalance(address account) external view returns (uint256);
 
-    function getERC20Balance(address account_, ERC20 token_) external view returns (uint256);
+    function getERC20Balance(address account, ERC20 token) external view returns (uint256);
 
-    function withdraw(address account_, uint256 withdrawETH_, ERC20[] calldata tokens_) external;
+    function withdraw(address account, uint256 withdrawETH, ERC20[] calldata tokens) external;
 }

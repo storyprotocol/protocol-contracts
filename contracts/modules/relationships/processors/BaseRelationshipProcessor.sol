@@ -18,26 +18,26 @@ abstract contract BaseRelationshipProcessor is IRelationshipProcessor, ERC165 {
     address internal immutable _RELATIONSHIP_MODULE;
     error OnlyRelationshipModule();
 
-    constructor(address _relationshipModule) {
-        if(_relationshipModule == address(0)) revert ZeroAddress();
-        _RELATIONSHIP_MODULE = _relationshipModule;
+    constructor(address relationshipModule_) {
+        if(relationshipModule_ == address(0)) revert ZeroAddress();
+        _RELATIONSHIP_MODULE = relationshipModule_;
     }
 
     
     /// @inheritdoc IRelationshipProcessor
     /// @dev Checks if the caller is the relationship module and calls implementation.
-    function processRelationship(IRelationshipModule.RelationshipParams memory params, bytes calldata data, address caller) external override returns(bool) {
+    function processRelationship(IRelationshipModule.RelationshipParams memory params_, bytes calldata data_, address caller_) external override returns(bool) {
         if(msg.sender != _RELATIONSHIP_MODULE) revert OnlyRelationshipModule();
-        return _processRelationship(params, data, caller);
+        return _processRelationship(params_, data_, caller_);
     }
 
 
-    function _processRelationship(IRelationshipModule.RelationshipParams memory params, bytes calldata data, address caller) internal virtual returns(bool);    
+    function _processRelationship(IRelationshipModule.RelationshipParams memory params_, bytes calldata data_, address caller_) internal virtual returns(bool);    
 
     function supportsInterface(
-        bytes4 interfaceId
+        bytes4 interfaceId_
     ) public view override(ERC165) returns (bool) {
-        return super.supportsInterface(interfaceId) || interfaceId == type(IRelationshipProcessor).interfaceId;
+        return super.supportsInterface(interfaceId_) || interfaceId_ == type(IRelationshipProcessor).interfaceId;
     }
 
 }

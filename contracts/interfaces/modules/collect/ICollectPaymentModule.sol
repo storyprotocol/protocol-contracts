@@ -33,13 +33,13 @@ interface ICollectPaymentModule is
     ///         configured payment in the process.
     /// @param collectParams_ Collect module collect data, including IP asset id,
     ///         collector address, and collect payment module processing data.
-    /// @return collectNft_ The address of the collected NFT.
-    /// @return collectNftId_ The id of the collected collect NFT.
+    /// @return collectNft The address of the collected NFT.
+    /// @return collectNftId The id of the collected collect NFT.
     function collect(
         CollectParams calldata collectParams_
     )
         external
         payable
         override(ICollectModule)
-        returns (address collectNft_, uint256 collectNftId_);
+        returns (address collectNft, uint256 collectNftId);
 }

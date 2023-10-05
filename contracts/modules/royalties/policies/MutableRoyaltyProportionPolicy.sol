@@ -8,21 +8,21 @@ import { RoyaltyNFT } from "contracts/modules/royalties/RoyaltyNFT.sol";
 contract MutableRoyaltyProportionPolicy is IRoyaltyProportionPolicy {
     RoyaltyNFT public immutable royaltyNFT;
 
-    constructor(address _royaltyNft) {
-        royaltyNFT = RoyaltyNFT(_royaltyNft);
+    constructor(address royaltyNft_) {
+        royaltyNFT = RoyaltyNFT(royaltyNft_);
     }
 
     function initPolicy(address, bytes calldata) override external {}
 
-    function updateDistribution(address sourceAccount, bytes calldata data) override external {
-        ProportionData memory propData = abi.decode(data, (ProportionData));
-        uint256 tokenId = royaltyNFT.toTokenId(sourceAccount);
+    function updateDistribution(address sourceAccount_, bytes calldata data_) override external {
+        ProportionData memory propData = abi.decode(data_, (ProportionData));
+        uint256 tokenId = royaltyNFT.toTokenId(sourceAccount_);
         if (!royaltyNFT.exists(tokenId)) {
-            royaltyNFT.mint(sourceAccount, propData.accounts, propData.percentAllocations);
+            royaltyNFT.mint(sourceAccount_, propData.accounts, propData.percentAllocations);
         } else {
             for (uint256 i = 0; i < propData.accounts.length; ++i) {
                 royaltyNFT.safeTransferFrom(
-                    sourceAccount,
+                    sourceAccount_,
                     propData.accounts[i],
                     tokenId,
                     propData.percentAllocations[i],
@@ -32,7 +32,7 @@ contract MutableRoyaltyProportionPolicy is IRoyaltyProportionPolicy {
         }
     }
 
-    function distribute(address account, address token) override external {
-        royaltyNFT.distributeFunds(account, token);
+    function distribute(address account_, address token_) override external {
+        royaltyNFT.distributeFunds(account_, token_);
     }
 }
