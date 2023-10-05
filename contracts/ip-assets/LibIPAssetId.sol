@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import { IPAsset } from "contracts/IPAsset.sol";
 
-library LibIPAssetId {
+library LibIPAssetID {
     error InvalidIPAsset(IPAsset ipAsset);
 
     uint256 private constant _ID_RANGE = 10 ** 12;

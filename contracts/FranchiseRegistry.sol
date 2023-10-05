@@ -80,7 +80,7 @@ contract FranchiseRegistry is
     ) external returns (uint256, address) {
         FranchiseStorage storage $ = _getFranchiseStorage();
         uint256 nextId = ++$.franchiseIds;
-        address ipAssetRegistry = FACTORY.createFranchiseIPAssets(
+        address ipAssetRegistry = FACTORY.createFranchiseIpAssets(
             nextId,
             params.name,
             params.symbol,

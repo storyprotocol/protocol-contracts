@@ -33,12 +33,12 @@ interface IRelationshipModule {
     event RelationshipConfigSet(
         string name,
         bytes32 indexed relationshipId,
-        uint256 sourceIPAssetTypeMask,
-        uint256 destIPAssetTypeMask,
+        uint256 sourceIpAssetTypeMask,
+        uint256 destIpAssetTypeMask,
         bool onlySameFranchise,
         address processor,
-        uint256 maxTTL,
-        uint256 minTTL,
+        uint256 maxTtl,
+        uint256 minTtl,
         bool renewable
     );
 
@@ -53,14 +53,14 @@ interface IRelationshipModule {
     error InvalidEndTimestamp();
 
     struct TimeConfig {
-        uint112 maxTTL;
-        uint112 minTTL;
+        uint112 maxTtl;
+        uint112 minTtl;
         bool renewable;
     }
 
     struct RelationshipConfig {
-        uint256 sourceIPAssetTypeMask;
-        uint256 destIPAssetTypeMask;
+        uint256 sourceIpAssetTypeMask;
+        uint256 destIpAssetTypeMask;
         bool onlySameFranchise;
         IRelationshipProcessor processor;
         address disputer;
@@ -68,9 +68,9 @@ interface IRelationshipModule {
     }
 
     struct SetRelationshipConfigParams {
-        IPAsset[] sourceIPAssets;
+        IPAsset[] sourceIpAssets;
         bool allowedExternalSource;
-        IPAsset[] destIPAssets;
+        IPAsset[] destIpAssets;
         bool allowedExternalDest;
         bool onlySameFranchise;
         address processor;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
+import { LibIPAssetID } from "contracts/ip-assets/LibIPAssetID.sol";
 import { Unauthorized, NonExistentID, ZeroAddress } from "contracts/errors/General.sol";
 import { IIPAssetDataManager } from "contracts/interfaces/ip-assets/storage/IIPAssetDataManager.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -34,15 +34,15 @@ abstract contract IPAssetDataManager is Initializable, IIPAssetDataManager {
         string calldata mediaUrl
     ) internal returns (IPAsset) {
         IPAssetDataStorage storage $ = _getIPAssetDataStorage();
-        IPAssetData storage sbd = $.ipAssetsData[ipAssetId];
-        if (sbd.blockType == IPAsset.UNDEFINED) {
-            sbd.blockType = LibIPAssetId._ipAssetTypeFor(ipAssetId);
+        IPAssetData storage ipAsseData = $.ipAssetsData[ipAssetId];
+        if (ipAsseData.blockType == IPAsset.UNDEFINED) {
+            ipAsseData.blockType = LibIPAssetID._ipAssetTypeFor(ipAssetId);
         }
-        sbd.name = name;
-        sbd.description = description;
-        sbd.mediaUrl = mediaUrl;
-        emit IPAssetWritten(ipAssetId, sbd.blockType, name, description, mediaUrl);
-        return sbd.blockType;
+        ipAsseData.name = name;
+        ipAsseData.description = description;
+        ipAsseData.mediaUrl = mediaUrl;
+        emit IPAssetWritten(ipAssetId, ipAsseData.blockType, name, description, mediaUrl);
+        return ipAsseData.blockType;
     }
 
     function readIPAsset(uint256 ipAssetId) public view returns (IPAssetData memory) {

@@ -12,8 +12,8 @@ contract MockCollectModule is CollectModuleBase {
 
     /// @notice Initializes a mock collect module.
     /// @param franchiseRegistry The protocol-wide franchise registry address.
-    /// @param defaultCollectNFTImpl The default collect NFT impl address.
-    constructor(address franchiseRegistry, address defaultCollectNFTImpl) CollectModuleBase(franchiseRegistry, defaultCollectNFTImpl) {}
+    /// @param defaultCollectNftImpl The default collect NFT impl address.
+    constructor(address franchiseRegistry, address defaultCollectNftImpl) CollectModuleBase(franchiseRegistry, defaultCollectNftImpl) {}
 
     /// @notice Initializes the collect module via UUPS proxying.
     /// @param accessControl The address utilized for contract access control.

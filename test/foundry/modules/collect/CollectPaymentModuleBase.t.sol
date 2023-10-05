@@ -51,7 +51,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         for (uint256 i = 0; i < length; ) {
             paymentInfo = paymentInfoSuite[i].info;
             paymentParams = paymentInfoSuite[i].params;
-            ipAssetId = _createIPAsset(alice, 1, abi.encode(paymentInfo));
+            ipAssetId = _createIpAsset(alice, 1, abi.encode(paymentInfo));
             _;
             i += 1;
         }
@@ -61,8 +61,8 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
     ///         using the latest generated payment struct for collect encoding.
     /// @param ipAssetOwner The owner address for the new IP asset.
     /// @param ipAssetType The type of the IP asset being created.
-    modifier createIPAsset(address ipAssetOwner, uint8 ipAssetType) override {
-        ipAssetId = _createIPAsset(ipAssetOwner, ipAssetType, abi.encode(paymentInfo));
+    modifier createIpAsset(address ipAssetOwner, uint8 ipAssetType) override {
+        ipAssetId = _createIpAsset(ipAssetOwner, ipAssetType, abi.encode(paymentInfo));
         _;
     }
 
@@ -110,7 +110,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         vm.prank(address(ipAssetRegistry));
         paymentInfo = CollectPaymentInfo(address(0), PaymentType.NATIVE, 0 ether, alice);
         vm.expectRevert(CollectPaymentModuleAmountInvalid.selector);
-        _initCollectModule(franchiseId, defaultCollectNFTImpl);
+        _initCollectModule(franchiseId, defaultCollectNftImpl);
     }
 
     /// @notice Tests that payments with invalid settings revert.
@@ -118,7 +118,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         vm.prank(address(ipAssetRegistry));
         paymentInfo = CollectPaymentInfo(address(erc20), PaymentType.NATIVE, 1 ether, alice);
         vm.expectRevert(CollectPaymentModuleInvalidSettings.selector);
-        _initCollectModule(franchiseId, defaultCollectNFTImpl);
+        _initCollectModule(franchiseId, defaultCollectNftImpl);
     }
 
     /// @notice Tests that payments with invalid tokens revert.
@@ -127,7 +127,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         vm.prank(address(ipAssetRegistry));
         paymentInfo = CollectPaymentInfo(bob, PaymentType.ERC20, 1 ether, alice);
         vm.expectRevert(CollectPaymentModuleTokenInvalid.selector);
-        _initCollectModule(franchiseId, defaultCollectNFTImpl);
+        _initCollectModule(franchiseId, defaultCollectNftImpl);
     }
 
     /// @notice Tests that native payments work as expected.
@@ -155,7 +155,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
             paymentType: PaymentType.NATIVE,
             paymentAmount: 10
         });
-        ipAssetId = _createIPAsset(collector, 1, abi.encode(paymentInfo));
+        ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
 
         vm.prank(collector);
         vm.expectRevert(CollectPaymentModuleNativeTransferFailed.selector);
@@ -164,8 +164,8 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
             ipAssetId: ipAssetId,
             collector: collector,
             collectData: abi.encode(paymentParams),
-            collectNFTInitData: "",
-            collectNFTData: ""
+            collectNftInitData: "",
+            collectNftData: ""
         }));
     }
 
@@ -182,7 +182,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
             paymentType: PaymentType.ERC20,
             paymentAmount: 1
         });
-        ipAssetId = _createIPAsset(collector, 1, abi.encode(paymentInfo));
+        ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
         vm.expectRevert(CollectPaymentModulePaymentParamsInvalid.selector);
         _collect(franchiseId, ipAssetId);
     }
@@ -203,7 +203,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
             paymentType: PaymentType.ERC20,
             paymentAmount: 10
         });
-        ipAssetId = _createIPAsset(collector, 1, abi.encode(paymentInfo));
+        ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
         vm.expectRevert(CollectPaymentModuleERC20TransferFailed.selector);
         _collect(franchiseId, ipAssetId);
     }
@@ -221,15 +221,15 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
             paymentType: PaymentType.ERC20,
             paymentAmount: 10
         });
-        ipAssetId = _createIPAsset(collector, 1, abi.encode(paymentInfo));
+        ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
         vm.expectRevert(CollectPaymentModuleNativeTokenNotAllowed.selector);
         collectModule.collect{value: 10}(CollectParams({
             franchiseId: franchiseId,
             ipAssetId: ipAssetId,
             collector: collector,
             collectData: abi.encode(paymentParams),
-            collectNFTInitData: "",
-            collectNFTData: ""
+            collectNftInitData: "",
+            collectNftData: ""
         }));
     }
 
@@ -246,7 +246,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
             paymentType: PaymentType.ERC20,
             paymentAmount: 9999999
         });
-        ipAssetId = _createIPAsset(collector, 1, abi.encode(paymentInfo));
+        ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
         vm.expectRevert(CollectPaymentModulePaymentInsufficient.selector);
         _collect(franchiseId, ipAssetId);
 
@@ -268,7 +268,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
             paymentType: PaymentType.ERC20,
             paymentAmount: 10
         });
-        ipAssetId = _createIPAsset(collector, 1, abi.encode(paymentInfo));
+        ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
         vm.expectRevert(CollectPaymentModuleERC20TransferInvalidABIEncoding.selector);
         _collect(franchiseId, ipAssetId);
     }
@@ -289,7 +289,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
             paymentType: PaymentType.ERC20,
             paymentAmount: 10
         });
-        ipAssetId = _createIPAsset(collector, 1, abi.encode(paymentInfo));
+        ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
         vm.expectRevert(CollectPaymentModuleERC20TransferInvalidReturnValue.selector);
         _collect(franchiseId, ipAssetId);
     }
@@ -317,7 +317,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
             paymentType: PaymentType.NATIVE,
             paymentAmount: 10
         });
-        ipAssetId = _createIPAsset(alice, 1, abi.encode(paymentInfo));
+        ipAssetId = _createIpAsset(alice, 1, abi.encode(paymentInfo));
 
         vm.prank(collector);
         vm.expectRevert(CollectPaymentModulePaymentInsufficient.selector);
@@ -326,8 +326,8 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
             ipAssetId: ipAssetId,
             collector: collector,
             collectData: abi.encode(paymentParams),
-            collectNFTInitData: "",
-            collectNFTData: ""
+            collectNftInitData: "",
+            collectNftData: ""
         }));
     }
 
@@ -387,12 +387,12 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
 
     /// @dev Helper function that initializes a collect module.
     /// @param franchiseId The id of the franchise associated with the module.
-    /// @param collectNFTImpl Collect NFT impl address used for collecting.
-    function _initCollectModule(uint256 franchiseId, address collectNFTImpl) internal virtual override {
+    /// @param collectNftImpl Collect NFT impl address used for collecting.
+    function _initCollectModule(uint256 franchiseId, address collectNftImpl) internal virtual override {
         collectModule.initCollect(InitCollectParams({
             franchiseId: franchiseId,
             ipAssetId: ipAssetId,
-            collectNFTImpl: collectNFTImpl,
+            collectNftImpl: collectNftImpl,
             data: abi.encode(paymentInfo)
         }));
     }
@@ -408,8 +408,8 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
                 ipAssetId: ipAssetId_,
                 collector: collector,
                 collectData: abi.encode(paymentParams),
-                collectNFTInitData: "",
-                collectNFTData: ""
+                collectNftInitData: "",
+                collectNftData: ""
             }));
         }
         return collectModule.collect(CollectParams({
@@ -417,15 +417,15 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
             ipAssetId: ipAssetId_,
             collector: collector,
             collectData: abi.encode(paymentParams),
-            collectNFTInitData: "",
-            collectNFTData: ""
+            collectNftInitData: "",
+            collectNftData: ""
         }));
     }
 
     /// @notice Changes the base testing collect module deployment to deploy the 
     ///         mock payment collect module instead.
-    function _deployCollectModule(address collectNFTImpl) internal virtual override  returns (address) {
-        collectModuleImpl = address(new MockCollectPaymentModule(address(franchiseRegistry), collectNFTImpl));
+    function _deployCollectModule(address collectNftImpl) internal virtual override  returns (address) {
+        collectModuleImpl = address(new MockCollectPaymentModule(address(franchiseRegistry), collectNftImpl));
 
         collectPaymentModule = ICollectPaymentModule(
             _deployUUPSProxy(

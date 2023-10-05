@@ -73,7 +73,7 @@ contract IPAccountRegistry is IIPAccountRegistry {
     }
 
     /// @inheritdoc IIPAccountRegistry
-    function getIPAccountImpl() external view override returns (address) {
+    function getIpAccountImpl() external view override returns (address) {
         return IP_ACCOUNT_IMPL;
     }
 

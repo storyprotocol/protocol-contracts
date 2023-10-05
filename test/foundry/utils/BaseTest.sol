@@ -43,7 +43,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     RelationshipModuleHarness public relationshipModuleHarness;
     address eventEmitter;
     address public franchiseRegistryImpl;
-    address public defaultCollectNFTImpl;
+    address public defaultCollectNftImpl;
     address public collectModuleImpl;
     address public accessControlSingletonImpl;
 
@@ -100,8 +100,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
             )
         );
 
-        defaultCollectNFTImpl = _deployCollectNFTImpl();
-        collectModule = ICollectModule(_deployCollectModule(defaultCollectNFTImpl));
+        defaultCollectNftImpl = _deployCollectNFTImpl();
+        collectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));
         
         // upgrade factory to use new event emitter
         ipAssetRegistryImpl = address(new IPAssetRegistry(eventEmitter, address(licensingModule), address(franchiseRegistry), address(collectModule)));
@@ -168,8 +168,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         return address(new MockCollectNFT());
     }
 
-    function _deployCollectModule(address collectNFTImpl) internal virtual returns (address) {
-        collectModuleImpl = address(new MockCollectModule(address(franchiseRegistry), collectNFTImpl));
+    function _deployCollectModule(address collectNftImpl) internal virtual returns (address) {
+        collectModuleImpl = address(new MockCollectModule(address(franchiseRegistry), collectNftImpl));
         return _deployUUPSProxy(
                 collectModuleImpl,
                 abi.encodeWithSelector(
@@ -183,11 +183,11 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     ///      tested against. The reason this is currently added is that during
     ///      fuzz testing, foundry may plug existing contracts as potential
     ///      owners for IP asset creation.
-    function _createIPAsset(address ipAssetOwner, uint8 ipAssetType, bytes memory collectData) internal isValidReceiver(ipAssetOwner) returns (uint256) {
+    function _createIpAsset(address ipAssetOwner, uint8 ipAssetType, bytes memory collectData) internal isValidReceiver(ipAssetOwner) returns (uint256) {
         vm.assume(ipAssetType > uint8(type(IPAsset).min));
         vm.assume(ipAssetType < uint8(type(IPAsset).max));
         vm.prank(ipAssetOwner);
-        return ipAssetRegistry.createIPAsset(IPAsset(ipAssetType), "name", "description", "mediaUrl", ipAssetOwner, 0, collectData);
+        return ipAssetRegistry.createIpAsset(IPAsset(ipAssetType), "name", "description", "mediaUrl", ipAssetOwner, 0, collectData);
     }
 
 }

@@ -42,16 +42,16 @@ contract SetAppearsInRelationship is Script, BroadcastManager, JsonDeploymentHan
         }
 
         IRelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
-            sourceIPAssets: sourceIPAssets,
+            sourceIpAssets: sourceIPAssets,
             allowedExternalSource: false,
-            destIPAssets: destIPAssets,
+            destIpAssets: destIPAssets,
             allowedExternalDest: false,
             onlySameFranchise: true,
             processor: processor,
             disputer: admin,
             timeConfig: IRelationshipModule.TimeConfig({
-                maxTTL: 0,
-                minTTL: 0,
+                maxTtl: 0,
+                minTtl: 0,
                 renewable: false
             })
         });

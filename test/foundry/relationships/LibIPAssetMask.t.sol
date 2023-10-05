@@ -8,7 +8,7 @@ import { LibIPAssetMask } from "contracts/modules/relationships/LibIPAssetMask.s
 import { IPAsset, EXTERNAL_ASSET } from "contracts/IPAsset.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
+import { LibIPAssetID } from "contracts/ip-assets/LibIPAssetID.sol";
 import { MockERC721 } from "../mocks/MockERC721.sol";
 
 contract LibIPAssetMaskHarness {
@@ -164,7 +164,7 @@ contract LibIPAssetMaskNodesTest is Test {
     }
 
     function test_checkRelationshipNode_ipAsset_true() public {
-        uint256 tokenId = LibIPAssetId._zeroId(IPAsset(1)) + 1;
+        uint256 tokenId = LibIPAssetID._zeroId(IPAsset(1)) + 1;
         collection.mint(owner, tokenId);
         uint256 mask = 1 << (uint256(IPAsset(1)) & 0xff);
         bool result = checker.checkRelationshipNode(true, tokenId, mask);
@@ -172,7 +172,7 @@ contract LibIPAssetMaskNodesTest is Test {
     }
 
     function test_checkRelationshipNode_ipAsset_false() public {
-        uint256 tokenId = LibIPAssetId._zeroId(IPAsset(1)) + 1;
+        uint256 tokenId = LibIPAssetID._zeroId(IPAsset(1)) + 1;
         collection.mint(owner, tokenId);
         uint256 mask = 1 << (uint256(IPAsset(2)) & 0xff);
         bool result = checker.checkRelationshipNode(true, tokenId, mask);
@@ -180,7 +180,7 @@ contract LibIPAssetMaskNodesTest is Test {
     }
 
     function test_checkRelationshipNode_external_true() public {
-        uint256 tokenId = LibIPAssetId._zeroId(IPAsset(1)) + 1;
+        uint256 tokenId = LibIPAssetID._zeroId(IPAsset(1)) + 1;
         collection.mint(owner, tokenId);
         uint256 mask = 1 << (uint256(EXTERNAL_ASSET) & 0xff);
         bool result = checker.checkRelationshipNode(false, tokenId, mask);

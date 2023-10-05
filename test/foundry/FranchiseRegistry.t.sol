@@ -31,7 +31,7 @@ contract FranchiseRegistryTest is BaseTest {
         vm.startPrank(franchiseOwner);
         vm.expectCall(address(factory),
             abi.encodeCall(
-                factory.createFranchiseIPAssets,
+                factory.createFranchiseIpAssets,
                 (
                     2,
                     "name2",
