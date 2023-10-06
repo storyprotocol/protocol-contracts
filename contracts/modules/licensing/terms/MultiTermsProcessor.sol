@@ -3,8 +3,7 @@ pragma solidity ^0.8.19;
 
 import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
 import { BaseTermsProcessor } from "./BaseTermsProcessor.sol";
-import { EmptyArray, LengthMismatch } from "contracts/errors/General.sol";
-
+import { Errors } from "contracts/lib/Errors.sol";
 
 /// NOTE: this contract is not tested yet, do not use.
 /// @title MultiTermsProcessor
@@ -12,7 +11,6 @@ import { EmptyArray, LengthMismatch } from "contracts/errors/General.sol";
 /// @notice Contract that allow to compose multiple terms processors into one, to allow for complex license arrangements.
 /// Either all processors are executed successfully, or none are.
 contract MultiTermsProcessor is BaseTermsProcessor {
-    error TooManyTermsProcessors();
 
     event ProcessorsSet(ITermsProcessor[] processors);
 
@@ -27,9 +25,9 @@ contract MultiTermsProcessor is BaseTermsProcessor {
 
     /// Sets the processors to be executed in order.
     function _setProcessors(ITermsProcessor[] memory processors_) private {
-        if (processors_.length == 0) revert EmptyArray();
+        if (processors_.length == 0) revert Errors.EmptyArray();
         if (processors_.length > MAX_PROCESSORS)
-            revert TooManyTermsProcessors();
+            revert Errors.MultiTermsProcessor_TooManyTermsProcessors();
         processors = processors_;
         emit ProcessorsSet(processors_);
     }

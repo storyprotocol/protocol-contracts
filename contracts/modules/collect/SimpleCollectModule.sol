@@ -2,7 +2,7 @@
 pragma solidity ^0.8.18;
 
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { UPGRADER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { CollectModuleBase } from "contracts/modules/collect/CollectModuleBase.sol";
 
 /// @title Simple Collect Module
@@ -28,6 +28,6 @@ contract SimpleCollectModule is CollectModuleBase {
     }
 
     /// @dev Additional authorization necessitated by UUPS module upgrades.
-    function _authorizeUpgrade(address newImplementation_) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address newImplementation_) internal override onlyRole(AccessControl.UPGRADER_ROLE) {}
 
 }

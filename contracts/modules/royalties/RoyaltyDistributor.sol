@@ -7,7 +7,7 @@ import { AccessControlledUpgradeable } from "contracts/access-control/AccessCont
 import { IIPAccountRegistry } from "contracts/interfaces/ip-accounts/IIPAccountRegistry.sol";
 import { IRoyaltyPolicy } from "contracts/interfaces/modules/royalties/policies/IRoyaltyPolicy.sol";
 import { RoyaltyNFT } from "contracts/modules/royalties/RoyaltyNFT.sol";
-import { UPGRADER_ROLE, PROTOCOL_ADMIN_ROLE } from "contracts/access-control/ProtocolRoles.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
 
 contract RoyaltyDistributor is Pausable, IRoyaltyDistributor, AccessControlledUpgradeable {
 
@@ -59,10 +59,10 @@ contract RoyaltyDistributor is Pausable, IRoyaltyDistributor, AccessControlledUp
         royaltyNFT.claim(account_, token_);
     }
 
-    function pause() external onlyRole(PROTOCOL_ADMIN_ROLE) {
+    function pause() external onlyRole(AccessControl.PROTOCOL_ADMIN_ROLE) {
         _pause();
     }
-    function unpause() external onlyRole(PROTOCOL_ADMIN_ROLE) {
+    function unpause() external onlyRole(AccessControl.PROTOCOL_ADMIN_ROLE) {
         _unpause();
     }
 
@@ -72,6 +72,6 @@ contract RoyaltyDistributor is Pausable, IRoyaltyDistributor, AccessControlledUp
 
     function _authorizeUpgrade(
         address newImplementation_
-    ) internal virtual override onlyRole(UPGRADER_ROLE) {}
+    ) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
 
 }

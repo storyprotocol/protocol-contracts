@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 interface IIPAccountRegistry {
+
     event AccountCreated(
         address account,
         address implementation,
@@ -10,9 +11,6 @@ interface IIPAccountRegistry {
         uint256 tokenId,
         uint256 salt
     );
-
-    error NonExistIpAccountImpl();
-    error IpAccountInitializationFailed();
 
     function createAccount(
         uint256 chainId_,

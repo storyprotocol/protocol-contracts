@@ -3,13 +3,14 @@ pragma solidity ^0.8.13;
 
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { IIPAccountRegistry } from "contracts/interfaces/ip-accounts/IIPAccountRegistry.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
 contract IPAccountRegistry is IIPAccountRegistry {
     address internal immutable IP_ACCOUNT_IMPL;
     uint256 internal immutable IP_ACCOUNT_SALT;
 
     constructor(address ipAccountImpl_) {
-        if (ipAccountImpl_ == address(0)) revert NonExistIpAccountImpl();
+        if (ipAccountImpl_ == address(0)) revert Errors.IPAccountRegistry_NonExistentIpAccountImpl();
         IP_ACCOUNT_IMPL = ipAccountImpl_;
         IP_ACCOUNT_SALT = 0;
     }
@@ -48,7 +49,7 @@ contract IPAccountRegistry is IIPAccountRegistry {
 
         if (initData_.length != 0) {
             (bool success, ) = _account.call(initData_);
-            if (!success) revert IpAccountInitializationFailed();
+            if (!success) revert Errors.IPAccountRegistry_InitializationFailed();
         }
 
         return _account;

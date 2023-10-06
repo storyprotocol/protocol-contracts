@@ -4,7 +4,7 @@ pragma solidity ^0.8.18;
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import { IERC721Errors } from "contracts/interfaces/modules/collect/nft/IERC721Errors.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
 /// @title Minimal Collect Module ERC-721 Contract
 /// @notice This is a barebones ERC-721 contract that does not implement the
@@ -16,7 +16,7 @@ import { IERC721Errors } from "contracts/interfaces/modules/collect/nft/IERC721E
 ///           requiring a constructor for IP asset specific intialization
 ///         - MAY not be upgradeable, thus not necessarily requiring a more
 ///           involved IERC721Upgradeable extension
-abstract contract ERC721 is IERC721, IERC721Errors {
+abstract contract ERC721 is IERC721 {
 
     /// @notice Maps tokens to their owner addresses.
     mapping(uint256 => address) public ownerOf;
@@ -53,7 +53,7 @@ abstract contract ERC721 is IERC721, IERC721Errors {
 
         // Revert unless msg.sender is the owner or approved operator.
         if (msg.sender != owner && !isApprovedForAll[owner][msg.sender]) {
-            revert ERC721SenderUnauthorized();
+            revert Errors.ERC721_SenderUnauthorized();
         }
 
         getApproved[tokenId_] = approved_;
@@ -80,7 +80,7 @@ abstract contract ERC721 is IERC721, IERC721Errors {
                 !=
                 IERC721Receiver.onERC721Received.selector
         ) {
-            revert ERC721SafeTransferUnsupported();
+            revert Errors.ERC721_SafeTransferUnsupported();
         }
     }
 
@@ -102,7 +102,7 @@ abstract contract ERC721 is IERC721, IERC721Errors {
                 !=
                 IERC721Receiver.onERC721Received.selector
         ) {
-            revert ERC721SafeTransferUnsupported();
+            revert Errors.ERC721_SafeTransferUnsupported();
         }
     }
 
@@ -119,7 +119,7 @@ abstract contract ERC721 is IERC721, IERC721Errors {
         uint256 tokenId_
     ) public virtual {
         if (from_ != ownerOf[tokenId_]) {
-            revert ERC721OwnerInvalid();
+            revert Errors.ERC721_OwnerInvalid();
         }
 
         if (
@@ -127,11 +127,11 @@ abstract contract ERC721 is IERC721, IERC721Errors {
             msg.sender != getApproved[tokenId_] &&
             !isApprovedForAll[from_][msg.sender]
         ) {
-            revert ERC721SenderUnauthorized();
+            revert Errors.ERC721_SenderUnauthorized();
         }
 
         if (to_ == address(0)) {
-            revert ERC721ReceiverInvalid();
+            revert Errors.ERC721_ReceiverInvalid();
         }
 
         delete getApproved[tokenId_];
@@ -158,11 +158,11 @@ abstract contract ERC721 is IERC721, IERC721Errors {
     /// @param tokenId_ Id of the NFT being minted.
     function _mint(address to_, uint256 tokenId_) internal virtual {
         if (to_ == address(0)) {
-            revert ERC721ReceiverInvalid();
+            revert Errors.ERC721_ReceiverInvalid();
         }
 
         if (ownerOf[tokenId_] != address(0)) {
-            revert ERC721TokenAlreadyMinted();
+            revert Errors.ERC721_TokenAlreadyMinted();
         }
 
         unchecked {
@@ -180,7 +180,7 @@ abstract contract ERC721 is IERC721, IERC721Errors {
         address owner = ownerOf[tokenId_];
 
         if (owner == address(0)) {
-            revert ERC721TokenNonExistent();
+            revert Errors.ERC721_TokenNonExistent();
         }
 
         unchecked {

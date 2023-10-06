@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import { BaseRelationshipProcessor } from "./BaseRelationshipProcessor.sol";
-import { IRelationshipModule } from "contracts/interfaces/modules/relationships/IRelationshipModule.sol";
+import { Relationship } from "contracts/lib/modules/Relationship.sol";
 
 
 /// @title PermissionlessRelationshipProcessor
@@ -13,7 +13,7 @@ contract PermissionlessRelationshipProcessor is BaseRelationshipProcessor {
 
     
     /// Returns true.
-    function _processRelationship(IRelationshipModule.RelationshipParams memory, bytes calldata, address) internal virtual override returns(bool) {
+    function _processRelationship(Relationship.RelationshipParams memory, bytes calldata, address) internal virtual override returns(bool) {
         return true;
     }
 }

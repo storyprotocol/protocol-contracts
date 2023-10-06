@@ -7,6 +7,7 @@ import "contracts/ip-accounts/IPAccountRegistry.sol";
 import "contracts/ip-accounts/IPAccountImpl.sol";
 import "contracts/interfaces/ip-accounts/IIPAccount.sol";
 import "contracts/interfaces/ip-accounts/IERC6551Account.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 import "test/foundry/mocks/MockERC721.sol";
 
 contract IPAccountTest is Test {
@@ -109,7 +110,7 @@ contract IPAccountTest is Test {
         address otherOwner = vm.addr(2);
 
         vm.prank(vm.addr(3));
-        vm.expectRevert(IPAccountImpl.CallerNotOwner.selector);
+        vm.expectRevert(Errors.IPAccountImpl_CallerNotOwner.selector);
         ipAccount.safeTransferFrom(address(nft), account, otherOwner, subTokenId);
 
         vm.prank(owner);

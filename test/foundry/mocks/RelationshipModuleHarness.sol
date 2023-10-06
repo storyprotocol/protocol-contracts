@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import { RelationshipModuleBase } from "contracts/modules/relationships/RelationshipModuleBase.sol";
+import { Relationship } from "contracts/lib/modules/Relationship.sol";
 
 contract RelationshipModuleHarness is RelationshipModuleBase {
 
@@ -11,7 +12,7 @@ contract RelationshipModuleHarness is RelationshipModuleBase {
         __RelationshipModuleBase_init(accessControl);
     }
 
-    function setRelationshipConfig(string calldata name, SetRelationshipConfigParams calldata params) external returns(bytes32 relationshipId) {
+    function setRelationshipConfig(string calldata name, Relationship.SetRelationshipConfigParams calldata params) external returns(bytes32 relationshipId) {
         return _setRelationshipConfig(name, params);
     }
 

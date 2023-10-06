@@ -3,7 +3,8 @@ pragma solidity ^0.8.18;
 
 import { SimpleCollectModule } from "contracts/modules/collect/SimpleCollectModule.sol";
 import { BaseCollectModuleTest } from "./BaseCollectModuleTest.sol";
-import { CollectParams } from "contracts/lib/CollectModuleStructs.sol";
+import { Collect } from "contracts/lib/modules/Collect.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
 /// @title Simple Collect Module Testing Contract
 contract SimpleCollectModuleTest is BaseCollectModuleTest {
@@ -15,8 +16,8 @@ contract SimpleCollectModuleTest is BaseCollectModuleTest {
     /// @notice Tests that unauthorized collects revert.
     function test_CollectModuleCollectUnauthorizedReverts(uint8 ipAssetType) createIpAsset(collector, ipAssetType) public {
         vm.prank(alice);
-        vm.expectRevert(CollectModuleCollectUnauthorized.selector);
-        collectModule.collect(CollectParams({
+        vm.expectRevert(Errors.CollectModule_CollectUnauthorized.selector);
+        collectModule.collect(Collect.CollectParams({
             franchiseId: franchiseId,
             ipAssetId: ipAssetId,
             collector: collector,

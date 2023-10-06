@@ -7,8 +7,8 @@ import '../mocks/MockLicensingModule.sol';
 import '../mocks/MockTermsProcessor.sol';
 import '../mocks/RightsManagerHarness.sol';
 import "../mocks/MockERC721.sol";
-import "contracts/errors/General.sol"; 
-
+import { Errors } from "contracts/lib/Errors.sol";
+import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 contract RightsManagerInternalTest is Test, ProxyHelper {
 
@@ -50,7 +50,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
     }
 
     function test_revert_transfer_sublicense() public {
-        vm.expectRevert(Unauthorized.selector);
+        vm.expectRevert(Errors.Unauthorized.selector);
         rightsManager.transferSublicense(1, address(0x123456));
     }
 
@@ -58,7 +58,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 0;
-        (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
         // TODO test events
         uint256 licenseId = rightsManager.createLicense_exposed(
             tokenId,
@@ -83,7 +83,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 0;
-        (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
         // TODO test events
         uint256 licenseId = rightsManager.createLicense_exposed(
             tokenId,
@@ -106,7 +106,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
     function test_internal_create_license_nonRootLicense_notmockMinting() public {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
-        (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
         // mockMint root
         uint256 parentLicenseId = rightsManager.createLicense_exposed(
             tokenId,
@@ -145,7 +145,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
     function test_internal_create_license_nonRootLicense_mockMinting() public {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
-        (IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
         // mockMint root
         uint256 parentLicenseId = rightsManager.createLicense_exposed(
             tokenId,
@@ -179,8 +179,8 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 0;
-        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
-        vm.expectRevert(RightsManager.ZeroRevokerAddress.selector);
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        vm.expectRevert(Errors.RightsManager_ZeroRevokerAddress.selector);
         rightsManager.createLicense_exposed(
             tokenId,
             parentLicenseId,
@@ -197,7 +197,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
     function test_revert_internal_createLicense_nonExistentId() public {
         uint256 tokenId = 1;
         uint256 parentLicenseId = 0;
-        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
         vm.expectRevert(abi.encodeWithSignature("NonExistentID(uint256)", 1));
         rightsManager.createLicense_exposed(
             tokenId,
@@ -216,7 +216,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 0;
-        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
         // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
@@ -230,7 +230,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             false
         );
         // mockMint root again
-        vm.expectRevert(RightsManager.AlreadyHasRootLicense.selector);
+        vm.expectRevert(Errors.RightsManager_AlreadyHasRootLicense.selector);
         rightsManager.createLicense_exposed(
             tokenId,
             parentLicenseId,
@@ -248,7 +248,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
         // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
@@ -262,7 +262,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             false
         );
         // mockMint sublicense
-        vm.expectRevert(RightsManager.NotOwnerOfParentLicense.selector);
+        vm.expectRevert(Errors.RightsManager_NotOwnerOfParentLicense.selector);
         rightsManager.createLicense_exposed(
             tokenId,
             parentLicenseId,
@@ -280,7 +280,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
         // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
@@ -298,7 +298,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         rightsManager.revokeLicense(parentLicenseId);
 
         // mockMint sublicense
-        vm.expectRevert(RightsManager.InactiveParentLicense.selector);
+        vm.expectRevert(Errors.RightsManager_InactiveParentLicense.selector);
         rightsManager.createLicense_exposed(
             tokenId,
             parentLicenseId,
@@ -316,7 +316,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
         // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
@@ -330,7 +330,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             false
         );
         // mockMint sublicense
-        vm.expectRevert(RightsManager.CannotSublicense.selector);
+        vm.expectRevert(Errors.RightsManager_CannotSublicense.selector);
         rightsManager.createLicense_exposed(
             tokenId,
             parentLicenseId,
@@ -348,7 +348,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
         // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
@@ -362,7 +362,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             false
         );
         // mockMint sublicense
-        vm.expectRevert(RightsManager.CommercialTermsMismatch.selector);
+        vm.expectRevert(Errors.RightsManager_CommercialTermsMismatch.selector);
         rightsManager.createLicense_exposed(
             tokenId,
             parentLicenseId,
@@ -380,7 +380,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
         // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
@@ -394,7 +394,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             false
         );
         // mockMint sublicense
-        vm.expectRevert(RightsManager.CommercialTermsMismatch.selector);
+        vm.expectRevert(Errors.RightsManager_CommercialTermsMismatch.selector);
         rightsManager.createLicense_exposed(
             tokenId,
             parentLicenseId,
@@ -408,7 +408,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         );
         // Uncomment this if we ever allow commercial sublicenses attached to children tokenIds
         /*
-        vm.expectRevert(RightsManager.CommercialTermsMismatch.selector);
+        vm.expectRevert(Errors.RightsManager_CommercialTermsMismatch.selector);
         rightsManager.createLicense_exposed(
             tokenId,
             parentLicenseId,
@@ -436,7 +436,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
             revoker,
             false,
             true,
-            IERC5218.TermsProcessorConfig({
+            Licensing.TermsProcessorConfig({
                 processor: ITermsProcessor(address(rightsManager)),
                 data: abi.encode("terms")
             }),
@@ -456,7 +456,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         assertEq(rightsManager.getParentLicenseId(licenseId), parentLicenseId, "license parentLicenseId");
         assertTrue(rightsManager.isLicenseActive(licenseId), "license active");
         assertEq(rightsManager.getLicenseURI(licenseId), "licenseUri");
-        (RightsManager.License memory license, address owner) = rightsManager.getLicense(licenseId);
+        (Licensing.License memory license, address owner) = rightsManager.getLicense(licenseId);
         assertEq(owner, licenseHolder, "internal method will not create ipasset, but we mockMinted in RightsManagerHarness");
         assertEq(license.active, true, "license active");
         assertEq(license.canSublicense, canSublicense, "license canSublicense");

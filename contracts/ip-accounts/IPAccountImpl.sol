@@ -11,12 +11,11 @@ import { IERC1155Receiver } from "@openzeppelin/contracts/token/ERC1155/IERC1155
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC6551Account } from "contracts/interfaces/ip-accounts/IERC6551Account.sol";
 import { IIPAccount } from "contracts/interfaces/ip-accounts/IIPAccount.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
 /// @title IPAccountImpl
 contract IPAccountImpl is IERC165, IIPAccount, IERC1271 {
     using SafeERC20 for IERC20;
-
-    error CallerNotOwner();
 
     uint256 public state;
     // ERC20 token => amount
@@ -99,7 +98,7 @@ contract IPAccountImpl is IERC165, IIPAccount, IERC1271 {
         address to_,
         uint256 tokenId_
     ) external {
-        if (!_isValidSigner(msg.sender)) revert CallerNotOwner();
+        if (!_isValidSigner(msg.sender)) revert Errors.IPAccountImpl_CallerNotOwner();
         ++state;
         IERC721(nftContract_).safeTransferFrom(from_, to_, tokenId_);
     }

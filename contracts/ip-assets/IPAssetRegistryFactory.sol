@@ -2,16 +2,17 @@
 
 pragma solidity ^0.8.13;
 
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
 import { IPAssetRegistry } from "./IPAssetRegistry.sol";
 import { IVersioned } from "contracts/interfaces/utils/IVersioned.sol";
 import { UnsupportedInterface } from "../errors/General.sol";
 import { LicenseRegistry } from "../modules/licensing/LicenseRegistry.sol";
 import { RevertingIPAssetRegistry } from "contracts/utils/RevertingIPAssetRegistry.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
 contract IPAssetRegistryFactory is Ownable {
     using ERC165Checker for address;
@@ -62,7 +63,7 @@ contract IPAssetRegistryFactory is Ownable {
                 type(IIPAssetRegistry).interfaceId
             )
         ) {
-            revert UnsupportedInterface("IIPAssetRegistry");
+            revert Errors.UnsupportedInterface("IIPAssetRegistry");
         }
         BEACON.upgradeTo(newImplementation_);
         emit FranchisesUpgraded(

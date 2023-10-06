@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.18;
 
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { BaseERC721Test } from "./BaseERC721Test.sol";
 import { MockCollectModuleERC721 } from "test/foundry/mocks/MockCollectModuleERC721.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
 /// @title ERC-721 Testing Contract
 /// @notice Tests all ERC-721 functionality.
@@ -183,7 +184,7 @@ contract ERC721Test is BaseERC721Test {
 
     /// @notice Tests that mints to the zero address throw.
     function test_ERC721MintZeroAddressReverts(uint256 tokenId) public {
-        vm.expectRevert(ERC721ReceiverInvalid.selector);
+        vm.expectRevert(Errors.ERC721_ReceiverInvalid.selector);
         erc721.mint(address(0), tokenId);
     }
 
@@ -191,7 +192,7 @@ contract ERC721Test is BaseERC721Test {
     function test_ERC721MintDuplicateReverts(uint256 tokenId, address owner) public {
         vm.assume(owner != address(0));
         erc721.mint(owner, tokenId);
-        vm.expectRevert(ERC721TokenAlreadyMinted.selector);
+        vm.expectRevert(Errors.ERC721_TokenAlreadyMinted.selector);
         erc721.mint(owner, tokenId);
     }
 
@@ -223,13 +224,13 @@ contract ERC721Test is BaseERC721Test {
     /// @notice Tests that duplicate burns revert.
     function test_ERC721BurnDuplicateReverts(uint256 tokenId, address owner) public mintTokenForOwner(owner, tokenId) {
         erc721.burn(tokenId);
-        vm.expectRevert(ERC721TokenNonExistent.selector);
+        vm.expectRevert(Errors.ERC721_TokenNonExistent.selector);
         erc721.burn(tokenId);
     }
 
     /// @notice Tests that burns of non-existent tokens revert.
     function test_ERC721BurnNonexistentTokenReverts(uint256 tokenId) public {
-        vm.expectRevert(ERC721TokenNonExistent.selector);
+        vm.expectRevert(Errors.ERC721_TokenNonExistent.selector);
         erc721.burn(tokenId);
     }
 

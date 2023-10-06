@@ -5,9 +5,9 @@ import "forge-std/Script.sol";
 import "script/foundry/utils/StringUtil.sol";
 import "script/foundry/utils/JsonDeploymentHandler.s.sol";
 import "script/foundry/utils/BroadcastManager.s.sol";
-import "contracts/IPAsset.sol";
+import "contracts/lib/IPAsset.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
-import "contracts/interfaces/modules/relationships/IRelationshipModule.sol";
+import { Relationship } from "contracts/lib/modules/Relationship.sol";
 
 contract SetTestRelationship is Script, BroadcastManager, JsonDeploymentHandler {
 
@@ -27,9 +27,9 @@ contract SetTestRelationship is Script, BroadcastManager, JsonDeploymentHandler 
         }
         protocolRelationshipModule = ProtocolRelationshipModule(relModule);
 
-        IPAsset[] memory allIpAssets = new IPAsset[](6);
+        IPAsset.IPAssetType[] memory allIpAssets = new IPAsset.IPAssetType[](6);
         for (uint8 i = 0; i < 6; i++) {
-            allIpAssets[i] = IPAsset(i + 1);
+            allIpAssets[i] = IPAsset.IPAssetType(i + 1);
         }
 
         address processor = _readAddress(".relationship-processors.PermissionlessRelationshipProcessor");
@@ -37,7 +37,7 @@ contract SetTestRelationship is Script, BroadcastManager, JsonDeploymentHandler 
             revert("PermissionlessRelationshipProcessor");
         }
 
-        IRelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
+        Relationship.SetRelationshipConfigParams memory params = Relationship.SetRelationshipConfigParams({
             sourceIpAssets: allIpAssets,
             allowedExternalSource: true,
             destIpAssets: allIpAssets,
@@ -45,7 +45,7 @@ contract SetTestRelationship is Script, BroadcastManager, JsonDeploymentHandler 
             onlySameFranchise: true,
             processor: processor,
             disputer: admin,
-            timeConfig: IRelationshipModule.TimeConfig({
+            timeConfig: Relationship.TimeConfig({
                 maxTtl: 0,
                 minTtl: 0,
                 renewable: false
