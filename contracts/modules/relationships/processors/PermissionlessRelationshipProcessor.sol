@@ -9,7 +9,7 @@ import { IRelationshipModule } from "contracts/interfaces/modules/relationships/
 /// @dev Relationship processor that always returns true.
 contract PermissionlessRelationshipProcessor is BaseRelationshipProcessor {
 
-    constructor(address relationshipModule) BaseRelationshipProcessor(relationshipModule) {}
+    constructor(address relationshipModule_) BaseRelationshipProcessor(relationshipModule_) {}
 
     
     /// Returns true.

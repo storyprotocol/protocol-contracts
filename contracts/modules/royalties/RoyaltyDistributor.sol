@@ -17,46 +17,46 @@ contract RoyaltyDistributor is Pausable, IRoyaltyDistributor, AccessControlledUp
     // ipAccount => royaltyPolicy
     mapping(address => address) private policies;
 
-    constructor(address _ipAccountRegistry, address _royaltyNft) {
-        ipAccountRegistry = IIPAccountRegistry(_ipAccountRegistry);
-        royaltyNFT = RoyaltyNFT(_royaltyNft);
+    constructor(address ipAccountRegistry_, address royaltyNft_) {
+        ipAccountRegistry = IIPAccountRegistry(ipAccountRegistry_);
+        royaltyNFT = RoyaltyNFT(royaltyNft_);
     }
 
     function setRoyaltyPolicy(
-        address nftContract,
-        uint256 tokenId,
-        address royaltyPolicy,
-        bytes calldata data
+        address nftContract_,
+        uint256 tokenId_,
+        address royaltyPolicy_,
+        bytes calldata data_
     ) external {
-        address ipAccount = _ipAccount(nftContract, tokenId);
-        policies[ipAccount] = royaltyPolicy;
-        IRoyaltyPolicy(royaltyPolicy).initPolicy(ipAccount, data);
+        address ipAccount = _ipAccount(nftContract_, tokenId_);
+        policies[ipAccount] = royaltyPolicy_;
+        IRoyaltyPolicy(royaltyPolicy_).initPolicy(ipAccount, data_);
     }
 
     function getRoyaltyPolicy(
-        address nftContract,
-        uint256 tokenId
+        address nftContract_,
+        uint256 tokenId_
     ) external view returns (address) {
-        address ipAccount = _ipAccount(nftContract, tokenId);
+        address ipAccount = _ipAccount(nftContract_, tokenId_);
         return policies[ipAccount];
     }
 
     function updateDistribution(
-        address nftContract,
-        uint256 tokenId,
-        bytes calldata data
+        address nftContract_,
+        uint256 tokenId_,
+        bytes calldata data_
     ) external {
-        address ipAccount = ipAccountRegistry.createAccount(block.chainid, nftContract, tokenId, "");
-        IRoyaltyPolicy(policies[ipAccount]).updateDistribution(ipAccount, data);
+        address ipAccount = ipAccountRegistry.createAccount(block.chainid, nftContract_, tokenId_, "");
+        IRoyaltyPolicy(policies[ipAccount]).updateDistribution(ipAccount, data_);
     }
 
-    function distribute(address nftContract, uint256 tokenId, address token) external {
-        address ipAccount = _ipAccount(nftContract, tokenId);
-        IRoyaltyPolicy(policies[ipAccount]).distribute(ipAccount, token);
+    function distribute(address nftContract_, uint256 tokenId_, address token_) external {
+        address ipAccount = _ipAccount(nftContract_, tokenId_);
+        IRoyaltyPolicy(policies[ipAccount]).distribute(ipAccount, token_);
     }
 
-    function claim(address account, address token) external {
-        royaltyNFT.claim(account, token);
+    function claim(address account_, address token_) external {
+        royaltyNFT.claim(account_, token_);
     }
 
     function pause() external onlyRole(PROTOCOL_ADMIN_ROLE) {
@@ -66,12 +66,12 @@ contract RoyaltyDistributor is Pausable, IRoyaltyDistributor, AccessControlledUp
         _unpause();
     }
 
-    function _ipAccount(address nftContract, uint256 tokenId) internal view returns(address) {
-        return ipAccountRegistry.account(block.chainid, nftContract, tokenId);
+    function _ipAccount(address nftContract_, uint256 tokenId_) internal view returns(address) {
+        return ipAccountRegistry.account(block.chainid, nftContract_, tokenId_);
     }
 
     function _authorizeUpgrade(
-        address newImplementation
+        address newImplementation_
     ) internal virtual override onlyRole(UPGRADER_ROLE) {}
 
 }

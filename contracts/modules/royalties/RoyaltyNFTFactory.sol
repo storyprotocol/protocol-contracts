@@ -9,14 +9,14 @@ contract RoyaltyNFTFactory {
 
     address public immutable royaltyNft;
 
-    constructor(address _splitMain) {
-        royaltyNft = address(new RoyaltyNFT(_splitMain));
+    constructor(address splitMain_) {
+        royaltyNft = address(new RoyaltyNFT(splitMain_));
     }
 
     function createRoyaltyNft(
-        bytes32 salt
+        bytes32 salt_
     ) external returns (RoyaltyNFT rn) {
-        rn = RoyaltyNFT(Clones.cloneDeterministic(royaltyNft, salt));
+        rn = RoyaltyNFT(Clones.cloneDeterministic(royaltyNft, salt_));
         emit CreateRoyaltyNFT(rn);
     }
 }

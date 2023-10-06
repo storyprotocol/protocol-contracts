@@ -32,8 +32,8 @@ interface ILicensingModule {
     event FranchiseConfigSet(uint256 franchiseId, FranchiseConfig config);
 
 
-    function configureFranchiseLicensing(uint256 franchiseId, FranchiseConfig memory config) external;
-    function getFranchiseConfig(uint256 franchiseId) external view returns (FranchiseConfig memory);
+    function configureFranchiseLicensing(uint256 franchiseId_, FranchiseConfig memory config_) external;
+    function getFranchiseConfig(uint256 franchiseId_) external view returns (FranchiseConfig memory);
     function getNonCommercialLicenseURI() external view returns (string memory);
 
 }

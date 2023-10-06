@@ -11,12 +11,12 @@ import { IRelationshipModule } from "contracts/interfaces/modules/relationships/
 /// @dev Relationship processor that checks if the caller (relationship setter) is the owner of the destination IP Asset.
 contract DstOwnerRelationshipProcessor is BaseRelationshipProcessor {
 
-    constructor(address relationshipModule) BaseRelationshipProcessor(relationshipModule) {}
+    constructor(address relationshipModule_) BaseRelationshipProcessor(relationshipModule_) {}
 
     
     /// Returns true if the caller is the owner of the destination IP Asset, reverts otherwise.
-    function _processRelationship(IRelationshipModule.RelationshipParams memory params, bytes calldata, address caller) internal view virtual override returns(bool) {
-        if (IERC721(params.destContract).ownerOf(params.destId) != caller) {
+    function _processRelationship(IRelationshipModule.RelationshipParams memory params_, bytes calldata, address caller_) internal view virtual override returns(bool) {
+        if (IERC721(params_.destContract).ownerOf(params_.destId) != caller_) {
             revert Unauthorized();
         }
         return true;

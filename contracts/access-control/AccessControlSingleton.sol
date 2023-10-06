@@ -22,27 +22,27 @@ contract AccessControlSingleton is
     string public constant version = "0.1.0";
 
     /// @notice Initializer method, access point to initialize inheritance tree.
-    /// @param _admin address to be the PROTOCOL_ADMIN_ROLE.
-    function initialize(address _admin) external initializer {
-        if (_admin == address(0)) revert ZeroAddress();
+    /// @param admin_ address to be the PROTOCOL_ADMIN_ROLE.
+    function initialize(address admin_) external initializer {
+        if (admin_ == address(0)) revert ZeroAddress();
         __AccessControl_init();
         __UUPSUpgradeable_init();
-        _grantRole(PROTOCOL_ADMIN_ROLE, _admin);
+        _grantRole(PROTOCOL_ADMIN_ROLE, admin_);
     }
 
     /// @notice Method for PROTOCOL_ADMIN_ROLE to create new roles, and define their role admin.
-    /// @param role id of the new role. Should be keccak256("<ROLE_NAME>").
-    /// @param admin role id that will be the role admin for the new role.
+    /// @param role_ id of the new role. Should be keccak256("<ROLE_NAME>").
+    /// @param admin_ role id that will be the role admin for the new role.
     function setRoleAdmin(
-        bytes32 role,
-        bytes32 admin
+        bytes32 role_,
+        bytes32 admin_
     ) external onlyRole(PROTOCOL_ADMIN_ROLE) {
-        _setRoleAdmin(role, admin);
+        _setRoleAdmin(role_, admin_);
     }
 
     /// @notice Access control for the upgrade process (UPGRADER_ROLE)
-    /// @param newImplementation address of the new deployed implementation.
+    /// @param newImplementation_ address of the new deployed implementation.
     function _authorizeUpgrade(
-        address newImplementation
+        address newImplementation_
     ) internal virtual override onlyRole(UPGRADER_ROLE) {}
 }

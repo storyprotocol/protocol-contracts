@@ -34,17 +34,17 @@ contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
 
     FranchiseRegistry public immutable FRANCHISE_REGISTRY;
 
-    constructor(address franchiseRegistry) {
-        if (franchiseRegistry == address(0)) {
+    constructor(address franchiseRegistry_) {
+        if (franchiseRegistry_ == address(0)) {
             revert ZeroAddress();
         }
-        FRANCHISE_REGISTRY = FranchiseRegistry(franchiseRegistry);
+        FRANCHISE_REGISTRY = FranchiseRegistry(franchiseRegistry_);
         _disableInitializers();
     }
 
-    function initialize(address accessControl, string calldata nonCommercialLicenseUri) public initializer {
-        __AccessControlledUpgradeable_init(accessControl);
-        _getLicensingModuleStorage().nonCommercialLicenseURI = nonCommercialLicenseUri;
+    function initialize(address accessControl_, string calldata nonCommercialLicenseUri_) public initializer {
+        __AccessControlledUpgradeable_init(accessControl_);
+        _getLicensingModuleStorage().nonCommercialLicenseURI = nonCommercialLicenseUri_;
     }
 
     function _getLicensingModuleStorage() internal pure returns (LicensingModuleStorage storage $) {
@@ -60,51 +60,51 @@ contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
 
     
     /// Set the URI for non-commercial licenses across Story Protocol. Setting this does NOT affect existing licenses, only new ones.
-    /// @param _nonCommercialLicenseURI The URI to set for non-commercial licenses
-    function setNonCommercialLicenseURI(string calldata _nonCommercialLicenseURI) external onlyRole(LICENSING_MANAGER_ROLE) {
-        _getLicensingModuleStorage().nonCommercialLicenseURI = _nonCommercialLicenseURI;
-        emit NonCommercialLicenseUriSet(_nonCommercialLicenseURI);
+    /// @param nonCommercialLicenseURI_ The URI to set for non-commercial licenses
+    function setNonCommercialLicenseURI(string calldata nonCommercialLicenseURI_) external onlyRole(LICENSING_MANAGER_ROLE) {
+        _getLicensingModuleStorage().nonCommercialLicenseURI = nonCommercialLicenseURI_;
+        emit NonCommercialLicenseUriSet(nonCommercialLicenseURI_);
     }
 
     
     /// Set the FranchiseConfig for a Franchise, configuring its licensing framework.
     /// @dev if setting root licenses, they should be active. A revoker address must be set, and it will be
     /// common for all licenses in the Franchise.
-    /// @param franchiseId The ID of the Franchise to set the config for
-    /// @param config The FranchiseConfig to set
-    function configureFranchiseLicensing(uint256 franchiseId, FranchiseConfig memory config) external {
-        if (msg.sender != FRANCHISE_REGISTRY.ownerOf(franchiseId)) {
+    /// @param franchiseId_ The ID of the Franchise to set the config for
+    /// @param config_ The FranchiseConfig to set
+    function configureFranchiseLicensing(uint256 franchiseId_, FranchiseConfig memory config_) external {
+        if (msg.sender != FRANCHISE_REGISTRY.ownerOf(franchiseId_)) {
             revert Unauthorized();
         }
-        _verifyRootLicense(franchiseId, config.nonCommercialConfig.franchiseRootLicenseId);
-        _verifyRootLicense(franchiseId, config.commercialConfig.franchiseRootLicenseId);
-        if (config.revoker == address(0)) {
+        _verifyRootLicense(franchiseId_, config_.nonCommercialConfig.franchiseRootLicenseId);
+        _verifyRootLicense(franchiseId_, config_.commercialConfig.franchiseRootLicenseId);
+        if (config_.revoker == address(0)) {
             revert ZeroRevokerAddress();
         }
         LicensingModuleStorage storage $ = _getLicensingModuleStorage();
-        $.franchiseConfigs[franchiseId] = config;
-        emit FranchiseConfigSet(franchiseId, config);
+        $.franchiseConfigs[franchiseId_] = config_;
+        emit FranchiseConfigSet(franchiseId_, config_);
     }
 
-    function _verifyRootLicense(uint256 franchiseId, uint256 rootLicenseId) internal view {
-        if (rootLicenseId != 0) {
-            IERC5218 rightsManager = IERC5218(FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId));
+    function _verifyRootLicense(uint256 franchiseId_, uint256 rootLicenseId_) internal view {
+        if (rootLicenseId_ != 0) {
+            IERC5218 rightsManager = IERC5218(FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId_));
             if (address(rightsManager) == address(0)) {
                 // FRANCHISE_REGISTRY.ownerOf(franchiseId) should take care of this,
                 // but leaving it in case IPAssetRegistration creation fails somewhow.
                 revert NonExistentFranchise();
             }
-            if (!rightsManager.isLicenseActive(rootLicenseId)) {
-                revert RootLicenseNotActive(rootLicenseId);
+            if (!rightsManager.isLicenseActive(rootLicenseId_)) {
+                revert RootLicenseNotActive(rootLicenseId_);
             }
         }
     }
 
-    function getFranchiseConfig(uint256 franchiseId) public view returns (FranchiseConfig memory) {
-        return _getLicensingModuleStorage().franchiseConfigs[franchiseId];
+    function getFranchiseConfig(uint256 franchiseId_) public view returns (FranchiseConfig memory) {
+        return _getLicensingModuleStorage().franchiseConfigs[franchiseId_];
     }
 
     function _authorizeUpgrade(
-        address newImplementation
+        address newImplementation_
     ) internal virtual override onlyRole(UPGRADER_ROLE) {}
 }

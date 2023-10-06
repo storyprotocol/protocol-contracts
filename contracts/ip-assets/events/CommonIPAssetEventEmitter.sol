@@ -10,14 +10,14 @@ contract CommonIPAssetEventEmitter is IIPAssetEventEmitter  {
 
     FranchiseRegistry public immutable FRANCHISE_REGISTRY;
 
-    constructor(address _franchiseRegistry) {
-        if (_franchiseRegistry == address(0)) revert ZeroAddress();
-        FRANCHISE_REGISTRY = FranchiseRegistry(_franchiseRegistry);
+    constructor(address franchiseRegistry_) {
+        if (franchiseRegistry_ == address(0)) revert ZeroAddress();
+        FRANCHISE_REGISTRY = FranchiseRegistry(franchiseRegistry_);
     }
 
-    function emitIpAssetCreation(uint256 franchiseId, uint256 ipAssetId) override external {
-        if(FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId) != msg.sender) revert Unauthorized();
-        emit IPAssetCreated(franchiseId, msg.sender, ipAssetId, LibIPAssetID._ipAssetTypeFor(ipAssetId));
+    function emitIpAssetCreation(uint256 franchiseId_, uint256 ipAssetId_) override external {
+        if(FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId_) != msg.sender) revert Unauthorized();
+        emit IPAssetCreated(franchiseId_, msg.sender, ipAssetId_, LibIPAssetID._ipAssetTypeFor(ipAssetId_));
     }
 
 }

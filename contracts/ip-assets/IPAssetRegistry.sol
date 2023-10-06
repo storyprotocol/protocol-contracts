@@ -42,33 +42,33 @@ contract IPAssetRegistry is
     uint256 private constant _ROOT_IP_ASSET = 0;
 
     constructor(
-        address _eventEmitter,
-        address _licensingModule,
-        address _franchiseRegistry,
-        address _collectModule
-    ) RightsManager(_franchiseRegistry) {
+        address eventEmitter_,
+        address licensingModule_,
+        address franchiseRegistry_,
+        address collectModule_
+    ) RightsManager(franchiseRegistry_) {
         // TODO: should Franchise owner be able to change this?
-        if (_eventEmitter == address(0)) revert ZeroAddress();
-        EVENT_EMITTER = IIPAssetEventEmitter(_eventEmitter);
-        if (_licensingModule == address(0)) revert ZeroAddress();
-        LICENSING_MODULE = ILicensingModule(_licensingModule);
-        if (_collectModule == address(0)) revert ZeroAddress();
-        COLLECT_MODULE = ICollectModule(_collectModule);
+        if (eventEmitter_ == address(0)) revert ZeroAddress();
+        EVENT_EMITTER = IIPAssetEventEmitter(eventEmitter_);
+        if (licensingModule_ == address(0)) revert ZeroAddress();
+        LICENSING_MODULE = ILicensingModule(licensingModule_);
+        if (collectModule_ == address(0)) revert ZeroAddress();
+        COLLECT_MODULE = ICollectModule(collectModule_);
         _disableInitializers();
     }
 
     function initialize(
-        uint256 _franchiseId,
-        string calldata _name,
-        string calldata _symbol,
-        string calldata _description
+        uint256 franchiseId_,
+        string calldata name_,
+        string calldata symbol_,
+        string calldata description_
     ) public initializer {
-        __RightsManager_init(_name, _symbol);
+        __RightsManager_init(name_, symbol_);
         __Multicall_init();
-        if (_franchiseId == 0) revert ZeroAmount();
+        if (franchiseId_ == 0) revert ZeroAmount();
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
-        $.franchiseId = _franchiseId;
-        $.description = _description;
+        $.franchiseId = franchiseId_;
+        $.description = description_;
     }
 
     function _getIPAssetRegistryStorage()
@@ -91,26 +91,26 @@ contract IPAssetRegistry is
     /// a commercial license may also be assigned.
     /// @dev reverts if LicensingModule is not configured for the Franchise.
     /// Logs to IPAssetEventEmitter, common contract for all IPAsset registries.
-    /// @param ipAssetType the type of IPAsset to create
-    /// @param name IPAsset name
-    /// @param _description short description of the IPAsset
-    /// @param mediaUrl url to the IPAsset media and metadata
-    /// @param to holder of the IPAsset (and thus the licenses)
-    /// @param parentIpAssetId 0 if this is a root IPAsset, if it is a derivative, set the parent IPAsset id
-    /// @param collectData Additional data passed for collect module initialization
+    /// @param ipAssetType_ the type of IPAsset to create
+    /// @param name_ IPAsset name
+    /// @param description_ short description of the IPAsset
+    /// @param mediaUrl_ url to the IPAsset media and metadata
+    /// @param to_ holder of the IPAsset (and thus the licenses)
+    /// @param parentIpAssetId_ 0 if this is a root IPAsset, if it is a derivative, set the parent IPAsset id
+    /// @param collectData_ Additional data passed for collect module initialization
     /// @return the created IPAsset id
     function createIpAsset(
-        IPAsset ipAssetType,
-        string calldata name,
-        string calldata _description,
-        string calldata mediaUrl,
-        address to,
-        uint256 parentIpAssetId,
-        bytes calldata collectData
+        IPAsset ipAssetType_,
+        string calldata name_,
+        string calldata description_,
+        string calldata mediaUrl_,
+        address to_,
+        uint256 parentIpAssetId_,
+        bytes calldata collectData_
     ) public returns (uint256) {
-        if (ipAssetType == IPAsset.UNDEFINED) revert InvalidBlockType();
-        uint256 ipAssetId = _mintBlock(to, ipAssetType);
-        _writeIPAsset(ipAssetId, name, _description, mediaUrl);
+        if (ipAssetType_ == IPAsset.UNDEFINED) revert InvalidBlockType();
+        uint256 ipAssetId = _mintBlock(to_, ipAssetType_);
+        _writeIPAsset(ipAssetId, name_, description_, mediaUrl_);
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
         uint256 _franchiseId = $.franchiseId;
         EVENT_EMITTER.emitIpAssetCreation(_franchiseId, ipAssetId);
@@ -120,20 +120,20 @@ contract IPAssetRegistry is
         if (config.revoker == address(0)) revert LicensingNotConfigured();
         _setNonCommercialRights(
             ipAssetId,
-            parentIpAssetId,
-            to,
+            parentIpAssetId_,
+            to_,
             config.revoker,
             config.nonCommercialConfig,
             config.nonCommercialTerms
         );
         // If non derivative IpAsset, then franchise config may dictate commercial rights
         // Derivative works do not have commercial rights unless a deal with the relevant licensor is made
-        if (config.rootIpAssetHasCommercialRights && parentIpAssetId == 0) {
+        if (config.rootIpAssetHasCommercialRights && parentIpAssetId_ == 0) {
             // Commercial
             _setCommercialRights(
                 ipAssetId,
                 _ROOT_IP_ASSET,
-                to,
+                to_,
                 config.revoker,
                 config.commercialLicenseUri,
                 config.commercialConfig,
@@ -146,7 +146,7 @@ contract IPAssetRegistry is
                 franchiseId: _franchiseId,
                 ipAssetId: ipAssetId,
                 collectNftImpl: address(0), // Default collect module NFT impl
-                data: collectData
+                data: collectData_
             })
         );
         return ipAssetId;
@@ -154,89 +154,89 @@ contract IPAssetRegistry is
 
     /// Sets the non commercial rights for an IPAsset, with terms from the Franchise config in LicensingModule.
     /// If no parent asset id is provided, the root IPAsset id is used if it exists in the Franchise config.
-    /// @param ipAssetId the IPAsset id
-    /// @param parentIpAssetId in case this is a derivative IPAsset, set the parent IPAsset id, 0 otherwise
-    /// @param holder of the IPAsset and licenses
-    /// @param revoker of the license. Can't be zero or changed later
-    /// @param config Franchise config
-    /// @param terms for the license to be active
+    /// @param ipAssetId_ the IPAsset id
+    /// @param parentIpAssetId_ in case this is a derivative IPAsset, set the parent IPAsset id, 0 otherwise
+    /// @param holder_ of the IPAsset and licenses
+    /// @param revoker_ of the license. Can't be zero or changed later
+    /// @param config_ Franchise config
+    /// @param terms_ for the license to be active
     function _setNonCommercialRights(
-        uint256 ipAssetId,
-        uint256 parentIpAssetId,
-        address holder,
-        address revoker,
-        ILicensingModule.IpAssetConfig memory config,
-        TermsProcessorConfig memory terms
+        uint256 ipAssetId_,
+        uint256 parentIpAssetId_,
+        address holder_,
+        address revoker_,
+        ILicensingModule.IpAssetConfig memory config_,
+        TermsProcessorConfig memory terms_
     ) internal {
-        uint256 parentLicenseId = parentIpAssetId == 0
-            ? config.franchiseRootLicenseId
-            : getLicenseIdByTokenId(parentIpAssetId, false);
+        uint256 parentLicenseId = parentIpAssetId_ == 0
+            ? config_.franchiseRootLicenseId
+            : getLicenseIdByTokenId(parentIpAssetId_, false);
         _createLicense(
-            ipAssetId,
+            ipAssetId_,
             parentLicenseId,
-            holder,
+            holder_,
             LICENSING_MODULE.getNonCommercialLicenseURI(),
-            revoker,
+            revoker_,
             false,
-            config.canSublicense,
-            terms,
+            config_.canSublicense,
+            terms_,
             false
         );
     }
 
     /// Sets the commercial rights for an IPAsset, with terms from the Franchise config in LicensingModule.
     /// If no parent asset id is provided, the root IPAsset id is used if it exists in the Franchise config.
-    /// @param ipAssetId the IPAsset id
-    /// @param parentIpAssetId in case this is a derivative IPAsset, set the parent IPAsset id, 0 otherwise
-    /// @param holder of the IPAsset and licenses
-    /// @param revoker of the license. Can't be zero or changed later
-    /// @param config Franchise config
-    /// @param terms for the license to be active
+    /// @param ipAssetId_ the IPAsset id
+    /// @param parentIpAssetId_ in case this is a derivative IPAsset, set the parent IPAsset id, 0 otherwise
+    /// @param holder_ of the IPAsset and licenses
+    /// @param revoker_ of the license. Can't be zero or changed later
+    /// @param config_ Franchise config
+    /// @param terms_ for the license to be active
     function _setCommercialRights(
-        uint256 ipAssetId,
-        uint256 parentIpAssetId,
-        address holder,
-        address revoker,
-        string memory licenseUri,
-        ILicensingModule.IpAssetConfig memory config,
-        TermsProcessorConfig memory terms
+        uint256 ipAssetId_,
+        uint256 parentIpAssetId_,
+        address holder_,
+        address revoker_,
+        string memory licenseUri_,
+        ILicensingModule.IpAssetConfig memory config_,
+        TermsProcessorConfig memory terms_
     ) internal {
-        uint256 parentLicenseId = parentIpAssetId == _ROOT_IP_ASSET
-            ? config.franchiseRootLicenseId
-            : getLicenseIdByTokenId(parentIpAssetId, true);
+        uint256 parentLicenseId = parentIpAssetId_ == _ROOT_IP_ASSET
+            ? config_.franchiseRootLicenseId
+            : getLicenseIdByTokenId(parentIpAssetId_, true);
         _createLicense(
-            ipAssetId,
+            ipAssetId_,
             parentLicenseId,
-            holder,
-            licenseUri,
-            revoker,
+            holder_,
+            licenseUri_,
+            revoker_,
             true,
-            config.canSublicense,
-            terms,
+            config_.canSublicense,
+            terms_,
             false
         );
     }
 
     /// mints the IPAsset block, and assigns the next id to it.
-    /// @param to holder
-    /// @param ipAssetId ip asset type
+    /// @param to_ holder
+    /// @param ipAssetId_ ip asset type
     function _mintBlock(
-        address to,
-        IPAsset ipAssetId
+        address to_,
+        IPAsset ipAssetId_
     ) private returns (uint256) {
-        uint256 nextId = currentIdFor(ipAssetId) + 1;
-        if (nextId > LibIPAssetID._lastId(ipAssetId)) revert IdOverBounds();
+        uint256 nextId = currentIdFor(ipAssetId_) + 1;
+        if (nextId > LibIPAssetID._lastId(ipAssetId_)) revert IdOverBounds();
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
-        $.ids[ipAssetId] = nextId;
-        _safeMint(to, nextId);
+        $.ids[ipAssetId_] = nextId;
+        _safeMint(to_, nextId);
         return nextId;
     }
 
-    function currentIdFor(IPAsset ipAssetId) public view returns (uint256) {
+    function currentIdFor(IPAsset ipAssetId_) public view returns (uint256) {
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
-        uint256 currentId = $.ids[ipAssetId];
+        uint256 currentId = $.ids[ipAssetId_];
         if (currentId == 0) {
-            return LibIPAssetID._zeroId(ipAssetId);
+            return LibIPAssetID._zeroId(ipAssetId_);
         } else {
             return currentId;
         }
@@ -253,14 +253,14 @@ contract IPAssetRegistry is
     }
 
     function tokenURI(
-        uint256 tokenId
+        uint256 tokenId_
     ) public view override returns (string memory) {
         // TODO: should this reference the license too?
-        return readIPAsset(tokenId).mediaUrl;
+        return readIPAsset(tokenId_).mediaUrl;
     }
 
     function supportsInterface(
-        bytes4 interfaceId
+        bytes4 interfaceId_
     )
         public
         view
@@ -269,7 +269,7 @@ contract IPAssetRegistry is
         returns (bool)
     {
         return
-            interfaceId == type(IIPAssetRegistry).interfaceId ||
-            super.supportsInterface(interfaceId);
+            interfaceId_ == type(IIPAssetRegistry).interfaceId ||
+            super.supportsInterface(interfaceId_);
     }
 }

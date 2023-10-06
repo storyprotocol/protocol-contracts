@@ -15,16 +15,16 @@ interface ICollectNFT is IERC721, ICollectNFTEventsAndErrors {
     function totalSupply() external view returns (uint256);
 
     /// @notice Initializes a collect NFT for subsequent collection.
-    /// @param initParams Collect NFT init data, including bound franchise IP
+    /// @param initParams_ Collect NFT init data, including bound franchise IP
     ///        asset registry, IP asset id, and generic unformatted init data.
-    function initialize(InitCollectNFTParams calldata initParams) external;
+    function initialize(InitCollectNFTParams calldata initParams_) external;
 
     /// @notice Performs a collect, minting the NFT to address `collector`.
-    /// @param collector The address of the target designated for collection.
-    /// @param data Additional unformatted bytes data for optional processing.
-    /// @return tokenId The id of the minted collect NFT.
+    /// @param collector_ The address of the target designated for collection.
+    /// @param data_ Additional unformatted bytes data for optional processing.
+    /// @return tokenId_ The id of the minted collect NFT.
     function collect(
-        address collector,
-        bytes calldata data
+        address collector_,
+        bytes calldata data_
     ) external returns (uint256);
 }

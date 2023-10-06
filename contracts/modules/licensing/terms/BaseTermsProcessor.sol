@@ -20,11 +20,11 @@ abstract contract BaseTermsProcessor is ITermsProcessor, ERC165 {
 
     address public immutable AUTHORIZED_EXECUTOR;
 
-    constructor(address authorizedExecutor) {
-        if (authorizedExecutor == address(0)) {
+    constructor(address authorizedExecutor_) {
+        if (authorizedExecutor_ == address(0)) {
             revert ZeroAddress();
         }
-        AUTHORIZED_EXECUTOR = authorizedExecutor;
+        AUTHORIZED_EXECUTOR = authorizedExecutor_;
     }
 
     modifier onlyAuthorizedExecutor() {
@@ -33,18 +33,18 @@ abstract contract BaseTermsProcessor is ITermsProcessor, ERC165 {
     }
 
     /// @inheritdoc ITermsProcessor
-    function executeTerms(bytes calldata data) onlyAuthorizedExecutor external returns(bytes memory newData) {
-        return _executeTerms(data);
+    function executeTerms(bytes calldata data_) onlyAuthorizedExecutor external returns(bytes memory newData) {
+        return _executeTerms(data_);
     }
 
     /// method defining the actual execution of the terms, with no access control for caller, to be implemented by the child contract
-    function _executeTerms(bytes calldata data) internal virtual returns (bytes memory newData);
+    function _executeTerms(bytes calldata data_) internal virtual returns (bytes memory newData);
 
     
     function supportsInterface(
-        bytes4 interfaceId
+        bytes4 interfaceId_
     ) public view virtual override(ERC165, IERC165) returns (bool) {
-        return interfaceId == type(ITermsProcessor).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId_ == type(ITermsProcessor).interfaceId || super.supportsInterface(interfaceId_);
     }
 
 }

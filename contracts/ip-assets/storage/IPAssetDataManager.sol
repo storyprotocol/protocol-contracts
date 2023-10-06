@@ -28,26 +28,26 @@ abstract contract IPAssetDataManager is Initializable, IIPAssetDataManager {
     }
     
     function _writeIPAsset(
-        uint256 ipAssetId,
-        string calldata name,
-        string calldata description,
-        string calldata mediaUrl
+        uint256 ipAssetId_,
+        string calldata name_,
+        string calldata description_,
+        string calldata mediaUrl_
     ) internal returns (IPAsset) {
         IPAssetDataStorage storage $ = _getIPAssetDataStorage();
-        IPAssetData storage ipAsseData = $.ipAssetsData[ipAssetId];
+        IPAssetData storage ipAsseData = $.ipAssetsData[ipAssetId_];
         if (ipAsseData.blockType == IPAsset.UNDEFINED) {
-            ipAsseData.blockType = LibIPAssetID._ipAssetTypeFor(ipAssetId);
+            ipAsseData.blockType = LibIPAssetID._ipAssetTypeFor(ipAssetId_);
         }
-        ipAsseData.name = name;
-        ipAsseData.description = description;
-        ipAsseData.mediaUrl = mediaUrl;
-        emit IPAssetWritten(ipAssetId, ipAsseData.blockType, name, description, mediaUrl);
+        ipAsseData.name = name_;
+        ipAsseData.description = description_;
+        ipAsseData.mediaUrl = mediaUrl_;
+        emit IPAssetWritten(ipAssetId_, ipAsseData.blockType, name_, description_, mediaUrl_);
         return ipAsseData.blockType;
     }
 
-    function readIPAsset(uint256 ipAssetId) public view returns (IPAssetData memory) {
+    function readIPAsset(uint256 ipAssetId_) public view returns (IPAssetData memory) {
         IPAssetDataStorage storage $ = _getIPAssetDataStorage();
-        return $.ipAssetsData[ipAssetId];
+        return $.ipAssetsData[ipAssetId_];
     }
     
 }

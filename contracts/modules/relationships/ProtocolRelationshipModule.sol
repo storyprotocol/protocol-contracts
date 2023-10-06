@@ -13,24 +13,24 @@ import { UPGRADER_ROLE, RELATIONSHIP_MANAGER_ROLE } from "contracts/access-contr
 /// Upgrades are done by the UPGRADER_ROLE.
 contract ProtocolRelationshipModule is RelationshipModuleBase {
 
-    constructor(address _franchiseRegistry) RelationshipModuleBase(_franchiseRegistry) {}
+    constructor(address franchiseRegistry_) RelationshipModuleBase(franchiseRegistry_) {}
 
-    function initialize(address accessControl) public initializer {
-        __RelationshipModuleBase_init(accessControl);
+    function initialize(address accessControl_) public initializer {
+        __RelationshipModuleBase_init(accessControl_);
     }
 
     /********* Setting Relationships *********/
-    function setRelationshipConfig(string calldata name, SetRelationshipConfigParams calldata params) external onlyRole(RELATIONSHIP_MANAGER_ROLE) returns (bytes32 relationshipId) {
-        return _setRelationshipConfig(name, params);
+    function setRelationshipConfig(string calldata name_, SetRelationshipConfigParams calldata params_) external onlyRole(RELATIONSHIP_MANAGER_ROLE) returns (bytes32 relationshipId) {
+        return _setRelationshipConfig(name_, params_);
     }
 
-    function unsetRelationshipConfig(bytes32 relationshipId) external onlyRole(RELATIONSHIP_MANAGER_ROLE) {
-        _unsetRelationshipConfig(relationshipId);
+    function unsetRelationshipConfig(bytes32 relationshipId_) external onlyRole(RELATIONSHIP_MANAGER_ROLE) {
+        _unsetRelationshipConfig(relationshipId_);
     }
 
 
     function _authorizeUpgrade(
-        address newImplementation
+        address newImplementation_
     ) internal virtual override onlyRole(UPGRADER_ROLE) {}
 
 }

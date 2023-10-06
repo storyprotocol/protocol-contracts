@@ -20,6 +20,6 @@ interface IIPAssetDataManager  {
         IPAsset blockType;
     }
     
-    function readIPAsset(uint256 ipAssetId) external view returns (IPAssetData memory);
+    function readIPAsset(uint256 ipAssetId_) external view returns (IPAssetData memory);
     
 }

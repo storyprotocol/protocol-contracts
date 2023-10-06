@@ -13,41 +13,40 @@ contract LicenseRegistry is ILicenseRegistry, ERC721 {
 
     IERC5218 private immutable _RIGHTS_MANAGER;
     
-    constructor(address _rightsManager, string memory _name, string memory _symbol) ERC721(_name, _symbol) {
-        if (_rightsManager == address(0)) {
+    constructor(address rightsManager_, string memory name_, string memory symbol_) ERC721(name_, symbol_) {
+        if (rightsManager_ == address(0)) {
             revert ZeroAddress();
         }
-        _RIGHTS_MANAGER = IERC5218(_rightsManager);
+        _RIGHTS_MANAGER = IERC5218(rightsManager_);
     }
 
     modifier onlyRightsManager() {
         if (msg.sender != address(_RIGHTS_MANAGER)) revert Unauthorized();
         _;
     }
-
     
     /// @notice Mint a License to the given address. Only caller allowed is the RightsManager.
-    /// @param to The address to mint the License to.
-    /// @param tokenId The ID of the License to mint.
-    function mint(address to, uint256 tokenId) external onlyRightsManager {
-        _mint(to, tokenId);
+    /// @param to_ The address to mint the License to.
+    /// @param tokenId_ The ID of the License to mint.
+    function mint(address to_, uint256 tokenId_) external onlyRightsManager {
+        _mint(to_, tokenId_);
     }
 
-    function exists(uint256 tokenId) external view returns (bool) {
-        return _exists(tokenId);
+    function exists(uint256 tokenId_) external view returns (bool) {
+        return _exists(tokenId_);
     }
     
     function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 firstTokenId,
-        uint256 batchSize
+        address from_,
+        address to_,
+        uint256 firstTokenId_,
+        uint256 batchSize_
     ) internal virtual override {
         // Minting has already been checked by the RightsManager, but transfers need to pass some checks.
-        if (from != address(0)) {
-            _RIGHTS_MANAGER.transferSublicense(firstTokenId, to);
+        if (from_ != address(0)) {
+            _RIGHTS_MANAGER.transferSublicense(firstTokenId_, to_);
         }
-        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
+        super._beforeTokenTransfer(from_, to_, firstTokenId_, batchSize_);
     }
 
     function getRightsManager() external view override returns (address) {
