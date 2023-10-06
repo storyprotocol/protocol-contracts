@@ -17,10 +17,6 @@ library LibDuration {
         return self_.startTime != START_TIME_NOT_SET && block.timestamp >= self_.startTime && block.timestamp < self_.startTime + self_.ttl;
     }
 
-    function isRenewable(TimeConfig memory self_) internal pure returns (bool) {
-        return self_.renewer != address(0);
-    }
-
     function renew(TimeConfig memory self_, uint64 ttl_) view internal {
         if (!isRenewable(self_)) revert Errors.LibDuration_NotRenewable();
         if (msg.sender != self_.renewer) revert Errors.LibDuration_CallerNotRenewer();
@@ -38,6 +34,10 @@ library LibDuration {
         });
     }
 
+    function isRenewable(TimeConfig memory self_) internal pure returns (bool) {
+        return self_.renewer != address(0);
+    }
+    
     function createStoppedTimeConfig(uint64 ttl_, address renewer_) internal pure returns (TimeConfig memory) {
         if (ttl_ == 0) revert Errors.LibDuration_ZeroTTL();
         return TimeConfig({

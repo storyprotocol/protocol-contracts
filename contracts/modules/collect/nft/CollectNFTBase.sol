@@ -43,12 +43,6 @@ abstract contract CollectNFTBase is ERC721, ICollectNFT {
         _initialized = true;
     }
 
-    /// @notice Returns the total # of collect NFTs that exist for an IP asset.
-    /// @return The total number of collect NFTs in the collection.
-    function totalSupply() public view virtual returns (uint256) {
-        return _totalSupply;
-    }
-
     /// @notice Initializes a collect NFT for subsequent collection.
     /// @param initParams_ Collect NFT init data, including bound franchise IP 
     ///        asset registry, IP asset id, and generic unformatted init data.
@@ -82,6 +76,12 @@ abstract contract CollectNFTBase is ERC721, ICollectNFT {
         tokenId = _totalSupply;
         _mint(collector_, tokenId);
         _collect(data_);
+    }
+
+    /// @notice Returns the total # of collect NFTs that exist for an IP asset.
+    /// @return The total number of collect NFTs in the collection.
+    function totalSupply() public view virtual returns (uint256) {
+        return _totalSupply;
     }
 
     /// @dev Performs any additional initialization of the collect NFT.
