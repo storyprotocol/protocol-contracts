@@ -21,7 +21,7 @@ jobs:
           
       - name: List files in the repository
         run: |
-          ls ${{ github.workspace }}
+          ls -R ${{ github.workspace }}
   
       - name: Run install
         uses: borales/actions-yarn@v4
