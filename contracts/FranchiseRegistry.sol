@@ -49,9 +49,9 @@ contract FranchiseRegistry is
     address public constant PROTOCOL_ROOT_ADDRESS = address(0);
     string private constant _VERSION = "0.1.0";
 
-    constructor(address _factory) {
-        if (_factory == address(0)) revert Errors.ZeroAddress();
-        FACTORY = IPAssetRegistryFactory(_factory);
+    constructor(address factory_) {
+        if (factory_ == address(0)) revert Errors.ZeroAddress();
+        FACTORY = IPAssetRegistryFactory(factory_);
         _disableInitializers();
     }
 
@@ -134,7 +134,7 @@ contract FranchiseRegistry is
     }
 
     function _authorizeUpgrade(
-        address newImplementation
+        address newImplementation_
     ) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
 
 }

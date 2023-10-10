@@ -44,13 +44,13 @@ interface IRelationshipModule {
 
     event RelationshipConfigUnset(bytes32 indexed relationshipId);
 
-    function relate(Relationship.RelationshipParams calldata params, bytes calldata data) external;
-    function unrelate(Relationship.RelationshipParams calldata params) external;
-    function areTheyRelated(Relationship.RelationshipParams calldata params) external view returns (bool);
-    function isRelationshipExpired(Relationship.RelationshipParams calldata params) external view returns (bool);
-    function setRelationshipConfig(string calldata name, Relationship.SetRelationshipConfigParams calldata params) external returns(bytes32 relationshipId);
-    function getRelationshipId(string calldata name) external view returns (bytes32);
-    function unsetRelationshipConfig(bytes32 relationshipId) external;
-    function getRelationshipConfig(bytes32 relationshipId) external view returns (Relationship.RelationshipConfig memory);
-    function getRelationshipConfigDecoded(bytes32 relationshipId) external view returns (Relationship.SetRelationshipConfigParams memory);
+    function relate(Relationship.RelationshipParams calldata params_, bytes calldata data_) external;
+    function unrelate(Relationship.RelationshipParams calldata params_) external;
+    function areTheyRelated(Relationship.RelationshipParams calldata params_) external view returns (bool);
+    function isRelationshipExpired(Relationship.RelationshipParams calldata params_) external view returns (bool);
+    function setRelationshipConfig(string calldata name_, Relationship.SetRelationshipConfigParams calldata params_) external returns(bytes32 relationshipId);
+    function getRelationshipId(string calldata name_) external view returns (bytes32);
+    function unsetRelationshipConfig(bytes32 relationshipId_) external;
+    function getRelationshipConfig(bytes32 relationshipId_) external view returns (Relationship.RelationshipConfig memory);
+    function getRelationshipConfigDecoded(bytes32 relationshipId_) external view returns (Relationship.SetRelationshipConfigParams memory);
 }

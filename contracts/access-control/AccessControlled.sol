@@ -16,10 +16,10 @@ abstract contract AccessControlled is IAccessControlled {
     IAccessControl private _accessControl;
 
     /// @notice Checks if msg.sender has `role`, reverts if not.
-    /// @param role the role to be tested, defined in Roles.sol and set in AccessManager instance.
-    modifier onlyRole(bytes32 role) {
-        if (!hasRole(role, msg.sender)) {
-            revert Errors.MissingRole(role, msg.sender);
+    /// @param role_ the role to be tested, defined in Roles.sol and set in AccessManager instance.
+    modifier onlyRole(bytes32 role_) {
+        if (!hasRole(role_, msg.sender)) {
+            revert Errors.MissingRole(role_, msg.sender);
         }
         _;
     }
