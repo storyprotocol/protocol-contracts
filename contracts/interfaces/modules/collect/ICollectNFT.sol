@@ -9,10 +9,6 @@ import { Collect } from "contracts/lib/modules/Collect.sol";
 /// @notice Contracts implementing the Collect NFT interface may be collected
 ///         through a collect module for a bound franchise IP asset.
 interface ICollectNFT is IERC721 {
-    /// @notice Returns the total # of collect NFTs that exist for an IP asset.
-    /// @return The total number of collect NFTs in the collection.
-    function totalSupply() external view returns (uint256);
-
     /// @notice Initializes a collect NFT for subsequent collection.
     /// @param initParams_ Collect NFT init data, including bound franchise IP
     ///        asset registry, IP asset id, and generic unformatted init data.
@@ -26,4 +22,8 @@ interface ICollectNFT is IERC721 {
         address collector_,
         bytes calldata data_
     ) external returns (uint256);
+
+    /// @notice Returns the total # of collect NFTs that exist for an IP asset.
+    /// @return The total number of collect NFTs in the collection.
+    function totalSupply() external view returns (uint256);
 }

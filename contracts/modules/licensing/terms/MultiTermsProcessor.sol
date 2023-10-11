@@ -23,32 +23,19 @@ contract MultiTermsProcessor is BaseTermsProcessor {
         _setProcessors(processors_);
     }
 
-    /// Sets the processors to be executed in order.
-    function _setProcessors(ITermsProcessor[] memory processors_) private {
-        if (processors_.length == 0) revert Errors.EmptyArray();
-        if (processors_.length > MAX_PROCESSORS)
-            revert Errors.MultiTermsProcessor_TooManyTermsProcessors();
-        processors = processors_;
-        emit ProcessorsSet(processors_);
-    }
-
-    
-    /// Decode the data into an array of bytes with length == processors length, and execute each processor in order.
-    /// Encode the results into a new array of bytes and return it.
-    /// @param data_ must be decodable into an array of bytes with length == processors length.
-    /// @return newData the encoded bytes array with the results of each processor execution.
-    function _executeTerms(bytes calldata data_) internal override returns (bytes memory newData) {
+    /// Checks if all the terms are executed, in order. If one fails, it returns false.
+    function termsExecutedSuccessfully(bytes calldata data_) external view override returns (bool) {
         uint256 length = processors.length;
         bytes[] memory encodedTerms = new bytes[](length);
         encodedTerms = abi.decode(data_, (bytes[]));
-        bytes[] memory newEncodedTerms = new bytes[](length);
+        bool result = true;
         for (uint256 i = 0; i < length;) {
-            newEncodedTerms[i] = processors[i].executeTerms(encodedTerms[i]);
+            result = result && processors[i].termsExecutedSuccessfully(encodedTerms[i]);
             unchecked {
                 i++;
             }
         }
-        return abi.encode(newEncodedTerms);
+        return result;
     }
 
     /// ERC165 interface support, but for ITermsProcessor it only returns true if only all processors support the interface.
@@ -69,19 +56,30 @@ contract MultiTermsProcessor is BaseTermsProcessor {
         return super.supportsInterface(interfaceId_);
     }
 
-    /// Checks if all the terms are executed, in order. If one fails, it returns false.
-    function termsExecutedSuccessfully(bytes calldata data_) external view override returns (bool) {
+    /// Decode the data into an array of bytes with length == processors length, and execute each processor in order.
+    /// Encode the results into a new array of bytes and return it.
+    /// @param data_ must be decodable into an array of bytes with length == processors length.
+    /// @return newData the encoded bytes array with the results of each processor execution.
+    function _executeTerms(bytes calldata data_) internal override returns (bytes memory newData) {
         uint256 length = processors.length;
         bytes[] memory encodedTerms = new bytes[](length);
         encodedTerms = abi.decode(data_, (bytes[]));
-        bool result = true;
+        bytes[] memory newEncodedTerms = new bytes[](length);
         for (uint256 i = 0; i < length;) {
-            result = result && processors[i].termsExecutedSuccessfully(encodedTerms[i]);
+            newEncodedTerms[i] = processors[i].executeTerms(encodedTerms[i]);
             unchecked {
                 i++;
             }
         }
-        return result;
+        return abi.encode(newEncodedTerms);
     }
 
+    /// Sets the processors to be executed in order.
+    function _setProcessors(ITermsProcessor[] memory processors_) private {
+        if (processors_.length == 0) revert Errors.EmptyArray();
+        if (processors_.length > MAX_PROCESSORS)
+            revert Errors.MultiTermsProcessor_TooManyTermsProcessors();
+        processors = processors_;
+        emit ProcessorsSet(processors_);
+    }
 }

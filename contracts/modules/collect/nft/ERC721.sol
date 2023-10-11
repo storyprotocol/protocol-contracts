@@ -45,21 +45,6 @@ abstract contract ERC721 is IERC721 {
         emit ApprovalForAll(msg.sender, operator_, approved_);
     }
 
-    /// @notice Sets approved address of NFT `id` to address `approved`.
-    /// @param approved_ The new approved address for the NFT.
-    /// @param tokenId_ The id of the NFT to approve.
-    function approve(address approved_, uint256 tokenId_) public virtual {
-        address owner = ownerOf[tokenId_];
-
-        // Revert unless msg.sender is the owner or approved operator.
-        if (msg.sender != owner && !isApprovedForAll[owner][msg.sender]) {
-            revert Errors.ERC721_SenderUnauthorized();
-        }
-
-        getApproved[tokenId_] = approved_;
-        emit Approval(owner, approved_, tokenId_);
-    }
-
     /// @notice Transfers NFT of id `id` from address `from` to address `to`,
     ///  with safety checks ensuring `to` is capable of receiving the NFT.
     /// @dev Safety checks are only performed if `to` is a smart contract.
@@ -104,6 +89,21 @@ abstract contract ERC721 is IERC721 {
         ) {
             revert Errors.ERC721_SafeTransferUnsupported();
         }
+    }
+
+    /// @notice Sets approved address of NFT `id` to address `approved`.
+    /// @param approved_ The new approved address for the NFT.
+    /// @param tokenId_ The id of the NFT to approve.
+    function approve(address approved_, uint256 tokenId_) public virtual {
+        address owner = ownerOf[tokenId_];
+
+        // Revert unless msg.sender is the owner or approved operator.
+        if (msg.sender != owner && !isApprovedForAll[owner][msg.sender]) {
+            revert Errors.ERC721_SenderUnauthorized();
+        }
+
+        getApproved[tokenId_] = approved_;
+        emit Approval(owner, approved_, tokenId_);
     }
 
     /// @notice Transfers NFT of id `id` from address `from` to address `to`,

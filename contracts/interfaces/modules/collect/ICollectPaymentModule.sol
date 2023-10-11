@@ -8,15 +8,6 @@ import { ICollectModule } from "./ICollectModule.sol";
 /// @notice The collect payment module enables IP assets to be bound to NFTs
 ///         that can be minted for a configurable fee.
 interface ICollectPaymentModule is ICollectModule {
-    /// @notice Returns the collect payment info associated with an IP asset.
-    /// @param  franchiseId_ The id of the franchise of the specified IP asset.
-    /// @param  ipAssetId_ The id of the specified IP asset within the franchise.
-    /// @return Payment info associated with the configured IP asset collect.
-    function getPaymentInfo(
-        uint256 franchiseId_,
-        uint256 ipAssetId_
-    ) external view returns (Collect.CollectPaymentInfo memory);
-
     /// @notice Initializes the collect payment module for a specific IP asset.
     /// @param initCollectParams_ Collect module init data, including IP asset
     ///        id, collect NFT impl address, and payment module init data.
@@ -37,4 +28,13 @@ interface ICollectPaymentModule is ICollectModule {
         payable
         override(ICollectModule)
         returns (address collectNft, uint256 collectNftId);
+
+    /// @notice Returns the collect payment info associated with an IP asset.
+    /// @param  franchiseId_ The id of the franchise of the specified IP asset.
+    /// @param  ipAssetId_ The id of the specified IP asset within the franchise.
+    /// @return Payment info associated with the configured IP asset collect.
+    function getPaymentInfo(
+        uint256 franchiseId_,
+        uint256 ipAssetId_
+    ) external view returns (Collect.CollectPaymentInfo memory);
 }

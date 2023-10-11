@@ -29,9 +29,9 @@ interface ISplitMain {
         address distributorAddress
     ) external;
 
+    function withdraw(address account, uint256 withdrawETH, ERC20[] calldata tokens) external;
+
     function getETHBalance(address account) external view returns (uint256);
 
     function getERC20Balance(address account, ERC20 token) external view returns (uint256);
-
-    function withdraw(address account, uint256 withdrawETH, ERC20[] calldata tokens) external;
 }

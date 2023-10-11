@@ -34,15 +34,6 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
         address defaultCollectNftImpl_
     ) CollectModuleBase(franchiseRegistry_, defaultCollectNftImpl_) {}
 
-    /// @notice Returns the collect payment info associated with an IP asset.
-    /// @param  franchiseId_ The id of the franchise of the specified IP asset.
-    /// @param  ipAssetId_ The id of the specified IP asset within the franchise.
-    /// @return Payment info associated with the configured IP asset collect.
-    function getPaymentInfo(uint256 franchiseId_, uint256 ipAssetId_) public view returns (Collect.CollectPaymentInfo memory) {
-        CollectPaymentModuleStorage storage $ = _getCollectPaymentModuleStorage();
-        return $.paymentInfo[franchiseId_][ipAssetId_];
-    }
-
     /// @notice Initializes the collect payment module for a specific IP asset.
     /// @param initCollectParams_ Collect module init data, including IP asset
     ///        id, collect NFT impl address, and payment module init data.
@@ -59,6 +50,15 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
     /// TODO: Add payment reentrancy guard
     function collect(Collect.CollectParams calldata collectParams_) public virtual payable override(CollectModuleBase, ICollectPaymentModule) returns (address collectNft, uint256 collectNftId) {
         return super.collect(collectParams_);
+    }
+
+    /// @notice Returns the collect payment info associated with an IP asset.
+    /// @param  franchiseId_ The id of the franchise of the specified IP asset.
+    /// @param  ipAssetId_ The id of the specified IP asset within the franchise.
+    /// @return Payment info associated with the configured IP asset collect.
+    function getPaymentInfo(uint256 franchiseId_, uint256 ipAssetId_) public view returns (Collect.CollectPaymentInfo memory) {
+        CollectPaymentModuleStorage storage $ = _getCollectPaymentModuleStorage();
+        return $.paymentInfo[franchiseId_][ipAssetId_];
     }
 
     /// @dev Perform initialization of the collect payment module.
@@ -177,13 +177,6 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
         // TODO: Add support for ERC-721 and ERC-1155 payment processing.
     }
 
-    /// @dev Gets the ERC-1967 configured collect payment module storage slot.
-    function _getCollectPaymentModuleStorage() private pure returns (CollectPaymentModuleStorage storage $) {
-        assembly {
-            $.slot := _COLLECT_PAYMENT_MODULE_STORAGE
-        }
-    }
-
     /// @dev Transfers `amount` of the native token to address `to`. `msg.value`
     ///      is assumed to have been forwarded from the collector to the module.
     /// @param to_ Recipient address of the native tokens.
@@ -244,4 +237,10 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
         }
     }
 
+    /// @dev Gets the ERC-1967 configured collect payment module storage slot.
+    function _getCollectPaymentModuleStorage() private pure returns (CollectPaymentModuleStorage storage $) {
+        assembly {
+            $.slot := _COLLECT_PAYMENT_MODULE_STORAGE
+        }
+    }
 }

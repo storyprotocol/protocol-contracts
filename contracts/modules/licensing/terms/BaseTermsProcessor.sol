@@ -35,14 +35,12 @@ abstract contract BaseTermsProcessor is ITermsProcessor, ERC165 {
         return _executeTerms(data_);
     }
 
-    /// method defining the actual execution of the terms, with no access control for caller, to be implemented by the child contract
-    function _executeTerms(bytes calldata data_) internal virtual returns (bytes memory newData);
-
-    
     function supportsInterface(
         bytes4 interfaceId_
     ) public view virtual override(ERC165, IERC165) returns (bool) {
         return interfaceId_ == type(ITermsProcessor).interfaceId || super.supportsInterface(interfaceId_);
     }
 
+    /// method defining the actual execution of the terms, with no access control for caller, to be implemented by the child contract
+    function _executeTerms(bytes calldata data_) internal virtual returns (bytes memory newData);
 }

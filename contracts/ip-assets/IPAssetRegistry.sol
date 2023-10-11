@@ -55,6 +55,20 @@ contract IPAssetRegistry is
         _disableInitializers();
     }
 
+    function description() external view returns (string memory) {
+        IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
+        return $.description;
+    }
+
+    function franchiseId() external view returns (uint256) {
+        IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
+        return $.franchiseId;
+    }
+
+    function version() external pure virtual returns (string memory) {
+        return _VERSION;
+    }
+
     function initialize(
         uint256 franchiseId_,
         string calldata name_,
@@ -67,20 +81,6 @@ contract IPAssetRegistry is
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
         $.franchiseId = franchiseId_;
         $.description = description_;
-    }
-
-    function _getIPAssetRegistryStorage()
-        private
-        pure
-        returns (IPAssetRegistryStorage storage $)
-    {
-        assembly {
-            $.slot := _STORAGE_LOCATION
-        }
-    }
-
-    function version() external pure virtual returns (string memory) {
-        return _VERSION;
     }
 
     /// Creates a new IPAsset, and assigns licenses (rights) to it, according to the Franchise
@@ -148,6 +148,27 @@ contract IPAssetRegistry is
             })
         );
         return ipAssetId;
+    }
+
+    function tokenURI(
+        uint256 tokenId_
+    ) public view override returns (string memory) {
+        // TODO: should this reference the license too?
+        return readIPAsset(tokenId_).mediaUrl;
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId_
+    )
+    public
+    view
+    virtual
+    override(ERC721Upgradeable, IERC165Upgradeable)
+    returns (bool)
+    {
+        return
+            interfaceId_ == type(IIPAssetRegistry).interfaceId ||
+            super.supportsInterface(interfaceId_);
     }
 
     /// Sets the non commercial rights for an IPAsset, with terms from the Franchise config in LicensingModule.
@@ -240,34 +261,13 @@ contract IPAssetRegistry is
         }
     }
 
-    function description() external view returns (string memory) {
-        IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
-        return $.description;
-    }
-
-    function franchiseId() external view returns (uint256) {
-        IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
-        return $.franchiseId;
-    }
-
-    function tokenURI(
-        uint256 tokenId_
-    ) public view override returns (string memory) {
-        // TODO: should this reference the license too?
-        return readIPAsset(tokenId_).mediaUrl;
-    }
-
-    function supportsInterface(
-        bytes4 interfaceId_
-    )
-        public
-        view
-        virtual
-        override(ERC721Upgradeable, IERC165Upgradeable)
-        returns (bool)
+    function _getIPAssetRegistryStorage()
+        private
+        pure
+        returns (IPAssetRegistryStorage storage $)
     {
-        return
-            interfaceId_ == type(IIPAssetRegistry).interfaceId ||
-            super.supportsInterface(interfaceId_);
+        assembly {
+            $.slot := _STORAGE_LOCATION
+        }
     }
 }

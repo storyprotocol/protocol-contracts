@@ -55,26 +55,6 @@ contract FranchiseRegistry is
         _disableInitializers();
     }
 
-    function initialize(address accessControl_) public initializer {
-        __UUPSUpgradeable_init();
-        __AccessControlledUpgradeable_init(accessControl_);
-        __ERC721_init("Story Protocol", "SP");
-    }
-
-    function _getFranchiseStorage()
-        private
-        pure
-        returns (FranchiseStorage storage $)
-    {
-        assembly {
-            $.slot := _STORAGE_LOCATION
-        }
-    }
-
-    function version() external pure override returns (string memory) {
-        return _VERSION;
-    }
-
     function registerFranchise(
         FranchiseCreationParams calldata params_
     ) external returns (uint256, address) {
@@ -103,13 +83,6 @@ contract FranchiseRegistry is
         return (nextId, ipAssetRegistry);
     }
 
-    function ipAssetRegistryForId(
-        uint256 franchiseId_
-    ) public view returns (address) {
-        FranchiseStorage storage $ = _getFranchiseStorage();
-        return $.ipAssetRegistries[franchiseId_];
-    }
-
     /// @notice checks if an address is a valid SP IPAssetRegistry.
     /// @param ipAssetRegistry_ the address to check
     /// @return true if it's a valid SP IPAssetRegistry, false otherwise
@@ -125,6 +98,23 @@ contract FranchiseRegistry is
         }
     }
 
+    function version() external pure override returns (string memory) {
+        return _VERSION;
+    }
+
+    function initialize(address accessControl_) public initializer {
+        __UUPSUpgradeable_init();
+        __AccessControlledUpgradeable_init(accessControl_);
+        __ERC721_init("Story Protocol", "SP");
+    }
+
+    function ipAssetRegistryForId(
+        uint256 franchiseId_
+    ) public view returns (address) {
+        FranchiseStorage storage $ = _getFranchiseStorage();
+        return $.ipAssetRegistries[franchiseId_];
+    }
+
     function tokenURI(
         uint256 tokenId_
     ) public view virtual override returns (string memory) {
@@ -137,4 +127,13 @@ contract FranchiseRegistry is
         address newImplementation_
     ) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
 
+    function _getFranchiseStorage()
+        private
+        pure
+        returns (FranchiseStorage storage $)
+    {
+        assembly {
+            $.slot := _STORAGE_LOCATION
+        }
+    }
 }
