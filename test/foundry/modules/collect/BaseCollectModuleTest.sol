@@ -18,6 +18,25 @@ import { Errors } from "contracts/lib/Errors.sol";
 /// @notice Provides a set of reusable tests for ERC-721 implementations.
 contract BaseCollectModuleTest is BaseTest {
 
+    // TODO: Currently, when compiling with 0.8.21, there is a known ICE bug that prevents us from emitting from the interface directly e.g. via ICollectModule.Collected - these two should be refactored in favor of emitting through the interface once we officially migrate to 0.8.22.
+    // See: https://github.com/ethereum/solidity/issues/14430
+    event Collected(
+        uint256 indexed franchiseid_,
+        uint256 indexed ipAssetId_,
+        address indexed collector_,
+        address collectNft_,
+        uint256 collectNftId_,
+        bytes collectData_,
+        bytes collectNftData_
+    );
+
+    // TODO: Refactor once we migrate to compiling via 0.8.22 as explained above.
+    event NewCollectNFT(
+        uint256 indexed franchiseId_,
+        uint256 indexed ipAssetId_,
+        address collectNFT_
+    );
+
     // In the base collect module, an IP asset configured with a zero address
     // collect NFT impl means that the module-wide default should be used.
     address public constant DEFAULT_COLLECT_NFT_IMPL_CONFIG = address(0);
@@ -73,6 +92,22 @@ contract BaseCollectModuleTest is BaseTest {
     /// @notice Tests that collects with the module-default collect NFT succeed.
     function test_CollectModuleCollectDefaultCollectNFT(uint8 ipAssetType) createIpAsset(collector, ipAssetType) public {
         assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), address(0));
+        vm.expectEmit(true, true, false, false, address(collectModule));
+        emit NewCollectNFT(
+            franchiseId,
+            ipAssetId,
+            defaultCollectNftImpl
+        );
+        vm.expectEmit(true, true, true, false, address(collectModule));
+        emit Collected(
+            franchiseId,
+            ipAssetId,
+            collector,
+            defaultCollectNftImpl,
+            0,
+            "",
+            ""
+        );
         (address collectNft, uint256 collectNftId) = _collect(franchiseId, ipAssetId);
         assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), collectNft);
         assertTrue(ICollectNFT(collectNft).ownerOf(collectNftId) == cal);
@@ -82,6 +117,22 @@ contract BaseCollectModuleTest is BaseTest {
     /// @notice Tests that collects with customized collect NFTs succeed.
     function test_CollectModuleCollectCustomCollectNFT(uint8 ipAssetType) public createIpAsset(collector, ipAssetType) {
         assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), address(0));
+        vm.expectEmit(true, true, false, false, address(collectModule));
+        emit NewCollectNFT(
+            franchiseId,
+            ipAssetId,
+            defaultCollectNftImpl
+        );
+        vm.expectEmit(true, true, true, false, address(collectModule));
+        emit Collected(
+            franchiseId,
+            ipAssetId,
+            collector,
+            defaultCollectNftImpl,
+            0,
+            "",
+            ""
+        );
         (address collectNft, uint256 collectNftId) = _collect(franchiseId, ipAssetId);
         assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), collectNft);
         assertTrue(ICollectNFT(collectNft).ownerOf(collectNftId) == cal);
