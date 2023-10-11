@@ -5,7 +5,8 @@ import { ICollectModule } from "contracts/interfaces/modules/collect/ICollectMod
 import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.sol";
 import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
 
-import { InitCollectNFTParams } from "contracts/lib/CollectNFTStructs.sol";
+import { Collect } from "contracts/lib/modules/Collect.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 import { ERC721 } from "./ERC721.sol";
 
 /// @title Collect NFT Base Contract
@@ -30,7 +31,7 @@ abstract contract CollectNFTBase is ERC721, ICollectNFT {
     /// @notice Ensures calls may only be invoked by the parent collect module.
     modifier onlyCollectModule() {
         if (msg.sender != address(collectModule)) {
-            revert CollectNFTCallerUnauthorized();
+            revert Errors.CollectNFT_CallerUnauthorized();
         }
         _;
     }
@@ -51,11 +52,11 @@ abstract contract CollectNFTBase is ERC721, ICollectNFT {
     /// @notice Initializes a collect NFT for subsequent collection.
     /// @param initParams_ Collect NFT init data, including bound franchise IP 
     ///        asset registry, IP asset id, and generic unformatted init data.
-    function initialize(InitCollectNFTParams calldata initParams_) public virtual {
+    function initialize(Collect.InitCollectNFTParams calldata initParams_) public virtual {
 
         // Revert if this collect NFT has already been initialized.
         if (_initialized) {
-            revert CollectNFTAlreadyInitialized();
+            revert Errors.CollectNFT_AlreadyInitialized();
         }
 
         _initialized = true;
@@ -66,7 +67,7 @@ abstract contract CollectNFTBase is ERC721, ICollectNFT {
         // Ensure the bound IP asset in fact exists.
         try ipAssetRegistry.ownerOf(ipAssetId) {
         } catch {
-            revert CollectNFTIPAssetNonExistent();
+            revert Errors.CollectNFT_IPAssetNonExistent();
         }
 
         // Perform any additional collect NFT initialization.

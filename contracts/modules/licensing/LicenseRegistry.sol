@@ -4,6 +4,7 @@ import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { ZeroAddress, Unauthorized } from "contracts/errors/General.sol";
 import { IERC5218 } from "contracts/interfaces/modules/licensing/IERC5218.sol";
 import { ILicenseRegistry } from "contracts/interfaces/modules/licensing/ILicenseRegistry.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
 
 /// @title LicenseRegistry
@@ -15,13 +16,13 @@ contract LicenseRegistry is ILicenseRegistry, ERC721 {
     
     constructor(address rightsManager_, string memory name_, string memory symbol_) ERC721(name_, symbol_) {
         if (rightsManager_ == address(0)) {
-            revert ZeroAddress();
+            revert Errors.ZeroAddress();
         }
         _RIGHTS_MANAGER = IERC5218(rightsManager_);
     }
 
     modifier onlyRightsManager() {
-        if (msg.sender != address(_RIGHTS_MANAGER)) revert Unauthorized();
+        if (msg.sender != address(_RIGHTS_MANAGER)) revert Errors.Unauthorized();
         _;
     }
     

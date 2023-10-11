@@ -8,12 +8,12 @@ import { AccessControlledUpgradeable } from "contracts/access-control/AccessCont
 import { ZeroAddress, UnsupportedInterface, Unauthorized } from "contracts/errors/General.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
 import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
-import { IPAsset } from "contracts/IPAsset.sol";
+import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { LibIPAssetMask } from "./LibIPAssetMask.sol";
 import { IRelationshipModule } from "contracts/interfaces/modules/relationships/IRelationshipModule.sol";
 import { IRelationshipProcessor } from "contracts/interfaces/modules/relationships/processors/IRelationshipProcessor.sol";
-
-
+import { Errors } from "contracts/lib/Errors.sol";
+import { Relationship } from "contracts/lib/modules/Relationship.sol";
 
 /// @title RelationshipModuleBase
 /// @author Raul Martinez
@@ -36,7 +36,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     struct RelationshipModuleStorage {
         mapping(bytes32 => bool) relationships;
         mapping(bytes32 => uint256) relationshipExpirations;
-        mapping(bytes32 => RelationshipConfig) relConfigs;
+        mapping(bytes32 => Relationship.RelationshipConfig) relConfigs;
     }
 
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.relationship-module.storage")) - 1)))
@@ -46,16 +46,16 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     
     /// reverts if the TTL is not well configured for the relationship.
     /// @param params_ the relationship params
-    modifier onlyValidTTL(RelationshipParams calldata params_) {
-        RelationshipConfig storage relConfig = _getRelationshipModuleStorage().relConfigs[params_.relationshipId];
+    modifier onlyValidTTL(Relationship.RelationshipParams calldata params_) {
+        Relationship.RelationshipConfig storage relConfig = _getRelationshipModuleStorage().relConfigs[params_.relationshipId];
         if (relConfig.timeConfig.maxTtl != 0 && params_.ttl != 0) {
-            if (params_.ttl > relConfig.timeConfig.maxTtl || params_.ttl < relConfig.timeConfig.minTtl) revert InvalidEndTimestamp();
+            if (params_.ttl > relConfig.timeConfig.maxTtl || params_.ttl < relConfig.timeConfig.minTtl) revert Errors.RelationshipModule_InvalidEndTimestamp();
         }
         _;
     }
 
     constructor(address franchiseRegistry_) {
-        if (franchiseRegistry_ == address(0)) revert ZeroAddress();
+        if (franchiseRegistry_ == address(0)) revert Errors.ZeroAddress();
         FRANCHISE_REGISTRY = FranchiseRegistry(franchiseRegistry_);
         _disableInitializers();
     }
@@ -81,9 +81,9 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     /// Processors returning false imply that the relationship is pending (multi step process), and the relationship will not be set yet.
     /// @param params_ the relationship params
     /// @param data_ optional data that will be passed to the processor
-    function relate(RelationshipParams calldata params_, bytes calldata data_) external onlyValidTTL(params_) {
+    function relate(Relationship.RelationshipParams calldata params_, bytes calldata data_) external onlyValidTTL(params_) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
-        RelationshipConfig storage relConfig = $.relConfigs[params_.relationshipId];
+        Relationship.RelationshipConfig storage relConfig = $.relConfigs[params_.relationshipId];
         _verifyRelationshipParams(params_, relConfig);
         
         if (!relConfig.processor.processRelationship(params_, data_, msg.sender)) {
@@ -102,7 +102,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     /// @param timeConfig_ the relationship time config
     /// @param ttl_ the new ttl
     /// @return the new end time
-    function _updateEndTime(bytes32 relKey_, TimeConfig memory timeConfig_, uint256 ttl_) private returns (uint256) {
+    function _updateEndTime(bytes32 relKey_, Relationship.TimeConfig memory timeConfig_, uint256 ttl_) private returns (uint256) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         if (timeConfig_.maxTtl != 0) {
             uint256 endTime = $.relationshipExpirations[relKey_];
@@ -119,11 +119,11 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     /// @notice Unrelates two IPAssets or an IPAsset and an external ERC721 contract.
     /// Only callable by the disputer of the relationship, as defined in the relationship config.
     /// @param params_ the relationship params
-    function unrelate(RelationshipParams calldata params_) external {
+    function unrelate(Relationship.RelationshipParams calldata params_) external {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
-        if ($.relConfigs[params_.relationshipId].disputer != msg.sender) revert Unauthorized();
+        if ($.relConfigs[params_.relationshipId].disputer != msg.sender) revert Errors.Unauthorized();
         bytes32 key = getRelationshipKey(params_);
-        if (!$.relationships[key]) revert NonExistingRelationship();
+        if (!$.relationships[key]) revert Errors.RelationshipModule_NonExistingRelationship();
         delete $.relationships[key];
         emit RelationUnset(params_.sourceContract, params_.sourceId, params_.destContract, params_.destId, params_.relationshipId);
     }
@@ -132,7 +132,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     /// @notice Checks if two IPAssets or an IPAsset and an external ERC721 contract are related.
     /// @param params_ the relationship params
     /// @return true if they are related and the relationship has not expired, false otherwise
-    function areTheyRelated(RelationshipParams calldata params_) external view returns (bool) {
+    function areTheyRelated(Relationship.RelationshipParams calldata params_) external view returns (bool) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         return $.relationships[getRelationshipKey(params_)] && !isRelationshipExpired(params_);
     }
@@ -141,7 +141,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     /// @notice Checks if a relationship has expired.
     /// @param params_ the relationship params
     /// @return true if the relationship has expired, false if not expired or if it has no expiration
-    function isRelationshipExpired(RelationshipParams calldata params_) public view returns (bool) {
+    function isRelationshipExpired(Relationship.RelationshipParams calldata params_) public view returns (bool) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         uint256 endTime = $.relationshipExpirations[getRelationshipKey(params_)];
         return endTime != 0 && endTime < block.timestamp;
@@ -151,13 +151,13 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     /// @notice validates the relationship params according to the relationship config.
     /// @param params_ the relationship params
     /// @param relConfig_ the relationship config
-    function _verifyRelationshipParams(RelationshipParams calldata params_, RelationshipConfig memory relConfig_) private view {
-        if (relConfig_.sourceIpAssetTypeMask == 0) revert NonExistingRelationship();
+    function _verifyRelationshipParams(Relationship.RelationshipParams calldata params_, Relationship.RelationshipConfig memory relConfig_) private view {
+        if (relConfig_.sourceIpAssetTypeMask == 0) revert Errors.RelationshipModule_NonExistingRelationship();
         (bool sourceResult, bool sourceIsAssetRegistry) = _checkRelationshipNode(params_.sourceContract, params_.sourceId, relConfig_.sourceIpAssetTypeMask);
-        if (!sourceResult) revert UnsupportedRelationshipSrc();
+        if (!sourceResult) revert Errors.RelationshipModule_UnsupportedRelationshipSrc();
         (bool destResult, bool destIsAssetRegistry) = _checkRelationshipNode(params_.destContract, params_.destId, relConfig_.destIpAssetTypeMask);
-        if (!destResult) revert UnsupportedRelationshipDst();
-        if(sourceIsAssetRegistry && destIsAssetRegistry && params_.sourceContract != params_.destContract && relConfig_.onlySameFranchise) revert CannotRelateToOtherFranchise();
+        if (!destResult) revert Errors.RelationshipModule_UnsupportedRelationshipDst();
+        if(sourceIsAssetRegistry && destIsAssetRegistry && params_.sourceContract != params_.destContract && relConfig_.onlySameFranchise) revert Errors.RelationshipModule_CannotRelateToOtherFranchise();
     }
 
 
@@ -175,7 +175,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     }
 
     /// calculates the relationship key by keccak256 hashing srcContract, srcId, dstContract, dstId and relationshipId
-    function getRelationshipKey(RelationshipParams calldata params_) public pure returns (bytes32) {
+    function getRelationshipKey(Relationship.RelationshipParams calldata params_) public pure returns (bytes32) {
         return keccak256(
             abi.encode(
                 params_.sourceContract,
@@ -193,9 +193,9 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     /// @notice Sets a relationship config for a relationship ID.
     /// @param name_ the relationship name
     /// @param params_ the relationship config params
-    function _setRelationshipConfig(string calldata name_, SetRelationshipConfigParams calldata params_) internal returns(bytes32 relationshipId) {
+    function _setRelationshipConfig(string calldata name_, Relationship.SetRelationshipConfigParams calldata params_) internal returns(bytes32 relationshipId) {
         relationshipId = getRelationshipId(name_);
-        RelationshipConfig memory relConfig = _convertRelParams(params_);
+        Relationship.RelationshipConfig memory relConfig = _convertRelParams(params_);
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         $.relConfigs[relationshipId] = relConfig;
         emit RelationshipConfigSet(
@@ -219,7 +219,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         if (
             $.relConfigs[relationshipId_].sourceIpAssetTypeMask == 0
-        ) revert NonExistingRelationship();
+        ) revert Errors.RelationshipModule_NonExistingRelationship();
         delete $.relConfigs[relationshipId_];
         emit RelationshipConfigUnset(relationshipId_);
     }
@@ -233,11 +233,11 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     /// 
     /// @param params_ the SetRelationshipConfigParams
     /// @return the RelationshipConfig
-    function _convertRelParams(SetRelationshipConfigParams calldata params_) private view returns(RelationshipConfig memory) {
-        if (!params_.processor.supportsInterface(type(IRelationshipProcessor).interfaceId)) revert UnsupportedInterface("IRelationshipProcessor");
-        if (params_.timeConfig.maxTtl < params_.timeConfig.minTtl) revert InvalidTTL();
-        if (params_.disputer == address(0)) revert ZeroAddress();
-        return RelationshipConfig(
+    function _convertRelParams(Relationship.SetRelationshipConfigParams calldata params_) private view returns(Relationship.RelationshipConfig memory) {
+        if (!params_.processor.supportsInterface(type(IRelationshipProcessor).interfaceId)) revert Errors.UnsupportedInterface("IRelationshipProcessor");
+        if (params_.timeConfig.maxTtl < params_.timeConfig.minTtl) revert Errors.RelationshipModule_InvalidTTL();
+        if (params_.disputer == address(0)) revert Errors.ZeroAddress();
+        return Relationship.RelationshipConfig(
             LibIPAssetMask._convertToMask(params_.sourceIpAssets, params_.allowedExternalSource),
             LibIPAssetMask._convertToMask(params_.destIpAssets, params_.allowedExternalDest),
             params_.onlySameFranchise,
@@ -248,7 +248,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     }
 
     /// returns a RelationshipConfig for the given relationshipId, or an empty one if it doesn't exist
-    function getRelationshipConfig(bytes32 relationshipId_) public view returns (RelationshipConfig memory) {
+    function getRelationshipConfig(bytes32 relationshipId_) public view returns (Relationship.RelationshipConfig memory) {
         RelationshipModuleStorage storage $ = _getRelationshipModuleStorage();
         return $.relConfigs[relationshipId_];
     }
@@ -256,11 +256,11 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     /// @dev convenience method to return a SetRelationshipConfigParams from a relationshipId, or an empty one if it doesn't exist
     /// NOTE: Caller must ignore the array elements of value 0 in the IPAsset arrays
     /// @param relationshipId_ the relationship ID
-    function getRelationshipConfigDecoded(bytes32 relationshipId_) external view returns(SetRelationshipConfigParams memory) {
-        RelationshipConfig memory relConfig = getRelationshipConfig(relationshipId_);
-        (IPAsset[] memory sourceIpAssets, bool sourceSupportsExternal) = LibIPAssetMask._convertFromMask(relConfig.sourceIpAssetTypeMask);
-        (IPAsset[] memory destIpAssets, bool destSupportsExternal) = LibIPAssetMask._convertFromMask(relConfig.destIpAssetTypeMask);
-        return SetRelationshipConfigParams(
+    function getRelationshipConfigDecoded(bytes32 relationshipId_) external view returns(Relationship.SetRelationshipConfigParams memory) {
+        Relationship.RelationshipConfig memory relConfig = getRelationshipConfig(relationshipId_);
+        (IPAsset.IPAssetType[] memory sourceIpAssets, bool sourceSupportsExternal) = LibIPAssetMask._convertFromMask(relConfig.sourceIpAssetTypeMask);
+        (IPAsset.IPAssetType[] memory destIpAssets, bool destSupportsExternal) = LibIPAssetMask._convertFromMask(relConfig.destIpAssetTypeMask);
+        return Relationship.SetRelationshipConfigParams(
             sourceIpAssets,
             sourceSupportsExternal,
             destIpAssets,
@@ -284,7 +284,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     /// @param ipAssets_ The array of IPAsset types
     /// @param allowsExternal_ Whether the relationship config allows external (non SP ERC721) assets
     /// @return mask The mask representing the IPAsset types and the allows external flag
-    function convertToMask(IPAsset[] calldata ipAssets_, bool allowsExternal_) external pure returns (uint256) {
+    function convertToMask(IPAsset.IPAssetType[] calldata ipAssets_, bool allowsExternal_) external pure returns (uint256) {
         return LibIPAssetMask._convertToMask(ipAssets_, allowsExternal_);
     }
 
@@ -294,7 +294,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
     /// @param mask_ The mask representing the IPAsset types and the allows external flag
     /// @return ipAssets The array of IPAsset types
     /// @return allowsExternal Whether the relationship config allows external (non SP ERC721) assets
-    function convertFromMask(uint256 mask_) external pure returns (IPAsset[] memory ipAssets, bool allowsExternal) {
+    function convertFromMask(uint256 mask_) external pure returns (IPAsset.IPAssetType[] memory ipAssets, bool allowsExternal) {
         return LibIPAssetMask._convertFromMask(mask_);
     }
 

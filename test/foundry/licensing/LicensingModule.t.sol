@@ -5,7 +5,8 @@ import "forge-std/Test.sol";
 import '../utils/BaseTest.sol';
 import '../mocks/MockLicensingModule.sol';
 import '../mocks/MockTermsProcessor.sol';
-import "contracts/errors/General.sol";
+import { Errors } from "contracts/lib/Errors.sol";
+import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 contract LicensingModuleTest is BaseTest {
 
@@ -20,7 +21,7 @@ contract LicensingModuleTest is BaseTest {
 
     function test_configFranchise() public {
         vm.startPrank(franchiseOwner);
-        IERC5218.TermsProcessorConfig memory termsConfig = IERC5218.TermsProcessorConfig({
+        Licensing.TermsProcessorConfig memory termsConfig = Licensing.TermsProcessorConfig({
             processor: commercialTermsProcessor,
             data: abi.encode("root")
         });
@@ -29,14 +30,14 @@ contract LicensingModuleTest is BaseTest {
         assertEq(licenseRegistry.ownerOf(rootLicenseId), franchiseOwner);
         assertEq(rootLicenseId, 1);
 
-        ILicensingModule.FranchiseConfig memory config = _getLicensingConfig();
+        Licensing.FranchiseConfig memory config = _getLicensingConfig();
         config.revoker = address(0x5656565);
         config.commercialConfig.franchiseRootLicenseId = rootLicenseId;
         config.commercialTerms.data = abi.encode("bye");
         config.nonCommercialTerms.data = abi.encode("hi");
         
         licensingModule.configureFranchiseLicensing(1, config);
-        ILicensingModule.FranchiseConfig memory configResult = licensingModule.getFranchiseConfig(1);
+        Licensing.FranchiseConfig memory configResult = licensingModule.getFranchiseConfig(1);
         assertEq(configResult.nonCommercialConfig.canSublicense, true);
         assertEq(configResult.nonCommercialConfig.franchiseRootLicenseId, 0);
         assertEq(address(configResult.nonCommercialTerms.processor), address(nonCommercialTermsProcessor));
@@ -51,7 +52,7 @@ contract LicensingModuleTest is BaseTest {
     }
 
     function test_revert_nonAuthorizedConfigSetter() public {
-        vm.expectRevert(Unauthorized.selector);
+        vm.expectRevert(Errors.Unauthorized.selector);
         licensingModule.configureFranchiseLicensing(1, LibMockFranchiseConfig.getMockFranchiseConfig());
     }
 
@@ -62,16 +63,16 @@ contract LicensingModuleTest is BaseTest {
 
     function test_revert_zeroRevokerAddress() public {
         vm.startPrank(franchiseOwner);
-        ILicensingModule.FranchiseConfig memory config = LibMockFranchiseConfig.getMockFranchiseConfig();
+        Licensing.FranchiseConfig memory config = LibMockFranchiseConfig.getMockFranchiseConfig();
         config.revoker = address(0);
-        vm.expectRevert(LicensingModule.ZeroRevokerAddress.selector);
+        vm.expectRevert(Errors.LicensingModule_ZeroRevokerAddress.selector);
         licensingModule.configureFranchiseLicensing(1, config);
         vm.stopPrank();
     }
 
     function test_revert_rootLicenseNotActiveCommercial() public {
         
-        IERC5218.TermsProcessorConfig memory termsConfig = IERC5218.TermsProcessorConfig({
+        Licensing.TermsProcessorConfig memory termsConfig = Licensing.TermsProcessorConfig({
             processor: commercialTermsProcessor,
             data: abi.encode("root")
         });
@@ -81,10 +82,10 @@ contract LicensingModuleTest is BaseTest {
         
         commercialTermsProcessor.setSuccess(false);
         
-        ILicensingModule.FranchiseConfig memory config = _getLicensingConfig();
+        Licensing.FranchiseConfig memory config = _getLicensingConfig();
         config.commercialConfig.franchiseRootLicenseId = rootLicenseId;
         vm.startPrank(franchiseOwner);
-        vm.expectRevert(abi.encodeWithSignature("RootLicenseNotActive(uint256)", 1));
+        vm.expectRevert(abi.encodeWithSignature("LicensingModule_RootLicenseNotActive(uint256)", 1));
         licensingModule.configureFranchiseLicensing(1, config);
         vm.stopPrank();
         

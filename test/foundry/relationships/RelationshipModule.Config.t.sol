@@ -2,6 +2,8 @@
 pragma solidity ^0.8.13;
 
 import '../utils/BaseTest.sol';
+import { Errors } from "contracts/lib/Errors.sol";
+import { Relationship } from "contracts/lib/modules/Relationship.sol";
 
 contract RelationshipModuleSetupRelationshipsTest is BaseTest {
 
@@ -11,13 +13,13 @@ contract RelationshipModuleSetupRelationshipsTest is BaseTest {
     }
 
     function test_setRelationship() public {
-        IPAsset[] memory sourceIpAssets = new IPAsset[](1);
-        sourceIpAssets[0] = IPAsset.STORY;
-        IPAsset[] memory destIpAssets = new IPAsset[](2);
-        destIpAssets[0] = IPAsset.CHARACTER;
-        destIpAssets[1] = IPAsset.ART;
+        IPAsset.IPAssetType[] memory sourceIpAssets = new IPAsset.IPAssetType[](1);
+        sourceIpAssets[0] = IPAsset.IPAssetType.STORY;
+        IPAsset.IPAssetType[] memory destIpAssets = new IPAsset.IPAssetType[](2);
+        destIpAssets[0] = IPAsset.IPAssetType.CHARACTER;
+        destIpAssets[1] = IPAsset.IPAssetType.ART;
         
-        IRelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
+        Relationship.SetRelationshipConfigParams memory params = Relationship.SetRelationshipConfigParams({
             sourceIpAssets: sourceIpAssets,
             allowedExternalSource: false,
             destIpAssets: destIpAssets,
@@ -25,7 +27,7 @@ contract RelationshipModuleSetupRelationshipsTest is BaseTest {
             onlySameFranchise: true,
             processor: address(relationshipProcessor),
             disputer: address(this),
-            timeConfig: IRelationshipModule.TimeConfig({
+            timeConfig: Relationship.TimeConfig({
                 minTtl: 0,
                 maxTtl: 0,
                 renewable: false
@@ -35,20 +37,20 @@ contract RelationshipModuleSetupRelationshipsTest is BaseTest {
         bytes32 relId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
         assertEq(relId, keccak256(abi.encode("RELATIONSHIP")));
 
-        IRelationshipModule.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relId);
-        assertEq(config.sourceIpAssetTypeMask, 1 << (uint256(IPAsset.STORY) & 0xff));
-        assertEq(config.destIpAssetTypeMask, 1 << (uint256(IPAsset.CHARACTER) & 0xff) | 1 << (uint256(IPAsset.ART) & 0xff) | (uint256(EXTERNAL_ASSET) << 248));
+        Relationship.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relId);
+        assertEq(config.sourceIpAssetTypeMask, 1 << (uint256(IPAsset.IPAssetType.STORY) & 0xff));
+        assertEq(config.destIpAssetTypeMask, 1 << (uint256(IPAsset.IPAssetType.CHARACTER) & 0xff) | 1 << (uint256(IPAsset.IPAssetType.ART) & 0xff) | (uint256(IPAsset.EXTERNAL_ASSET) << 248));
         assertTrue(config.onlySameFranchise);
         // TODO: test for event
 
     }
 
     function test_revert_IfMasksNotConfigured() public {
-        IPAsset[] memory sourceIpAssets = new IPAsset[](1);
-        sourceIpAssets[0] = IPAsset.UNDEFINED;
-        IPAsset[] memory destIpAssets = new IPAsset[](2);
+        IPAsset.IPAssetType[] memory sourceIpAssets = new IPAsset.IPAssetType[](1);
+        sourceIpAssets[0] = IPAsset.IPAssetType.UNDEFINED;
+        IPAsset.IPAssetType[] memory destIpAssets = new IPAsset.IPAssetType[](2);
 
-        IRelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
+        Relationship.SetRelationshipConfigParams memory params = Relationship.SetRelationshipConfigParams({
             sourceIpAssets: sourceIpAssets,
             allowedExternalSource: false,
             destIpAssets: destIpAssets,
@@ -56,7 +58,7 @@ contract RelationshipModuleSetupRelationshipsTest is BaseTest {
             onlySameFranchise: true,
             processor: address(relationshipProcessor),
             disputer: address(this),
-            timeConfig: IRelationshipModule.TimeConfig({
+            timeConfig: Relationship.TimeConfig({
                 minTtl: 0,
                 maxTtl: 0,
                 renewable: false
@@ -68,13 +70,13 @@ contract RelationshipModuleSetupRelationshipsTest is BaseTest {
     }
 
     function test_relationshipConfigDecoded() public {
-        IPAsset[] memory sourceIpAssets = new IPAsset[](1);
-        sourceIpAssets[0] = IPAsset.STORY;
-        IPAsset[] memory destIpAssets = new IPAsset[](2);
-        destIpAssets[0] = IPAsset.CHARACTER;
-        destIpAssets[1] = IPAsset.ART;
+        IPAsset.IPAssetType[] memory sourceIpAssets = new IPAsset.IPAssetType[](1);
+        sourceIpAssets[0] = IPAsset.IPAssetType.STORY;
+        IPAsset.IPAssetType[] memory destIpAssets = new IPAsset.IPAssetType[](2);
+        destIpAssets[0] = IPAsset.IPAssetType.CHARACTER;
+        destIpAssets[1] = IPAsset.IPAssetType.ART;
         
-        IRelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
+        Relationship.SetRelationshipConfigParams memory params = Relationship.SetRelationshipConfigParams({
             sourceIpAssets: sourceIpAssets,
             allowedExternalSource: false,
             destIpAssets: destIpAssets,
@@ -82,7 +84,7 @@ contract RelationshipModuleSetupRelationshipsTest is BaseTest {
             onlySameFranchise: true,
             processor: address(relationshipProcessor),
             disputer: address(this),
-            timeConfig: IRelationshipModule.TimeConfig({
+            timeConfig: Relationship.TimeConfig({
                 minTtl: 0,
                 maxTtl: 0,
                 renewable: false
@@ -90,7 +92,7 @@ contract RelationshipModuleSetupRelationshipsTest is BaseTest {
         });
         bytes32 relId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
 
-        IRelationshipModule.SetRelationshipConfigParams memory result = relationshipModule.getRelationshipConfigDecoded(relId);
+        Relationship.SetRelationshipConfigParams memory result = relationshipModule.getRelationshipConfigDecoded(relId);
 
         _assertEqIPAssetArray(result.sourceIpAssets, params.sourceIpAssets);
         _assertEqIPAssetArray(result.destIpAssets, params.destIpAssets);
@@ -105,7 +107,7 @@ contract RelationshipModuleSetupRelationshipsTest is BaseTest {
 
     }
 
-    function _assertEqIPAssetArray(IPAsset[] memory result, IPAsset[] memory expected) internal {
+    function _assertEqIPAssetArray(IPAsset.IPAssetType[] memory result, IPAsset.IPAssetType[] memory expected) internal {
         for (uint256 i = 0; i < result.length; i++) {
             if (i < expected.length) {
                 assertEq(uint256(result[i]), uint256(expected[i]));
@@ -125,11 +127,11 @@ contract RelationshipModuleUnsetRelationshipsTest is BaseTest {
     function setUp() virtual override public {
         deployProcessors = true;
         super.setUp();
-        IPAsset[] memory sourceIpAssets = new IPAsset[](1);
-        sourceIpAssets[0] = IPAsset.STORY;
-        IPAsset[] memory destIpAssets = new IPAsset[](1);
-        destIpAssets[0] = IPAsset.CHARACTER;
-        IRelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
+        IPAsset.IPAssetType[] memory sourceIpAssets = new IPAsset.IPAssetType[](1);
+        sourceIpAssets[0] = IPAsset.IPAssetType.STORY;
+        IPAsset.IPAssetType[] memory destIpAssets = new IPAsset.IPAssetType[](1);
+        destIpAssets[0] = IPAsset.IPAssetType.CHARACTER;
+        Relationship.SetRelationshipConfigParams memory params = Relationship.SetRelationshipConfigParams({
             sourceIpAssets: sourceIpAssets,
             allowedExternalSource: false,
             destIpAssets: destIpAssets,
@@ -137,7 +139,7 @@ contract RelationshipModuleUnsetRelationshipsTest is BaseTest {
             onlySameFranchise: true,
             processor: address(relationshipProcessor),
             disputer: address(this),
-            timeConfig: IRelationshipModule.TimeConfig({
+            timeConfig: Relationship.TimeConfig({
                 minTtl: 0,
                 maxTtl: 0,
                 renewable: false
@@ -149,7 +151,7 @@ contract RelationshipModuleUnsetRelationshipsTest is BaseTest {
     function test_unsetRelationshipConfig() public {
         relationshipModule.unsetRelationshipConfig(relationshipId);
 
-        IRelationshipModule.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relationshipId);
+        Relationship.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relationshipId);
         assertEq(config.sourceIpAssetTypeMask, 0);
         assertEq(config.destIpAssetTypeMask, 0);
         assertFalse(config.onlySameFranchise);
@@ -158,7 +160,7 @@ contract RelationshipModuleUnsetRelationshipsTest is BaseTest {
 
     function test_revert_unsetRelationshipConfigNonExistingRelationship() public {
         bytes32 id = relationshipModule.getRelationshipId("UNDEFINED_Relationship");
-        vm.expectRevert(IRelationshipModule.NonExistingRelationship.selector);
+        vm.expectRevert(Errors.RelationshipModule_NonExistingRelationship.selector);
         relationshipModule.unsetRelationshipConfig(id);
     }
 

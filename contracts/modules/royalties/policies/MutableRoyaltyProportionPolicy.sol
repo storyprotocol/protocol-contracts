@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import {IRoyaltyProportionPolicy} from "contracts/interfaces/modules/royalties/policies/IRoyaltyProportionPolicy.sol";
+import { IRoyaltyPolicy } from "contracts/interfaces/modules/royalties/policies/IRoyaltyPolicy.sol";
 import { RoyaltyNFT } from "contracts/modules/royalties/RoyaltyNFT.sol";
+import { Royalties } from "contracts/lib/modules/Royalties.sol";
 
-
-contract MutableRoyaltyProportionPolicy is IRoyaltyProportionPolicy {
+contract MutableRoyaltyProportionPolicy is IRoyaltyPolicy {
     RoyaltyNFT public immutable royaltyNFT;
 
     constructor(address royaltyNft_) {
@@ -15,7 +15,7 @@ contract MutableRoyaltyProportionPolicy is IRoyaltyProportionPolicy {
     function initPolicy(address, bytes calldata) override external {}
 
     function updateDistribution(address sourceAccount_, bytes calldata data_) override external {
-        ProportionData memory propData = abi.decode(data_, (ProportionData));
+        Royalties.ProportionData memory propData = abi.decode(data_, (Royalties.ProportionData));
         uint256 tokenId = royaltyNFT.toTokenId(sourceAccount_);
         if (!royaltyNFT.exists(tokenId)) {
             royaltyNFT.mint(sourceAccount_, propData.accounts, propData.percentAllocations);

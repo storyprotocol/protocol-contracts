@@ -5,7 +5,7 @@ import { IVersioned } from "../utils/IVersioned.sol";
 import { IIPAssetDataManager } from "./storage/IIPAssetDataManager.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { IERC5218 } from "../modules/licensing/IERC5218.sol";
-import { IPAsset } from "contracts/IPAsset.sol";
+import { IPAsset } from "contracts/lib/IPAsset.sol";
 
 interface IIPAssetRegistry is
     IVersioned,
@@ -16,7 +16,7 @@ interface IIPAssetRegistry is
     function franchiseId() external view returns (uint256);
 
     function createIpAsset(
-        IPAsset ipAsset_,
+        IPAsset.IPAssetType ipAsset_,
         string calldata name_,
         string calldata description_,
         string calldata mediaUrl_,

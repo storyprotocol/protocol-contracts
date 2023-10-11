@@ -3,14 +3,13 @@ pragma solidity ^0.8.13;
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { LibDuration } from "../timing/LibDuration.sol";
-import { UPGRADER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
 import { IERC5218 } from "contracts/interfaces/modules/licensing/IERC5218.sol";
 import { ILicenseRegistry } from "contracts/interfaces/modules/licensing/ILicenseRegistry.sol";
-import { NonExistentID, Unauthorized, ZeroAddress, UnsupportedInterface } from "contracts/errors/General.sol";
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
-
+import { Errors } from "contracts/lib/Errors.sol";
+import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 /// @title RightsManager
 /// @author Raul Martinez
@@ -28,33 +27,8 @@ abstract contract RightsManager is
 {
     using ERC165CheckerUpgradeable for address;
 
-    error NotOwnerOfParentLicense();
-    error InactiveLicense();
-    error InactiveParentLicense();
-    error CannotSublicense();
-    error CommercialTermsMismatch();
-    error SenderNotRevoker();
-    error NotSublicense();
-    error AlreadyHasRootLicense();
-    error ZeroRevokerAddress();
-    error NFTHasNoAssociatedLicense();
-    error UseCreateFranchiseRootLicenseInstead();
-    error LicenseRegistryNotConfigured();
-
-    struct License {
-        bool active;
-        bool canSublicense;
-        bool commercial;
-        uint256 parentLicenseId;
-        uint256 tokenId;
-        address revoker;
-        string uri; // NOTE: should we merge this with IPAssetRegistry tokenURI for Licenses who are rights?
-        ITermsProcessor termsProcessor;
-        bytes termsData;
-    }
-
     struct RightsManagerStorage {
-        mapping(uint256 => License) licenses;
+        mapping(uint256 => Licensing.License) licenses;
         // keccack256(commercial, tokenId) => licenseId
         mapping(bytes32 => uint256) licensesForTokenId;
         uint256 licenseCounter;
@@ -69,7 +43,7 @@ abstract contract RightsManager is
 
     constructor(address franchiseRegistry_) {
         if (franchiseRegistry_ == address(0)) {
-            revert ZeroAddress();
+            revert Errors.ZeroAddress();
         }
         FRANCHISE_REGISTRY = IERC721(franchiseRegistry_);
 
@@ -85,8 +59,8 @@ abstract contract RightsManager is
 
     function setLicenseRegistry(address licenseRegistry_) external {
         // NOTE: This assumes no need to change ILicenseRegistry implementation.
-        if (address(_getRightsManagerStorage().licenseRegistry) != address(0)) revert Unauthorized();
-        if  (licenseRegistry_ == address(0)) revert ZeroAddress();
+        if (address(_getRightsManagerStorage().licenseRegistry) != address(0)) revert Errors.Unauthorized();
+        if  (licenseRegistry_ == address(0)) revert Errors.ZeroAddress();
         _getRightsManagerStorage().licenseRegistry = ILicenseRegistry(licenseRegistry_);
     }
 
@@ -120,12 +94,12 @@ abstract contract RightsManager is
         address revoker_,
         bool commercial_,
         bool canSublicense_,
-        TermsProcessorConfig memory terms_
+        Licensing.TermsProcessorConfig memory terms_
     ) external override returns (uint256) {
         if (tokenId_ == FRANCHISE_REGISTRY_OWNED_TOKEN_ID || parentLicenseId_ == _UNSET_LICENSE_ID) {
-            revert UseCreateFranchiseRootLicenseInstead();
+            revert Errors.RightsManager_UseCreateFranchiseRootLicenseInstead();
         }
-        if (msg.sender != getLicenseHolder(parentLicenseId_)) revert Unauthorized();
+        if (msg.sender != getLicenseHolder(parentLicenseId_)) revert Errors.Unauthorized();
         return _createLicense(
             tokenId_,
             parentLicenseId_,
@@ -157,9 +131,9 @@ abstract contract RightsManager is
         address revoker_,
         bool commercial_,
         bool canSublicense_,
-        TermsProcessorConfig memory terms_
+        Licensing.TermsProcessorConfig memory terms_
     ) external returns (uint256) {
-        if (msg.sender != FRANCHISE_REGISTRY.ownerOf(franchiseId_)) revert Unauthorized();
+        if (msg.sender != FRANCHISE_REGISTRY.ownerOf(franchiseId_)) revert Errors.Unauthorized();
         return _createLicense(
             FRANCHISE_REGISTRY_OWNED_TOKEN_ID,
             _UNSET_LICENSE_ID,
@@ -182,34 +156,34 @@ abstract contract RightsManager is
         address revoker_,
         bool commercial_,
         bool canSublicense_,
-        TermsProcessorConfig memory terms_,
+        Licensing.TermsProcessorConfig memory terms_,
         bool inLicenseRegistry_
     ) internal returns (uint256) {
         // TODO: should revoker come from allowed revoker list?
-        if (revoker_ == address(0)) revert ZeroRevokerAddress();
+        if (revoker_ == address(0)) revert Errors.RightsManager_ZeroRevokerAddress();
         RightsManagerStorage storage $ = _getRightsManagerStorage();
         // Only licenses minted to the FranchiseRegistry Owner as a root license should
-        // have tokenId = FRANCHISE_REGISTRY_OWNED_TOKEN_ID, otherwise the tokenId should be a minted NFT (IPAsset)
+        // have tokenId = FRANCHISE_REGISTRY_OWNED_TOKEN_ID, otherwise the tokenId should be a minted NFT (IPAsset.IPAssetType)
         // Checks for the FranchiseRegistry Owner should be done in the calling function
         if (tokenId_ != FRANCHISE_REGISTRY_OWNED_TOKEN_ID) {
             if (!_exists(tokenId_)) {
-                revert NonExistentID(tokenId_);
+                revert Errors.NonExistentID(tokenId_);
             }
         }
         // If this is not a LicenseRegsitry license, check that the tokenId doesn't already have a root license
         if (!inLicenseRegistry_) {
             if ($.licensesForTokenId[keccak256(abi.encode(commercial_, tokenId_))] != _UNSET_LICENSE_ID) {
-                revert AlreadyHasRootLicense();
+                revert Errors.RightsManager_AlreadyHasRootLicense();
             }
         } else {
-            if($.licenseRegistry == ILicenseRegistry(address(0))) revert LicenseRegistryNotConfigured();
+            if($.licenseRegistry == ILicenseRegistry(address(0))) revert Errors.RightsManager_LicenseRegistryNotConfigured();
             if(tokenId_ != FRANCHISE_REGISTRY_OWNED_TOKEN_ID && parentLicenseId_ != _UNSET_LICENSE_ID) {
                 // If this is a sublicense, check that this is a valid sublicense
-                License memory parentLicense = $.licenses[parentLicenseId_];
-                if (!parentLicense.active) revert InactiveParentLicense();
-                if (!parentLicense.canSublicense) revert CannotSublicense();
-                if (parentLicense.commercial != commercial_) revert CommercialTermsMismatch();
-                if (getLicenseHolder(parentLicenseId_) != licenseHolder_) revert NotOwnerOfParentLicense();
+                Licensing.License memory parentLicense = $.licenses[parentLicenseId_];
+                if (!parentLicense.active) revert Errors.RightsManager_InactiveParentLicense();
+                if (!parentLicense.canSublicense) revert Errors.RightsManager_CannotSublicense();
+                if (parentLicense.commercial != commercial_) revert Errors.RightsManager_CommercialTermsMismatch();
+                if (getLicenseHolder(parentLicenseId_) != licenseHolder_) revert Errors.RightsManager_NotOwnerOfParentLicense();
             }
         }
         // Check that the terms are valid
@@ -217,7 +191,7 @@ abstract contract RightsManager is
 
         // Create the license and increment the licenseCounter
         uint256 licenseId = ++$.licenseCounter;
-        $.licenses[licenseId] = License({
+        $.licenses[licenseId] = Licensing.License({
             active: true,
             canSublicense: canSublicense_,
             commercial: commercial_,
@@ -253,10 +227,10 @@ abstract contract RightsManager is
 
 
     function revokeLicense(uint256 licenseId_) external override {
-        if (!isLicenseSet(licenseId_)) revert NonExistentID(licenseId_);
+        if (!isLicenseSet(licenseId_)) revert Errors.NonExistentID(licenseId_);
         RightsManagerStorage storage $ = _getRightsManagerStorage();
-        License storage license = $.licenses[licenseId_];
-        if (msg.sender != license.revoker) revert SenderNotRevoker();
+        Licensing.License storage license = $.licenses[licenseId_];
+        if (msg.sender != license.revoker) revert Errors.RightsManager_SenderNotRevoker();
         license.active = false;
         emit RevokeLicense(licenseId_);
         // TODO: should we burn the license if it's from the LicenseRegistry?
@@ -269,8 +243,8 @@ abstract contract RightsManager is
     /// @param licenseId_ The identifier for the queried license
     function executeTerms(uint256 licenseId_) external {
         RightsManagerStorage storage $ = _getRightsManagerStorage();
-        if (msg.sender != $.licenseRegistry.ownerOf(licenseId_)) revert Unauthorized();
-        License storage license = $.licenses[licenseId_];
+        if (msg.sender != $.licenseRegistry.ownerOf(licenseId_)) revert Errors.Unauthorized();
+        Licensing.License storage license = $.licenses[licenseId_];
         if (license.termsProcessor != ITermsProcessor(address(0))) {
             bytes memory newData = license.termsProcessor.executeTerms(license.termsData);
             if (keccak256(license.termsData) != keccak256(newData)) {
@@ -289,19 +263,19 @@ abstract contract RightsManager is
         if (licenseId_ == 0) return false;
         RightsManagerStorage storage $ = _getRightsManagerStorage();
         while (licenseId_ != 0) {
-            License memory license = $.licenses[licenseId_];
+            Licensing.License memory license = $.licenses[licenseId_];
             if (!_isActiveAndTermsOk(license)) return false;
             licenseId_ = license.parentLicenseId;
         }
         return true;
     }
 
-    function _isActiveAndTermsOk(License memory license_) view private returns (bool) {
+    function _isActiveAndTermsOk(Licensing.License memory license_) view private returns (bool) {
         if (address(license_.termsProcessor) == address(0)) return license_.active;
         return license_.active && license_.termsProcessor.termsExecutedSuccessfully(license_.termsData);
     }
 
-    function getLicense(uint256 licenseId_) public view returns (License memory, address holder) {
+    function getLicense(uint256 licenseId_) public view returns (Licensing.License memory, address holder) {
         return (
             _getRightsManagerStorage().licenses[licenseId_],
             getLicenseHolder(licenseId_)
@@ -335,15 +309,15 @@ abstract contract RightsManager is
         // NOTE: We are assuming a revoked Non Commercial License impedes the transfer of the NFT.
         // Should revoked commercial rights also impede the transfer?
         uint256 licenseId = $.licensesForTokenId[keccak256(abi.encode(false, tokenId_))];
-        if (licenseId != _UNSET_LICENSE_ID) revert NFTHasNoAssociatedLicense(); // This should not happen, if fired there is a bug somewhere
-        if (isLicenseActive(licenseId)) revert InactiveLicense(); // NOTE: Should we freeze invalid licenses? burn them?
+        if (licenseId != _UNSET_LICENSE_ID) revert Errors.RightsManager_NFTHasNoAssociatedLicense(); // This should not happen, if fired there is a bug somewhere
+        if (isLicenseActive(licenseId)) revert Errors.RightsManager_InactiveLicense(); // NOTE: Should we freeze invalid licenses? burn them?
         emit TransferLicense(licenseId, to_);
     }
 
-    function _verifyTerms(TermsProcessorConfig memory terms_) private view {
+    function _verifyTerms(Licensing.TermsProcessorConfig memory terms_) private view {
         if  (address(terms_.processor) != address(0) &&
             !terms_.processor.supportsInterface(type(ITermsProcessor).interfaceId)) {
-            revert UnsupportedInterface("ITermsProcessor");
+            revert Errors.UnsupportedInterface("ITermsProcessor");
         }
     }
 
@@ -367,7 +341,7 @@ abstract contract RightsManager is
         if ($.licenseRegistry.exists(licenseId_)) {
             return $.licenseRegistry.ownerOf(licenseId_);
         } else {
-            License storage license = $.licenses[
+            Licensing.License storage license = $.licenses[
                 licenseId_
             ];
             return ownerOf(license.tokenId);
@@ -420,8 +394,8 @@ abstract contract RightsManager is
         address licenseHolder_
     ) public virtual override(IERC5218) {
         RightsManagerStorage storage $ = _getRightsManagerStorage();
-        if (msg.sender != address($.licenseRegistry)) revert Unauthorized();
-        if (!isLicenseActive(licenseId_)) revert InactiveLicense();
+        if (msg.sender != address($.licenseRegistry)) revert Errors.Unauthorized();
+        if (!isLicenseActive(licenseId_)) revert Errors.RightsManager_InactiveLicense();
         emit TransferLicense(licenseId_, licenseHolder_);
     }
 

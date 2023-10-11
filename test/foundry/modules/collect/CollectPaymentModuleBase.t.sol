@@ -3,7 +3,6 @@ pragma solidity ^0.8.18;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { ICollectPaymentModuleEventsAndErrors } from "contracts/interfaces/modules/collect/ICollectPaymentModuleEventsAndErrors.sol";
 import { ICollectModule } from "contracts/interfaces/modules/collect/ICollectModule.sol";
 import { ICollectPaymentModule } from "contracts/interfaces/modules/collect/ICollectPaymentModule.sol";
 import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.sol";
@@ -17,13 +16,12 @@ import { MockCollectNFT } from "test/foundry/mocks/MockCollectNFT.sol";
 import { MockERC20 } from "test/foundry/mocks/MockERC20.sol";
 import { MockWETH } from "test/foundry/mocks/MockWETH.sol";
 
-import { PaymentType } from "contracts/lib/CollectPaymentModuleEnums.sol";
-import { InitCollectParams, CollectParams } from "contracts/lib/CollectModuleStructs.sol";
-import { CollectPaymentInfo, CollectPaymentParams } from "contracts/lib/CollectPaymentModuleStructs.sol";
+import { Collect } from "contracts/lib/modules/Collect.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
 /// @title Collect Payment Module Base Testing Contract
 /// @notice Tests all functionality provided by the base payment collect module.
-contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentModuleEventsAndErrors {
+contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
 
     ICollectPaymentModule collectPaymentModule;
 
@@ -31,18 +29,18 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
     MockWETH public weth;
 
     address paymentToken;
-    PaymentType paymentType;
+    Collect.PaymentType paymentType;
     uint256 paymentAmount;
     address payable paymentRecipient;
-    CollectPaymentInfo paymentInfo;
-    CollectPaymentParams paymentParams;
+    Collect.CollectPaymentInfo paymentInfo;
+    Collect.CollectPaymentParams paymentParams;
 
     // Used for mocking suites of tests involving payment infos and params.
     CollectPaymentSet[] paymentSets;
 
     struct CollectPaymentSet {
-        CollectPaymentInfo info;
-        CollectPaymentParams params;
+        Collect.CollectPaymentInfo info;
+        Collect.CollectPaymentParams params;
     }
 
     /// @notice Parameterizes payment inputs and outputs for multiple test runs.
@@ -70,18 +68,18 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
     function setUp() public virtual override(BaseCollectModuleTest) { 
         super.setUp();
         paymentToken = address(0);
-        paymentType =  PaymentType.NATIVE;
+        paymentType =  Collect.PaymentType.NATIVE;
         paymentAmount =  1 ether;
         paymentRecipient = alice;
         collector = cal;
         vm.deal(collector, 999 ether);
-        paymentInfo = CollectPaymentInfo({
+        paymentInfo = Collect.CollectPaymentInfo({
             paymentToken: paymentToken,
             paymentType: paymentType,
             paymentAmount: paymentAmount,
             paymentRecipient: paymentRecipient
         });
-        paymentParams = CollectPaymentParams({
+        paymentParams = Collect.CollectPaymentParams({
             paymentToken: paymentToken,
             paymentType: paymentType,
             paymentAmount: paymentAmount
@@ -98,7 +96,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
 
     /// @notice Tests that the collect payment module is correctly initialized.
     function test_CollectPaymentModuleInit() public parameterizePaymentInfo(paymentSuite()) {
-        CollectPaymentInfo memory p = collectPaymentModule.getPaymentInfo(franchiseId, ipAssetId);
+        Collect.CollectPaymentInfo memory p = collectPaymentModule.getPaymentInfo(franchiseId, ipAssetId);
         assertEq(p.paymentToken, paymentInfo.paymentToken);
         assertEq(uint8(p.paymentType), uint8(paymentInfo.paymentType));
         assertEq(p.paymentAmount, paymentInfo.paymentAmount);
@@ -108,16 +106,16 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
     /// @notice Tests that native payments with no sent funds revert.
     function test_CollectPaymentModuleZeroPaymentReverts() public {
         vm.prank(address(ipAssetRegistry));
-        paymentInfo = CollectPaymentInfo(address(0), PaymentType.NATIVE, 0 ether, alice);
-        vm.expectRevert(CollectPaymentModuleAmountInvalid.selector);
+        paymentInfo = Collect.CollectPaymentInfo(address(0), Collect.PaymentType.NATIVE, 0 ether, alice);
+        vm.expectRevert(Errors.CollectPaymentModule_AmountInvalid.selector);
         _initCollectModule(franchiseId, defaultCollectNftImpl);
     }
 
     /// @notice Tests that payments with invalid settings revert.
     function test_CollectPaymentModuleInvalidSettingsReverts() public {
         vm.prank(address(ipAssetRegistry));
-        paymentInfo = CollectPaymentInfo(address(erc20), PaymentType.NATIVE, 1 ether, alice);
-        vm.expectRevert(CollectPaymentModuleInvalidSettings.selector);
+        paymentInfo = Collect.CollectPaymentInfo(address(erc20), Collect.PaymentType.NATIVE, 1 ether, alice);
+        vm.expectRevert(Errors.CollectPaymentModule_InvalidSettings.selector);
         _initCollectModule(franchiseId, defaultCollectNftImpl);
     }
 
@@ -125,8 +123,8 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
     function test_CollectPaymentModuleInvalidTokenReverts() public {
 
         vm.prank(address(ipAssetRegistry));
-        paymentInfo = CollectPaymentInfo(bob, PaymentType.ERC20, 1 ether, alice);
-        vm.expectRevert(CollectPaymentModuleTokenInvalid.selector);
+        paymentInfo = Collect.CollectPaymentInfo(bob, Collect.PaymentType.ERC20, 1 ether, alice);
+        vm.expectRevert(Errors.CollectPaymentModule_TokenInvalid.selector);
         _initCollectModule(franchiseId, defaultCollectNftImpl);
     }
 
@@ -144,22 +142,22 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
     function test_CollectPaymentModuleNativeTransferFailReverts() public {
         address payable throwingReceiver  = payable(address(new MockNativeTokenNonReceiver()));
 
-        paymentInfo = CollectPaymentInfo({
+        paymentInfo = Collect.CollectPaymentInfo({
             paymentToken: address(0),
-            paymentType: PaymentType.NATIVE,
+            paymentType: Collect.PaymentType.NATIVE,
             paymentAmount: 10,
             paymentRecipient: throwingReceiver
         });
-        paymentParams = CollectPaymentParams({
+        paymentParams = Collect.CollectPaymentParams({
             paymentToken: address(0),
-            paymentType: PaymentType.NATIVE,
+            paymentType: Collect.PaymentType.NATIVE,
             paymentAmount: 10
         });
         ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
 
         vm.prank(collector);
-        vm.expectRevert(CollectPaymentModuleNativeTransferFailed.selector);
-        collectModule.collect{value: 10}(CollectParams({
+        vm.expectRevert(Errors.CollectPaymentModule_NativeTransferFailed.selector);
+        collectModule.collect{value: 10}(Collect.CollectParams({
             franchiseId: franchiseId,
             ipAssetId: ipAssetId,
             collector: collector,
@@ -171,19 +169,19 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
 
     /// @notice Tests that payments with invalid parameters revert.
     function test_CollectPaymentModuleInvalidPaymentParamsReverts() public {
-        paymentInfo = CollectPaymentInfo({
+        paymentInfo = Collect.CollectPaymentInfo({
             paymentToken: address(erc20),
-            paymentType: PaymentType.ERC20,
+            paymentType: Collect.PaymentType.ERC20,
             paymentAmount: 10,
             paymentRecipient: paymentRecipient
         });
-        paymentParams = CollectPaymentParams({
+        paymentParams = Collect.CollectPaymentParams({
             paymentToken: address(erc20),
-            paymentType: PaymentType.ERC20,
+            paymentType: Collect.PaymentType.ERC20,
             paymentAmount: 1
         });
         ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
-        vm.expectRevert(CollectPaymentModulePaymentParamsInvalid.selector);
+        vm.expectRevert(Errors.CollectPaymentModule_PaymentParamsInvalid.selector);
         _collect(franchiseId, ipAssetId);
     }
 
@@ -192,38 +190,38 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         MockThrowingERC20 throwingERC20 = new MockThrowingERC20("Story Protocol Mock Token", "SP", 18, MockThrowingERC20.TransferBehavior.Fail);
         vm.prank(collector);
         throwingERC20.mint(999999);
-        paymentInfo = CollectPaymentInfo({
+        paymentInfo = Collect.CollectPaymentInfo({
             paymentToken: address(throwingERC20),
-            paymentType: PaymentType.ERC20,
+            paymentType: Collect.PaymentType.ERC20,
             paymentAmount: 10,
             paymentRecipient: paymentRecipient
         });
-        paymentParams = CollectPaymentParams({
+        paymentParams = Collect.CollectPaymentParams({
             paymentToken: address(throwingERC20),
-            paymentType: PaymentType.ERC20,
+            paymentType: Collect.PaymentType.ERC20,
             paymentAmount: 10
         });
         ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
-        vm.expectRevert(CollectPaymentModuleERC20TransferFailed.selector);
+        vm.expectRevert(Errors.CollectPaymentModule_ERC20TransferFailed.selector);
         _collect(franchiseId, ipAssetId);
     }
 
     /// @notice Tests that ERC20 payments with invalid payments revert.
     function test_CollectPaymentModuleERC20InvalidPaymentReverts() public {
-        paymentInfo = CollectPaymentInfo({
+        paymentInfo = Collect.CollectPaymentInfo({
             paymentToken: address(erc20),
-            paymentType: PaymentType.ERC20,
+            paymentType: Collect.PaymentType.ERC20,
             paymentAmount: 10,
             paymentRecipient: paymentRecipient
         });
-        paymentParams = CollectPaymentParams({
+        paymentParams = Collect.CollectPaymentParams({
             paymentToken: address(erc20),
-            paymentType: PaymentType.ERC20,
+            paymentType: Collect.PaymentType.ERC20,
             paymentAmount: 10
         });
         ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
-        vm.expectRevert(CollectPaymentModuleNativeTokenNotAllowed.selector);
-        collectModule.collect{value: 10}(CollectParams({
+        vm.expectRevert(Errors.CollectPaymentModule_NativeTokenNotAllowed.selector);
+        collectModule.collect{value: 10}(Collect.CollectParams({
             franchiseId: franchiseId,
             ipAssetId: ipAssetId,
             collector: collector,
@@ -235,19 +233,19 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
 
     /// @notice Tests that ERC20 payments with insufficient funds revert.
     function test_CollectPaymentModuleERC20InsufficientFundsReverts() public {
-        paymentInfo = CollectPaymentInfo({
+        paymentInfo = Collect.CollectPaymentInfo({
             paymentToken: address(erc20),
-            paymentType: PaymentType.ERC20,
+            paymentType: Collect.PaymentType.ERC20,
             paymentAmount: 9999999,
             paymentRecipient: paymentRecipient
         });
-        paymentParams = CollectPaymentParams({
+        paymentParams = Collect.CollectPaymentParams({
             paymentToken: address(erc20),
-            paymentType: PaymentType.ERC20,
+            paymentType: Collect.PaymentType.ERC20,
             paymentAmount: 9999999
         });
         ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
-        vm.expectRevert(CollectPaymentModulePaymentInsufficient.selector);
+        vm.expectRevert(Errors.CollectPaymentModule_PaymentInsufficient.selector);
         _collect(franchiseId, ipAssetId);
 
     }
@@ -257,19 +255,19 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         MockThrowingERC20 throwingERC20 = new MockThrowingERC20("Story Protocol Mock Token", "SP", 18, MockThrowingERC20.TransferBehavior.ReturnInvalidABI);
         vm.prank(collector);
         throwingERC20.mint(999999);
-        paymentInfo = CollectPaymentInfo({
+        paymentInfo = Collect.CollectPaymentInfo({
             paymentToken: address(throwingERC20),
-            paymentType: PaymentType.ERC20,
+            paymentType: Collect.PaymentType.ERC20,
             paymentAmount: 10,
             paymentRecipient: paymentRecipient
         });
-        paymentParams = CollectPaymentParams({
+        paymentParams = Collect.CollectPaymentParams({
             paymentToken: address(throwingERC20),
-            paymentType: PaymentType.ERC20,
+            paymentType: Collect.PaymentType.ERC20,
             paymentAmount: 10
         });
         ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
-        vm.expectRevert(CollectPaymentModuleERC20TransferInvalidABIEncoding.selector);
+        vm.expectRevert(Errors.CollectPaymentModule_ERC20TransferInvalidABIEncoding.selector);
         _collect(franchiseId, ipAssetId);
     }
 
@@ -278,19 +276,19 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         MockThrowingERC20 throwingERC20 = new MockThrowingERC20("Story Protocol Mock Token", "SP", 18, MockThrowingERC20.TransferBehavior.ReturnFalse);
         vm.prank(collector);
         throwingERC20.mint(999999);
-        paymentInfo = CollectPaymentInfo({
+        paymentInfo = Collect.CollectPaymentInfo({
             paymentToken: address(throwingERC20),
-            paymentType: PaymentType.ERC20,
+            paymentType: Collect.PaymentType.ERC20,
             paymentAmount: 10,
             paymentRecipient: paymentRecipient
         });
-        paymentParams = CollectPaymentParams({
+        paymentParams = Collect.CollectPaymentParams({
             paymentToken: address(throwingERC20),
-            paymentType: PaymentType.ERC20,
+            paymentType: Collect.PaymentType.ERC20,
             paymentAmount: 10
         });
         ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
-        vm.expectRevert(CollectPaymentModuleERC20TransferInvalidReturnValue.selector);
+        vm.expectRevert(Errors.CollectPaymentModule_ERC20TransferInvalidReturnValue.selector);
         _collect(franchiseId, ipAssetId);
     }
 
@@ -306,22 +304,22 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
 
     /// @notice Tests that payments without sufficient funds revert.
     function test_CollectPaymentModuleInsufficientFunds() public {
-        paymentInfo = CollectPaymentInfo({
+        paymentInfo = Collect.CollectPaymentInfo({
             paymentToken: address(0),
-            paymentType: PaymentType.NATIVE,
+            paymentType: Collect.PaymentType.NATIVE,
             paymentAmount: 10,
             paymentRecipient: paymentRecipient
         });
-        paymentParams = CollectPaymentParams({
+        paymentParams = Collect.CollectPaymentParams({
             paymentToken: address(0),
-            paymentType: PaymentType.NATIVE,
+            paymentType: Collect.PaymentType.NATIVE,
             paymentAmount: 10
         });
         ipAssetId = _createIpAsset(alice, 1, abi.encode(paymentInfo));
 
         vm.prank(collector);
-        vm.expectRevert(CollectPaymentModulePaymentInsufficient.selector);
-        collectModule.collect{value: 0}(CollectParams({
+        vm.expectRevert(Errors.CollectPaymentModule_PaymentInsufficient.selector);
+        collectModule.collect{value: 0}(Collect.CollectParams({
             franchiseId: franchiseId,
             ipAssetId: ipAssetId,
             collector: collector,
@@ -336,20 +334,20 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         delete paymentSets;
         paymentSets.push(
             CollectPaymentSet(
-                CollectPaymentInfo(address(0), PaymentType.NATIVE, 1 ether, alice),
-                CollectPaymentParams(address(0), PaymentType.NATIVE, 1 ether)
+                Collect.CollectPaymentInfo(address(0), Collect.PaymentType.NATIVE, 1 ether, alice),
+                Collect.CollectPaymentParams(address(0), Collect.PaymentType.NATIVE, 1 ether)
             )
         );
         paymentSets.push(
             CollectPaymentSet(
-                CollectPaymentInfo(address(erc20), PaymentType.ERC20, 10000, alice),
-                CollectPaymentParams(address(erc20), PaymentType.ERC20, 10000)
+                Collect.CollectPaymentInfo(address(erc20), Collect.PaymentType.ERC20, 10000, alice),
+                Collect.CollectPaymentParams(address(erc20), Collect.PaymentType.ERC20, 10000)
             )
         );
         paymentSets.push(
             CollectPaymentSet(
-                CollectPaymentInfo(address(weth), PaymentType.ERC20, 99, alice),
-                CollectPaymentParams(address(weth), PaymentType.ERC20, 99)
+                Collect.CollectPaymentInfo(address(weth), Collect.PaymentType.ERC20, 99, alice),
+                Collect.CollectPaymentParams(address(weth), Collect.PaymentType.ERC20, 99)
             )
         );
         return paymentSets;
@@ -360,14 +358,14 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         delete paymentSets;
         paymentSets.push(
             CollectPaymentSet(
-                CollectPaymentInfo(address(0), PaymentType.NATIVE, 1 ether, alice),
-                CollectPaymentParams(address(0), PaymentType.NATIVE, 1 ether)
+                Collect.CollectPaymentInfo(address(0), Collect.PaymentType.NATIVE, 1 ether, alice),
+                Collect.CollectPaymentParams(address(0), Collect.PaymentType.NATIVE, 1 ether)
             )
         );
         paymentSets.push(
             CollectPaymentSet(
-                CollectPaymentInfo(address(0), PaymentType.NATIVE, 99 ether, alice),
-                CollectPaymentParams(address(0), PaymentType.NATIVE, 99 ether)
+                Collect.CollectPaymentInfo(address(0), Collect.PaymentType.NATIVE, 99 ether, alice),
+                Collect.CollectPaymentParams(address(0), Collect.PaymentType.NATIVE, 99 ether)
             )
         );
         return paymentSets;
@@ -378,8 +376,8 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
         delete paymentSets;
         paymentSets.push(
             CollectPaymentSet(
-                CollectPaymentInfo(address(erc20), PaymentType.ERC20, 999, alice),
-                CollectPaymentParams(address(erc20), PaymentType.ERC20, 999)
+                Collect.CollectPaymentInfo(address(erc20), Collect.PaymentType.ERC20, 999, alice),
+                Collect.CollectPaymentParams(address(erc20), Collect.PaymentType.ERC20, 999)
             )
         );
         return paymentSets;
@@ -389,7 +387,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
     /// @param franchiseId The id of the franchise associated with the module.
     /// @param collectNftImpl Collect NFT impl address used for collecting.
     function _initCollectModule(uint256 franchiseId, address collectNftImpl) internal virtual override {
-        collectModule.initCollect(InitCollectParams({
+        collectModule.initCollect(Collect.InitCollectParams({
             franchiseId: franchiseId,
             ipAssetId: ipAssetId,
             collectNftImpl: collectNftImpl,
@@ -402,8 +400,8 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
     /// @param ipAssetId_ The id of the IP asset being collected.
     function _collect(uint256 franchiseId, uint256 ipAssetId_) internal virtual override returns (address, uint256) {
         vm.prank(collector);
-        if (paymentParams.paymentType == PaymentType.NATIVE) {
-            return collectModule.collect{value: paymentParams.paymentAmount}(CollectParams({
+        if (paymentParams.paymentType == Collect.PaymentType.NATIVE) {
+            return collectModule.collect{value: paymentParams.paymentAmount}(Collect.CollectParams({
                 franchiseId: franchiseId,
                 ipAssetId: ipAssetId_,
                 collector: collector,
@@ -412,7 +410,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest, ICollectPaymentM
                 collectNftData: ""
             }));
         }
-        return collectModule.collect(CollectParams({
+        return collectModule.collect(Collect.CollectParams({
             franchiseId: franchiseId,
             ipAssetId: ipAssetId_,
             collector: collector,

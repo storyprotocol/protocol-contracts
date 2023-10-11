@@ -2,11 +2,9 @@
 pragma solidity ^0.8.19;
 
 import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
-import { ZeroAddress, Unauthorized } from "contracts/errors/General.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-
-
 
 /// @title BaseTermsProcessor
 /// @notice Base contract for licensing terms processors, which encode, decode and execute the terms set on an IERC5218 license parameters,
@@ -22,13 +20,13 @@ abstract contract BaseTermsProcessor is ITermsProcessor, ERC165 {
 
     constructor(address authorizedExecutor_) {
         if (authorizedExecutor_ == address(0)) {
-            revert ZeroAddress();
+            revert Errors.ZeroAddress();
         }
         AUTHORIZED_EXECUTOR = authorizedExecutor_;
     }
 
     modifier onlyAuthorizedExecutor() {
-        if(msg.sender != AUTHORIZED_EXECUTOR) revert Unauthorized();
+        if(msg.sender != AUTHORIZED_EXECUTOR) revert Errors.Unauthorized();
         _;
     }
 

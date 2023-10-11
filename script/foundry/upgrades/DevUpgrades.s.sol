@@ -9,7 +9,6 @@ import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/modules/relationships/RelationshipModuleBase.sol";
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/access-control/ProtocolRoles.sol";
 import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
 import "contracts/ip-assets/IPAssetRegistry.sol";
 

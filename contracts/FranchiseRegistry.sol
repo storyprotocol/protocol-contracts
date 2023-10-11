@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
+import { Errors } from "contracts/lib/Errors.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { IPAssetRegistryFactory } from "./ip-assets/IPAssetRegistryFactory.sol";
 import { AccessControlledUpgradeable } from "./access-control/AccessControlledUpgradeable.sol";
-import { UPGRADER_ROLE } from "./access-control/ProtocolRoles.sol";
-import { ZeroAddress } from "./errors/General.sol";
 import { IVersioned } from "contracts/interfaces/utils/IVersioned.sol";
 import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -24,8 +24,8 @@ contract FranchiseRegistry is
         string symbol,
         string tokenURI
     );
-    error AlreadyRegistered();
 
+    /// TODO: Add franchise interface and place this in separate lib
     struct FranchiseCreationParams {
         string name;
         string symbol;
@@ -50,7 +50,7 @@ contract FranchiseRegistry is
     string private constant _VERSION = "0.1.0";
 
     constructor(address factory_) {
-        if (factory_ == address(0)) revert ZeroAddress();
+        if (factory_ == address(0)) revert Errors.ZeroAddress();
         FACTORY = IPAssetRegistryFactory(factory_);
         _disableInitializers();
     }
@@ -135,5 +135,6 @@ contract FranchiseRegistry is
 
     function _authorizeUpgrade(
         address newImplementation_
-    ) internal virtual override onlyRole(UPGRADER_ROLE) {}
+    ) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
+
 }

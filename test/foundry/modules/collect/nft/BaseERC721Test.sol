@@ -4,17 +4,17 @@ pragma solidity ^0.8.18;
 import "forge-std/Test.sol";
 
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { IERC721Events } from "contracts/interfaces/modules/collect/IERC721Events.sol";
-import { IERC721Errors } from "contracts/interfaces/modules/collect/nft/IERC721Errors.sol";
+import { IERC721Events } from "../../../interfaces/IERC721Events.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 import { MockCollectModuleERC721 } from "test/foundry/mocks/MockCollectModuleERC721.sol";
 import { BaseTestUtils } from "test/foundry/utils/BaseTestUtils.sol";
 import { MockERC721Receiver } from "test/foundry/mocks/MockERC721Receiver.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
 /// @title Collect Module Base ERC-721 Testing Utility Contract
 /// @notice Provides a set of reusable tests for ERC-721 implementations.
-contract BaseERC721Test is IERC721Errors, IERC721Events, BaseTestUtils {
+contract BaseERC721Test is IERC721Events, BaseTestUtils {
 
     // Custom event used to vet whether a receive was successful.
     event ERC721Received(address operator, address from, uint256 tokenId, bytes data);
@@ -79,7 +79,7 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, BaseTestUtils {
     ) internal stateless {
         vm.assume(operator != owner);
         vm.prank(operator);
-        vm.expectRevert(ERC721SenderUnauthorized.selector);
+        vm.expectRevert(Errors.ERC721_SenderUnauthorized.selector);
         erc721.approve(approved, tokenId);
     }
 
@@ -137,7 +137,7 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, BaseTestUtils {
         address,
         TransferType transferType
     ) internal stateless {
-        vm.expectRevert(ERC721ReceiverInvalid.selector);
+        vm.expectRevert(Errors.ERC721_ReceiverInvalid.selector);
         _transfer(transferType, erc721, owner, owner, address(0), tokenId);
     }
 
@@ -151,7 +151,7 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, BaseTestUtils {
         TransferType transferType
     ) internal stateless {
         vm.assume(owner != sender);
-        vm.expectRevert(ERC721OwnerInvalid.selector);
+        vm.expectRevert(Errors.ERC721_OwnerInvalid.selector);
         _transfer(transferType, erc721, sender, sender, receiver, tokenId);
     }
 
@@ -166,7 +166,7 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, BaseTestUtils {
     ) internal stateless {
         vm.assume(sender != owner);
         vm.assume(sender != address(0));
-        vm.expectRevert(ERC721SenderUnauthorized.selector);
+        vm.expectRevert(Errors.ERC721_SenderUnauthorized.selector);
         _transfer(transferType, erc721, sender, owner, receiver, tokenId);
     }
 
@@ -179,7 +179,7 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, BaseTestUtils {
         TransferType transferType
     ) internal stateless {
         MockERC721Receiver invalidReceiver = new MockERC721Receiver(0xDEADBEEF, false);
-        vm.expectRevert(ERC721SafeTransferUnsupported.selector);
+        vm.expectRevert(Errors.ERC721_SafeTransferUnsupported.selector);
         _transfer(transferType, erc721, owner, owner, address(invalidReceiver), tokenId);
     }
 
@@ -192,7 +192,7 @@ contract BaseERC721Test is IERC721Errors, IERC721Events, BaseTestUtils {
         TransferType transferType
     ) internal stateless {
         MockERC721Receiver invalidReceiver = new MockERC721Receiver(ERC721_RECEIVER_MAGIC_VALUE, true);
-        vm.expectRevert(ERC721SafeTransferUnsupported.selector);
+        vm.expectRevert(Errors.ERC721_SafeTransferUnsupported.selector);
         _transfer(transferType, erc721, owner, owner, address(invalidReceiver), tokenId);
     }
 
