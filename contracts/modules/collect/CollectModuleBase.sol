@@ -127,6 +127,17 @@ abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModu
         // Perform any additional collect module processing.
         _collect(collectParams_);
 
+        // Emit the Collect event.
+        emit Collected(
+            franchiseId,
+            ipAssetId,
+            collectParams_.collector,
+            collectNft,
+            collectNftId,
+            collectParams_.collectData,
+            collectParams_.collectNftData
+        );
+
         return (collectNft, collectNftId);
     }
 
@@ -174,6 +185,9 @@ abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModu
                 data: initData_
             }));
             $.collectInfo[franchiseId_][ipAssetId_].collectNft = collectNft;
+
+            // Emit the event indicating a new Collect NFT was created.
+            emit NewCollectNFT(franchiseId_, ipAssetId_, collectNft);
         }
         return collectNft;
     }

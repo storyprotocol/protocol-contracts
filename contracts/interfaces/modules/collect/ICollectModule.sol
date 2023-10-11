@@ -7,6 +7,26 @@ import { Collect } from "contracts/lib/modules/Collect.sol";
 /// @notice The collect module enables IP assets to be minted as NFTs mirroring
 ///         their binding IP assets in a franchise-configurable format.
 interface ICollectModule {
+
+    /// @dev Emits when a Collect action is invoked.
+    /// TODO: Once global IPs are supported, we can index the collect NFTs as well.
+    event Collected(
+        uint256 indexed franchiseid_,
+        uint256 indexed ipAssetId_,
+        address indexed collector_,
+        address collectNft_,
+        uint256 collectNftId_,
+        bytes collectData_,
+        bytes collectNftData_
+    );
+
+    /// @dev Emits when a new collect NFT is deployed.
+    event NewCollectNFT(
+        uint256 indexed franchiseId_,
+        uint256 indexed ipAssetId_,
+        address collectNFT_
+    );
+
     /// @notice Initializes the collect module for a specific IP asset.
     /// @param initCollectParams_ Collect module init data, including IP   asset
     ///        id, collect NFT impl address, and generic unformatted init data.
