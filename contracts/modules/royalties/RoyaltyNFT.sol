@@ -98,28 +98,6 @@ contract RoyaltyNFT is ERC1155Supply {
         );
     }
 
-    function _afterTokenTransfer(
-        address,
-        address from_,
-        address to_,
-        uint256[] memory ids_,
-        uint256[] memory,
-        bytes memory
-    ) internal virtual override {
-        for (uint256 i = 0; i < ids_.length; ++i) {
-            bytes32 indexTo = keccak256(abi.encode(ids_[i], to_));
-            if (from_ == address(0) || balanceOf(from_, ids_[i]) != 0) {
-                ownerIndexes[indexTo] = owners[ids_[i]].length;
-                owners[ids_[i]].push(to_);
-            } else {
-                bytes32 indexFrom = keccak256(abi.encode(ids_[i], from_));
-                owners[ids_[i]][ownerIndexes[indexFrom]] = to_;
-                ownerIndexes[indexTo] = ownerIndexes[indexFrom];
-                delete ownerIndexes[indexFrom];
-            }
-        }
-    }
-
     function uri(uint256) public view override returns (string memory) {
         return string.concat(
             "data:application/json;base64,",
@@ -145,6 +123,28 @@ contract RoyaltyNFT is ERC1155Supply {
 
     function toTokenId(address sourceAccount_) public pure returns (uint256 tokenId) {
         tokenId = uint256(uint160(sourceAccount_));
+    }
+
+    function _afterTokenTransfer(
+        address,
+        address from_,
+        address to_,
+        uint256[] memory ids_,
+        uint256[] memory,
+        bytes memory
+    ) internal virtual override {
+        for (uint256 i = 0; i < ids_.length; ++i) {
+            bytes32 indexTo = keccak256(abi.encode(ids_[i], to_));
+            if (from_ == address(0) || balanceOf(from_, ids_[i]) != 0) {
+                ownerIndexes[indexTo] = owners[ids_[i]].length;
+                owners[ids_[i]].push(to_);
+            } else {
+                bytes32 indexFrom = keccak256(abi.encode(ids_[i], from_));
+                owners[ids_[i]][ownerIndexes[indexFrom]] = to_;
+                ownerIndexes[indexTo] = ownerIndexes[indexFrom];
+                delete ownerIndexes[indexFrom];
+            }
+        }
     }
 
     function _getSum(uint32[] calldata numbers_) internal pure returns (uint32 sum) {

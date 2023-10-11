@@ -19,12 +19,11 @@ abstract contract IPAssetDataManager is Initializable, IIPAssetDataManager {
 
     function __IPAssetData_init() public initializer {}
 
-    function _getIPAssetDataStorage() private pure returns (IPAssetDataStorage storage $) {
-        assembly {
-            $.slot := _STORAGE_LOCATION
-        }
+    function readIPAsset(uint256 ipAssetId_) public view returns (IPAssetData memory) {
+        IPAssetDataStorage storage $ = _getIPAssetDataStorage();
+        return $.ipAssetsData[ipAssetId_];
     }
-    
+
     function _writeIPAsset(
         uint256 ipAssetId_,
         string calldata name_,
@@ -43,9 +42,10 @@ abstract contract IPAssetDataManager is Initializable, IIPAssetDataManager {
         return ipAsseData.blockType;
     }
 
-    function readIPAsset(uint256 ipAssetId_) public view returns (IPAssetData memory) {
-        IPAssetDataStorage storage $ = _getIPAssetDataStorage();
-        return $.ipAssetsData[ipAssetId_];
+    function _getIPAssetDataStorage() private pure returns (IPAssetDataStorage storage $) {
+        assembly {
+            $.slot := _STORAGE_LOCATION
+        }
     }
     
 }

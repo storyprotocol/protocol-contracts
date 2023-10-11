@@ -13,8 +13,6 @@ interface IIPAssetRegistry is
     IERC5218,
     IIPAssetDataManager
 {
-    function franchiseId() external view returns (uint256);
-
     function createIpAsset(
         IPAsset.IPAssetType ipAsset_,
         string calldata name_,
@@ -23,4 +21,6 @@ interface IIPAssetRegistry is
         address to_,
         uint256 parentIpAssetId_
     ) external returns (uint256);
+
+    function franchiseId() external view returns (uint256);
 }

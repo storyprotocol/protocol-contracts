@@ -30,40 +30,6 @@ abstract contract AccessControlledUpgradeable is UUPSUpgradeable, IAccessControl
         _;
     }
 
-    /// @notice Initializer method, access point to initialize inheritance tree.
-    /// @param accessControl_ address of AccessManager.
-    function __AccessControlledUpgradeable_init(
-        address accessControl_
-    ) internal initializer {
-        if (!accessControl_.supportsInterface(type(IAccessControl).interfaceId))
-            revert Errors.UnsupportedInterface("IAccessControl");
-        AccessControlledStorage storage $ = _getAccessControlledUpgradeable();
-        $.accessControl = IAccessControl(accessControl_);
-        emit AccessControlUpdated(accessControl_);
-    }
-
-    function _getAccessControlledUpgradeable()
-        private
-        pure
-        returns (AccessControlledStorage storage $)
-    {
-        assembly {
-            $.slot := _STORAGE_LOCATION
-        }
-    }
-
-    /// @notice Checks if `account has `role` assigned.
-    /// @param role_ the role to be tested, defined in Roles.sol and set in AccessManager instance.
-    /// @param account_ the address to be tested for the role.
-    /// @return return true if account has role, false otherwise.
-    function hasRole(
-        bytes32 role_,
-        address account_
-    ) internal view returns (bool) {
-        AccessControlledStorage storage $ = _getAccessControlledUpgradeable();
-        return $.accessControl.hasRole(role_, account_);
-    }
-
     /// @notice Sets AccessManager instance. Restricted to PROTOCOL_ADMIN_ROLE
     /// @param accessControl_ address of the new instance of AccessControlSingleton.
     function setAccessControl(
@@ -79,5 +45,39 @@ abstract contract AccessControlledUpgradeable is UUPSUpgradeable, IAccessControl
     function getAccessControl() public view returns (address) {
         AccessControlledStorage storage $ = _getAccessControlledUpgradeable();
         return address($.accessControl);
+    }
+
+    /// @notice Initializer method, access point to initialize inheritance tree.
+    /// @param accessControl_ address of AccessManager.
+    function __AccessControlledUpgradeable_init(
+        address accessControl_
+    ) internal initializer {
+        if (!accessControl_.supportsInterface(type(IAccessControl).interfaceId))
+            revert Errors.UnsupportedInterface("IAccessControl");
+        AccessControlledStorage storage $ = _getAccessControlledUpgradeable();
+        $.accessControl = IAccessControl(accessControl_);
+        emit AccessControlUpdated(accessControl_);
+    }
+
+    /// @notice Checks if `account has `role` assigned.
+    /// @param role_ the role to be tested, defined in Roles.sol and set in AccessManager instance.
+    /// @param account_ the address to be tested for the role.
+    /// @return return true if account has role, false otherwise.
+    function hasRole(
+        bytes32 role_,
+        address account_
+    ) internal view returns (bool) {
+        AccessControlledStorage storage $ = _getAccessControlledUpgradeable();
+        return $.accessControl.hasRole(role_, account_);
+    }
+
+    function _getAccessControlledUpgradeable()
+        private
+        pure
+        returns (AccessControlledStorage storage $)
+    {
+        assembly {
+            $.slot := _STORAGE_LOCATION
+        }
     }
 }

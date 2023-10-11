@@ -25,32 +25,29 @@ contract IPAccountImpl is IERC165, IIPAccount, IERC1271 {
 
     receive() external payable {}
 
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) external pure returns (bool) {
-        return (interfaceId_ == type(IERC6551Account).interfaceId ||
-            interfaceId_ == type(IERC1155Receiver).interfaceId ||
-            interfaceId_ == type(IERC721Receiver).interfaceId ||
-            interfaceId_ == type(IERC165).interfaceId);
+    /// @dev {See IIPAccount-safeTransferFrom}
+    function safeTransferFrom(
+        address nftContract_,
+        address from_,
+        address to_,
+        uint256 tokenId_
+    ) external {
+        if (!_isValidSigner(msg.sender)) revert Errors.IPAccountImpl_CallerNotOwner();
+        ++state;
+        IERC721(nftContract_).safeTransferFrom(from_, to_, tokenId_);
     }
 
-    /// @dev {See IERC6551Account-token}
-    function token() public view override returns (uint256, address, uint256) {
-        bytes memory footer = new bytes(0x60);
-        // 0x4d = 77 bytes (ERC-1167 Header, address, ERC-1167 Footer, salt)
-        // 0x60 = 96 bytes (chainId, tokenContract, tokenId)
-        //    ERC-1167 Header               (10 bytes)
-        //    <implementation (address)>    (20 bytes)
-        //    ERC-1167 Footer               (15 bytes)
-        //    <salt (uint256)>              (32 bytes)
-        //    <chainId (uint256)>           (32 bytes)
-        //    <tokenContract (address)>     (32 bytes)
-        //    <tokenId (uint256)>           (32 bytes)
-        assembly {
-            extcodecopy(address(), add(footer, 0x20), 0x4d, 0x60)
-        }
-
-        return abi.decode(footer, (uint256, address, uint256));
+    // TODO: authorization check that only the royaltyDistributor can call this function
+    function sendRoyaltyForDistribution(
+        address distributor_,
+        address erc20_
+    ) external {
+        IERC20(erc20_).safeTransfer(
+            distributor_,
+            IERC20(erc20_).balanceOf(address(this)) +
+            withdrawn[erc20_] -
+            entitled[erc20_]
+        );
     }
 
     function isValidSignature(
@@ -81,6 +78,34 @@ contract IPAccountImpl is IERC165, IIPAccount, IERC1271 {
         return bytes4(0);
     }
 
+    function supportsInterface(
+        bytes4 interfaceId_
+    ) external pure returns (bool) {
+        return (interfaceId_ == type(IERC6551Account).interfaceId ||
+            interfaceId_ == type(IERC1155Receiver).interfaceId ||
+            interfaceId_ == type(IERC721Receiver).interfaceId ||
+            interfaceId_ == type(IERC165).interfaceId);
+    }
+
+    /// @dev {See IERC6551Account-token}
+    function token() public view override returns (uint256, address, uint256) {
+        bytes memory footer = new bytes(0x60);
+        // 0x4d = 77 bytes (ERC-1167 Header, address, ERC-1167 Footer, salt)
+        // 0x60 = 96 bytes (chainId, tokenContract, tokenId)
+        //    ERC-1167 Header               (10 bytes)
+        //    <implementation (address)>    (20 bytes)
+        //    ERC-1167 Footer               (15 bytes)
+        //    <salt (uint256)>              (32 bytes)
+        //    <chainId (uint256)>           (32 bytes)
+        //    <tokenContract (address)>     (32 bytes)
+        //    <tokenId (uint256)>           (32 bytes)
+        assembly {
+            extcodecopy(address(), add(footer, 0x20), 0x4d, 0x60)
+        }
+
+        return abi.decode(footer, (uint256, address, uint256));
+    }
+
     function owner() public view returns (address) {
         (uint256 chainId, address contractAddress, uint256 tokenId) = token();
         if (chainId != block.chainid) return address(0);
@@ -89,31 +114,6 @@ contract IPAccountImpl is IERC165, IIPAccount, IERC1271 {
 
     function _isValidSigner(address signer_) internal view returns (bool) {
         return signer_ == owner();
-    }
-
-    /// @dev {See IIPAccount-safeTransferFrom}
-    function safeTransferFrom(
-        address nftContract_,
-        address from_,
-        address to_,
-        uint256 tokenId_
-    ) external {
-        if (!_isValidSigner(msg.sender)) revert Errors.IPAccountImpl_CallerNotOwner();
-        ++state;
-        IERC721(nftContract_).safeTransferFrom(from_, to_, tokenId_);
-    }
-
-    // TODO: authorization check that only the royaltyDistributor can call this function
-    function sendRoyaltyForDistribution(
-        address distributor_,
-        address erc20_
-    ) external {
-        IERC20(erc20_).safeTransfer(
-            distributor_,
-            IERC20(erc20_).balanceOf(address(this)) +
-                withdrawn[erc20_] -
-                entitled[erc20_]
-        );
     }
 
     function onERC721Received(

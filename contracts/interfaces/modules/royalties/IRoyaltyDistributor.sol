@@ -49,12 +49,6 @@ interface IRoyaltyDistributor {
     /// @param data_ The initial data of the royalty distribution policy.
     function setRoyaltyPolicy(address nftContract_, uint256 tokenId_, address royaltyPolicy_, bytes calldata data_) external;
 
-    /// @notice Get royalty policy for specified IP Asset.
-    /// @param nftContract_ address of NFT collection contract.
-    /// @param tokenId_ The NFT token Id of NFT collection contract.
-    /// @return  The address of royalty distribution policy.
-    function getRoyaltyPolicy(address nftContract_, uint256 tokenId_) external view returns (address);
-
     /// @notice update royalty distribution plan for given IP Asset.
     /// @param nftContract_ address of NFT collection contract.
     /// @param tokenId_ The NFT token Id of NFT collection contract.
@@ -76,4 +70,10 @@ interface IRoyaltyDistributor {
 
     /// @notice unpause the royalty distribution.
     function unpause() external;
+
+    /// @notice Get royalty policy for specified IP Asset.
+    /// @param nftContract_ address of NFT collection contract.
+    /// @param tokenId_ The NFT token Id of NFT collection contract.
+    /// @return  The address of royalty distribution policy.
+    function getRoyaltyPolicy(address nftContract_, uint256 tokenId_) external view returns (address);
 }

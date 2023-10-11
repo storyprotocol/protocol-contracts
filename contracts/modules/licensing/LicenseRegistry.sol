@@ -33,10 +33,22 @@ contract LicenseRegistry is ILicenseRegistry, ERC721 {
         _mint(to_, tokenId_);
     }
 
+    function getRightsManager() external view override returns (address) {
+        return address(_RIGHTS_MANAGER);
+    }
+
     function exists(uint256 tokenId_) external view returns (bool) {
         return _exists(tokenId_);
     }
-    
+
+    function name() public view override(ERC721, ILicenseRegistry) returns (string memory) {
+        return super.name();
+    }
+
+    function symbol() public view override(ERC721, ILicenseRegistry) returns (string memory) {
+        return super.symbol();
+    }
+
     function _beforeTokenTransfer(
         address from_,
         address to_,
@@ -49,17 +61,4 @@ contract LicenseRegistry is ILicenseRegistry, ERC721 {
         }
         super._beforeTokenTransfer(from_, to_, firstTokenId_, batchSize_);
     }
-
-    function getRightsManager() external view override returns (address) {
-        return address(_RIGHTS_MANAGER);
-    }
-
-    function name() public view override(ERC721, ILicenseRegistry) returns (string memory) {
-        return super.name();
-    }
-    
-    function symbol() public view override(ERC721, ILicenseRegistry) returns (string memory) {
-        return super.symbol();
-    }
-
 }

@@ -33,14 +33,6 @@ contract RoyaltyDistributor is Pausable, IRoyaltyDistributor, AccessControlledUp
         IRoyaltyPolicy(royaltyPolicy_).initPolicy(ipAccount, data_);
     }
 
-    function getRoyaltyPolicy(
-        address nftContract_,
-        uint256 tokenId_
-    ) external view returns (address) {
-        address ipAccount = _ipAccount(nftContract_, tokenId_);
-        return policies[ipAccount];
-    }
-
     function updateDistribution(
         address nftContract_,
         uint256 tokenId_,
@@ -66,12 +58,19 @@ contract RoyaltyDistributor is Pausable, IRoyaltyDistributor, AccessControlledUp
         _unpause();
     }
 
-    function _ipAccount(address nftContract_, uint256 tokenId_) internal view returns(address) {
-        return ipAccountRegistry.account(block.chainid, nftContract_, tokenId_);
+    function getRoyaltyPolicy(
+        address nftContract_,
+        uint256 tokenId_
+    ) external view returns (address) {
+        address ipAccount = _ipAccount(nftContract_, tokenId_);
+        return policies[ipAccount];
     }
 
     function _authorizeUpgrade(
         address newImplementation_
     ) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
 
+    function _ipAccount(address nftContract_, uint256 tokenId_) internal view returns(address) {
+        return ipAccountRegistry.account(block.chainid, nftContract_, tokenId_);
+    }
 }

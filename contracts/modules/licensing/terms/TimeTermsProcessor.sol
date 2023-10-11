@@ -19,6 +19,12 @@ contract TimeTermsProcessor is BaseTermsProcessor {
 
     constructor(address authorizedExecutor_) BaseTermsProcessor(authorizedExecutor_) {}
 
+    /// returns true if the current block.timestamp is within the start and start + ttl, false otherwise
+    function termsExecutedSuccessfully(bytes calldata data_) external view override returns (bool) {
+        LibDuration.TimeConfig memory config = abi.decode(data_, (LibDuration.TimeConfig));
+        return config.isActive();
+    }
+
     /// If startTime is not set, set it to block.timestamp and return the new encoded data. If startTime is set, return the same data.
     function _executeTerms(bytes calldata data_) internal virtual override returns (bytes memory newData) {
         LibDuration.TimeConfig memory config = abi.decode(data_, (LibDuration.TimeConfig));
@@ -27,11 +33,4 @@ contract TimeTermsProcessor is BaseTermsProcessor {
         }
         return abi.encode(config);
     }
-
-    /// returns true if the current block.timestamp is within the start and start + ttl, false otherwise
-    function termsExecutedSuccessfully(bytes calldata data_) external view override returns (bool) {
-        LibDuration.TimeConfig memory config = abi.decode(data_, (LibDuration.TimeConfig));
-        return config.isActive();
-    }
-
 }

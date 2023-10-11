@@ -37,23 +37,6 @@ contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
         _disableInitializers();
     }
 
-    function initialize(address accessControl_, string calldata nonCommercialLicenseUri_) public initializer {
-        __AccessControlledUpgradeable_init(accessControl_);
-        _getLicensingModuleStorage().nonCommercialLicenseURI = nonCommercialLicenseUri_;
-    }
-
-    function _getLicensingModuleStorage() internal pure returns (LicensingModuleStorage storage $) {
-        bytes32 position = _STORAGE_LOCATION;
-        assembly {
-            $.slot := position
-        }
-    }
-
-    function getNonCommercialLicenseURI() public view returns (string memory) {
-        return _getLicensingModuleStorage().nonCommercialLicenseURI;
-    }
-
-    
     /// Set the URI for non-commercial licenses across Story Protocol. Setting this does NOT affect existing licenses, only new ones.
     /// @param nonCommercialLicenseURI_ The URI to set for non-commercial licenses
     function setNonCommercialLicenseURI(string calldata nonCommercialLicenseURI_) external onlyRole(AccessControl.LICENSING_MANAGER_ROLE) {
@@ -61,7 +44,7 @@ contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
         emit NonCommercialLicenseUriSet(nonCommercialLicenseURI_);
     }
 
-    
+
     /// Set the FranchiseConfig for a Franchise, configuring its licensing framework.
     /// @dev if setting root licenses, they should be active. A revoker address must be set, and it will be
     /// common for all licenses in the Franchise.
@@ -81,6 +64,23 @@ contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
         emit FranchiseConfigSet(franchiseId_, config_);
     }
 
+    function initialize(address accessControl_, string calldata nonCommercialLicenseUri_) public initializer {
+        __AccessControlledUpgradeable_init(accessControl_);
+        _getLicensingModuleStorage().nonCommercialLicenseURI = nonCommercialLicenseUri_;
+    }
+
+    function getNonCommercialLicenseURI() public view returns (string memory) {
+        return _getLicensingModuleStorage().nonCommercialLicenseURI;
+    }
+
+    function getFranchiseConfig(uint256 franchiseId_) public view returns (Licensing.FranchiseConfig memory) {
+        return _getLicensingModuleStorage().franchiseConfigs[franchiseId_];
+    }
+
+    function _authorizeUpgrade(
+        address newImplementation_
+    ) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
+
     function _verifyRootLicense(uint256 franchiseId_, uint256 rootLicenseId_) internal view {
         if (rootLicenseId_ != 0) {
             IERC5218 rightsManager = IERC5218(FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId_));
@@ -95,11 +95,10 @@ contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
         }
     }
 
-    function getFranchiseConfig(uint256 franchiseId_) public view returns (Licensing.FranchiseConfig memory) {
-        return _getLicensingModuleStorage().franchiseConfigs[franchiseId_];
+    function _getLicensingModuleStorage() internal pure returns (LicensingModuleStorage storage $) {
+        bytes32 position = _STORAGE_LOCATION;
+        assembly {
+            $.slot := position
+        }
     }
-
-    function _authorizeUpgrade(
-        address newImplementation_
-    ) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
 }
