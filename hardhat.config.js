@@ -10,6 +10,7 @@ require("@nomiclabs/hardhat-etherscan");
 require('@openzeppelin/hardhat-upgrades');
 
 const createFranchise = require("./script/hardhat/createFranchise.js");
+const configureFranchiseLicensing = require("./script/hardhat/configureFranchiseLicensing.js");
 const createIPAsset = require("./script/hardhat/createIPAsset.js");
 const getIPAssetRegistryAddress = require("./script/hardhat/getIPAssetRegistryAddress.js");
 const getIPAsset = require("./script/hardhat/getIPAsset.js");
@@ -35,6 +36,19 @@ task('sp:create-franchise')
     .addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
     .setDescription('Mint Franchise NFT and create IPAssetsRegistry contract')
     .setAction(createFranchise);
+
+task('sp:configure-franchise-licensing')
+    .addPositionalParam('franchiseId', 'Id of the Franchise to configure licensing for, as given by FranchiseRegistry contract')
+    .addPositionalParam('nonCommercialCanSublicense', 'If false, ipAssets cannot have children IPAsset')
+    .addPositionalParam('nonCommercialRootLicenseId', 'If set, root IPAsset licenses will have this as their non commercial parentLicenseId')
+    .addPositionalParam('commercialCanSublicense', 'If false, this IPAsset cannot be parentLicenseId of any other commercial IPAsset')
+    .addPositionalParam('commercialRootLicenseId', 'If set, root IPAsset licenses will have this as their non commercial parentLicenseId')
+    .addPositionalParam('rootIpAssetHasCommercialRights', 'If true, root IPAsset licenses will have commercial rights')
+    .addPositionalParam('revoker', 'Address that can revoke licenses')
+    .addPositionalParam('commercialLicenseUri', 'URI for commercial license terms')
+    .addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
+    .setDescription('Configure licensing for a Franchise')
+    .setAction(configureFranchiseLicensing);
 
 task('sp:get-ip-asset-registry-address')
     .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Asset in, as given by FranchiseRegistry contract')

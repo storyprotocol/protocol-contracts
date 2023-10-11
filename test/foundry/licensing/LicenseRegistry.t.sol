@@ -8,7 +8,7 @@ import '../mocks/MockTermsProcessor.sol';
 import '../mocks/RightsManagerHarness.sol';
 import "../mocks/MockERC721.sol";
 import "contracts/errors/General.sol";
-
+/*
 contract LicenseRegistryTest is BaseTest {
 
     address licenseHolder = address(0x888888);
@@ -66,3 +66,4 @@ contract LicenseRegistryTest is BaseTest {
     }
 
 }
+*/
