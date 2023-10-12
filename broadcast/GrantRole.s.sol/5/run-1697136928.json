@@ -1,0 +1,39 @@
+{
+  "transactions": [
+    {
+      "hash": "0x19986ffc0c641ee380a6e4d049f8f8c75b15f4318e6b6e0961e473d76ec67fac",
+      "transactionType": "CALL",
+      "contractName": null,
+      "contractAddress": "0x3b698f6Ea479672d5fF21D6bc352a2de477a6c64",
+      "function": "grantRole(bytes32,address)",
+      "arguments": [
+        "0x637821dcee84aabec9c8cf4f6f643013a24ad27fd41511ffd937aea80d8619a9",
+        "0xB6288e57bf7406B35ab4F70Fd1135E907107e386"
+      ],
+      "rpc": "https://eth-goerli.g.alchemy.com/v2/7WyRjkZW0XJmt7tb4OqO9YTp5z_iVl-o",
+      "transaction": {
+        "type": "0x02",
+        "from": "0xb6288e57bf7406b35ab4f70fd1135e907107e386",
+        "to": "0x3b698f6ea479672d5ff21d6bc352a2de477a6c64",
+        "gas": "0x12f1f",
+        "value": "0x0",
+        "data": "0x2f2ff15d637821dcee84aabec9c8cf4f6f643013a24ad27fd41511ffd937aea80d8619a9000000000000000000000000b6288e57bf7406b35ab4f70fd1135e907107e386",
+        "nonce": "0x6e",
+        "accessList": []
+      },
+      "additionalContracts": [],
+      "isFixedGasLimit": false
+    }
+  ],
+  "receipts": [],
+  "libraries": [],
+  "pending": [
+    "0x19986ffc0c641ee380a6e4d049f8f8c75b15f4318e6b6e0961e473d76ec67fac"
+  ],
+  "path": "/Users/drmanhattan/Workspace/StoryProtocol/protocol-contracts/broadcast/GrantRole.s.sol/5/run-latest.json",
+  "returns": {},
+  "timestamp": 1697136928,
+  "chain": 5,
+  "multi": false,
+  "commit": "5bd60a5"
+}
