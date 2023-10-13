@@ -21,10 +21,10 @@
     "RoyaltyNFT": "0x3b2b13A69f2552E1ECfe8f8efb47C802AF1B35EB"
   },
   "relationship-processors": {
-    "DstOwnerRelationshipProcessor": "0x2890a4263BA12c6d6241CfC5c8D762B828041b86",
-    "PermissionlessRelationshipProcessor": "0xA5ee53c74f75bB4A149c55d8A24E5dF563897B0f",
-    "SrcDstOwnerRelationshipProcessor": "0xc6e3e7844E103116E3CA06aae3a02fde908F7c1a",
-    "SrcOwnerRelationshipProcessor": "0x5183ac89c1C9DeAADF856eED897fCd138C3083e2",
-    "SrcRequestOrDstOwnerRelationshipProcessor": "0x5C10cC663aE967877dE42572a5FD9B823321F0F4"
+    "DstOwnerRelationshipProcessor": "0x6F1364fcA44fCf2d96ECD8b2303E6B27d9f279B6",
+    "PermissionlessRelationshipProcessor": "0x379694d591cD310C3610EDb3D8D5CD625cA013a2",
+    "SrcDstOwnerRelationshipProcessor": "0x825Cb59b351e2cB35885e27d5C0F846F6ec09335",
+    "SrcOwnerRelationshipProcessor": "0x976E1CbC6EE716c16dB8fBA48026b40fc0052C0c",
+    "SrcRequestOrDstOwnerRelationshipProcessor": "0xfC367bb4047D7621B998C536E54Fa88838A6ACA9"
   }
 }
