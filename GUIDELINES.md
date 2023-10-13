@@ -18,6 +18,13 @@ The test suite coverage must be kept as close to 100% as possible, enforced in p
 
 Test should use Foundry, unless for some reason js or hardhat are needed (for example, upgrades).
 
+The test function names will follow
+
+```
+- test_contextCamel_descriptionOfTheTestCamel
+- context = method name, contract or functionality.
+```
+
 In some cases unit tests may be insufficient and complementary techniques should be used:
 
 1. Property-based tests (aka. fuzzing) for math-heavy code.
@@ -40,7 +47,7 @@ Modularity should be pursued, but not at the cost of the above priorities.
 
 For contributors, project guidelines and processes must be documented publicly.
 
-Every method and contract must have Natspec
+Every method and contract must have Natspec, using the `///` flavour always.
 
 For users, features must be abundantly documented. Documentation should include answers to common questions, solutions to common problems, and recommendations for critical decisions that the user may face.
 
@@ -77,7 +84,7 @@ Pull requests are squash-merged to keep the `main` branch history clean. The tit
 
 We welcome conventional commits, with prefixes the title with "fix:" or "feat:".
 
-Work in progress pull requests should be submitted as Drafts and should not be prefixed with "WIP:".
+Work in progress pull requests should be submitted as Drafts and should **not** be prefixed with "WIP:".
 
 Branch names don't matter, and commit messages within a pull request mostly don't matter either, although they can help the review process.
 
@@ -120,7 +127,9 @@ In addition to the official Solidity Style Guide we have a number of other conve
   interface IERC777 {
   ```
 
-* Group contracts by functionality within folders if possible. 
+* Group contracts by functionality within folders if possible.
+  
+* Interfaces should go inside the `interface` folder, mirroring the folder structure of the implementations
 
 * Folder names must be lowercase, hyphen separated.
 
@@ -134,4 +143,24 @@ In addition to the official Solidity Style Guide we have a number of other conve
   ExampleContract.sol
   ```
 
+* Acronyms should be
+  * Uppercase all if in contract name (`UUPSUpgradeable`, `IPAsset`)
+  * Camelcase in properties and function names (`ipAssetId`), except if they are defined otherwise in external contracts or interfaces (`tokenURI`)
+
 * Unchecked arithmetic blocks should contain comments explaining why overflow is guaranteed not to happen. If the reason is immediately apparent from the line above the unchecked block, the comment may be omitted.
+
+* Interfaces should contain methods an events. Structs showing in an interface should be grouped in a library
+
+* Function parameter names will have the **suffix** `_`
+  
+*  Naming conventions
+  - Contract: CamelCase (adjectiveNoun)
+  - Struct (noun)
+  - Event (past-tense)
+  - Function Name (verb noun)
+    - local variable (noun / compound noun)
+        - Booleans (use `isXXX`)
+        - `isValid`
+        - `valid`
+    - Modifier (prepositionNoun)
+        - `onlyOwner`
