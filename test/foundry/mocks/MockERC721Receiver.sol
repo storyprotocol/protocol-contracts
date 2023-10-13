@@ -3,12 +3,12 @@ pragma solidity ^0.8.18;
 
 import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 
-import { IERC721Events } from "contracts/interfaces/modules/collect/IERC721Events.sol";
-import { IERC721Errors } from "contracts/interfaces/modules/collect/nft/IERC721Errors.sol";
+import { IERC721Events } from "../interfaces/IERC721Events.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
 /// @title Mock ERC-721 Receiver
 /// @notice This contract is used to test ERC-721 safe transfers.
-contract MockERC721Receiver is IERC721Receiver, IERC721Errors, IERC721Events {
+contract MockERC721Receiver is IERC721Receiver, IERC721Events {
 
     /// @notice Custom event used to vet whether a receive was successful.
     event ERC721Received(address operator, address from, uint256 tokenId, bytes data);
@@ -39,7 +39,7 @@ contract MockERC721Receiver is IERC721Receiver, IERC721Errors, IERC721Events {
         bytes memory data
     ) public override returns (bytes4) {
         if (_throws) {
-            revert ERC721SafeTransferUnsupported();
+            revert Errors.ERC721_SafeTransferUnsupported();
         }
         emit ERC721Received(operator, from, tokenId, data);
         return _retval;

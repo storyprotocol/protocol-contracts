@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 
+import { Errors } from "contracts/lib/Errors.sol";
 import "contracts/ip-accounts/IPAccountRegistry.sol";
 import "test/foundry/mocks/MockIPAccount.sol";
 
@@ -48,7 +49,7 @@ contract RegistryTest is Test {
     }
 
     function test_revert_createAccount_ifInitFailed() public {
-        vm.expectRevert(IpAccountInitializationFailed.selector);
+        vm.expectRevert(Errors.IPAccountRegistry_InitializationFailed.selector);
         registry.createAccount(
             chainId,
             tokenAddress,

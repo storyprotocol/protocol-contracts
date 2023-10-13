@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 
 import { RelationshipModuleBase } from "./RelationshipModuleBase.sol";
-import { UPGRADER_ROLE, RELATIONSHIP_MANAGER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
-
+import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { Relationship } from "contracts/lib/modules/Relationship.sol";
 
 /// @title ProtocolRelationshipModule
 /// @dev Implementation of RelationshipModuleBase that allows relationship configs that will be used protocol wide.
@@ -20,17 +20,17 @@ contract ProtocolRelationshipModule is RelationshipModuleBase {
     }
 
     /********* Setting Relationships *********/
-    function setRelationshipConfig(string calldata name_, SetRelationshipConfigParams calldata params_) external onlyRole(RELATIONSHIP_MANAGER_ROLE) returns (bytes32 relationshipId) {
+    function setRelationshipConfig(string calldata name_, Relationship.SetRelationshipConfigParams calldata params_) external onlyRole(AccessControl.RELATIONSHIP_MANAGER_ROLE) returns (bytes32 relationshipId) {
         return _setRelationshipConfig(name_, params_);
     }
 
-    function unsetRelationshipConfig(bytes32 relationshipId_) external onlyRole(RELATIONSHIP_MANAGER_ROLE) {
+    function unsetRelationshipConfig(bytes32 relationshipId_) external onlyRole(AccessControl.RELATIONSHIP_MANAGER_ROLE) {
         _unsetRelationshipConfig(relationshipId_);
     }
 
 
     function _authorizeUpgrade(
         address newImplementation_
-    ) internal virtual override onlyRole(UPGRADER_ROLE) {}
+    ) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
 
 }

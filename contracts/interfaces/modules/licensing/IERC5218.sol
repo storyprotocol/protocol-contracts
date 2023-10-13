@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import { IERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
+import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 /// @title ERC-5218: NFT Rights Management
 interface IERC5218 is IERC721Upgradeable {
@@ -34,10 +35,56 @@ interface IERC5218 is IERC721Upgradeable {
     ///  `transfer` function call.
     event TransferLicense(uint256 _licenseId, address _licenseHolder);
 
-    struct TermsProcessorConfig {
-        ITermsProcessor processor;
-        bytes data;
-    }
+
+    /// @notice Create a new license.
+    /// @dev Throws unless the NFT `_tokenId` exists. Throws unless the parent
+    ///  license `_parentLicenseId` is active, or `_parentLicenseId` is a special
+    ///  identifier not referring to any license (such as 0) and the NFT
+    ///  `_tokenId` doesn't have a root license tethered to it. Throws unless the
+    ///  message sender is eligible to create the license, i.e., either the
+    ///  license to be created is a root license and `msg.sender` is the NFT owner,
+    ///  or the license to be created is a sublicense and `msg.sender` is the holder
+    ///  of the parent license.
+    /// @param _tokenId The identifier for the NFT the license is issued upon
+    /// @param _parentLicenseId The identifier for the parent license
+    /// @param _licenseHolder The address of the license holder
+    /// @param _uri The URI of the license terms
+    /// @param _revoker The revoker address
+    /// @param _commercial Whether the license granted is commercial or non commercial
+    /// @param _canSublicense Whether the license holder can sublicense the license
+    /// @param _terms The license terms
+    /// @return The identifier of the created license
+    function createLicense(
+        uint256 _tokenId,
+        uint256 _parentLicenseId,
+        address _licenseHolder,
+        string memory _uri,
+        address _revoker,
+        bool _commercial, // NOTE: MODIFIED ERC-5218
+        bool _canSublicense, // NOTE: MODIFIED ERC-5218
+        Licensing.TermsProcessorConfig memory _terms // NOTE: MODIFIED ERC-5218
+    ) external returns (uint256);
+
+    /// @notice Revoke a license.
+    /// @dev Throws unless the license is active and the message sender is the
+    ///  eligible revoker. This function should be used for revoking both root
+    ///  licenses and sublicenses. Note that if a root license is revoked, the
+    ///  NFT should be transferred back to its creator.
+    /// @param _licenseId The identifier for the queried license
+    function revokeLicense(uint256 _licenseId) external;
+
+    /// @notice Transfer a sublicense.
+    /// @dev Throws unless the sublicense is active and `msg.sender` is the license
+    ///  holder. Note that the root license of an NFT should be tethered to and
+    ///  transferred with the NFT. Whenever an NFT is transferred by calling the
+    ///  ERC721 `transfer` function, the holder of the root license should be
+    ///  changed to the new NFT owner.
+    /// @param _licenseId The identifier for the queried license
+    /// @param _licenseHolder The new license holder
+    function transferSublicense(
+        uint256 _licenseId,
+        address _licenseHolder
+    ) external;
 
     /// @notice Check if a license is active.
     /// @dev A non-existing or revoked license is inactive and this function must
@@ -100,55 +147,4 @@ interface IERC5218 is IERC721Upgradeable {
         uint256 _tokenId,
         bool _commercial // NOTE: MODIFIED ERC-5218
     ) external view returns (uint256);
-
-    /// @notice Create a new license.
-    /// @dev Throws unless the NFT `_tokenId` exists. Throws unless the parent
-    ///  license `_parentLicenseId` is active, or `_parentLicenseId` is a special
-    ///  identifier not referring to any license (such as 0) and the NFT
-    ///  `_tokenId` doesn't have a root license tethered to it. Throws unless the
-    ///  message sender is eligible to create the license, i.e., either the
-    ///  license to be created is a root license and `msg.sender` is the NFT owner,
-    ///  or the license to be created is a sublicense and `msg.sender` is the holder
-    ///  of the parent license.
-    /// @param _tokenId The identifier for the NFT the license is issued upon
-    /// @param _parentLicenseId The identifier for the parent license
-    /// @param _licenseHolder The address of the license holder
-    /// @param _uri The URI of the license terms
-    /// @param _revoker The revoker address
-    /// @param _commercial Whether the license granted is commercial or non commercial
-    /// @param _canSublicense Whether the license holder can sublicense the license
-    /// @param _terms The license terms
-    /// @return The identifier of the created license
-    function createLicense(
-        uint256 _tokenId,
-        uint256 _parentLicenseId,
-        address _licenseHolder,
-        string memory _uri,
-        address _revoker,
-        bool _commercial, // NOTE: MODIFIED ERC-5218
-        bool _canSublicense, // NOTE: MODIFIED ERC-5218
-        TermsProcessorConfig memory _terms // NOTE: MODIFIED ERC-5218
-    ) external returns (uint256);
-
-    /// @notice Revoke a license.
-    /// @dev Throws unless the license is active and the message sender is the
-    ///  eligible revoker. This function should be used for revoking both root
-    ///  licenses and sublicenses. Note that if a root license is revoked, the
-    ///  NFT should be transferred back to its creator.
-    /// @param _licenseId The identifier for the queried license
-    function revokeLicense(uint256 _licenseId) external;
-
-    /// @notice Transfer a sublicense.
-    /// @dev Throws unless the sublicense is active and `msg.sender` is the license
-    ///  holder. Note that the root license of an NFT should be tethered to and
-    ///  transferred with the NFT. Whenever an NFT is transferred by calling the
-    ///  ERC721 `transfer` function, the holder of the root license should be
-    ///  changed to the new NFT owner.
-    /// @param _licenseId The identifier for the queried license
-    /// @param _licenseHolder The new license holder
-    function transferSublicense(
-        uint256 _licenseId,
-        address _licenseHolder
-    ) external;
-
 }

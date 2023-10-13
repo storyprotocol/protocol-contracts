@@ -12,7 +12,6 @@ import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
-import "contracts/access-control/ProtocolRoles.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
 import "test/foundry/mocks/MockCollectNFT.sol";
 import "test/foundry/mocks/MockCollectModule.sol";
@@ -21,6 +20,7 @@ import "contracts/modules/royalties/policies/MutableRoyaltyProportionPolicy.sol"
 import "contracts/modules/royalties/RoyaltyNFT.sol";
 import "contracts/ip-accounts/IPAccountImpl.sol";
 import "contracts/ip-accounts/IPAccountRegistry.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
 
 contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
@@ -250,8 +250,8 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
         /// GRANT ROLEs
         AccessControlSingleton accessControlSingleton = AccessControlSingleton(accessControl);
-        accessControlSingleton.grantRole(UPGRADER_ROLE, admin);
-        accessControlSingleton.grantRole(RELATIONSHIP_MANAGER_ROLE, admin);
+        accessControlSingleton.grantRole(AccessControl.UPGRADER_ROLE, admin);
+        accessControlSingleton.grantRole(AccessControl.RELATIONSHIP_MANAGER_ROLE, admin);
         
         _writeDeployment(); 
         _endBroadcast();

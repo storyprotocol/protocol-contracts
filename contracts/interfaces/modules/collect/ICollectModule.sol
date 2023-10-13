@@ -1,17 +1,36 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.18;
 
-import { InitCollectParams, CollectParams } from "contracts/lib/CollectModuleStructs.sol";
-import { ICollectModuleEventsAndErrors } from "./ICollectModuleEventsAndErrors.sol";
+import { Collect } from "contracts/lib/modules/Collect.sol";
 
 /// @title Collect Module Interface
 /// @notice The collect module enables IP assets to be minted as NFTs mirroring
 ///         their binding IP assets in a franchise-configurable format.
-interface ICollectModule is ICollectModuleEventsAndErrors {
+interface ICollectModule {
+
+    /// @dev Emits when a Collect action is invoked.
+    /// TODO: Once global IPs are supported, we can index the collect NFTs as well.
+    event Collected(
+        uint256 indexed franchiseid_,
+        uint256 indexed ipAssetId_,
+        address indexed collector_,
+        address collectNft_,
+        uint256 collectNftId_,
+        bytes collectData_,
+        bytes collectNftData_
+    );
+
+    /// @dev Emits when a new collect NFT is deployed.
+    event NewCollectNFT(
+        uint256 indexed franchiseId_,
+        uint256 indexed ipAssetId_,
+        address collectNFT_
+    );
+
     /// @notice Initializes the collect module for a specific IP asset.
     /// @param initCollectParams_ Collect module init data, including IP   asset
     ///        id, collect NFT impl address, and generic unformatted init data.
-    function initCollect(InitCollectParams calldata initCollectParams_) external;
+    function initCollect(Collect.InitCollectParams calldata initCollectParams_) external;
 
     /// @notice Performs a collect on a specific IP asset for a collector.
     /// @param collectParams_ Collect module collect data, including IP asset id,
@@ -19,7 +38,7 @@ interface ICollectModule is ICollectModuleEventsAndErrors {
     /// @return collectNft The address of the collected NFT.
     /// @return collectNftId The id of the collected collect NFT.
     function collect(
-        CollectParams calldata collectParams_
+        Collect.CollectParams calldata collectParams_
     ) external payable returns (address collectNft, uint256 collectNftId);
 
     /// @notice Returns the collect NFT address associated with an IP asset.

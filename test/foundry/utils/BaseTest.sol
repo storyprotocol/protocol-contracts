@@ -8,11 +8,10 @@ import "test/foundry/mocks/MockCollectNFT.sol";
 import "test/foundry/mocks/MockCollectModule.sol";
 import "contracts/FranchiseRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/access-control/ProtocolRoles.sol";
 import "contracts/ip-assets/IPAssetRegistryFactory.sol";
 import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
 import "contracts/ip-assets/IPAssetRegistry.sol";
-import "contracts/IPAsset.sol";
+import "contracts/lib/IPAsset.sol";
 import "contracts/errors/General.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "contracts/modules/relationships/processors/DstOwnerRelationshipProcessor.sol";
@@ -23,6 +22,9 @@ import "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
 import "contracts/modules/licensing/LicenseRegistry.sol";
 import "contracts/interfaces/modules/collect/ICollectModule.sol";
 import '../mocks/MockTermsProcessor.sol';
+
+import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 contract BaseTest is BaseTestUtils, ProxyHelper {
 
@@ -73,7 +75,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
             )
         );
         vm.prank(admin);
-        accessControl.grantRole(UPGRADER_ROLE, upgrader);
+        accessControl.grantRole(AccessControl.UPGRADER_ROLE, upgrader);
         
         // Create Franchise Registry
         franchiseRegistryImpl = address(new FranchiseRegistry(address(factory)));
@@ -140,21 +142,21 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         }
     }
 
-    function _getLicensingConfig() view internal returns (ILicensingModule.FranchiseConfig memory) {
-        return ILicensingModule.FranchiseConfig({
-            nonCommercialConfig: ILicensingModule.IpAssetConfig({
+    function _getLicensingConfig() view internal returns (Licensing.FranchiseConfig memory) {
+        return Licensing.FranchiseConfig({
+            nonCommercialConfig: Licensing.IpAssetConfig({
                 canSublicense: true,
                 franchiseRootLicenseId: 0
             }),
-            nonCommercialTerms: IERC5218.TermsProcessorConfig({
+            nonCommercialTerms: Licensing.TermsProcessorConfig({
                 processor: nonCommercialTermsProcessor,
                 data: abi.encode("nonCommercial")
             }),
-            commercialConfig: ILicensingModule.IpAssetConfig({
+            commercialConfig: Licensing.IpAssetConfig({
                 canSublicense: false,
                 franchiseRootLicenseId: 0
             }),
-            commercialTerms: IERC5218.TermsProcessorConfig({
+            commercialTerms: Licensing.TermsProcessorConfig({
                 processor: commercialTermsProcessor,
                 data: abi.encode("commercial")
             }),
@@ -184,10 +186,10 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     ///      fuzz testing, foundry may plug existing contracts as potential
     ///      owners for IP asset creation.
     function _createIpAsset(address ipAssetOwner, uint8 ipAssetType, bytes memory collectData) internal isValidReceiver(ipAssetOwner) returns (uint256) {
-        vm.assume(ipAssetType > uint8(type(IPAsset).min));
-        vm.assume(ipAssetType < uint8(type(IPAsset).max));
+        vm.assume(ipAssetType > uint8(type(IPAsset.IPAssetType).min));
+        vm.assume(ipAssetType < uint8(type(IPAsset.IPAssetType).max));
         vm.prank(ipAssetOwner);
-        return ipAssetRegistry.createIpAsset(IPAsset(ipAssetType), "name", "description", "mediaUrl", ipAssetOwner, 0, collectData);
+        return ipAssetRegistry.createIpAsset(IPAsset.IPAssetType(ipAssetType), "name", "description", "mediaUrl", ipAssetOwner, 0, collectData);
     }
 
 }

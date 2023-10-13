@@ -2,7 +2,7 @@
 pragma solidity ^0.8.18;
 
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { UPGRADER_ROLE } from "contracts/access-control/ProtocolRoles.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { CollectModuleBase } from "contracts/modules/collect/CollectModuleBase.sol";
 
 /// @title Simple Collect Module
@@ -21,13 +21,12 @@ contract SimpleCollectModule is CollectModuleBase {
         __AccessControlledUpgradeable_init(accessControl_);
     }
 
+    /// @dev Additional authorization necessitated by UUPS module upgrades.
+    function _authorizeUpgrade(address newImplementation_) internal override onlyRole(AccessControl.UPGRADER_ROLE) {}
+
     /// @dev Checks whether the collect action is authorized for an IP asset.
     function _isCollectAuthorized(uint256 franchiseId_, uint256 ipAssetId_) internal view override returns (bool) {
         address ipAssetRegistry = FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId_);
         return msg.sender == IERC721(ipAssetRegistry).ownerOf(ipAssetId_);
     }
-
-    /// @dev Additional authorization necessitated by UUPS module upgrades.
-    function _authorizeUpgrade(address newImplementation_) internal override onlyRole(UPGRADER_ROLE) {}
-
 }

@@ -3,10 +3,7 @@ pragma solidity ^0.8.13;
 
 import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
 import { ICollectModule } from "contracts/interfaces/modules/collect/ICollectModule.sol";
-import { LibIPAssetID } from "./LibIPAssetID.sol";
-import { ZeroAmount, ZeroAddress } from "../errors/General.sol";
-import { IPAsset } from "contracts/IPAsset.sol";
-import { InitCollectParams } from "contracts/lib/CollectModuleStructs.sol";
+import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { IIPAssetEventEmitter } from "contracts/interfaces/ip-assets/events/IIPAssetEventEmitter.sol";
 import { IPAssetDataManager } from "./storage/IPAssetDataManager.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
@@ -14,19 +11,20 @@ import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/in
 import { MulticallUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 import { RightsManager } from "../modules/licensing/RightsManager.sol";
 import { ILicensingModule } from "contracts/interfaces/modules/licensing/ILicensingModule.sol";
+import { Collect } from "contracts/lib/modules/Collect.sol";
+import { Errors } from "contracts/lib/Errors.sol";
+import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 contract IPAssetRegistry is
     IPAssetDataManager,
     RightsManager,
     MulticallUpgradeable
 {
-    error IdOverBounds();
-    error LicensingNotConfigured();
 
     /// @custom:storage-location erc7201:story-protocol.ip-assets-registry.storage
     struct IPAssetRegistryStorage {
         /// @dev ipAssetId => id counter
-        mapping(IPAsset => uint256) ids;
+        mapping(IPAsset.IPAssetType => uint256) ids;
         string description;
         uint256 franchiseId;
     }
@@ -48,13 +46,27 @@ contract IPAssetRegistry is
         address collectModule_
     ) RightsManager(franchiseRegistry_) {
         // TODO: should Franchise owner be able to change this?
-        if (eventEmitter_ == address(0)) revert ZeroAddress();
+        if (eventEmitter_ == address(0)) revert Errors.ZeroAddress();
         EVENT_EMITTER = IIPAssetEventEmitter(eventEmitter_);
-        if (licensingModule_ == address(0)) revert ZeroAddress();
+        if (licensingModule_ == address(0)) revert Errors.ZeroAddress();
         LICENSING_MODULE = ILicensingModule(licensingModule_);
-        if (collectModule_ == address(0)) revert ZeroAddress();
+        if (collectModule_ == address(0)) revert Errors.ZeroAddress();
         COLLECT_MODULE = ICollectModule(collectModule_);
         _disableInitializers();
+    }
+
+    function description() external view returns (string memory) {
+        IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
+        return $.description;
+    }
+
+    function franchiseId() external view returns (uint256) {
+        IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
+        return $.franchiseId;
+    }
+
+    function version() external pure virtual returns (string memory) {
+        return _VERSION;
     }
 
     function initialize(
@@ -65,24 +77,10 @@ contract IPAssetRegistry is
     ) public initializer {
         __RightsManager_init(name_, symbol_);
         __Multicall_init();
-        if (franchiseId_ == 0) revert ZeroAmount();
+        if (franchiseId_ == 0) revert Errors.ZeroAmount();
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
         $.franchiseId = franchiseId_;
         $.description = description_;
-    }
-
-    function _getIPAssetRegistryStorage()
-        private
-        pure
-        returns (IPAssetRegistryStorage storage $)
-    {
-        assembly {
-            $.slot := _STORAGE_LOCATION
-        }
-    }
-
-    function version() external pure virtual returns (string memory) {
-        return _VERSION;
     }
 
     /// Creates a new IPAsset, and assigns licenses (rights) to it, according to the Franchise
@@ -100,7 +98,7 @@ contract IPAssetRegistry is
     /// @param collectData_ Additional data passed for collect module initialization
     /// @return the created IPAsset id
     function createIpAsset(
-        IPAsset ipAssetType_,
+        IPAsset.IPAssetType ipAssetType_,
         string calldata name_,
         string calldata description_,
         string calldata mediaUrl_,
@@ -108,16 +106,16 @@ contract IPAssetRegistry is
         uint256 parentIpAssetId_,
         bytes calldata collectData_
     ) public returns (uint256) {
-        if (ipAssetType_ == IPAsset.UNDEFINED) revert InvalidBlockType();
+        if (ipAssetType_ == IPAsset.IPAssetType.UNDEFINED) revert Errors.IPAsset_InvalidType(IPAsset.IPAssetType.UNDEFINED);
         uint256 ipAssetId = _mintBlock(to_, ipAssetType_);
         _writeIPAsset(ipAssetId, name_, description_, mediaUrl_);
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
         uint256 _franchiseId = $.franchiseId;
         EVENT_EMITTER.emitIpAssetCreation(_franchiseId, ipAssetId);
         // Non commercial
-        ILicensingModule.FranchiseConfig memory config = LICENSING_MODULE
+        Licensing.FranchiseConfig memory config = LICENSING_MODULE
             .getFranchiseConfig(_franchiseId);
-        if (config.revoker == address(0)) revert LicensingNotConfigured();
+        if (config.revoker == address(0)) revert Errors.IPAssetRegistry_LicensingNotConfigured();
         _setNonCommercialRights(
             ipAssetId,
             parentIpAssetId_,
@@ -142,7 +140,7 @@ contract IPAssetRegistry is
         }
         // TODO: Add collect NFT impl and data overrides
         COLLECT_MODULE.initCollect(
-            InitCollectParams({
+            Collect.InitCollectParams({
                 franchiseId: _franchiseId,
                 ipAssetId: ipAssetId,
                 collectNftImpl: address(0), // Default collect module NFT impl
@@ -150,6 +148,27 @@ contract IPAssetRegistry is
             })
         );
         return ipAssetId;
+    }
+
+    function tokenURI(
+        uint256 tokenId_
+    ) public view override returns (string memory) {
+        // TODO: should this reference the license too?
+        return readIPAsset(tokenId_).mediaUrl;
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId_
+    )
+    public
+    view
+    virtual
+    override(ERC721Upgradeable, IERC165Upgradeable)
+    returns (bool)
+    {
+        return
+            interfaceId_ == type(IIPAssetRegistry).interfaceId ||
+            super.supportsInterface(interfaceId_);
     }
 
     /// Sets the non commercial rights for an IPAsset, with terms from the Franchise config in LicensingModule.
@@ -165,8 +184,8 @@ contract IPAssetRegistry is
         uint256 parentIpAssetId_,
         address holder_,
         address revoker_,
-        ILicensingModule.IpAssetConfig memory config_,
-        TermsProcessorConfig memory terms_
+        Licensing.IpAssetConfig memory config_,
+        Licensing.TermsProcessorConfig memory terms_
     ) internal {
         uint256 parentLicenseId = parentIpAssetId_ == 0
             ? config_.franchiseRootLicenseId
@@ -198,8 +217,8 @@ contract IPAssetRegistry is
         address holder_,
         address revoker_,
         string memory licenseUri_,
-        ILicensingModule.IpAssetConfig memory config_,
-        TermsProcessorConfig memory terms_
+        Licensing.IpAssetConfig memory config_,
+        Licensing.TermsProcessorConfig memory terms_
     ) internal {
         uint256 parentLicenseId = parentIpAssetId_ == _ROOT_IP_ASSET
             ? config_.franchiseRootLicenseId
@@ -222,54 +241,33 @@ contract IPAssetRegistry is
     /// @param ipAssetId_ ip asset type
     function _mintBlock(
         address to_,
-        IPAsset ipAssetId_
+        IPAsset.IPAssetType ipAssetId_
     ) private returns (uint256) {
         uint256 nextId = currentIdFor(ipAssetId_) + 1;
-        if (nextId > LibIPAssetID._lastId(ipAssetId_)) revert IdOverBounds();
+        if (nextId > IPAsset._lastId(ipAssetId_)) revert Errors.IPAssetRegistry_IdOverBounds();
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
         $.ids[ipAssetId_] = nextId;
         _safeMint(to_, nextId);
         return nextId;
     }
 
-    function currentIdFor(IPAsset ipAssetId_) public view returns (uint256) {
+    function currentIdFor(IPAsset.IPAssetType ipAssetId_) public view returns (uint256) {
         IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
         uint256 currentId = $.ids[ipAssetId_];
         if (currentId == 0) {
-            return LibIPAssetID._zeroId(ipAssetId_);
+            return IPAsset._zeroId(ipAssetId_);
         } else {
             return currentId;
         }
     }
 
-    function description() external view returns (string memory) {
-        IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
-        return $.description;
-    }
-
-    function franchiseId() external view returns (uint256) {
-        IPAssetRegistryStorage storage $ = _getIPAssetRegistryStorage();
-        return $.franchiseId;
-    }
-
-    function tokenURI(
-        uint256 tokenId_
-    ) public view override returns (string memory) {
-        // TODO: should this reference the license too?
-        return readIPAsset(tokenId_).mediaUrl;
-    }
-
-    function supportsInterface(
-        bytes4 interfaceId_
-    )
-        public
-        view
-        virtual
-        override(ERC721Upgradeable, IERC165Upgradeable)
-        returns (bool)
+    function _getIPAssetRegistryStorage()
+        private
+        pure
+        returns (IPAssetRegistryStorage storage $)
     {
-        return
-            interfaceId_ == type(IIPAssetRegistry).interfaceId ||
-            super.supportsInterface(interfaceId_);
+        assembly {
+            $.slot := _STORAGE_LOCATION
+        }
     }
 }

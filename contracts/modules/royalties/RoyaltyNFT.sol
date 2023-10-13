@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { ERC1155Supply } from "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import { ERC1155 } from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
@@ -10,13 +10,8 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
 import { IIPAccount } from "contracts/interfaces/ip-accounts/IIPAccount.sol";
 import { ISplitMain } from "contracts/interfaces/modules/royalties/ISplitMain.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
-error AccountsAndAllocationsMismatch(
-    uint256 accountsLength,
-    uint256 allocationsLength
-);
-
-error InvalidAllocationsSum(uint32 allocationsSum);
 
 contract RoyaltyNFT is ERC1155Supply {
     using SafeERC20 for IERC20;
@@ -72,13 +67,13 @@ contract RoyaltyNFT is ERC1155Supply {
         uint256 numAccs = accounts_.length;
 
         if (accounts_.length != initAllocations_.length)
-            revert AccountsAndAllocationsMismatch(
+            revert Errors.RoyaltyNFT_AccountsAndAllocationsMismatch(
                 accounts_.length,
                 initAllocations_.length
             );
 
         if (_getSum(initAllocations_) != TOTAL_SUPPLY)
-            revert InvalidAllocationsSum(_getSum(initAllocations_));
+            revert Errors.RoyaltyNFT_InvalidAllocationsSum(_getSum(initAllocations_));
 
         unchecked {
             for (uint256 i; i < numAccs; ++i) {
@@ -101,28 +96,6 @@ contract RoyaltyNFT is ERC1155Supply {
                 controller: address(this)
             })
         );
-    }
-
-    function _afterTokenTransfer(
-        address,
-        address from_,
-        address to_,
-        uint256[] memory ids_,
-        uint256[] memory,
-        bytes memory
-    ) internal virtual override {
-        for (uint256 i = 0; i < ids_.length; ++i) {
-            bytes32 indexTo = keccak256(abi.encode(ids_[i], to_));
-            if (from_ == address(0) || balanceOf(from_, ids_[i]) != 0) {
-                ownerIndexes[indexTo] = owners[ids_[i]].length;
-                owners[ids_[i]].push(to_);
-            } else {
-                bytes32 indexFrom = keccak256(abi.encode(ids_[i], from_));
-                owners[ids_[i]][ownerIndexes[indexFrom]] = to_;
-                ownerIndexes[indexTo] = ownerIndexes[indexFrom];
-                delete ownerIndexes[indexFrom];
-            }
-        }
     }
 
     function uri(uint256) public view override returns (string memory) {
@@ -150,6 +123,28 @@ contract RoyaltyNFT is ERC1155Supply {
 
     function toTokenId(address sourceAccount_) public pure returns (uint256 tokenId) {
         tokenId = uint256(uint160(sourceAccount_));
+    }
+
+    function _afterTokenTransfer(
+        address,
+        address from_,
+        address to_,
+        uint256[] memory ids_,
+        uint256[] memory,
+        bytes memory
+    ) internal virtual override {
+        for (uint256 i = 0; i < ids_.length; ++i) {
+            bytes32 indexTo = keccak256(abi.encode(ids_[i], to_));
+            if (from_ == address(0) || balanceOf(from_, ids_[i]) != 0) {
+                ownerIndexes[indexTo] = owners[ids_[i]].length;
+                owners[ids_[i]].push(to_);
+            } else {
+                bytes32 indexFrom = keccak256(abi.encode(ids_[i], from_));
+                owners[ids_[i]][ownerIndexes[indexFrom]] = to_;
+                ownerIndexes[indexTo] = ownerIndexes[indexFrom];
+                delete ownerIndexes[indexFrom];
+            }
+        }
     }
 
     function _getSum(uint32[] calldata numbers_) internal pure returns (uint32 sum) {

@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.17;
 
-import {ERC20} from "solmate/src/tokens/ERC20.sol";
+import { ERC20 } from "solmate/src/tokens/ERC20.sol";
 
 interface ISplitMain {
-    error InvalidSplit__TooFewAccounts(uint256 accountsLength);
 
     function createSplit(
         address[] calldata accounts,
@@ -30,9 +29,9 @@ interface ISplitMain {
         address distributorAddress
     ) external;
 
+    function withdraw(address account, uint256 withdrawETH, ERC20[] calldata tokens) external;
+
     function getETHBalance(address account) external view returns (uint256);
 
     function getERC20Balance(address account, ERC20 token) external view returns (uint256);
-
-    function withdraw(address account, uint256 withdrawETH, ERC20[] calldata tokens) external;
 }

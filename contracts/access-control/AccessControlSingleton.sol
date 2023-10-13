@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.13;
 
-import { PROTOCOL_ADMIN_ROLE, UPGRADER_ROLE } from "./ProtocolRoles.sol";
+import { Errors } from "contracts/lib/Errors.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { IVersioned } from "contracts/interfaces/utils/IVersioned.sol";
-import { ZeroAddress } from "../errors/General.sol";
 import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -24,10 +24,10 @@ contract AccessControlSingleton is
     /// @notice Initializer method, access point to initialize inheritance tree.
     /// @param admin_ address to be the PROTOCOL_ADMIN_ROLE.
     function initialize(address admin_) external initializer {
-        if (admin_ == address(0)) revert ZeroAddress();
+        if (admin_ == address(0)) revert Errors.ZeroAddress();
         __AccessControl_init();
         __UUPSUpgradeable_init();
-        _grantRole(PROTOCOL_ADMIN_ROLE, admin_);
+        _grantRole(AccessControl.PROTOCOL_ADMIN_ROLE, admin_);
     }
 
     /// @notice Method for PROTOCOL_ADMIN_ROLE to create new roles, and define their role admin.
@@ -36,7 +36,7 @@ contract AccessControlSingleton is
     function setRoleAdmin(
         bytes32 role_,
         bytes32 admin_
-    ) external onlyRole(PROTOCOL_ADMIN_ROLE) {
+    ) external onlyRole(AccessControl.PROTOCOL_ADMIN_ROLE) {
         _setRoleAdmin(role_, admin_);
     }
 
@@ -44,5 +44,5 @@ contract AccessControlSingleton is
     /// @param newImplementation_ address of the new deployed implementation.
     function _authorizeUpgrade(
         address newImplementation_
-    ) internal virtual override onlyRole(UPGRADER_ROLE) {}
+    ) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
 }

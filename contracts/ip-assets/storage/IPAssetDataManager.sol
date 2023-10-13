@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import { LibIPAssetID } from "contracts/ip-assets/LibIPAssetID.sol";
+import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { Unauthorized, NonExistentID, ZeroAddress } from "contracts/errors/General.sol";
 import { IIPAssetDataManager } from "contracts/interfaces/ip-assets/storage/IIPAssetDataManager.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { IPAsset } from "contracts/IPAsset.sol";
+import { IPAsset } from "contracts/lib/IPAsset.sol";
 
 abstract contract IPAssetDataManager is Initializable, IIPAssetDataManager {
-
-    error InvalidBlockType();
 
     /// @custom:storage-location erc7201:story-protocol.ip-asset-data.storage
     struct IPAssetDataStorage {
@@ -21,22 +19,21 @@ abstract contract IPAssetDataManager is Initializable, IIPAssetDataManager {
 
     function __IPAssetData_init() public initializer {}
 
-    function _getIPAssetDataStorage() private pure returns (IPAssetDataStorage storage $) {
-        assembly {
-            $.slot := _STORAGE_LOCATION
-        }
+    function readIPAsset(uint256 ipAssetId_) public view returns (IPAssetData memory) {
+        IPAssetDataStorage storage $ = _getIPAssetDataStorage();
+        return $.ipAssetsData[ipAssetId_];
     }
-    
+
     function _writeIPAsset(
         uint256 ipAssetId_,
         string calldata name_,
         string calldata description_,
         string calldata mediaUrl_
-    ) internal returns (IPAsset) {
+    ) internal returns (IPAsset.IPAssetType) {
         IPAssetDataStorage storage $ = _getIPAssetDataStorage();
         IPAssetData storage ipAsseData = $.ipAssetsData[ipAssetId_];
-        if (ipAsseData.blockType == IPAsset.UNDEFINED) {
-            ipAsseData.blockType = LibIPAssetID._ipAssetTypeFor(ipAssetId_);
+        if (ipAsseData.blockType == IPAsset.IPAssetType.UNDEFINED) {
+            ipAsseData.blockType = IPAsset._ipAssetTypeFor(ipAssetId_);
         }
         ipAsseData.name = name_;
         ipAsseData.description = description_;
@@ -45,9 +42,10 @@ abstract contract IPAssetDataManager is Initializable, IIPAssetDataManager {
         return ipAsseData.blockType;
     }
 
-    function readIPAsset(uint256 ipAssetId_) public view returns (IPAssetData memory) {
-        IPAssetDataStorage storage $ = _getIPAssetDataStorage();
-        return $.ipAssetsData[ipAssetId_];
+    function _getIPAssetDataStorage() private pure returns (IPAssetDataStorage storage $) {
+        assembly {
+            $.slot := _STORAGE_LOCATION
+        }
     }
     
 }

@@ -7,7 +7,7 @@ import { AccessControlledUpgradeable } from "contracts/access-control/AccessCont
 import { IIPAccountRegistry } from "contracts/interfaces/ip-accounts/IIPAccountRegistry.sol";
 import { IRoyaltyPolicy } from "contracts/interfaces/modules/royalties/policies/IRoyaltyPolicy.sol";
 import { RoyaltyNFT } from "contracts/modules/royalties/RoyaltyNFT.sol";
-import { UPGRADER_ROLE, PROTOCOL_ADMIN_ROLE } from "contracts/access-control/ProtocolRoles.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
 
 contract RoyaltyDistributor is Pausable, IRoyaltyDistributor, AccessControlledUpgradeable {
 
@@ -33,14 +33,6 @@ contract RoyaltyDistributor is Pausable, IRoyaltyDistributor, AccessControlledUp
         IRoyaltyPolicy(royaltyPolicy_).initPolicy(ipAccount, data_);
     }
 
-    function getRoyaltyPolicy(
-        address nftContract_,
-        uint256 tokenId_
-    ) external view returns (address) {
-        address ipAccount = _ipAccount(nftContract_, tokenId_);
-        return policies[ipAccount];
-    }
-
     function updateDistribution(
         address nftContract_,
         uint256 tokenId_,
@@ -59,19 +51,26 @@ contract RoyaltyDistributor is Pausable, IRoyaltyDistributor, AccessControlledUp
         royaltyNFT.claim(account_, token_);
     }
 
-    function pause() external onlyRole(PROTOCOL_ADMIN_ROLE) {
+    function pause() external onlyRole(AccessControl.PROTOCOL_ADMIN_ROLE) {
         _pause();
     }
-    function unpause() external onlyRole(PROTOCOL_ADMIN_ROLE) {
+    function unpause() external onlyRole(AccessControl.PROTOCOL_ADMIN_ROLE) {
         _unpause();
     }
 
-    function _ipAccount(address nftContract_, uint256 tokenId_) internal view returns(address) {
-        return ipAccountRegistry.account(block.chainid, nftContract_, tokenId_);
+    function getRoyaltyPolicy(
+        address nftContract_,
+        uint256 tokenId_
+    ) external view returns (address) {
+        address ipAccount = _ipAccount(nftContract_, tokenId_);
+        return policies[ipAccount];
     }
 
     function _authorizeUpgrade(
         address newImplementation_
-    ) internal virtual override onlyRole(UPGRADER_ROLE) {}
+    ) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
 
+    function _ipAccount(address nftContract_, uint256 tokenId_) internal view returns(address) {
+        return ipAccountRegistry.account(block.chainid, nftContract_, tokenId_);
+    }
 }

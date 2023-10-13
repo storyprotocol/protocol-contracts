@@ -4,19 +4,19 @@ pragma solidity ^0.8.18;
 import { Clones } from '@openzeppelin/contracts/proxy/Clones.sol';
 
 import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.sol";
-import { ICollectNFTEventsAndErrors } from "contracts/interfaces/modules/collect/ICollectNFTEventsAndErrors.sol";
 
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
 import { BaseERC721Test } from "./BaseERC721Test.sol";
 import { MockCollectNFT } from "test/foundry/mocks/MockCollectNFT.sol";
 import { ERC721Test } from "./ERC721.t.sol";
 
-import { IPAsset } from "contracts/IPAsset.sol";
-import { InitCollectNFTParams } from "contracts/lib/CollectNFTStructs.sol";
+import { IPAsset } from "contracts/lib/IPAsset.sol";
+import { Collect } from "contracts/lib/modules/Collect.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
 /// @title Collect NFT Base Testing Contract
 /// @notice Tests all functionality provided by the base collect NFT.
-contract CollectNFTBaseTest is BaseERC721Test, BaseTest, ICollectNFTEventsAndErrors {
+contract CollectNFTBaseTest is BaseERC721Test, BaseTest {
 
     // Id of IP asset which may differ per test based on testing constraints.
     uint256 ipAssetId;
@@ -31,7 +31,7 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest, ICollectNFTEventsAndErr
         ipAssetId = _createIpAsset(ipAssetOwner, ipAssetType, "");
         collectNft = ICollectNFT(Clones.clone(defaultCollectNftImpl));
         vm.prank(address(collectModule));
-        collectNft.initialize(InitCollectNFTParams({
+        collectNft.initialize(Collect.InitCollectNFTParams({
             ipAssetRegistry: address(ipAssetRegistry),
             ipAssetId: ipAssetId,
             data: ""
@@ -60,8 +60,8 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest, ICollectNFTEventsAndErr
     /// @notice Tests whether collect on non-existent IP assets revert.
     function test_CollectNFTNonExistentIPAssetReverts() public {
         collectNft = ICollectNFT(Clones.clone(defaultCollectNftImpl));
-        vm.expectRevert(CollectNFTIPAssetNonExistent.selector);
-        collectNft.initialize(InitCollectNFTParams({
+        vm.expectRevert(Errors.CollectNFT_IPAssetNonExistent.selector);
+        collectNft.initialize(Collect.InitCollectNFTParams({
             ipAssetRegistry: address(ipAssetRegistry),
             ipAssetId: ipAssetId,
             data: ""
@@ -71,8 +71,8 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest, ICollectNFTEventsAndErr
     /// @notice Tests whether initialization on a deployed collect NFT reverts.
     function test_CollectNFTConstructorInitializeReverts() public {
         collectNft = new MockCollectNFT();
-        vm.expectRevert(CollectNFTAlreadyInitialized.selector);
-        collectNft.initialize(InitCollectNFTParams({
+        vm.expectRevert(Errors.CollectNFT_AlreadyInitialized.selector);
+        collectNft.initialize(Collect.InitCollectNFTParams({
             ipAssetRegistry: address(ipAssetRegistry),
             ipAssetId: ipAssetId,
             data: ""
@@ -81,14 +81,14 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest, ICollectNFTEventsAndErr
 
     /// @notice Tests whether collect calls not made by the collect module revert.
     function test_CollectNFTNonCollectModuleCallerReverts(uint8 ipAssetType) public createCollectNFT(cal, ipAssetType) {
-        vm.expectRevert(CollectNFTCallerUnauthorized.selector);
+        vm.expectRevert(Errors.CollectNFT_CallerUnauthorized.selector);
         collectNft.collect(address(this), "");
     }
 
     /// @notice Tests whether re-initialization of collect module settings revert.
     function test_CollectNFTInitializeTwiceReverts(uint8 ipAssetType) public createCollectNFT(cal, ipAssetType) {
-        vm.expectRevert(CollectNFTAlreadyInitialized.selector);
-        collectNft.initialize(InitCollectNFTParams({
+        vm.expectRevert(Errors.CollectNFT_AlreadyInitialized.selector);
+        collectNft.initialize(Collect.InitCollectNFTParams({
             ipAssetRegistry: address(ipAssetRegistry),
             ipAssetId: ipAssetId,
             data: ""

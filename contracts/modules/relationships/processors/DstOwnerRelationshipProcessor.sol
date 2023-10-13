@@ -3,8 +3,8 @@ pragma solidity ^0.8.13;
 
 import { BaseRelationshipProcessor } from "./BaseRelationshipProcessor.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import { Unauthorized } from "contracts/errors/General.sol";
-import { IRelationshipModule } from "contracts/interfaces/modules/relationships/IRelationshipModule.sol";
+import { Relationship } from "contracts/lib/modules/Relationship.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
 
 /// @title DstOwnerRelationshipProcessor
@@ -15,9 +15,9 @@ contract DstOwnerRelationshipProcessor is BaseRelationshipProcessor {
 
     
     /// Returns true if the caller is the owner of the destination IP Asset, reverts otherwise.
-    function _processRelationship(IRelationshipModule.RelationshipParams memory params_, bytes calldata, address caller_) internal view virtual override returns(bool) {
+    function _processRelationship(Relationship.RelationshipParams memory params_, bytes calldata, address caller_) internal view virtual override returns(bool) {
         if (IERC721(params_.destContract).ownerOf(params_.destId) != caller_) {
-            revert Unauthorized();
+            revert Errors.Unauthorized();
         }
         return true;
     }

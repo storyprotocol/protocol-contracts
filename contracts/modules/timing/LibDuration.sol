@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-library LibDuration {
+import { Errors } from "contracts/lib/Errors.sol";
 
-    error NotRenewable();
-    error CallerNotRenewer();
-    error ZeroTTL();
-    error InvalidStartTime();
+library LibDuration {
 
     struct TimeConfig {
         uint64 ttl;
@@ -20,20 +17,16 @@ library LibDuration {
         return self_.startTime != START_TIME_NOT_SET && block.timestamp >= self_.startTime && block.timestamp < self_.startTime + self_.ttl;
     }
 
-    function isRenewable(TimeConfig memory self_) internal pure returns (bool) {
-        return self_.renewer != address(0);
-    }
-
     function renew(TimeConfig memory self_, uint64 ttl_) view internal {
-        if (!isRenewable(self_)) revert NotRenewable();
-        if (msg.sender != self_.renewer) revert CallerNotRenewer();
-        if (ttl_ == 0) revert ZeroTTL();
+        if (!isRenewable(self_)) revert Errors.LibDuration_NotRenewable();
+        if (msg.sender != self_.renewer) revert Errors.LibDuration_CallerNotRenewer();
+        if (ttl_ == 0) revert Errors.LibDuration_ZeroTTL();
         self_.ttl = ttl_;
         self_.startTime = uint64(block.timestamp);
     }
 
     function createRunningTimeConfig(uint64 ttl_, address renewer_) internal view returns (TimeConfig memory) {
-        if (ttl_ == 0) revert ZeroTTL();
+        if (ttl_ == 0) revert Errors.LibDuration_ZeroTTL();
         return TimeConfig({
             ttl: ttl_,
             startTime: uint64(block.timestamp),
@@ -41,8 +34,12 @@ library LibDuration {
         });
     }
 
+    function isRenewable(TimeConfig memory self_) internal pure returns (bool) {
+        return self_.renewer != address(0);
+    }
+    
     function createStoppedTimeConfig(uint64 ttl_, address renewer_) internal pure returns (TimeConfig memory) {
-        if (ttl_ == 0) revert ZeroTTL();
+        if (ttl_ == 0) revert Errors.LibDuration_ZeroTTL();
         return TimeConfig({
             ttl: ttl_,
             startTime: 0,

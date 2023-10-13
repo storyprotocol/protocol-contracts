@@ -6,9 +6,8 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ICollectPaymentModule } from "contracts/interfaces/modules/collect/ICollectPaymentModule.sol";
 
 import { CollectModuleBase } from "./CollectModuleBase.sol";
-import { InitCollectParams, CollectParams } from "contracts/lib/CollectModuleStructs.sol";
-import { CollectPaymentInfo, CollectPaymentParams } from "contracts/lib/CollectPaymentModuleStructs.sol";
-import { PaymentType } from "contracts/lib/CollectPaymentModuleEnums.sol";
+import { Collect } from "contracts/lib/modules/Collect.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
 /// @title Collect Payment Module Base
 /// @notice This is the Story Protocol base payment collect module, which allows
@@ -20,7 +19,7 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
     struct CollectPaymentModuleStorage {
 
         // Maps IP assets (franchiseId, ipAssetId) to collect payment settings.
-        mapping(uint256 => mapping(uint256 => CollectPaymentInfo)) paymentInfo;
+        mapping(uint256 => mapping(uint256 => Collect.CollectPaymentInfo)) paymentInfo;
     }
 
     // The ERC-1967 storage slot associated with the collect payment module:
@@ -35,19 +34,10 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
         address defaultCollectNftImpl_
     ) CollectModuleBase(franchiseRegistry_, defaultCollectNftImpl_) {}
 
-    /// @notice Returns the collect payment info associated with an IP asset.
-    /// @param  franchiseId_ The id of the franchise of the specified IP asset.
-    /// @param  ipAssetId_ The id of the specified IP asset within the franchise.
-    /// @return Payment info associated with the configured IP asset collect.
-    function getPaymentInfo(uint256 franchiseId_, uint256 ipAssetId_) public view returns (CollectPaymentInfo memory) {
-        CollectPaymentModuleStorage storage $ = _getCollectPaymentModuleStorage();
-        return $.paymentInfo[franchiseId_][ipAssetId_];
-    }
-
     /// @notice Initializes the collect payment module for a specific IP asset.
     /// @param initCollectParams_ Collect module init data, including IP asset
     ///        id, collect NFT impl address, and payment module init data.
-    function initCollect(InitCollectParams calldata initCollectParams_) public virtual override(CollectModuleBase, ICollectPaymentModule) {
+    function initCollect(Collect.InitCollectParams calldata initCollectParams_) public virtual override(CollectModuleBase, ICollectPaymentModule) {
         super.initCollect(initCollectParams_);
     }
 
@@ -58,17 +48,26 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
     /// @return collectNft The address of the collected NFT.
     /// @return collectNftId The id of the collected collect NFT.
     /// TODO: Add payment reentrancy guard
-    function collect(CollectParams calldata collectParams_) public virtual payable override(CollectModuleBase, ICollectPaymentModule) returns (address collectNft, uint256 collectNftId) {
+    function collect(Collect.CollectParams calldata collectParams_) public virtual payable override(CollectModuleBase, ICollectPaymentModule) returns (address collectNft, uint256 collectNftId) {
         return super.collect(collectParams_);
+    }
+
+    /// @notice Returns the collect payment info associated with an IP asset.
+    /// @param  franchiseId_ The id of the franchise of the specified IP asset.
+    /// @param  ipAssetId_ The id of the specified IP asset within the franchise.
+    /// @return Payment info associated with the configured IP asset collect.
+    function getPaymentInfo(uint256 franchiseId_, uint256 ipAssetId_) public view returns (Collect.CollectPaymentInfo memory) {
+        CollectPaymentModuleStorage storage $ = _getCollectPaymentModuleStorage();
+        return $.paymentInfo[franchiseId_][ipAssetId_];
     }
 
     /// @dev Perform initialization of the collect payment module.
     /// @param initCollectParams_ Collect module init data, which includes
     ///        unformatted data used for collect payment module initialization.
-    function _initCollect(InitCollectParams calldata initCollectParams_) internal virtual override(CollectModuleBase) {
+    function _initCollect(Collect.InitCollectParams calldata initCollectParams_) internal virtual override(CollectModuleBase) {
 
         // Decode the payment initialization info.
-        CollectPaymentInfo memory paymentInfo = abi.decode(initCollectParams_.data, (CollectPaymentInfo));
+        Collect.CollectPaymentInfo memory paymentInfo = abi.decode(initCollectParams_.data, (Collect.CollectPaymentInfo));
 
         // Validate that the payment information is valid.
         _validatePaymentInfo(paymentInfo);
@@ -80,10 +79,10 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
     /// @dev Perform collect module payment processing.
     /// @param collectParams_ Collect module collect data, which includes
     ///        unformatted data used for collect payment module processing.
-    function _collect(CollectParams calldata collectParams_) internal virtual override(CollectModuleBase) {
+    function _collect(Collect.CollectParams calldata collectParams_) internal virtual override(CollectModuleBase) {
 
         // Decode the payment processing info.
-        CollectPaymentParams memory paymentParams = abi.decode(collectParams_.collectData, (CollectPaymentParams));
+        Collect.CollectPaymentParams memory paymentParams = abi.decode(collectParams_.collectData, (Collect.CollectPaymentParams));
 
         // Process the payment.
         _processPayment(collectParams_.franchiseId, collectParams_.ipAssetId, collectParams_.collector, paymentParams);
@@ -99,21 +98,21 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
         uint256 franchiseId_,
         uint256 ipAssetId_,
         address collector_,
-        CollectPaymentParams memory paymentParams_
+        Collect.CollectPaymentParams memory paymentParams_
     ) internal virtual {
 
         // Get the current payment info settings for the IP asset.
         CollectPaymentModuleStorage storage $ = _getCollectPaymentModuleStorage();
-        CollectPaymentInfo memory paymentInfo = $.paymentInfo[franchiseId_][ipAssetId_];
+        Collect.CollectPaymentInfo memory paymentInfo = $.paymentInfo[franchiseId_][ipAssetId_];
 
         // Validate the passed in payment parameters.
         // TODO: Optimize struct re-use to be more memory efficient.
         _validatePaymentProcessing(paymentInfo, paymentParams_, collector_);
 
-        if (paymentInfo.paymentType == PaymentType.NATIVE) {
+        if (paymentInfo.paymentType == Collect.PaymentType.NATIVE) {
             _transferNativeTokens(
                 paymentInfo.paymentRecipient, paymentInfo.paymentAmount);
-        } else if (paymentInfo.paymentType == PaymentType.ERC20) {
+        } else if (paymentInfo.paymentType == Collect.PaymentType.ERC20) {
             _transferERC20(
                 paymentInfo.paymentToken,
                 collector_,
@@ -125,22 +124,22 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
 
     /// @dev Checks whether the collect payment info to be configured is valid.
     /// @param paymentInfo_ Settings for collect payment such as amount or token.
-    function _validatePaymentInfo(CollectPaymentInfo memory paymentInfo_) internal virtual {
+    function _validatePaymentInfo(Collect.CollectPaymentInfo memory paymentInfo_) internal virtual {
 
         // Revert if a zero payment amount is specified.
         if (paymentInfo_.paymentAmount == 0) {
-            revert CollectPaymentModuleAmountInvalid();
+            revert Errors.CollectPaymentModule_AmountInvalid();
         }
 
-        PaymentType paymentType = paymentInfo_.paymentType;
-        if (paymentType == PaymentType.NATIVE) {
+        Collect.PaymentType paymentType = paymentInfo_.paymentType;
+        if (paymentType == Collect.PaymentType.NATIVE) {
             if (paymentInfo_.paymentToken != address(0)) {
-                revert CollectPaymentModuleInvalidSettings();
+                revert Errors.CollectPaymentModule_InvalidSettings();
             }
-        } else if (paymentType == PaymentType.ERC20) {
+        } else if (paymentType == Collect.PaymentType.ERC20) {
             // Revert if the specified token is not a contract.
             if (paymentInfo_.paymentToken.code.length == 0) {
-                revert CollectPaymentModuleTokenInvalid();
+                revert Errors.CollectPaymentModule_TokenInvalid();
             }
         }
         // TODO: Add support for ERC-721 and ERC-1155 payment validation.
@@ -149,40 +148,33 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
     /// @dev Checks whether payment processing parameters are valid.
     /// @param paymentInfo_ Currently configured info for the collect payment.
     /// @param paymentParams_ Parameters passed for collect payment processing.
-    function _validatePaymentProcessing(CollectPaymentInfo memory paymentInfo_, CollectPaymentParams memory paymentParams_, address collector_) internal virtual {
+    function _validatePaymentProcessing(Collect.CollectPaymentInfo memory paymentInfo_, Collect.CollectPaymentParams memory paymentParams_, address collector_) internal virtual {
 
         uint256 paymentAmount = paymentInfo_.paymentAmount;
         address paymentToken = paymentInfo_.paymentToken;
-        PaymentType paymentType = paymentInfo_.paymentType;
+        Collect.PaymentType paymentType = paymentInfo_.paymentType;
 
         if (
             paymentParams_.paymentType != paymentType     ||
             paymentParams_.paymentToken != paymentToken ||
             paymentParams_.paymentAmount < paymentAmount
         ) {
-            revert CollectPaymentModulePaymentParamsInvalid();
+            revert Errors.CollectPaymentModule_PaymentParamsInvalid();
         }
 
-        if (paymentType == PaymentType.NATIVE) {
+        if (paymentType == Collect.PaymentType.NATIVE) {
             if (msg.value < paymentAmount) {
-                revert CollectPaymentModulePaymentInsufficient();
+                revert Errors.CollectPaymentModule_PaymentInsufficient();
             }
-        } else if (paymentType == PaymentType.ERC20) {
+        } else if (paymentType == Collect.PaymentType.ERC20) {
             if (msg.value != 0) {
-                revert CollectPaymentModuleNativeTokenNotAllowed();
+                revert Errors.CollectPaymentModule_NativeTokenNotAllowed();
             }
             if (IERC20(paymentToken).balanceOf(collector_) < paymentAmount) {
-                revert CollectPaymentModulePaymentInsufficient();
+                revert Errors.CollectPaymentModule_PaymentInsufficient();
             }
         }
         // TODO: Add support for ERC-721 and ERC-1155 payment processing.
-    }
-
-    /// @dev Gets the ERC-1967 configured collect payment module storage slot.
-    function _getCollectPaymentModuleStorage() private pure returns (CollectPaymentModuleStorage storage $) {
-        assembly {
-            $.slot := _COLLECT_PAYMENT_MODULE_STORAGE
-        }
     }
 
     /// @dev Transfers `amount` of the native token to address `to`. `msg.value`
@@ -198,7 +190,7 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
 
         // If the call was unsuccessful, revert.
         if (!ok) {
-            revert CollectPaymentModuleNativeTransferFailed();
+            revert Errors.CollectPaymentModule_NativeTransferFailed();
         }
     }
 
@@ -227,7 +219,7 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
 
         // If the call was unsuccessful, revert.
         if (!ok) {
-            revert CollectPaymentModuleERC20TransferFailed();
+            revert Errors.CollectPaymentModule_ERC20TransferFailed();
         }
 
         // Perform additional checks if the returned data is not empty.
@@ -235,14 +227,20 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
 
             // If there was returned data, revert on unsupported ABI encoding.
             if (data.length < 32) {
-                revert CollectPaymentModuleERC20TransferInvalidABIEncoding();
+                revert Errors.CollectPaymentModule_ERC20TransferInvalidABIEncoding();
             }
 
             // If the token responded with an unsuccessful return value, revert.
             if (!abi.decode(data, (bool))) {
-                revert CollectPaymentModuleERC20TransferInvalidReturnValue();
+                revert Errors.CollectPaymentModule_ERC20TransferInvalidReturnValue();
             }
         }
     }
 
+    /// @dev Gets the ERC-1967 configured collect payment module storage slot.
+    function _getCollectPaymentModuleStorage() private pure returns (CollectPaymentModuleStorage storage $) {
+        assembly {
+            $.slot := _COLLECT_PAYMENT_MODULE_STORAGE
+        }
+    }
 }

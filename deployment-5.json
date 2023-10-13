@@ -2,7 +2,7 @@
   "main": {
     "AccessControlSingleton-Impl": "0xC773AB2D53A351d5Bb38Ea9DceDc0317C2532557",
     "AccessControlSingleton-Proxy": "0x3b698f6Ea479672d5fF21D6bc352a2de477a6c64",
-    "CollectModule-Impl": "0x2675F71863456609022c825946db1Ad9695f9aA8",
+    "CollectModule-Impl": "0x6c88f438cbfd9866dcd067ffe18b951f19b968da",
     "CollectModule-Proxy": "0x195c7612eB2ae51EcB8A012E0E0C6c0904Db5519",
     "CollectNFT": "0xCbda4bFa9c1574E60d64947870b4c931DCfEa88a",
     "CommonIPAssetEventEmitter": "0xA2Da90bB860DdD42d7a64E5C33cbA32eD30d4AaD",
