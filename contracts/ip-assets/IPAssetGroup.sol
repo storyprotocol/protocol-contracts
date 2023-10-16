@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import "forge-std/console2.sol";
 import { IIPAssetGroup } from "contracts/interfaces/ip-assets/IIPAssetGroup.sol";
 import { ICollectModule } from "contracts/interfaces/modules/collect/ICollectModule.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";

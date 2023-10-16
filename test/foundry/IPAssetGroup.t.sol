@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSDL-1.1
 pragma solidity ^0.8.13;
 
-import "forge-std/console.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IPAssetGroup } from "../../contracts/ip-assets/IPAssetGroup.sol";
 import { IPAssetController } from "contracts/IPAssetController.sol";
