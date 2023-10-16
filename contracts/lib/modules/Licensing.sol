@@ -21,8 +21,8 @@ library Licensing {
         // TODO: limit who you can sublicense to?
     }
 
-    /// @notice Franchise configuration for IP licensing.
-    struct FranchiseConfig {
+    /// @notice IPAssetGroup configuration for IP licensing.
+    struct IPAssetGroupConfig {
         IpAssetConfig nonCommercialConfig;
         TermsProcessorConfig nonCommercialTerms;
         IpAssetConfig commercialConfig;
@@ -41,7 +41,7 @@ library Licensing {
         uint256 parentLicenseId;
         uint256 tokenId;
         address revoker;
-        string uri; // NOTE: should we merge this with IPAssetRegistry tokenURI for Licenses who are rights?
+        string uri; // NOTE: should we merge this with IPAssetGroup tokenURI for Licenses who are rights?
         ITermsProcessor termsProcessor;
         bytes termsData;
     }

@@ -32,7 +32,7 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest {
         collectNft = ICollectNFT(Clones.clone(defaultCollectNftImpl));
         vm.prank(address(collectModule));
         collectNft.initialize(Collect.InitCollectNFTParams({
-            ipAssetRegistry: address(ipAssetRegistry),
+            ipAssetRegistry: address(ipAssetGroup),
             ipAssetId: ipAssetId,
             data: ""
         }));
@@ -62,7 +62,7 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest {
         collectNft = ICollectNFT(Clones.clone(defaultCollectNftImpl));
         vm.expectRevert(Errors.CollectNFT_IPAssetNonExistent.selector);
         collectNft.initialize(Collect.InitCollectNFTParams({
-            ipAssetRegistry: address(ipAssetRegistry),
+            ipAssetRegistry: address(ipAssetGroup),
             ipAssetId: ipAssetId,
             data: ""
         }));
@@ -73,7 +73,7 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest {
         collectNft = new MockCollectNFT();
         vm.expectRevert(Errors.CollectNFT_AlreadyInitialized.selector);
         collectNft.initialize(Collect.InitCollectNFTParams({
-            ipAssetRegistry: address(ipAssetRegistry),
+            ipAssetRegistry: address(ipAssetGroup),
             ipAssetId: ipAssetId,
             data: ""
         }));
@@ -89,7 +89,7 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest {
     function test_CollectNFTInitializeTwiceReverts(uint8 ipAssetType) public createCollectNFT(cal, ipAssetType) {
         vm.expectRevert(Errors.CollectNFT_AlreadyInitialized.selector);
         collectNft.initialize(Collect.InitCollectNFTParams({
-            ipAssetRegistry: address(ipAssetRegistry),
+            ipAssetRegistry: address(ipAssetGroup),
             ipAssetId: ipAssetId,
             data: ""
         }));

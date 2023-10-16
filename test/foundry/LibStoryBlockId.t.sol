@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "contracts/lib/IPAsset.sol";
 import "contracts/lib/IPAsset.sol";
 
-contract FranchiseRegistryTest is Test {
+contract IPAssetControllerTest is Test {
 
     uint256 private constant _ID_RANGE = 10**12;
     uint256 private constant _HALF_ID_RANGE = 5**12;

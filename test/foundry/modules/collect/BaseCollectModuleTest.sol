@@ -76,10 +76,10 @@ contract BaseCollectModuleTest is BaseTest {
     }
 
     /// @notice Tests whether collect reverts if the registry of the IP asset being collected does not exist.
-    function test_CollectModuleCollectNonExistentIPAssetRegistryReverts(uint256 nonExistentFranchiseId, uint8 ipAssetType) createIpAsset(collector, ipAssetType) public virtual {
-        vm.assume(nonExistentFranchiseId != franchiseId);
-        vm.expectRevert(Errors.CollectModule_IPAssetRegistryNonExistent.selector);
-        _collect(nonExistentFranchiseId, ipAssetId);
+    function test_CollectModuleCollectNonExistentIPAssetGroupReverts(uint256 nonExistentIPAssetGroupId, uint8 ipAssetType) createIpAsset(collector, ipAssetType) public virtual {
+        vm.assume(nonExistentIPAssetGroupId != franchiseId);
+        vm.expectRevert(Errors.CollectModule_IPAssetGroupNonExistent.selector);
+        _collect(nonExistentIPAssetGroupId, ipAssetId);
     }
 
     /// @notice Tests whether collect reverts if the IP asset being collected from does not exist.
@@ -140,8 +140,8 @@ contract BaseCollectModuleTest is BaseTest {
 
     /// @notice Tests expected behavior of the collect module constructor.
     function test_CollectModuleConstructor() public {
-        MockCollectModule mockCollectModule = new MockCollectModule(address(franchiseRegistry), defaultCollectNftImpl);
-        assertEq(address(mockCollectModule.FRANCHISE_REGISTRY()), address(franchiseRegistry));
+        MockCollectModule mockCollectModule = new MockCollectModule(address(ipAssetController), defaultCollectNftImpl);
+        assertEq(address(mockCollectModule.FRANCHISE_REGISTRY()), address(ipAssetController));
     }
 
     /// @notice Tests expected behavior of collect module initialization.
@@ -150,8 +150,8 @@ contract BaseCollectModuleTest is BaseTest {
     }
 
     /// @notice Tests collect module reverts on unauthorized calls.
-    function test_CollectModuleInitCollectInvalidCallerReverts(uint256 nonExistentFranchiseId, uint8 ipAssetType) public createIpAsset(collector, ipAssetType)  {
-        vm.assume(nonExistentFranchiseId != franchiseId);
+    function test_CollectModuleInitCollectInvalidCallerReverts(uint256 nonExistentIPAssetGroupId, uint8 ipAssetType) public createIpAsset(collector, ipAssetType)  {
+        vm.assume(nonExistentIPAssetGroupId != franchiseId);
         vm.expectRevert(Errors.CollectModule_CallerUnauthorized.selector);
         vm.prank(address(this));
         collectModule.initCollect(Collect.InitCollectParams({
@@ -165,7 +165,7 @@ contract BaseCollectModuleTest is BaseTest {
     /// @notice Tests collect module reverts on duplicate initialization.
     function test_CollectModuleDuplicateInitReverts(uint8 ipAssetType) createIpAsset(collector, ipAssetType) public {
         vm.expectRevert(Errors.CollectModule_IPAssetAlreadyInitialized.selector);
-        vm.prank(address(ipAssetRegistry));
+        vm.prank(address(ipAssetGroup));
         _initCollectModule(franchiseId, defaultCollectNftImpl);
     }
 

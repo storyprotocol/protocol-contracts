@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 import { ZeroAddress, Unauthorized } from "contracts/errors/General.sol";
-import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
+import { IPAssetController } from "contracts/IPAssetController.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
@@ -12,10 +12,10 @@ interface ILicensingModule {
     
     event NonCommercialLicenseUriSet(string uri);
 
-    event FranchiseConfigSet(uint256 franchiseId, Licensing.FranchiseConfig config);
+    event IPAssetGroupConfigSet(uint256 franchiseId, Licensing.IPAssetGroupConfig config);
 
-    function configureFranchiseLicensing(uint256 franchiseId_, Licensing.FranchiseConfig memory config_) external;
-    function getFranchiseConfig(uint256 franchiseId_) external view returns (Licensing.FranchiseConfig memory);
+    function configureIPAssetGroupLicensing(uint256 franchiseId_, Licensing.IPAssetGroupConfig memory config_) external;
+    function getIPAssetGroupConfig(uint256 franchiseId_) external view returns (Licensing.IPAssetGroupConfig memory);
     function getNonCommercialLicenseURI() external view returns (string memory);
 
 }

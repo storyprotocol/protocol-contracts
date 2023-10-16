@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 
-interface IIPAssetDataManager  {
+interface IIPAssetGroupDataManager  {
 
     event IPAssetWritten(
         uint256 indexed ipAssetId,
@@ -17,6 +17,7 @@ interface IIPAssetDataManager  {
         string name;
         string description;
         string mediaUrl;
+        uint256 ipAssetId;
         IPAsset.IPAssetType blockType;
     }
     

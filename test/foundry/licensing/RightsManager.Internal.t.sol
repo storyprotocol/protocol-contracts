@@ -7,12 +7,13 @@ import '../mocks/MockLicensingModule.sol';
 import '../mocks/MockTermsProcessor.sol';
 import '../mocks/RightsManagerHarness.sol';
 import "../mocks/MockERC721.sol";
+import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 contract RightsManagerInternalTest is Test, ProxyHelper {
 
-    MockERC721 mockFranchiseRegistry;
+    MockERC721 mockIPAssetController;
     RightsManagerHarness rightsManager;
     address constant mockEventEmitter = address(0x1234567);
     address constant mockLicensingModule = address(0x23445);
@@ -21,21 +22,22 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
     address constant revoker = address(0x123456722222);
     
     function setUp() public {
-        mockFranchiseRegistry = new MockERC721();
-        RightsManagerHarness impl = new RightsManagerHarness(mockEventEmitter, mockLicensingModule, address(mockFranchiseRegistry), mockCollectModule);
+        mockIPAssetController = new MockERC721();
+        RightsManagerHarness impl = new RightsManagerHarness();
         rightsManager = RightsManagerHarness(
             _deployUUPSProxy(
                 address(impl),
                 abi.encodeWithSelector(
-                    bytes4(
-                        keccak256(
-                            bytes("initialize(uint256,string,string,string)")
-                        )
-                    ),
-                    1,
-                    "name",
-                    "symbol",
-                    "description"
+                    bytes4(keccak256(bytes("initialize((address,uint256,string,string,string,address,address))"))),
+                    IPAsset.InitIPAssetGroupParams({
+                        ipAssetController: address(mockIPAssetController),
+                        franchiseId: 1,
+                        name: "name",
+                        symbol: "symbol",
+                        description: "description",
+                        licensingModule: address(mockLicensingModule),
+                        collectModule: address(mockCollectModule)
+                    })
                 )
             )
         );
@@ -44,7 +46,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
     }
 
     function test_setup() public {
-        assertEq(address(rightsManager.FRANCHISE_REGISTRY()), address(mockFranchiseRegistry));
+        assertEq(address(rightsManager.FRANCHISE_REGISTRY()), address(mockIPAssetController));
         assertEq(rightsManager.name(), "name");
         assertEq(rightsManager.symbol(), "symbol");
     }
@@ -58,7 +60,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 0;
-        (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockIPAssetGroupConfig.getTermsProcessorConfig();
         // TODO test events
         uint256 licenseId = rightsManager.createLicense_exposed(
             tokenId,
@@ -83,7 +85,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 0;
-        (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockIPAssetGroupConfig.getTermsProcessorConfig();
         // TODO test events
         uint256 licenseId = rightsManager.createLicense_exposed(
             tokenId,
@@ -106,7 +108,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
     function test_internal_create_license_nonRootLicense_notmockMinting() public {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
-        (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockIPAssetGroupConfig.getTermsProcessorConfig();
         // mockMint root
         uint256 parentLicenseId = rightsManager.createLicense_exposed(
             tokenId,
@@ -145,7 +147,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
     function test_internal_create_license_nonRootLicense_mockMinting() public {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
-        (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockIPAssetGroupConfig.getTermsProcessorConfig();
         // mockMint root
         uint256 parentLicenseId = rightsManager.createLicense_exposed(
             tokenId,
@@ -179,7 +181,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 0;
-        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetGroupConfig.getTermsProcessorConfig();
         vm.expectRevert(Errors.RightsManager_ZeroRevokerAddress.selector);
         rightsManager.createLicense_exposed(
             tokenId,
@@ -197,7 +199,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
     function test_revert_internal_createLicense_nonExistentId() public {
         uint256 tokenId = 1;
         uint256 parentLicenseId = 0;
-        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetGroupConfig.getTermsProcessorConfig();
         vm.expectRevert(abi.encodeWithSignature("NonExistentID(uint256)", 1));
         rightsManager.createLicense_exposed(
             tokenId,
@@ -216,7 +218,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 0;
-        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetGroupConfig.getTermsProcessorConfig();
         // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
@@ -248,7 +250,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetGroupConfig.getTermsProcessorConfig();
         // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
@@ -280,7 +282,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetGroupConfig.getTermsProcessorConfig();
         // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
@@ -316,7 +318,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetGroupConfig.getTermsProcessorConfig();
         // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
@@ -348,7 +350,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetGroupConfig.getTermsProcessorConfig();
         // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,
@@ -380,7 +382,7 @@ contract RightsManagerInternalTest is Test, ProxyHelper {
         uint256 tokenId = 1;
         rightsManager.mockMint(licenseHolder, tokenId);
         uint256 parentLicenseId = 1;
-        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetGroupConfig.getTermsProcessorConfig();
         // mockMint root
         rightsManager.createLicense_exposed(
             tokenId,

@@ -19,25 +19,25 @@ contract LicensingModuleTest is BaseTest {
         assertEq(licensingModule.getNonCommercialLicenseURI(), NON_COMMERCIAL_LICENSE_URI);
     }
 
-    function test_configFranchise() public {
+    function test_configIPAssetGroup() public {
         vm.startPrank(franchiseOwner);
         Licensing.TermsProcessorConfig memory termsConfig = Licensing.TermsProcessorConfig({
             processor: commercialTermsProcessor,
             data: abi.encode("root")
         });
 
-        uint256 rootLicenseId = ipAssetRegistry.createFranchiseRootLicense(1, franchiseOwner, "commercial_uri_root", revoker, true, true, termsConfig);
+        uint256 rootLicenseId = ipAssetGroup.createIPAssetGroupRootLicense(1, franchiseOwner, "commercial_uri_root", revoker, true, true, termsConfig);
         assertEq(licenseRegistry.ownerOf(rootLicenseId), franchiseOwner);
         assertEq(rootLicenseId, 1);
 
-        Licensing.FranchiseConfig memory config = _getLicensingConfig();
+        Licensing.IPAssetGroupConfig memory config = _getLicensingConfig();
         config.revoker = address(0x5656565);
         config.commercialConfig.franchiseRootLicenseId = rootLicenseId;
         config.commercialTerms.data = abi.encode("bye");
         config.nonCommercialTerms.data = abi.encode("hi");
         
-        licensingModule.configureFranchiseLicensing(1, config);
-        Licensing.FranchiseConfig memory configResult = licensingModule.getFranchiseConfig(1);
+        licensingModule.configureIPAssetGroupLicensing(1, config);
+        Licensing.IPAssetGroupConfig memory configResult = licensingModule.getIPAssetGroupConfig(1);
         assertEq(configResult.nonCommercialConfig.canSublicense, true);
         assertEq(configResult.nonCommercialConfig.franchiseRootLicenseId, 0);
         assertEq(address(configResult.nonCommercialTerms.processor), address(nonCommercialTermsProcessor));
@@ -53,20 +53,20 @@ contract LicensingModuleTest is BaseTest {
 
     function test_revert_nonAuthorizedConfigSetter() public {
         vm.expectRevert(Errors.Unauthorized.selector);
-        licensingModule.configureFranchiseLicensing(1, LibMockFranchiseConfig.getMockFranchiseConfig());
+        licensingModule.configureIPAssetGroupLicensing(1, LibMockIPAssetGroupConfig.getMockIPAssetGroupConfig());
     }
 
-    function test_revert_nonExistingFranchise() public {
+    function test_revert_nonExistingIPAssetGroup() public {
         vm.expectRevert("ERC721: invalid token ID");
-        licensingModule.configureFranchiseLicensing(2, LibMockFranchiseConfig.getMockFranchiseConfig());
+        licensingModule.configureIPAssetGroupLicensing(2, LibMockIPAssetGroupConfig.getMockIPAssetGroupConfig());
     }
 
     function test_revert_zeroRevokerAddress() public {
         vm.startPrank(franchiseOwner);
-        Licensing.FranchiseConfig memory config = LibMockFranchiseConfig.getMockFranchiseConfig();
+        Licensing.IPAssetGroupConfig memory config = LibMockIPAssetGroupConfig.getMockIPAssetGroupConfig();
         config.revoker = address(0);
         vm.expectRevert(Errors.LicensingModule_ZeroRevokerAddress.selector);
-        licensingModule.configureFranchiseLicensing(1, config);
+        licensingModule.configureIPAssetGroupLicensing(1, config);
         vm.stopPrank();
     }
 
@@ -78,15 +78,15 @@ contract LicensingModuleTest is BaseTest {
         });
 
         vm.prank(franchiseOwner);
-        uint256 rootLicenseId = ipAssetRegistry.createFranchiseRootLicense(1, franchiseOwner, "commercial_uri_root", revoker, true, true, termsConfig);
+        uint256 rootLicenseId = ipAssetGroup.createIPAssetGroupRootLicense(1, franchiseOwner, "commercial_uri_root", revoker, true, true, termsConfig);
         
         commercialTermsProcessor.setSuccess(false);
         
-        Licensing.FranchiseConfig memory config = _getLicensingConfig();
+        Licensing.IPAssetGroupConfig memory config = _getLicensingConfig();
         config.commercialConfig.franchiseRootLicenseId = rootLicenseId;
         vm.startPrank(franchiseOwner);
         vm.expectRevert(abi.encodeWithSignature("LicensingModule_RootLicenseNotActive(uint256)", 1));
-        licensingModule.configureFranchiseLicensing(1, config);
+        licensingModule.configureIPAssetGroupLicensing(1, config);
         vm.stopPrank();
         
     }

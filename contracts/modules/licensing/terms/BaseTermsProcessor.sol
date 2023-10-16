@@ -9,7 +9,7 @@ import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 /// @title BaseTermsProcessor
 /// @notice Base contract for licensing terms processors, which encode, decode and execute the terms set on an IERC5218 license parameters,
 /// in particular the TermsProcessorConfig struct for the terms parameter in createLicense().
-/// TermsProcessors need to be deployed once per AUTHORIZED_EXECUTOR, which is usually each Franchise IPAssetRegistry.
+/// TermsProcessors need to be deployed once per AUTHORIZED_EXECUTOR, which is usually each IPAssetGroup IPAssetGroup.
 /// @dev TermsProcessor are intended to be reused accross the protocol, so they should be generic enough to be used by different modules.
 /// Most will be stateless, and if a terms processor needs to update something license specific,
 /// it should return the updated encoded data in executeTerms() so it is stored back on the license.

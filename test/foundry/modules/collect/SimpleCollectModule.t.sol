@@ -29,7 +29,7 @@ contract SimpleCollectModuleTest is BaseCollectModuleTest {
 
     /// @notice Tests that upgrades work as expected.
     function test_CollectModuleUpgrade() public {
-        address newCollectModuleImpl = address(new SimpleCollectModule(address(franchiseRegistry), defaultCollectNftImpl));
+        address newCollectModuleImpl = address(new SimpleCollectModule(address(ipAssetController), defaultCollectNftImpl));
         vm.prank(upgrader);
 
         bytes memory data = abi.encodeWithSelector(
@@ -46,10 +46,10 @@ contract SimpleCollectModuleTest is BaseCollectModuleTest {
     }
 
     /// @notice Tests whether collect reverts if the registry of the IP asset being collected does not exist.
-    function test_CollectModuleCollectNonExistentIPAssetRegistryReverts(uint256 nonExistentFranchiseId, uint8 ipAssetType) createIpAsset(collector, ipAssetType) public virtual override {
-        vm.assume(nonExistentFranchiseId != franchiseId);
+    function test_CollectModuleCollectNonExistentIPAssetGroupReverts(uint256 nonExistentIPAssetGroupId, uint8 ipAssetType) createIpAsset(collector, ipAssetType) public virtual override {
+        vm.assume(nonExistentIPAssetGroupId != franchiseId);
         vm.expectRevert();
-        _collect(nonExistentFranchiseId, ipAssetId);
+        _collect(nonExistentIPAssetGroupId, ipAssetId);
     }
 
 
@@ -62,7 +62,7 @@ contract SimpleCollectModuleTest is BaseCollectModuleTest {
 
     /// @notice Changes the base testing collect module deployment to deploy the mock payment collect module instead.
     function _deployCollectModule(address collectNftImpl) internal virtual override  returns (address) {
-        collectModuleImpl = address(new SimpleCollectModule(address(franchiseRegistry), collectNftImpl));
+        collectModuleImpl = address(new SimpleCollectModule(address(ipAssetController), collectNftImpl));
 
         return _deployUUPSProxy(
                 collectModuleImpl,

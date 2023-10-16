@@ -10,9 +10,9 @@ import { CollectModuleBase } from "contracts/modules/collect/CollectModuleBase.s
 contract SimpleCollectModule is CollectModuleBase {
 
     /// @notice Initializes a mock collect module.
-    /// @param franchiseRegistry_ The protocol-wide franchise registry address.
+    /// @param ipAssetController_ The protocol-wide franchise registry address.
     /// @param defaultCollectNftImpl_ The default collect NFT impl address.
-    constructor(address franchiseRegistry_, address defaultCollectNftImpl_) CollectModuleBase(franchiseRegistry_, defaultCollectNftImpl_) {}
+    constructor(address ipAssetController_, address defaultCollectNftImpl_) CollectModuleBase(ipAssetController_, defaultCollectNftImpl_) {}
 
     /// @notice Initializes the collect module via UUPS proxying.
     /// @param accessControl_ The address utilized for contract access control.

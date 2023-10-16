@@ -6,8 +6,8 @@ import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/ut
 import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { ZeroAddress, UnsupportedInterface, Unauthorized } from "contracts/errors/General.sol";
-import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
-import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
+import { IPAssetController } from "contracts/IPAssetController.sol";
+import { IIPAssetGroup } from "contracts/interfaces/ip-assets/IIPAssetGroup.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { LibIPAssetMask } from "./LibIPAssetMask.sol";
 import { IRelationshipModule } from "contracts/interfaces/modules/relationships/IRelationshipModule.sol";
@@ -41,7 +41,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
 
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.relationship-module.storage")) - 1)))
     bytes32 private constant _STORAGE_LOCATION = 0xd16687d5cf786234491b4cc484b2a64f24855aadee9b1b73824db1ed2840fd0b;
-    FranchiseRegistry public immutable FRANCHISE_REGISTRY;
+    IPAssetController public immutable FRANCHISE_REGISTRY;
 
     
     /// reverts if the TTL is not well configured for the relationship.
@@ -54,9 +54,9 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
         _;
     }
 
-    constructor(address franchiseRegistry_) {
-        if (franchiseRegistry_ == address(0)) revert Errors.ZeroAddress();
-        FRANCHISE_REGISTRY = FranchiseRegistry(franchiseRegistry_);
+    constructor(address ipAssetController_) {
+        if (ipAssetController_ == address(0)) revert Errors.ZeroAddress();
+        FRANCHISE_REGISTRY = IPAssetController(ipAssetController_);
         _disableInitializers();
     }
 
@@ -114,7 +114,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
             sourceSupportsExternal,
             destIpAssets,
             destSupportsExternal,
-            relConfig.onlySameFranchise,
+            relConfig.onlySameIPAssetGroup,
             address(relConfig.processor),
             relConfig.disputer,
             relConfig.timeConfig
@@ -198,7 +198,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
             relationshipId,
             relConfig.sourceIpAssetTypeMask,
             relConfig.destIpAssetTypeMask,
-            relConfig.onlySameFranchise,
+            relConfig.onlySameIPAssetGroup,
             params_.processor,
             relConfig.timeConfig.maxTtl,
             relConfig.timeConfig.minTtl,
@@ -245,7 +245,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
         if (!sourceResult) revert Errors.RelationshipModule_UnsupportedRelationshipSrc();
         (bool destResult, bool destIsAssetRegistry) = _checkRelationshipNode(params_.destContract, params_.destId, relConfig_.destIpAssetTypeMask);
         if (!destResult) revert Errors.RelationshipModule_UnsupportedRelationshipDst();
-        if(sourceIsAssetRegistry && destIsAssetRegistry && params_.sourceContract != params_.destContract && relConfig_.onlySameFranchise) revert Errors.RelationshipModule_CannotRelateToOtherFranchise();
+        if(sourceIsAssetRegistry && destIsAssetRegistry && params_.sourceContract != params_.destContract && relConfig_.onlySameIPAssetGroup) revert Errors.RelationshipModule_CannotRelateToOtherIPAssetGroup();
     }
 
     /// @dev Checks if the source or destination type of a relationship is allowed by the relationship config.
@@ -275,7 +275,7 @@ abstract contract RelationshipModuleBase is IRelationshipModule, AccessControlle
         return Relationship.RelationshipConfig(
             LibIPAssetMask._convertToMask(params_.sourceIpAssets, params_.allowedExternalSource),
             LibIPAssetMask._convertToMask(params_.destIpAssets, params_.allowedExternalDest),
-            params_.onlySameFranchise,
+            params_.onlySameIPAssetGroup,
             IRelationshipProcessor(params_.processor),
             params_.disputer,
             params_.timeConfig

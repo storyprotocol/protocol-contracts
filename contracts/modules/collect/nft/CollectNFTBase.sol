@@ -3,7 +3,7 @@ pragma solidity ^0.8.18;
 
 import { ICollectModule } from "contracts/interfaces/modules/collect/ICollectModule.sol";
 import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.sol";
-import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
+import { IIPAssetGroup } from "contracts/interfaces/ip-assets/IIPAssetGroup.sol";
 
 import { Collect } from "contracts/lib/modules/Collect.sol";
 import { Errors } from "contracts/lib/Errors.sol";
@@ -20,7 +20,7 @@ abstract contract CollectNFTBase is ERC721, ICollectNFT {
     ICollectModule public collectModule;
 
     // The franchise registry that the IP asset is registered under.
-    IIPAssetRegistry public ipAssetRegistry;
+    IIPAssetGroup public ipAssetRegistry;
 
     // The id of the IP asset that the collect NFT is bound to.
     uint256 public ipAssetId;
@@ -55,7 +55,7 @@ abstract contract CollectNFTBase is ERC721, ICollectNFT {
 
         _initialized = true;
         collectModule = ICollectModule(msg.sender);
-        ipAssetRegistry = IIPAssetRegistry(initParams_.ipAssetRegistry);
+        ipAssetRegistry = IIPAssetGroup(initParams_.ipAssetRegistry);
         ipAssetId = initParams_.ipAssetId;
 
         // Ensure the bound IP asset in fact exists.

@@ -35,7 +35,7 @@ interface IRelationshipModule {
         bytes32 indexed relationshipId,
         uint256 sourceIpAssetTypeMask,
         uint256 destIpAssetTypeMask,
-        bool onlySameFranchise,
+        bool onlySameIPAssetGroup,
         address processor,
         uint256 maxTtl,
         uint256 minTtl,
@@ -46,11 +46,11 @@ interface IRelationshipModule {
 
     function relate(Relationship.RelationshipParams calldata params_, bytes calldata data_) external;
     function unrelate(Relationship.RelationshipParams calldata params_) external;
-    function setRelationshipConfig(string calldata name_, Relationship.SetRelationshipConfigParams calldata params_) external returns(bytes32 relationshipId);
-    function unsetRelationshipConfig(bytes32 relationshipId_) external;
     function areTheyRelated(Relationship.RelationshipParams calldata params_) external view returns (bool);
     function isRelationshipExpired(Relationship.RelationshipParams calldata params_) external view returns (bool);
+    function setRelationshipConfig(string calldata name_, Relationship.SetRelationshipConfigParams calldata params_) external returns(bytes32 relationshipId);
     function getRelationshipId(string calldata name_) external view returns (bytes32);
+    function unsetRelationshipConfig(bytes32 relationshipId_) external;
     function getRelationshipConfig(bytes32 relationshipId_) external view returns (Relationship.RelationshipConfig memory);
     function getRelationshipConfigDecoded(bytes32 relationshipId_) external view returns (Relationship.SetRelationshipConfigParams memory);
 }

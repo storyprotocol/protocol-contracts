@@ -27,12 +27,12 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
     bytes32 private constant _COLLECT_PAYMENT_MODULE_STORAGE = 0x5dfab49ded706b2f2f30c864b856c7ede3dea7f2e0652ef85d5676b6e4568675;
 
     /// @notice Instantiates a new collect payment module.
-    /// @param franchiseRegistry_ The protocol-wide franchise registry address.
+    /// @param ipAssetController_ The protocol-wide franchise registry address.
     /// @param defaultCollectNftImpl_ The default collect NFT impl address.
     constructor(
-        address franchiseRegistry_,
+        address ipAssetController_,
         address defaultCollectNftImpl_
-    ) CollectModuleBase(franchiseRegistry_, defaultCollectNftImpl_) {}
+    ) CollectModuleBase(ipAssetController_, defaultCollectNftImpl_) {}
 
     /// @notice Initializes the collect payment module for a specific IP asset.
     /// @param initCollectParams_ Collect module init data, including IP asset

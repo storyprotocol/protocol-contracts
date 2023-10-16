@@ -105,7 +105,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
 
     /// @notice Tests that native payments with no sent funds revert.
     function test_CollectPaymentModuleZeroPaymentReverts() public {
-        vm.prank(address(ipAssetRegistry));
+        vm.prank(address(ipAssetGroup));
         paymentInfo = Collect.CollectPaymentInfo(address(0), Collect.PaymentType.NATIVE, 0 ether, alice);
         vm.expectRevert(Errors.CollectPaymentModule_AmountInvalid.selector);
         _initCollectModule(franchiseId, defaultCollectNftImpl);
@@ -113,7 +113,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
 
     /// @notice Tests that payments with invalid settings revert.
     function test_CollectPaymentModuleInvalidSettingsReverts() public {
-        vm.prank(address(ipAssetRegistry));
+        vm.prank(address(ipAssetGroup));
         paymentInfo = Collect.CollectPaymentInfo(address(erc20), Collect.PaymentType.NATIVE, 1 ether, alice);
         vm.expectRevert(Errors.CollectPaymentModule_InvalidSettings.selector);
         _initCollectModule(franchiseId, defaultCollectNftImpl);
@@ -122,7 +122,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
     /// @notice Tests that payments with invalid tokens revert.
     function test_CollectPaymentModuleInvalidTokenReverts() public {
 
-        vm.prank(address(ipAssetRegistry));
+        vm.prank(address(ipAssetGroup));
         paymentInfo = Collect.CollectPaymentInfo(bob, Collect.PaymentType.ERC20, 1 ether, alice);
         vm.expectRevert(Errors.CollectPaymentModule_TokenInvalid.selector);
         _initCollectModule(franchiseId, defaultCollectNftImpl);
@@ -423,7 +423,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
     /// @notice Changes the base testing collect module deployment to deploy the 
     ///         mock payment collect module instead.
     function _deployCollectModule(address collectNftImpl) internal virtual override  returns (address) {
-        collectModuleImpl = address(new MockCollectPaymentModule(address(franchiseRegistry), collectNftImpl));
+        collectModuleImpl = address(new MockCollectPaymentModule(address(ipAssetController), collectNftImpl));
 
         collectPaymentModule = ICollectPaymentModule(
             _deployUUPSProxy(

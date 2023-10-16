@@ -6,11 +6,10 @@ import 'test/foundry/utils/BaseTestUtils.sol';
 import "test/foundry/mocks/RelationshipModuleHarness.sol";
 import "test/foundry/mocks/MockCollectNFT.sol";
 import "test/foundry/mocks/MockCollectModule.sol";
-import "contracts/FranchiseRegistry.sol";
+import "contracts/IPAssetController.sol";
+import "contracts/IPAssetRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/ip-assets/IPAssetRegistryFactory.sol";
-import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
-import "contracts/ip-assets/IPAssetRegistry.sol";
+import "contracts/ip-assets/IPAssetGroup.sol";
 import "contracts/lib/IPAsset.sol";
 import "contracts/errors/General.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
@@ -28,11 +27,10 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 contract BaseTest is BaseTestUtils, ProxyHelper {
 
-    IPAssetRegistryFactory public factory;
-    IPAssetRegistry public ipAssetRegistry;
+    IPAssetGroup public ipAssetGroup;
     uint256 public franchiseId;
-    address ipAssetRegistryImpl;
-    FranchiseRegistry public franchiseRegistry;
+    address ipAssetGroupImpl;
+    IPAssetController public ipAssetController;
     RelationshipModuleBase public relationshipModule;
     AccessControlSingleton accessControl;
     PermissionlessRelationshipProcessor public relationshipProcessor;
@@ -44,7 +42,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     ICollectModule public collectModule;
     RelationshipModuleHarness public relationshipModuleHarness;
     address eventEmitter;
-    address public franchiseRegistryImpl;
     address public defaultCollectNftImpl;
     address public collectModuleImpl;
     address public accessControlSingletonImpl;
@@ -62,7 +59,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
 
     function setUp() virtual override(BaseTestUtils) public {
         super.setUp();
-        factory = new IPAssetRegistryFactory();
 
         // Create Access Control
         accessControlSingletonImpl = address(new AccessControlSingleton());
@@ -77,21 +73,11 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         vm.prank(admin);
         accessControl.grantRole(AccessControl.UPGRADER_ROLE, upgrader);
         
-        // Create Franchise Registry
-        franchiseRegistryImpl = address(new FranchiseRegistry(address(factory)));
-        franchiseRegistry = FranchiseRegistry(
-            _deployUUPSProxy(
-                franchiseRegistryImpl,
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
-                )
-            )
-        );
-        // Create Common Event Emitter
-        eventEmitter = address(new CommonIPAssetEventEmitter(address(franchiseRegistry)));
+        // Create IPAssetGroup Registry
+        ipAssetController = new IPAssetController();
         
         // Create Licensing Module
-        address licensingImplementation = address(new LicensingModule(address(franchiseRegistry)));
+        address licensingImplementation = address(new LicensingModule(address(ipAssetController)));
         licensingModule = LicensingModule(
             _deployUUPSProxy(
                 licensingImplementation,
@@ -105,28 +91,30 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         defaultCollectNftImpl = _deployCollectNFTImpl();
         collectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));
         
-        // upgrade factory to use new event emitter
-        ipAssetRegistryImpl = address(new IPAssetRegistry(eventEmitter, address(licensingModule), address(franchiseRegistry), address(collectModule)));
-        factory.upgradeFranchises(ipAssetRegistryImpl);
-        
+        IPAsset.RegisterIPAssetGroupParams memory params = IPAsset.RegisterIPAssetGroupParams(
+            "IPAssetGroupName",
+            "FRN",
+            "description",
+            "tokenURI",
+            address(licensingModule),
+            address(collectModule)
+        );
+
         vm.startPrank(franchiseOwner);
-
-        // Register Franchise (will create IPAssetRegistry and associated LicenseRegistry)
-        FranchiseRegistry.FranchiseCreationParams memory params = FranchiseRegistry.FranchiseCreationParams("FranchiseName", "FRN", "description", "tokenURI");
         address ipAssets;
-        (franchiseId, ipAssets) = franchiseRegistry.registerFranchise(params);
-        ipAssetRegistry = IPAssetRegistry(ipAssets);
-        licenseRegistry = ILicenseRegistry(ipAssetRegistry.getLicenseRegistry());
+        (franchiseId, ipAssets) = ipAssetController.registerIPAssetGroup(params);
+        ipAssetGroup = IPAssetGroup(ipAssets);
+        licenseRegistry = ILicenseRegistry(ipAssetGroup.getLicenseRegistry());
 
-        // Configure Licensing for Franchise
+        // Configure Licensing for IPAssetGroup
         nonCommercialTermsProcessor = new MockTermsProcessor();
         commercialTermsProcessor = new MockTermsProcessor();
-        licensingModule.configureFranchiseLicensing(franchiseId, _getLicensingConfig());
+        licensingModule.configureIPAssetGroupLicensing(franchiseId, _getLicensingConfig());
 
         vm.stopPrank();
 
         // Create Relationship Module
-        relationshipModuleHarness = new RelationshipModuleHarness(address(franchiseRegistry));
+        relationshipModuleHarness = new RelationshipModuleHarness(address(ipAssetController));
         relationshipModule = RelationshipModuleBase(
             _deployUUPSProxy(
                 address(relationshipModuleHarness),
@@ -142,8 +130,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         }
     }
 
-    function _getLicensingConfig() view internal returns (Licensing.FranchiseConfig memory) {
-        return Licensing.FranchiseConfig({
+    function _getLicensingConfig() view internal returns (Licensing.IPAssetGroupConfig memory) {
+        return Licensing.IPAssetGroupConfig({
             nonCommercialConfig: Licensing.IpAssetConfig({
                 canSublicense: true,
                 franchiseRootLicenseId: 0
@@ -171,7 +159,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     }
 
     function _deployCollectModule(address collectNftImpl) internal virtual returns (address) {
-        collectModuleImpl = address(new MockCollectModule(address(franchiseRegistry), collectNftImpl));
+        collectModuleImpl = address(new MockCollectModule(address(ipAssetController), collectNftImpl));
         return _deployUUPSProxy(
                 collectModuleImpl,
                 abi.encodeWithSelector(
@@ -189,7 +177,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         vm.assume(ipAssetType > uint8(type(IPAsset.IPAssetType).min));
         vm.assume(ipAssetType < uint8(type(IPAsset.IPAssetType).max));
         vm.prank(ipAssetOwner);
-        return ipAssetRegistry.createIpAsset(IPAsset.IPAssetType(ipAssetType), "name", "description", "mediaUrl", ipAssetOwner, 0, collectData);
+        return ipAssetGroup.createIpAsset(IPAsset.IPAssetType(ipAssetType), "name", "description", "mediaUrl", ipAssetOwner, 0, collectData);
     }
 
 }

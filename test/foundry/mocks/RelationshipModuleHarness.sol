@@ -6,7 +6,7 @@ import { Relationship } from "contracts/lib/modules/Relationship.sol";
 
 contract RelationshipModuleHarness is RelationshipModuleBase {
 
-    constructor(address _franchiseRegistry) RelationshipModuleBase(_franchiseRegistry) {}
+    constructor(address _ipAssetController) RelationshipModuleBase(_ipAssetController) {}
 
     function initialize(address accessControl) public initializer {
         __RelationshipModuleBase_init(accessControl);

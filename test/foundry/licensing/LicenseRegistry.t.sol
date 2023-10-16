@@ -20,11 +20,11 @@ contract LicenseRegistryTest is BaseTest {
         deployProcessors = false;
         super.setUp();
         vm.prank(licenseHolder);
-        uint256 ipAssetId = ipAssetRegistry.createIpAsset(IPAsset.IPAssetType(1), "name", "description", "mediaUrl", licenseHolder, 0, "");
-        uint256 parentLicenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, false);
-        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        uint256 ipAssetId = ipAssetGroup.createIpAsset(IPAsset.IPAssetType(1), "name", "description", "mediaUrl", licenseHolder, 0, "");
+        uint256 parentLicenseId = ipAssetGroup.getLicenseIdByTokenId(ipAssetId, false);
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetGroupConfig.getTermsProcessorConfig();
         vm.prank(licenseHolder);
-        licenseId = ipAssetRegistry.createLicense(
+        licenseId = ipAssetGroup.createLicense(
             ipAssetId,
             parentLicenseId,
             licenseHolder,
@@ -39,9 +39,9 @@ contract LicenseRegistryTest is BaseTest {
 
     function test_setUp() public {
         assertEq(licenseRegistry.ownerOf(licenseId), licenseHolder);
-        assertEq(licenseRegistry.name(), "Licenses for FranchiseName");
+        assertEq(licenseRegistry.name(), "Licenses for IPAssetGroupName");
         assertEq(licenseRegistry.symbol(), "slFRN");
-        assertEq(address(licenseRegistry.getRightsManager()), address(ipAssetRegistry));
+        assertEq(address(licenseRegistry.getRightsManager()), address(ipAssetGroup));
         assertEq(licenseRegistry.exists(licenseId), true);
     }
 
@@ -59,7 +59,7 @@ contract LicenseRegistryTest is BaseTest {
 
     function test_revert_transfer_inactive_license() public {
         vm.prank(revoker);
-        ipAssetRegistry.revokeLicense(licenseId);
+        ipAssetGroup.revokeLicense(licenseId);
 
         vm.expectRevert(Errors.RightsManager_InactiveLicense.selector);
         vm.prank(licenseHolder);
