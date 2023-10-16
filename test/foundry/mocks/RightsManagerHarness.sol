@@ -2,10 +2,10 @@
 pragma solidity ^0.8.13;
 
 import { IPAssetRegistry } from "contracts/ip-assets/IPAssetRegistry.sol";
-import { IPAsset } from "contracts/IPAsset.sol";
-import { ILicensingModule } from "contracts/modules/licensing/ILicensingModule.sol";
-import { IERC5218 } from "contracts/modules/licensing/IERC5218.sol";
-import { ITermsProcessor } from "contracts/modules/licensing/terms/ITermsProcessor.sol";
+import { IPAsset } from "contracts/lib/IPAsset.sol";
+import { ILicensingModule } from "contracts/interfaces/modules/licensing/ILicensingModule.sol";
+import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
+import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 
 contract RightsManagerHarness is IPAssetRegistry {
@@ -21,10 +21,10 @@ contract RightsManagerHarness is IPAssetRegistry {
 
     function mockMintWithRights(address to, uint256 tokenId, address revoker) external {
         _mint(to, tokenId);
-        _setNonCommercialRights(tokenId, 0, to, revoker, ILicensingModule.IpAssetConfig({
+        _setNonCommercialRights(tokenId, 0, to, revoker, Licensing.IpAssetConfig({
             canSublicense: true,
             franchiseRootLicenseId: 0
-        }), IERC5218.TermsProcessorConfig({
+        }), Licensing.TermsProcessorConfig({
             processor: ITermsProcessor(address(0)),
             data: ""
         }));
@@ -38,7 +38,7 @@ contract RightsManagerHarness is IPAssetRegistry {
         address revoker,
         bool commercial,
         bool canSublicense,
-        TermsProcessorConfig memory _terms,
+        Licensing.TermsProcessorConfig memory _terms,
         bool inLicenseRegistry
     ) external returns(uint256 licenseId) {
         return _createLicense(

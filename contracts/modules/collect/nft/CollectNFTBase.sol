@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.18;
 
-import { ICollectModule } from "contracts/interfaces/ICollectModule.sol";
-import { ICollectNFT } from "contracts/interfaces/ICollectNFT.sol";
-import { IIPAssetRegistry } from "contracts/ip-assets/IIPAssetRegistry.sol";
+import { ICollectModule } from "contracts/interfaces/modules/collect/ICollectModule.sol";
+import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.sol";
+import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
 
-import { InitCollectNFTParams } from "contracts/lib/CollectNFTStructs.sol";
+import { Collect } from "contracts/lib/modules/Collect.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 import { ERC721 } from "./ERC721.sol";
 
 /// @title Collect NFT Base Contract
@@ -30,7 +31,7 @@ abstract contract CollectNFTBase is ERC721, ICollectNFT {
     /// @notice Ensures calls may only be invoked by the parent collect module.
     modifier onlyCollectModule() {
         if (msg.sender != address(collectModule)) {
-            revert CollectNFTCallerUnauthorized();
+            revert Errors.CollectNFT_CallerUnauthorized();
         }
         _;
     }
@@ -42,52 +43,52 @@ abstract contract CollectNFTBase is ERC721, ICollectNFT {
         _initialized = true;
     }
 
+    /// @notice Initializes a collect NFT for subsequent collection.
+    /// @param initParams_ Collect NFT init data, including bound franchise IP 
+    ///        asset registry, IP asset id, and generic unformatted init data.
+    function initialize(Collect.InitCollectNFTParams calldata initParams_) public virtual {
+
+        // Revert if this collect NFT has already been initialized.
+        if (_initialized) {
+            revert Errors.CollectNFT_AlreadyInitialized();
+        }
+
+        _initialized = true;
+        collectModule = ICollectModule(msg.sender);
+        ipAssetRegistry = IIPAssetRegistry(initParams_.ipAssetRegistry);
+        ipAssetId = initParams_.ipAssetId;
+
+        // Ensure the bound IP asset in fact exists.
+        try ipAssetRegistry.ownerOf(ipAssetId) {
+        } catch {
+            revert Errors.CollectNFT_IPAssetNonExistent();
+        }
+
+        // Perform any additional collect NFT initialization.
+        _initialize(initParams_.data);
+    }
+
+    /// @notice Performs a collect, minting the NFT to address `collector`.
+    /// @param collector_ The address of the target designated for collection.
+    /// @param data_ Additional unformatted bytes data for optional processing.
+    /// @return tokenId The id of the minted collect NFT.
+    function collect(address collector_, bytes calldata data_) onlyCollectModule public virtual returns (uint256 tokenId) {
+        tokenId = _totalSupply;
+        _mint(collector_, tokenId);
+        _collect(data_);
+    }
+
     /// @notice Returns the total # of collect NFTs that exist for an IP asset.
     /// @return The total number of collect NFTs in the collection.
     function totalSupply() public view virtual returns (uint256) {
         return _totalSupply;
     }
 
-    /// @notice Initializes a collect NFT for subsequent collection.
-    /// @param initParams Collect NFT init data, including bound franchise IP 
-    ///        asset registry, IP asset id, and generic unformatted init data.
-    function initialize(InitCollectNFTParams calldata initParams) public virtual {
-
-        // Revert if this collect NFT has already been initialized.
-        if (_initialized) {
-            revert CollectNFTAlreadyInitialized();
-        }
-
-        _initialized = true;
-        collectModule = ICollectModule(msg.sender);
-        ipAssetRegistry = IIPAssetRegistry(initParams.ipAssetRegistry);
-        ipAssetId = initParams.ipAssetId;
-
-        // Ensure the bound IP asset in fact exists.
-        try ipAssetRegistry.ownerOf(ipAssetId) {
-        } catch {
-            revert CollectNFTIPAssetNonExistent();
-        }
-
-        // Perform any additional collect NFT initialization.
-        _initialize(initParams.data);
-    }
-
-    /// @notice Performs a collect, minting the NFT to address `collector`.
-    /// @param collector The address of the target designated for collection.
-    /// @param data Additional unformatted bytes data for optional processing.
-    /// @return tokenId The id of the minted collect NFT.
-    function collect(address collector, bytes calldata data) onlyCollectModule public virtual returns (uint256 tokenId) {
-        tokenId = _totalSupply;
-        _mint(collector, tokenId);
-        _collect(data);
-    }
-
     /// @dev Performs any additional initialization of the collect NFT.
-    /// @param data Additional unformatted data to be used for initialization.
-    function _initialize(bytes calldata data) internal virtual {}
+    /// @param data_ Additional unformatted data to be used for initialization.
+    function _initialize(bytes calldata data_) internal virtual {}
 
     /// @dev Performs any additional collect processing for the collect NFT.
-    /// @param data Additional unformatted data to be used for collection.
-    function _collect(bytes calldata data) internal virtual {}
+    /// @param data_ Additional unformatted data to be used for collection.
+    function _collect(bytes calldata data_) internal virtual {}
 }

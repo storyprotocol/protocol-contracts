@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import { IPAsset } from "./IPAsset.sol";
+import { Errors } from "contracts/lib/Errors.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { IPAssetRegistryFactory } from "./ip-assets/IPAssetRegistryFactory.sol";
 import { AccessControlledUpgradeable } from "./access-control/AccessControlledUpgradeable.sol";
-import { UPGRADER_ROLE } from "./access-control/ProtocolRoles.sol";
-import { ZeroAddress, Unauthorized } from "./errors/General.sol";
-import { IVersioned } from "./utils/IVersioned.sol";
-import { IIPAssetRegistry } from "./ip-assets/IIPAssetRegistry.sol";
-import { LibIPAssetId } from "./ip-assets/LibIPAssetId.sol";
+import { IVersioned } from "contracts/interfaces/utils/IVersioned.sol";
+import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract FranchiseRegistry is
     UUPSUpgradeable,
@@ -27,8 +24,8 @@ contract FranchiseRegistry is
         string symbol,
         string tokenURI
     );
-    error AlreadyRegistered();
 
+    /// TODO: Add franchise interface and place this in separate lib
     struct FranchiseCreationParams {
         string name;
         string symbol;
@@ -46,26 +43,58 @@ contract FranchiseRegistry is
 
     IPAssetRegistryFactory public immutable FACTORY;
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.franchise-registry.storage")) - 1)))
-    bytes32 private constant _STORAGE_LOCATION = 0x5648324915b730d22cca7279385130ad43fd4829d795fb20e9ab398bfe537e8f;
+    bytes32 private constant _STORAGE_LOCATION =
+        0x5648324915b730d22cca7279385130ad43fd4829d795fb20e9ab398bfe537e8f;
     uint256 public constant PROTOCOL_ROOT_ID = 0;
     address public constant PROTOCOL_ROOT_ADDRESS = address(0);
     string private constant _VERSION = "0.1.0";
 
-    constructor(address _factory) {
-        if (_factory == address(0)) revert ZeroAddress();
-        FACTORY = IPAssetRegistryFactory(_factory);
+    constructor(address factory_) {
+        if (factory_ == address(0)) revert Errors.ZeroAddress();
+        FACTORY = IPAssetRegistryFactory(factory_);
         _disableInitializers();
     }
 
-    function initialize(address accessControl) public initializer {
-        __UUPSUpgradeable_init();
-        __AccessControlledUpgradeable_init(accessControl);
-        __ERC721_init("Story Protocol", "SP");
+    function registerFranchise(
+        FranchiseCreationParams calldata params_
+    ) external returns (uint256, address) {
+        FranchiseStorage storage $ = _getFranchiseStorage();
+        uint256 nextId = ++$.franchiseIds;
+        address ipAssetRegistry = FACTORY.createFranchiseIpAssets(
+            nextId,
+            params_.name,
+            params_.symbol,
+            params_.description
+        );
+        $.ipAssetRegistries[nextId] = ipAssetRegistry;
+        $.tokenURIs[nextId] = params_.tokenURI;
+        _safeMint(msg.sender, nextId);
+        // TODO: set licensing restrictions per franchise, maybe grant commercial root license to the franchise NFT
+
+        emit FranchiseRegistered(
+            msg.sender,
+            nextId,
+            ipAssetRegistry,
+            params_.name,
+            params_.symbol,
+            params_.tokenURI
+        );
+
+        return (nextId, ipAssetRegistry);
     }
 
-    function _getFranchiseStorage() private pure returns (FranchiseStorage storage $) {
-        assembly {
-            $.slot := _STORAGE_LOCATION
+    /// @notice checks if an address is a valid SP IPAssetRegistry.
+    /// @param ipAssetRegistry_ the address to check
+    /// @return true if it's a valid SP IPAssetRegistry, false otherwise
+    function isIpAssetRegistry(
+        address ipAssetRegistry_
+    ) external view returns (bool) {
+        try IIPAssetRegistry(ipAssetRegistry_).franchiseId() returns (
+            uint256 franchiseId
+        ) {
+            return ipAssetRegistryForId(franchiseId) == ipAssetRegistry_;
+        } catch {
+            return false;
         }
     }
 
@@ -73,55 +102,38 @@ contract FranchiseRegistry is
         return _VERSION;
     }
 
-    function registerFranchise(FranchiseCreationParams calldata params) external returns (uint256, address) {
-        FranchiseStorage storage $ = _getFranchiseStorage();
-        uint256 nextId = ++$.franchiseIds;
-        address ipAssetRegistry = FACTORY.createFranchiseIPAssets(
-            nextId,
-            params.name,
-            params.symbol,
-            params.description
-        );
-        $.ipAssetRegistries[nextId] = ipAssetRegistry;
-        $.tokenURIs[nextId] = params.tokenURI;
-        _safeMint(msg.sender, nextId);
-        // TODO: set licensing restrictions per franchise, maybe grant commercial root license to the franchise NFT
-        
-        emit FranchiseRegistered(msg.sender, nextId, ipAssetRegistry, params.name, params.symbol, params.tokenURI);
-        
-        return (nextId, ipAssetRegistry);
+    function initialize(address accessControl_) public initializer {
+        __UUPSUpgradeable_init();
+        __AccessControlledUpgradeable_init(accessControl_);
+        __ERC721_init("Story Protocol", "SP");
     }
 
     function ipAssetRegistryForId(
-        uint256 franchiseId
+        uint256 franchiseId_
     ) public view returns (address) {
         FranchiseStorage storage $ = _getFranchiseStorage();
-        return $.ipAssetRegistries[franchiseId];
+        return $.ipAssetRegistries[franchiseId_];
     }
 
-    
-    /**
-     * @notice checks if an address is a valid SP IPAssetRegistry.
-     * @param ipAssetRegistry the address to check
-     * @return true if it's a valid SP IPAssetRegistry, false otherwise
-     */
-    function isIpAssetRegistry(address ipAssetRegistry) external view returns(bool) {
-        try IIPAssetRegistry(ipAssetRegistry).franchiseId() returns (uint256 franchiseId) {
-            return ipAssetRegistryForId(franchiseId) == ipAssetRegistry;
-        } catch {
-            return false;
-        }
-    }
-
-
-    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        _requireMinted(tokenId);
+    function tokenURI(
+        uint256 tokenId_
+    ) public view virtual override returns (string memory) {
+        _requireMinted(tokenId_);
         FranchiseStorage storage $ = _getFranchiseStorage();
-        return $.tokenURIs[tokenId];
-    } 
+        return $.tokenURIs[tokenId_];
+    }
 
     function _authorizeUpgrade(
-        address newImplementation
-    ) internal virtual override onlyRole(UPGRADER_ROLE) {}
+        address newImplementation_
+    ) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
 
+    function _getFranchiseStorage()
+        private
+        pure
+        returns (FranchiseStorage storage $)
+    {
+        assembly {
+            $.slot := _STORAGE_LOCATION
+        }
+    }
 }

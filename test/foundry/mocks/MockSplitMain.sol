@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSDL-1.1
 pragma solidity ^0.8.13;
 
-import "contracts/modules/royalties/ISplitMain.sol";
+import "contracts/interfaces/modules/royalties/ISplitMain.sol";
 import "test/foundry/mocks/MockSplit.sol";
 import "test/foundry/mocks/MockERC20.sol";
 

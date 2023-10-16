@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import { IIPAssetEventEmitter } from "./IIPAssetEventEmitter.sol";
-import { LibIPAssetId } from "contracts/ip-assets/LibIPAssetId.sol";
+import { IIPAssetEventEmitter } from "contracts/interfaces/ip-assets/events/IIPAssetEventEmitter.sol";
+import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
-import { ZeroAddress, Unauthorized } from "contracts/errors/General.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
 contract CommonIPAssetEventEmitter is IIPAssetEventEmitter  {
 
     FranchiseRegistry public immutable FRANCHISE_REGISTRY;
 
-    constructor(address _franchiseRegistry) {
-        if (_franchiseRegistry == address(0)) revert ZeroAddress();
-        FRANCHISE_REGISTRY = FranchiseRegistry(_franchiseRegistry);
+    constructor(address franchiseRegistry_) {
+        if (franchiseRegistry_ == address(0)) revert Errors.ZeroAddress();
+        FRANCHISE_REGISTRY = FranchiseRegistry(franchiseRegistry_);
     }
 
-    function emitIPAssetCreation(uint256 franchiseId, uint256 ipAssetId) override external {
-        if(FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId) != msg.sender) revert Unauthorized();
-        emit IPAssetCreated(franchiseId, msg.sender, ipAssetId, LibIPAssetId._ipAssetTypeFor(ipAssetId));
+    function emitIpAssetCreation(uint256 franchiseId_, uint256 ipAssetId_) override external {
+        if(FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId_) != msg.sender) revert Errors.Unauthorized();
+        emit IPAssetCreated(franchiseId_, msg.sender, ipAssetId_, IPAsset._ipAssetTypeFor(ipAssetId_));
     }
 
 }

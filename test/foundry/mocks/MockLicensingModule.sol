@@ -1,31 +1,31 @@
 pragma solidity ^0.8.19;
 
-import { ILicensingModule } from "contracts/modules/licensing/ILicensingModule.sol";
-import { IERC5218 } from "contracts/modules/licensing/IERC5218.sol";
-import { ITermsProcessor } from "contracts/modules/licensing/terms/ITermsProcessor.sol";
+import { ILicensingModule } from "contracts/interfaces/modules/licensing/ILicensingModule.sol";
+import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
 import { MockTermsProcessor } from "./MockTermsProcessor.sol";
+import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 library LibMockFranchiseConfig {
     function getMockFranchiseConfig()
         internal
         pure
-        returns (ILicensingModule.FranchiseConfig memory)
+        returns (Licensing.FranchiseConfig memory)
     {
         return
-            ILicensingModule.FranchiseConfig({
-                nonCommercialConfig: ILicensingModule.IpAssetConfig({
+            Licensing.FranchiseConfig({
+                nonCommercialConfig: Licensing.IpAssetConfig({
                     canSublicense: false,
                     franchiseRootLicenseId: 0
                 }),
-                nonCommercialTerms: IERC5218.TermsProcessorConfig({
+                nonCommercialTerms: Licensing.TermsProcessorConfig({
                     processor: ITermsProcessor(address(0)),
                     data: ""
                 }),
-                commercialConfig: ILicensingModule.IpAssetConfig({
+                commercialConfig: Licensing.IpAssetConfig({
                     canSublicense: false,
                     franchiseRootLicenseId: 0
                 }),
-                commercialTerms: IERC5218.TermsProcessorConfig({
+                commercialTerms: Licensing.TermsProcessorConfig({
                     processor: ITermsProcessor(address(0)),
                     data: ""
                 }),
@@ -35,9 +35,9 @@ library LibMockFranchiseConfig {
             });
     }
 
-    function getTermsProcessorConfig() public returns(IERC5218.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor){
+    function getTermsProcessorConfig() public returns(Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor){
         termsProcessor = new MockTermsProcessor();
-        terms = IERC5218.TermsProcessorConfig({
+        terms = Licensing.TermsProcessorConfig({
             processor: termsProcessor,
             data: abi.encode("terms")
         });
@@ -47,14 +47,14 @@ library LibMockFranchiseConfig {
 contract MockLicensingModule is ILicensingModule {
     function configureFranchiseLicensing(
         uint256 franchiseId,
-        FranchiseConfig memory config
+        Licensing.FranchiseConfig memory config
     ) external override {
         // No-op
     }
 
     function getFranchiseConfig(
         uint256
-    ) external pure override returns (FranchiseConfig memory) {
+    ) external pure override returns (Licensing.FranchiseConfig memory) {
         return LibMockFranchiseConfig.getMockFranchiseConfig();
     }
 

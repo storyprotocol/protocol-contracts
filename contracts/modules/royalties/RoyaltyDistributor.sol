@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import { IRoyaltyDistributor } from "./IRoyaltyDistributor.sol";
+import { IRoyaltyDistributor } from "contracts/interfaces/modules/royalties/IRoyaltyDistributor.sol";
 import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
-import { IIPAccountRegistry } from "contracts/ip-accounts/IIPAccountRegistry.sol";
-import { IRoyaltyPolicy } from "contracts/modules/royalties/policies/IRoyaltyPolicy.sol";
+import { IIPAccountRegistry } from "contracts/interfaces/ip-accounts/IIPAccountRegistry.sol";
+import { IRoyaltyPolicy } from "contracts/interfaces/modules/royalties/policies/IRoyaltyPolicy.sol";
 import { RoyaltyNFT } from "contracts/modules/royalties/RoyaltyNFT.sol";
-import { UPGRADER_ROLE, PROTOCOL_ADMIN_ROLE } from "contracts/access-control/ProtocolRoles.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
 
 contract RoyaltyDistributor is Pausable, IRoyaltyDistributor, AccessControlledUpgradeable {
 
@@ -17,61 +17,60 @@ contract RoyaltyDistributor is Pausable, IRoyaltyDistributor, AccessControlledUp
     // ipAccount => royaltyPolicy
     mapping(address => address) private policies;
 
-    constructor(address _ipAccountRegistry, address _royaltyNft) {
-        ipAccountRegistry = IIPAccountRegistry(_ipAccountRegistry);
-        royaltyNFT = RoyaltyNFT(_royaltyNft);
+    constructor(address ipAccountRegistry_, address royaltyNft_) {
+        ipAccountRegistry = IIPAccountRegistry(ipAccountRegistry_);
+        royaltyNFT = RoyaltyNFT(royaltyNft_);
     }
 
     function setRoyaltyPolicy(
-        address nftContract,
-        uint256 tokenId,
-        address royaltyPolicy,
-        bytes calldata data
+        address nftContract_,
+        uint256 tokenId_,
+        address royaltyPolicy_,
+        bytes calldata data_
     ) external {
-        address ipAccount = _ipAccount(nftContract, tokenId);
-        policies[ipAccount] = royaltyPolicy;
-        IRoyaltyPolicy(royaltyPolicy).initPolicy(ipAccount, data);
-    }
-
-    function getRoyaltyPolicy(
-        address nftContract,
-        uint256 tokenId
-    ) external view returns (address) {
-        address ipAccount = _ipAccount(nftContract, tokenId);
-        return policies[ipAccount];
+        address ipAccount = _ipAccount(nftContract_, tokenId_);
+        policies[ipAccount] = royaltyPolicy_;
+        IRoyaltyPolicy(royaltyPolicy_).initPolicy(ipAccount, data_);
     }
 
     function updateDistribution(
-        address nftContract,
-        uint256 tokenId,
-        bytes calldata data
+        address nftContract_,
+        uint256 tokenId_,
+        bytes calldata data_
     ) external {
-        address ipAccount = ipAccountRegistry.createAccount(block.chainid, nftContract, tokenId, "");
-        IRoyaltyPolicy(policies[ipAccount]).updateDistribution(ipAccount, data);
+        address ipAccount = ipAccountRegistry.createAccount(block.chainid, nftContract_, tokenId_, "");
+        IRoyaltyPolicy(policies[ipAccount]).updateDistribution(ipAccount, data_);
     }
 
-    function distribute(address nftContract, uint256 tokenId, address token) external {
-        address ipAccount = _ipAccount(nftContract, tokenId);
-        IRoyaltyPolicy(policies[ipAccount]).distribute(ipAccount, token);
+    function distribute(address nftContract_, uint256 tokenId_, address token_) external {
+        address ipAccount = _ipAccount(nftContract_, tokenId_);
+        IRoyaltyPolicy(policies[ipAccount]).distribute(ipAccount, token_);
     }
 
-    function claim(address account, address token) external {
-        royaltyNFT.claim(account, token);
+    function claim(address account_, address token_) external {
+        royaltyNFT.claim(account_, token_);
     }
 
-    function pause() external onlyRole(PROTOCOL_ADMIN_ROLE) {
+    function pause() external onlyRole(AccessControl.PROTOCOL_ADMIN_ROLE) {
         _pause();
     }
-    function unpause() external onlyRole(PROTOCOL_ADMIN_ROLE) {
+    function unpause() external onlyRole(AccessControl.PROTOCOL_ADMIN_ROLE) {
         _unpause();
     }
 
-    function _ipAccount(address nftContract, uint256 tokenId) internal view returns(address) {
-        return ipAccountRegistry.account(block.chainid, nftContract, tokenId);
+    function getRoyaltyPolicy(
+        address nftContract_,
+        uint256 tokenId_
+    ) external view returns (address) {
+        address ipAccount = _ipAccount(nftContract_, tokenId_);
+        return policies[ipAccount];
     }
 
     function _authorizeUpgrade(
-        address newImplementation
-    ) internal virtual override onlyRole(UPGRADER_ROLE) {}
+        address newImplementation_
+    ) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
 
+    function _ipAccount(address nftContract_, uint256 tokenId_) internal view returns(address) {
+        return ipAccountRegistry.account(block.chainid, nftContract_, tokenId_);
+    }
 }

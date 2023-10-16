@@ -1,60 +1,71 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/utils/Create2.sol";
-import "./IIPAccountRegistry.sol";
+import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
+import { IIPAccountRegistry } from "contracts/interfaces/ip-accounts/IIPAccountRegistry.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
 contract IPAccountRegistry is IIPAccountRegistry {
     address internal immutable IP_ACCOUNT_IMPL;
     uint256 internal immutable IP_ACCOUNT_SALT;
 
-    constructor(address ipAccountImpl) {
-        if (ipAccountImpl == address(0)) revert NonExistIpAccountImpl();
-        IP_ACCOUNT_IMPL = ipAccountImpl;
+    constructor(address ipAccountImpl_) {
+        if (ipAccountImpl_ == address(0)) revert Errors.IPAccountRegistry_NonExistentIpAccountImpl();
+        IP_ACCOUNT_IMPL = ipAccountImpl_;
         IP_ACCOUNT_SALT = 0;
     }
 
     function createAccount(
-        uint256 chainId,
-        address tokenContract,
-        uint256 tokenId,
-        bytes calldata initData
+        uint256 chainId_,
+        address tokenContract_,
+        uint256 tokenId_,
+        bytes calldata initData_
     ) external returns (address) {
         bytes memory code = _getCreationCode(
             IP_ACCOUNT_IMPL,
-            chainId,
-            tokenContract,
-            tokenId,
+            chainId_,
+            tokenContract_,
+            tokenId_,
             IP_ACCOUNT_SALT
         );
 
-        address _account = Create2.computeAddress(bytes32(IP_ACCOUNT_SALT), keccak256(code));
+        address _account = Create2.computeAddress(
+            bytes32(IP_ACCOUNT_SALT),
+            keccak256(code)
+        );
 
         if (_account.code.length != 0) return _account;
 
-        emit AccountCreated(_account, IP_ACCOUNT_IMPL, chainId, tokenContract, tokenId, IP_ACCOUNT_SALT);
+        emit AccountCreated(
+            _account,
+            IP_ACCOUNT_IMPL,
+            chainId_,
+            tokenContract_,
+            tokenId_,
+            IP_ACCOUNT_SALT
+        );
 
         _account = Create2.deploy(0, bytes32(IP_ACCOUNT_SALT), code);
 
-        if (initData.length != 0) {
-            (bool success, ) = _account.call(initData);
-            if (!success) revert IpAccountInitializationFailed();
+        if (initData_.length != 0) {
+            (bool success, ) = _account.call(initData_);
+            if (!success) revert Errors.IPAccountRegistry_InitializationFailed();
         }
 
         return _account;
     }
 
     function account(
-        uint256 chainId,
-        address tokenContract,
-        uint256 tokenId
+        uint256 chainId_,
+        address tokenContract_,
+        uint256 tokenId_
     ) external view returns (address) {
         bytes32 bytecodeHash = keccak256(
             _getCreationCode(
                 IP_ACCOUNT_IMPL,
-                chainId,
-                tokenContract,
-                tokenId,
+                chainId_,
+                tokenContract_,
+                tokenId_,
                 IP_ACCOUNT_SALT
             )
         );
@@ -63,7 +74,7 @@ contract IPAccountRegistry is IIPAccountRegistry {
     }
 
     /// @inheritdoc IIPAccountRegistry
-    function getIPAccountImpl() external view override returns (address) {
+    function getIpAccountImpl() external view override returns (address) {
         return IP_ACCOUNT_IMPL;
     }
 
@@ -74,7 +85,6 @@ contract IPAccountRegistry is IIPAccountRegistry {
         uint256 tokenId_,
         uint256 salt_
     ) internal pure returns (bytes memory) {
-        return
         // Proxy that delegate call to IPAccountProxy
         //    |           0x00000000      36             calldatasize          cds
         //    |           0x00000001      3d             returndatasize        0 cds
@@ -100,11 +110,12 @@ contract IPAccountRegistry is IIPAccountRegistry {
         //    |       |   0x0000002a      fd             revert
         //    |       `-> 0x0000002b      5b             jumpdest              0 rds
         //    \           0x0000002c      f3             return
-        abi.encodePacked(
-            hex"3d60ad80600a3d3981f3363d3d373d3d3d363d73",
-            implementation_,
-            hex"5af43d82803e903d91602b57fd5bf3",
-            abi.encode(salt_, chainId_, tokenContract_, tokenId_)
-        );
+        return
+            abi.encodePacked(
+                hex"3d60ad80600a3d3981f3363d3d373d3d3d363d73",
+                implementation_,
+                hex"5af43d82803e903d91602b57fd5bf3",
+                abi.encode(salt_, chainId_, tokenContract_, tokenId_)
+            );
     }
 }

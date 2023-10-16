@@ -5,9 +5,9 @@ import "forge-std/Script.sol";
 import "script/foundry/utils/StringUtil.sol";
 import "script/foundry/utils/JsonDeploymentHandler.s.sol";
 import "script/foundry/utils/BroadcastManager.s.sol";
-import "contracts/IPAsset.sol";
+import "contracts/lib/IPAsset.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
-import "contracts/modules/relationships/IRelationshipModule.sol";
+import { Relationship } from "contracts/lib/modules/Relationship.sol";
 
 contract SetAppearsInRelationship is Script, BroadcastManager, JsonDeploymentHandler {
 
@@ -27,31 +27,31 @@ contract SetAppearsInRelationship is Script, BroadcastManager, JsonDeploymentHan
         }
         protocolRelationshipModule = ProtocolRelationshipModule(relModule);
 
-        IPAsset[] memory sourceIPAssets = new IPAsset[](4);
-        sourceIPAssets[0] = IPAsset.CHARACTER;
-        sourceIPAssets[1] = IPAsset.GROUP;
-        sourceIPAssets[2] = IPAsset.LOCATION;
-        sourceIPAssets[3] = IPAsset.ITEM;
+        IPAsset.IPAssetType[] memory sourceIPAssets = new IPAsset.IPAssetType[](4);
+        sourceIPAssets[0] = IPAsset.IPAssetType.CHARACTER;
+        sourceIPAssets[1] = IPAsset.IPAssetType.GROUP;
+        sourceIPAssets[2] = IPAsset.IPAssetType.LOCATION;
+        sourceIPAssets[3] = IPAsset.IPAssetType.ITEM;
         
-        IPAsset[] memory destIPAssets = new IPAsset[](1);
-        destIPAssets[0] = IPAsset.STORY;
+        IPAsset.IPAssetType[] memory destIPAssets = new IPAsset.IPAssetType[](1);
+        destIPAssets[0] = IPAsset.IPAssetType.STORY;
 
         address processor = _readAddress(".relationship-processors.SrcRequestOrDstOwnerRelationshipProcessor");
         if (processor == address(0)) {
             revert("SrcRequestOrDstOwnerRelationshipProcessor not found");
         }
 
-        IRelationshipModule.SetRelationshipConfigParams memory params = IRelationshipModule.SetRelationshipConfigParams({
-            sourceIPAssets: sourceIPAssets,
+        Relationship.SetRelationshipConfigParams memory params = Relationship.SetRelationshipConfigParams({
+            sourceIpAssets: sourceIPAssets,
             allowedExternalSource: false,
-            destIPAssets: destIPAssets,
+            destIpAssets: destIPAssets,
             allowedExternalDest: false,
             onlySameFranchise: true,
             processor: processor,
             disputer: admin,
-            timeConfig: IRelationshipModule.TimeConfig({
-                maxTTL: 0,
-                minTTL: 0,
+            timeConfig: Relationship.TimeConfig({
+                maxTtl: 0,
+                minTtl: 0,
                 renewable: false
             })
         });

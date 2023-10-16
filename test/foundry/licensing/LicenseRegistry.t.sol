@@ -8,7 +8,8 @@ import '../mocks/MockTermsProcessor.sol';
 import '../mocks/RightsManagerHarness.sol';
 import "../mocks/MockERC721.sol";
 import "contracts/errors/General.sol";
-/**
+import { Errors } from "contracts/lib/Errors.sol";
+
 contract LicenseRegistryTest is BaseTest {
 
     address licenseHolder = address(0x888888);
@@ -19,9 +20,9 @@ contract LicenseRegistryTest is BaseTest {
         deployProcessors = false;
         super.setUp();
         vm.prank(licenseHolder);
-        uint256 ipAssetId = ipAssetRegistry.createIPAsset(IPAsset(1), "name", "description", "mediaUrl", licenseHolder, 0);
+        uint256 ipAssetId = ipAssetRegistry.createIpAsset(IPAsset.IPAssetType(1), "name", "description", "mediaUrl", licenseHolder, 0, "");
         uint256 parentLicenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, false);
-        (IERC5218.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
         vm.prank(licenseHolder);
         licenseId = ipAssetRegistry.createLicense(
             ipAssetId,
@@ -45,7 +46,7 @@ contract LicenseRegistryTest is BaseTest {
     }
 
     function test_revert_mint_non_rights_manager() public {
-        vm.expectRevert(Unauthorized.selector);
+        vm.expectRevert(Errors.Unauthorized.selector);
         licenseRegistry.mint(licenseHolder, 1);
     }
 
@@ -60,7 +61,7 @@ contract LicenseRegistryTest is BaseTest {
         vm.prank(revoker);
         ipAssetRegistry.revokeLicense(licenseId);
 
-        vm.expectRevert(RightsManager.InactiveLicense.selector);
+        vm.expectRevert(Errors.RightsManager_InactiveLicense.selector);
         vm.prank(licenseHolder);
         licenseRegistry.transferFrom(licenseHolder, receiver, licenseId);
     }

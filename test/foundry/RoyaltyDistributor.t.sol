@@ -7,16 +7,18 @@ import "contracts/ip-accounts/IPAccountRegistry.sol";
 import "test/foundry/mocks/MockIPAccount.sol";
 import "contracts/modules/royalties/RoyaltyDistributor.sol";
 import "contracts/modules/royalties/RoyaltyNFT.sol";
-import "contracts/modules/royalties/ISplitMain.sol";
+import "contracts/interfaces/modules/royalties/ISplitMain.sol";
 import "./mocks/MockSplitMain.sol";
 import "./mocks/MockERC20.sol";
 import "test/foundry/mocks/MockSplitMain.sol";
 import "contracts/modules/royalties/policies/MutableRoyaltyProportionPolicy.sol";
+import "contracts/modules/royalties/RoyaltyNFTFactory.sol";
 
 contract RoyaltyDistributorTest is Test {
     RoyaltyDistributor public royaltyDistributor;
     IPAccountRegistry public registry;
     MockIPAccount public implementation;
+    RoyaltyNFTFactory public royaltyNFTFactory;
     RoyaltyNFT public royaltyNft;
     ISplitMain public splitMain;
     MutableRoyaltyProportionPolicy public mutablePolicy;
@@ -39,7 +41,9 @@ contract RoyaltyDistributorTest is Test {
         tokenAddress = address(200);
         tokenId = 300;
         splitMain = _getSplitMain();
-        royaltyNft = new RoyaltyNFT(address(splitMain));
+        royaltyNFTFactory = new RoyaltyNFTFactory(address(splitMain));
+        royaltyNft = royaltyNFTFactory.createRoyaltyNft(bytes32(0));
+        royaltyNft = royaltyNFTFactory.createRoyaltyNft(bytes32("1"));
         implementation = new MockIPAccount();
         registry = new IPAccountRegistry(address(implementation));
         royaltyDistributor = new RoyaltyDistributor(address(registry), address(royaltyNft));
@@ -79,6 +83,52 @@ contract RoyaltyDistributorTest is Test {
         percentAllocations[2] = alloc2;
 
         ProportionData memory data = ProportionData({
+            accounts: accounts,
+            percentAllocations: percentAllocations
+        });
+
+        royaltyDistributor.updateDistribution(tokenAddress, tokenId, abi.encode(data));
+
+        assertEq(royaltyNft.balanceOf(tokenAccount, royaltyNft.toTokenId(tokenAccount)), 500000);
+    }
+
+    function test_updateDistributionTwice() public {
+        royaltyDistributor.setRoyaltyPolicy(tokenAddress, tokenId, address(mutablePolicy), "");
+        address configuredPolicy = royaltyDistributor.getRoyaltyPolicy(tokenAddress, tokenId);
+        assertEq(address(mutablePolicy), configuredPolicy);
+        address tokenAccount = registry.account(
+            block.chainid,
+            tokenAddress,
+            tokenId
+        );
+        uint32 tokenAlloc = 750000;
+        address acc1 = address(300);
+        uint32 alloc1 = 250000;
+
+        address[] memory accounts = new address[](2);
+        uint32[] memory percentAllocations = new uint32[](2);
+
+        accounts[0] = tokenAccount;
+        percentAllocations[0] = tokenAlloc;
+        accounts[1] = acc1;
+        percentAllocations[1] = alloc1;
+
+        ProportionData memory data = ProportionData({
+            accounts: accounts,
+            percentAllocations: percentAllocations
+        });
+        royaltyDistributor.updateDistribution(tokenAddress, tokenId, abi.encode(data));
+        vm.startPrank(tokenAccount);
+        royaltyNft.setApprovalForAll(address(mutablePolicy), true);
+        vm.stopPrank();
+        address acc3 = address(500);
+        uint32 alloc3 = 250000;
+        accounts = new address[](1);
+        percentAllocations = new uint32[](1);
+        accounts[0] = acc3;
+        percentAllocations[0] = alloc3;
+
+        data = ProportionData({
             accounts: accounts,
             percentAllocations: percentAllocations
         });

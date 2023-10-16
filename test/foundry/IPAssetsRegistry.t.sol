@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: BUSDL-1.1
 pragma solidity ^0.8.13;
 
+import { Errors } from "contracts/lib/Errors.sol";
 import { IPAssetRegistry } from "../../contracts/ip-assets/IPAssetRegistry.sol";
 import { IPAssetRegistryFactory } from "../../contracts/ip-assets/IPAssetRegistryFactory.sol";
-import { IPAsset } from "../../contracts/IPAsset.sol";
-import { LibIPAssetId } from "../../contracts/ip-assets/LibIPAssetId.sol";
+import { IPAsset } from "../../contracts/lib/IPAsset.sol";
+import { IPAsset } from "../../contracts/lib/IPAsset.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { IERC1967 } from "@openzeppelin/contracts/interfaces/IERC1967.sol";
 import { MockIPAssetEventEmitter } from "./mocks/MockIPAssetEventEmitter.sol";
@@ -49,7 +50,7 @@ contract IPAssetRegistryTest is Test {
 
         address mockCollectModule = address(new MockCollectModule(address(mockFranchiseRegistry), address(new MockCollectNFT())));
         factory.upgradeFranchises(address(new IPAssetRegistry(mockEventEmitter, mockLicenseModule, address(mockFranchiseRegistry), mockCollectModule)));
-        ipAssetRegistry = IPAssetRegistry(factory.createFranchiseIPAssets(1, "name", "symbol", "description"));
+        ipAssetRegistry = IPAssetRegistry(factory.createFranchiseIpAssets(1, "name", "symbol", "description"));
         mockFranchiseRegistry.setIpAssetRegistryAddress(address(ipAssetRegistry));
     }
 
@@ -61,37 +62,37 @@ contract IPAssetRegistryTest is Test {
     }
 
     function test_mintIdAssignment() public {
-        uint8 firstIPAssetType = uint8(IPAsset.STORY);
-        uint8 lastIPAssetTypeId = uint8(IPAsset.ITEM);
+        uint8 firstIPAssetType = uint8(IPAsset.IPAssetType.STORY);
+        uint8 lastIPAssetTypeId = uint8(IPAsset.IPAssetType.ITEM);
         for(uint8 i = firstIPAssetType; i < lastIPAssetTypeId; i++) {
-            IPAsset sb = IPAsset(i);
-            uint256 zero = LibIPAssetId._zeroId(sb);
-            assertEq(ipAssetRegistry.currentIdFor(sb), zero, "starts with zero");
+            IPAsset.IPAssetType ipAsset = IPAsset.IPAssetType(i);
+            uint256 zero = IPAsset._zeroId(ipAsset);
+            assertEq(ipAssetRegistry.currentIdFor(ipAsset), zero, "starts with zero");
             vm.prank(address(mockFranchiseRegistry));
-            uint256 blockId1 = ipAssetRegistry.createIPAsset(sb, "name", "description", "mediaUrl", mintee, 0);
+            uint256 blockId1 = ipAssetRegistry.createIpAsset(ipAsset, "name", "description", "mediaUrl", mintee, 0, "");
             assertEq(blockId1, zero + 1, "returned blockId is incremented by one");
-            assertEq(ipAssetRegistry.currentIdFor(sb), zero + 1, "mint increments currentIdFor by one");
+            assertEq(ipAssetRegistry.currentIdFor(ipAsset), zero + 1, "mint increments currentIdFor by one");
             vm.prank(address(mockFranchiseRegistry));
-            uint256 blockId2 = ipAssetRegistry.createIPAsset(sb, "name2", "description2", "mediaUrl2", mintee, 0);
+            uint256 blockId2 = ipAssetRegistry.createIpAsset(ipAsset, "name2", "description2", "mediaUrl2", mintee, 0, "");
             assertEq(blockId2, zero + 2, "returned blockId is incremented by one again");
-            assertEq(ipAssetRegistry.currentIdFor(sb), zero + 2, "2 mint increments currentIdFor by one again");
+            assertEq(ipAssetRegistry.currentIdFor(ipAsset), zero + 2, "2 mint increments currentIdFor by one again");
         }
         
     }
 
     function test_mintStoryOwnership() public {
-        uint8 firstIPAssetType = uint8(IPAsset.STORY);
-        uint8 lastIPAssetTypeId = uint8(IPAsset.ITEM);
+        uint8 firstIPAssetType = uint8(IPAsset.IPAssetType.STORY);
+        uint8 lastIPAssetTypeId = uint8(IPAsset.IPAssetType.ITEM);
         for(uint8 i = firstIPAssetType; i < lastIPAssetTypeId; i++) {
-            IPAsset sb = IPAsset(i);
+            IPAsset.IPAssetType ipAsset = IPAsset.IPAssetType(i);
             uint256 loopBalance = ipAssetRegistry.balanceOf(mintee);
             assertEq(loopBalance, (i - 1) * 2, "balance is zero for block type");
             vm.prank(address(mockFranchiseRegistry));
-            uint256 blockId1 = ipAssetRegistry.createIPAsset(sb, "name", "description", "mediaUrl", mintee, 0);
+            uint256 blockId1 = ipAssetRegistry.createIpAsset(ipAsset, "name", "description", "mediaUrl", mintee, 0, "");
             assertEq(ipAssetRegistry.balanceOf(mintee), loopBalance + 1, "balance is incremented by one");
             assertEq(ipAssetRegistry.ownerOf(blockId1), mintee);
             vm.prank(address(mockFranchiseRegistry));
-            uint256 blockId2 = ipAssetRegistry.createIPAsset(sb, "name", "description", "mediaUrl", mintee, 0);
+            uint256 blockId2 = ipAssetRegistry.createIpAsset(ipAsset, "name", "description", "mediaUrl", mintee, 0, "");
             assertEq(ipAssetRegistry.balanceOf(mintee), loopBalance + 2, "balance is incremented by one again");
             assertEq(ipAssetRegistry.ownerOf(blockId2), mintee);
         }
@@ -99,15 +100,17 @@ contract IPAssetRegistryTest is Test {
 
     function test_revertMintUnknownIPAsset() public {
         vm.prank(address(mockFranchiseRegistry));
-        vm.expectRevert(InvalidBlockType.selector);
-        ipAssetRegistry.createIPAsset(IPAsset.UNDEFINED, "name", "description", "mediaUrl", mintee, 0);
+        vm.expectRevert(
+            abi.encodeWithSelector(Errors.IPAsset_InvalidType.selector, IPAsset.IPAssetType.UNDEFINED)
+        );
+        ipAssetRegistry.createIpAsset(IPAsset.IPAssetType.UNDEFINED, "name", "description", "mediaUrl", mintee, 0, "");
     }
 
     function test_IPAssetCreationData() public {
         vm.prank(address(mockFranchiseRegistry));
-        uint256 blockId = ipAssetRegistry.createIPAsset(IPAsset.STORY, "name", "description", "mediaUrl", mintee, 0);
+        uint256 blockId = ipAssetRegistry.createIpAsset(IPAsset.IPAssetType.STORY, "name", "description", "mediaUrl", mintee, 0, "");
         IPAssetRegistry.IPAssetData memory data = ipAssetRegistry.readIPAsset(blockId);
-        assertEq(uint8(data.blockType), uint8(IPAsset.STORY));
+        assertEq(uint8(data.blockType), uint8(IPAsset.IPAssetType.STORY));
         assertEq(data.name, "name");
         assertEq(data.description, "description");
         assertEq(data.mediaUrl, "mediaUrl");
@@ -115,7 +118,7 @@ contract IPAssetRegistryTest is Test {
 
     function test_emptyIPAssetRead() public {
         IPAssetRegistry.IPAssetData memory data = ipAssetRegistry.readIPAsset(12312313);
-        assertEq(uint8(data.blockType), uint8(IPAsset.UNDEFINED));
+        assertEq(uint8(data.blockType), uint8(IPAsset.IPAssetType.UNDEFINED));
         assertEq(data.name, "");
         assertEq(data.description, "");
         assertEq(data.mediaUrl, "");
@@ -123,7 +126,7 @@ contract IPAssetRegistryTest is Test {
 
     function test_tokenUriReturnsMediaURL() public {
         vm.prank(address(mockFranchiseRegistry));
-        uint256 blockId = ipAssetRegistry.createIPAsset(IPAsset.STORY, "name", "description", "https://mediaUrl.xyz", mintee, 0);
+        uint256 blockId = ipAssetRegistry.createIpAsset(IPAsset.IPAssetType.STORY, "name", "description", "https://mediaUrl.xyz", mintee, 0, "");
         assertEq(ipAssetRegistry.tokenURI(blockId), "https://mediaUrl.xyz");    
     }
 
