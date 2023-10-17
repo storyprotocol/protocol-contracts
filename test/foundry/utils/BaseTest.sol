@@ -147,7 +147,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         }
     }
 
-    function _getLicensingConfig() view internal returns (ILicensingModule.FranchiseConfig memory) {
+    function _getLicensingConfig() view internal virtual returns (ILicensingModule.FranchiseConfig memory) {
         return ILicensingModule.FranchiseConfig({
             nonCommercialConfig: ILicensingModule.IpAssetConfig({
                 canSublicense: true,
