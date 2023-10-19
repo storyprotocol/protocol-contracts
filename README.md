@@ -262,6 +262,55 @@ Read Story Block
 npx hardhat sp:read-ip-asset--network <network> <franchiseId> <IPAssetId>
 ```
 
+Upload Story Blocks and Relationships
+
+This section requires more detail to establish how to format an input JSON data file. In the file, the data should be separated under "ip-assets" and "relationships".
+
+The IP Assets are stored in arrays and represented as JSON objects. For each story block, the following fields are required:
+```
+// example:
+stories: [
+// this is an individual story to be uploaded.
+{
+    "id": null,
+    "ipAssetType": "STORY",
+    "name": "The Full Grain World Bible",
+    "description": "Lorem Ipsum",
+    "mediaURL": "https://www.youtube.com/watch?v=9bZkp7q19f0"
+}
+]
+```
+
+The ID is initially set to null to identify an IPAsset that is yet to be uploaded; the file will be rewritten once blocks are successfully uploaded. This means, once the script finished if some batch txs failed, running the script again will only try to upload the failed IP Assets (since it skips ids that are not null)
+
+To upload relationships, the following fields are needed:
+
+```
+"relationships": [
+    {
+      "sourceContract": "same", // Address of the source contract, or "same" if it's the franchise passed as parameter
+      "sourceAssetType": "stories", // key for the source IPA data array in the JSON
+      "sourceAssetIndex": 0, // Index of the source IPA in the array correspondent to the key above
+      "destContract": "same", // Address of the destination contract, or "same" if it's the franchise passed as parameter
+      "destAssetType": "characters", // key for the destination IPA data array in the JSON
+      "destAssetIndex": 0, // Index of the destination IPA in the array correspondent to the key above
+      "data": "0x", // Hook params, if any
+      "name": "TEST_RELATIONSHIP", // Name of the relationship, as per SPIP
+      "ttl": 1, // Int, duration in seconds of the relationship, in case it can be time limited. Ignored otherwise
+      "sourceId": null, //null in the beginning since the IPAs are not uploaded, will be set by the script
+      "destId": null, //null in the beginning since the IPAs are not uploaded, will be set by the script
+      "relationshipId": null //null in the beginning since relationship is unset, it will be the hash of name.
+    }
+  ]
+```
+
+[The full example JSON is in script/data/data_example.json](/script/data/data_example.json)
+
+To call the task, use the following:
+```
+npx hardhat --network <network> -sp:uploader <franchiseId> <address that receives the IPAs> <pathname of JSON data> --batchSize <optional number of entried batched per tx>
+```
+
 ### Working with a local network
 
 Foundry comes with local network [anvil](https://book.getfoundry.sh/anvil/index.html) baked in, and allows us to deploy to our local network for quick testing locally.

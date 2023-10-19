@@ -15,9 +15,9 @@ contract SetupFranchiseLicensing is Script, BroadcastManager, JsonDeploymentHand
     LicensingModule licensingModule;
 
     // ********* EDIT THESE FOR CONFIG *********
-    uint constant FRANCHISE_ID = 67;
+    uint constant FRANCHISE_ID = 250;
 
-    address constant REVOKER_ADDRESS = address(0x1);
+    address constant REVOKER_ADDRESS = address(0xB6288e57bf7406B35ab4F70Fd1135E907107e386);
     bool constant ROOT_IP_ASSET_HAS_COMMERCIAL_RIGHTS = false;
 
     bool constant NON_COMMERCIAL_SUBLICENSING = true;

@@ -6,9 +6,9 @@ function findId(events) {
     return event.args.tokenId.toString()
 }
 
-function validateIPAssetType(IPAssetType) {
-    console.log("IPAssetType: ", IPAssetType);
-    switch (IPAssetType) {
+function validateIPAssetType(ipAssetType) {
+    console.log("IPAssetType: ", ipAssetType);
+    switch (ipAssetType) {
         case "STORY":
             return 1;
         case "CHARACTER":
@@ -22,7 +22,7 @@ function validateIPAssetType(IPAssetType) {
         case "ITEM":
             return 6;
         default:
-            throw new Error("Invalid story block type: " + IPAssetType);
+            throw new Error("Invalid story block type: " + ipAssetType);
     }
 }
 

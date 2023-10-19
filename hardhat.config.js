@@ -14,7 +14,7 @@ const configureFranchiseLicensing = require("./script/hardhat/configureFranchise
 const createIPAsset = require("./script/hardhat/createIPAsset.js");
 const getIPAssetRegistryAddress = require("./script/hardhat/getIPAssetRegistryAddress.js");
 const getIPAsset = require("./script/hardhat/getIPAsset.js");
-const sbUploader = require("./script/hardhat/sbUploader.js");
+const batchUploader = require("./script/hardhat/batchUploader.js");
 const namespacedStorageKey = require("./script/hardhat/namespacedStorageKey.js");
 const { task } = require("hardhat/config");
 
@@ -73,17 +73,18 @@ task('sp:read-ip-asset')
 
 task('sp:uploader')
     .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Assets in, as given by FranchiseRegistry contract')
+    .addPositionalParam('receiver', 'Address that will receive the IP Assets')
     .addPositionalParam('filePath', 'path to the Json data')
     .addOptionalParam('batchSize', 'Number of blocks to upload in each batch', 100, types.int)
     .setDescription('Mass upload IP Assets from a Json file')
-    .setAction(sbUploader);
+    .setAction(batchUploader);
 
 task('sp:update-ip-assets')
     .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Assets in, as given by FranchiseRegistry contract')
     .addPositionalParam('tx', 'tx hash that created blocks')
     .addPositionalParam('filePath', 'path to the Json data')
     .setDescription('Update ids for blocks in the Json file')
-    .setAction(sbUploader.updateIds);
+    .setAction(batchUploader.updateIds);
 
 task('sp:eip7201-key')
     .addPositionalParam('namespace', 'Namespace, for example erc7201:example.main')

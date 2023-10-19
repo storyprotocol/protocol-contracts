@@ -1,48 +1,65 @@
 {
-    "blocks": {
-      "stories": [
-        {
-          "id": null,
-          "blockType": "STORY",
-          "name": "The Full Grain World Bible",
-          "description": "Lorem Ipsum",
-          "author": "Sebastian Sinclair",
-          "content": "Lorem ipsum dolor sit amet consectetur adipiscing elit ullamcorper venenatis, habitasse egestas luctus penatibus eleifend at litora iaculis risus, cum quis habitant facilisi vel eu sapien taciti. Imperdiet id tincidunt erat primis sociosqu odio, nullam fusce bibendum arcu class lacus, purus cum condimentum sem varius. Magna risus scelerisque ullamcorper himenaeos et maecenas nibh erat donec, tellus vivamus elementum leo nascetur dui in litora. Malesuada nascetur eu elementum urna placerat ridiculus, nisi phasellus faucibus penatibus vivamus, fermentum ut interdum volutpat mauris.\n\n            Mi himenaeos massa netus lacinia ac platea penatibus quisque felis sapien, ante ad libero faucibus sed sagittis egestas odio inceptos ridiculus, primis metus nunc sociis eros eleifend ultricies tincidunt taciti. Eu litora cursus penatibus massa cubilia fames pellentesque, curabitur nascetur consequat placerat nulla viverra egestas, ridiculus tellus class in lacinia maecenas.\n            \n            Eros dignissim sollicitudin torquent posuere litora neque et dui rutrum metus eleifend, sociis facilisi in eget varius netus praesent potenti urna curae. Elementum tempus feugiat suscipit blandit hendrerit placerat cum aliquet curabitur ultrices tempor, tincidunt neque lobortis condimentum cras ad nisi consequat sagittis primis. Curae nullam magna semper himenaeos penatibus potenti vestibulum nostra, magnis venenatis scelerisque mi rhoncus condimentum urna, diam a curabitur aliquam fames sociosqu tincidunt.\n\nViverra lobortis rutrum eget erat ullamcorper vestibulum praesent vivamus torquent, laoreet curabitur aptent dui vel ad ac eu egestas pharetra, turpis bibendum libero faucibus lacinia sociosqu ultricies consequat. Per nec eget hendrerit gravida urna in semper, sociis accumsan facilisi laoreet scelerisque torquent, ad est pharetra faucibus luctus nisl. Urna sociis ut lacus pharetra dis ullamcorper ad arcu, erat aenean congue integer fames blandit purus. Suspendisse condimentum facilisi aliquam at varius velit quis, dictum ullamcorper dapibus cum posuere nec pellentesque, porta laoreet tempus cursus porttitor sollicitudin.\n\nAuctor senectus praesent nostra porttitor platea dapibus phasellus vitae enim tristique venenatis laoreet, vehicula eleifend fusce metus lectus massa facilisis fames class neque eros. Libero magna eros posuere velit faucibus laoreet suscipit nascetur, etiam montes consequat phasellus aptent porttitor ante platea, leo lacinia molestie justo congue malesuada netus. Blandit primis facilisi vivamus scelerisque iaculis sociosqu per quisque odio lacus auctor tempor, sodales mauris donec non magnis nisi sollicitudin nulla semper senectus.\n            \n            Vel cursus fringilla venenatis ligula ridiculus dictum est libero gravida pharetra, nulla interdum netus laoreet mus dictumst magna class dapibus. Vulputate mauris congue leo nec nisi cum fermentum platea, purus non dis varius erat curabitur dapibus ligula, curae eros tellus venenatis vestibulum fusce himenaeos. Consequat dictumst convallis natoque donec curabitur lacus malesuada, leo a suspendisse mi nostra phasellus quam iaculis, mattis eleifend vulputate ut mollis vehicula."
-        }
-      ],
-      "groups": [
-        {
-          "id": null,
-          "blockType": "GROUP",
-          "name": "The Fresh",
-          "description": "Human Like",
-          "groupingBlockType": "GROUP",
-          "ids": []
-        }
-      ],
-      "characters": [
-        {
-          "id": null,
-          "blockType": "CHARACTER",
-          "name": "Captain Crunch",
-          "description": "Lorem Ipsum"
-        }
-      ],
-      "locations": [
-        {
-          "id": null,
-          "blockType": "LOCATION",
-          "name": "Weird Homeworld",
-          "description": "Lorem Lorem."
-        }
-      ],
-      "items": [
-        {
-          "id": null,
-          "blockType": "ITEM",
-          "name": "The asdad",
-          "description": "asdd"
-        }
-      ]
+  "ip-assets": {
+    "stories": [
+      {
+        "id": null,
+        "ipAssetType": "STORY",
+        "name": "The Full Grain World Bible",
+        "description": "Lorem Ipsum",
+        "mediaURL": "https://www.youtube.com/watch?v=9bZkp7q19f0"
+      }
+    ],
+    "groups": [
+      {
+        "id": null,
+        "ipAssetType": "GROUP",
+        "name": "The Fresh",
+        "description": "Human Like",
+        "mediaURL": "https://www.youtube.com/watch?v=9bZkp7q19f0"
+      }
+    ],
+    "characters": [
+      {
+        "id": null,
+        "ipAssetType": "CHARACTER",
+        "name": "Captain Crunch",
+        "description": "Lorem Ipsum",
+        "mediaURL": "https://www.youtube.com/watch?v=9bZkp7q19f0"
+      }
+    ],
+    "locations": [
+      {
+        "id": null,
+        "ipAssetType": "LOCATION",
+        "name": "Weird Homeworld",
+        "description": "Lorem Lorem.",
+        "mediaURL": "https://www.youtube.com/watch?v=9bZkp7q19f0"
+      }
+    ],
+    "items": [
+      {
+        "id": null,
+        "ipAssetType": "ITEM",
+        "name": "The asdad",
+        "description": "asdd",
+        "mediaURL": "https://www.youtube.com/watch?v=9bZkp7q19f0"
+      }
+    ]
+  },
+  "relationships": [
+    {
+      "sourceContract": "same",
+      "sourceAssetType": "stories",
+      "sourceAssetIndex": 0,
+      "destContract": "same",
+      "destAssetType": "characters",
+      "destAssetIndex": 0,
+      "data": "0x",
+      "name": "TEST_RELATIONSHIP",
+      "ttl": 1,
+      "sourceId": null,
+      "destId": null,
+      "relationshipId": null
     }
-  }
+  ]
+}
