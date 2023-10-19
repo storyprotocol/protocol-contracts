@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
-import { HookRegistry } from "contracts/hooks/HookRegistry.sol";
+import { HookRegistry } from "./HookRegistry.sol";
 
 abstract contract BaseModule is IModule, HookRegistry {
 
