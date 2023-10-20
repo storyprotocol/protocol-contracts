@@ -9,14 +9,14 @@ abstract contract HookRegistry {
         PostAction
     }
 
-    address[] public preActionHooks;
-    address[] public postActionHooks;
+    address[] private _preActionHooks;
+    address[] private _postActionHooks;
 
     uint256 public constant INDEX_NOT_FOUND = type(uint256).max;
     uint256 public constant MAX_HOOKS = 10;
 
-    event HookRegistered(HookType hType, address indexed hook, uint256 index);
-    event HookUnregistered(HookType hType, address indexed hook, uint256 index);
+    event HookRegistered(HookType indexed hType, address indexed hook, uint256 index);
+    event HookUnregistered(HookType indexed hType, address indexed hook, uint256 index);
     event HookReplaced(
         HookType hType,
         address indexed prevHook,
@@ -24,9 +24,9 @@ abstract contract HookRegistry {
         address indexed nextHook,
         uint256 nextIndex
     );
-
+    
     modifier onlyHookRegistryAdmin() {
-        if (msg.sender == _hookRegistryAdmin())
+        if (msg.sender != _hookRegistryAdmin())
             revert Errors.HookRegistry_CallerNotAdmin();
         _;
     }
@@ -80,15 +80,28 @@ abstract contract HookRegistry {
         return hookIndex(hType_, hook_) != INDEX_NOT_FOUND;
     }
 
+    function hookAt(
+        HookType hType_,
+        uint256 index_
+    ) public view returns (address) {
+        return _hooksForType(hType_)[index_];
+    }
+
+    function totalHooks(
+        HookType hType_
+    ) public view returns (uint256) {
+        return _hooksForType(hType_).length;
+    }
+
     function _hookRegistryAdmin() internal view virtual returns (address);
 
     function _hooksForType(
         HookType hType_
     ) private view returns (address[] storage) {
         if (hType_ == HookType.PreAction) {
-            return preActionHooks;
+            return _preActionHooks;
         } else {
-            return postActionHooks;
+            return _postActionHooks;
         }
     }
 
@@ -96,8 +109,11 @@ abstract contract HookRegistry {
         address[] storage hooks_,
         address hook_
     ) private returns (uint256) {
+        if (hooks_.length == MAX_HOOKS) {
+            revert Errors.HookRegistry_MaxHooksExceeded();
+        }
         if (_hookIndex(hooks_, hook_) != INDEX_NOT_FOUND) {
-            revert("HookRegistry: hook already registered");
+            revert Errors.HookRegistry_AlreadyRegistered();
         }
         hooks_.push(hook_);
         return hooks_.length - 1;

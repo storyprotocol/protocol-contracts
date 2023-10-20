@@ -44,6 +44,7 @@ library Errors {
     error HookRegistry_HookNotFound();
     error HookRegistry_CallerNotAdmin();
     error HookRegistry_IndexOutOfBounds();
+    error HookRegistry_MaxHooksExceeded();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            BaseRelationshipProcessor                   //

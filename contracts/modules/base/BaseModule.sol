@@ -33,10 +33,7 @@ abstract contract BaseModule is IModule, HookRegistry {
         emit RequestCompleted(msg.sender);
     }
 
-    function _hookRegistryAdmin() virtual override internal view returns (address) {
-        // get owner from ipa registry
-    }
-
+    function _hookRegistryAdmin() virtual override internal view returns (address);
     function _verifyExecution(address caller, bytes calldata selfParams) virtual internal {}
     function _executePreHooks(bytes[] calldata params) virtual internal returns (bool) {}
     function _performAction(bytes calldata params) virtual internal {}
