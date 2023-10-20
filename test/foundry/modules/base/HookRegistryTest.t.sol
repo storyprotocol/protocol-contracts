@@ -11,15 +11,8 @@ contract HookRegistryTest is Test {
     MockHookRegistry registry;
     address admin = address(123);
 
-    event HookRegistered(HookRegistry.HookType indexed hType, address indexed hook, uint256 index);
-    event HookUnregistered(HookRegistry.HookType indexed hType, address indexed hook, uint256 index);
-    event HookReplaced(
-        HookRegistry.HookType hType,
-        address indexed prevHook,
-        uint256 prevIndex,
-        address indexed nextHook,
-        uint256 nextIndex
-    );
+    event HooksRegistered(HookRegistry.HookType indexed hType, address[] indexed hook);
+    event HooksCleared(HookRegistry.HookType indexed hType);
 
     function setUp() public {
         vm.prank(admin);
@@ -27,62 +20,157 @@ contract HookRegistryTest is Test {
     }
 
     function test_hookRegistry_registerPreHooks() public {
-        address hook1 = address(456);
-        address hook2 = address(789);
+        address[] memory hooks = new address[](2);
+        hooks[0] = address(123);
+        hooks[1] = address(456);
         vm.startPrank(admin);
-        vm.expectEmit(true, true, false, true);
-        emit HookRegistered(HookRegistry.HookType.PreAction, hook1, 0);
-        registry.registerHook(HookRegistry.HookType.PreAction, hook1);
-        vm.expectEmit(true, true, false, true);
-        emit HookRegistered(HookRegistry.HookType.PreAction, hook2, 1);
-        registry.registerHook(HookRegistry.HookType.PreAction, hook2);
+        vm.expectEmit(true, false, false, true);
+        emit HooksRegistered(HookRegistry.HookType.PreAction, hooks);
+        registry.registerHooks(HookRegistry.HookType.PreAction, hooks);
         vm.stopPrank();
-        assertEq(registry.hookAt(HookRegistry.HookType.PreAction, 0), hook1);
-        assertEq(registry.hookAt(HookRegistry.HookType.PreAction, 1), hook2);
-        assertEq(registry.totalHooks(HookRegistry.HookType.PreAction), 2);
+        assertEq(registry.hookAt(HookRegistry.HookType.PreAction, 0), hooks[0]);
+        assertEq(registry.hookAt(HookRegistry.HookType.PreAction, 1), hooks[1]);
+        assertEq(registry.totalHooks(HookRegistry.HookType.PreAction), hooks.length);
+    }
+
+    function test_hookRegistry_registerPreHooksClearsHooksIfNotEmpty() public {
+        address[] memory hooks = new address[](2);
+        hooks[0] = address(123);
+        hooks[1] = address(456);
+        vm.startPrank(admin);
+        registry.registerHooks(HookRegistry.HookType.PreAction, hooks);
+        vm.expectEmit(true, false, false, true);
+        emit HooksCleared(HookRegistry.HookType.PreAction);
+        registry.registerHooks(HookRegistry.HookType.PreAction, hooks);
+        vm.stopPrank();
+        assertEq(registry.hookAt(HookRegistry.HookType.PreAction, 0), hooks[0]);
+        assertEq(registry.hookAt(HookRegistry.HookType.PreAction, 1), hooks[1]);
+        assertEq(registry.totalHooks(HookRegistry.HookType.PreAction), hooks.length);
     }
 
     function test_hookRegistry_registerPostHooks() public {
-        address hook1 = address(456);
-        address hook2 = address(789);
+        address[] memory hooks = new address[](2);
+        hooks[0] = address(123);
+        hooks[1] = address(456);
         vm.startPrank(admin);
-        vm.expectEmit(true, true, false, true);
-        emit HookRegistered(HookRegistry.HookType.PostAction, hook1, 0);
-        registry.registerHook(HookRegistry.HookType.PostAction, hook1);
-        vm.expectEmit(true, true, false, true);
-        emit HookRegistered(HookRegistry.HookType.PostAction, hook2, 1);
-        registry.registerHook(HookRegistry.HookType.PostAction, hook2);
+        vm.expectEmit(true, false, false, true);
+        emit HooksRegistered(HookRegistry.HookType.PostAction, hooks);
+        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);
         vm.stopPrank();
-        assertEq(registry.hookAt(HookRegistry.HookType.PostAction, 0), hook1);
-        assertEq(registry.hookAt(HookRegistry.HookType.PostAction, 1), hook2);
-        assertEq(registry.totalHooks(HookRegistry.HookType.PostAction), 2);
+        assertEq(registry.hookAt(HookRegistry.HookType.PostAction, 0), hooks[0]);
+        assertEq(registry.hookAt(HookRegistry.HookType.PostAction, 1), hooks[1]);
+        assertEq(registry.totalHooks(HookRegistry.HookType.PostAction), hooks.length);
     }
 
-    function test_hookRegistry_revertRegisterPreHooksCallerNotAdmin() public {
-        address hook1 = address(456);
+    function test_hookRegistry_registerPostHooksClearsHooksIfNotEmpty() public {
+        address[] memory hooks = new address[](2);
+        hooks[0] = address(123);
+        hooks[1] = address(456);
+        vm.startPrank(admin);
+        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);
+        vm.expectEmit(true, false, false, true);
+        emit HooksCleared(HookRegistry.HookType.PostAction);
+        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);
+        vm.stopPrank();
+        assertEq(registry.hookAt(HookRegistry.HookType.PostAction, 0), hooks[0]);
+        assertEq(registry.hookAt(HookRegistry.HookType.PostAction, 1), hooks[1]);
+        assertEq(registry.totalHooks(HookRegistry.HookType.PostAction), hooks.length);
+    }
+
+    function test_hookRegistry_revertRegisterHooksCallerNotAdmin() public {
+        address[] memory hooks = new address[](2);
+        hooks[0] = address(123);
+        hooks[1] = address(456);
         vm.expectRevert(Errors.HookRegistry_CallerNotAdmin.selector);
-        registry.registerHook(HookRegistry.HookType.PostAction, hook1);        
+        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);        
     }
 
-    function test_hookRegistry_revertRegisterTooManyHooks() public {
+    function test_hookRegistry_revertRegisterMaxHooksExceeded() public {
+        address[] memory hooks = new address[](registry.MAX_HOOKS() + 1);
         vm.startPrank(admin);
         for(uint256 i = 0; i <= registry.MAX_HOOKS(); i++) {
-            if (i == registry.MAX_HOOKS()) {
-                vm.expectRevert(Errors.HookRegistry_MaxHooksExceeded.selector);
-            }
-            registry.registerHook(HookRegistry.HookType.PostAction, vm.addr(i + 1));
+            hooks[i] = vm.addr(i + 1);
         }
-    }
-
-    function test_hookRegistry_revertRegisterHookAlreadyRegistered() public {
-        address hook1 = address(456);
-        vm.startPrank(admin);
-        registry.registerHook(HookRegistry.HookType.PostAction, hook1);
-        vm.expectRevert(Errors.HookRegistry_AlreadyRegistered.selector);
-        registry.registerHook(HookRegistry.HookType.PostAction, hook1);
+        vm.expectRevert(Errors.HookRegistry_MaxHooksExceeded.selector);
+        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);
+        vm.expectRevert(Errors.HookRegistry_MaxHooksExceeded.selector);
+        registry.registerHooks(HookRegistry.HookType.PreAction, hooks);
         vm.stopPrank();
     }
-    
 
+    function test_hookRegistry_revertRegisterDuplicatedHook() public {
+        address[] memory hooks = new address[](2);
+        hooks[0] = address(123);
+        hooks[1] = address(123);
+        vm.startPrank(admin);
+        vm.expectRevert(Errors.HookRegistry_RegisteringDuplicatedHook.selector);
+        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);
+        vm.stopPrank();
+    }
+
+    function test_hookRegistry_getters() public {
+        address[] memory hooks = new address[](2);
+        hooks[0] = address(123);
+        hooks[1] = address(456);
+        vm.startPrank(admin);
+
+        registry.registerHooks(HookRegistry.HookType.PreAction, hooks);
+        assertEq(registry.hookAt(HookRegistry.HookType.PreAction, 0), hooks[0]);
+        assertEq(registry.hookAt(HookRegistry.HookType.PreAction, 1), hooks[1]);
+        assertEq(registry.hookIndex(HookRegistry.HookType.PreAction, hooks[0]), 0);
+        assertEq(registry.hookIndex(HookRegistry.HookType.PreAction, hooks[1]), 1);
+        assertEq(registry.totalHooks(HookRegistry.HookType.PreAction), hooks.length);
+        assertEq(registry.isRegistered(HookRegistry.HookType.PreAction, hooks[0]), true);
+        assertEq(registry.isRegistered(HookRegistry.HookType.PreAction, hooks[1]), true);
+
+        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);
+        assertEq(registry.hookAt(HookRegistry.HookType.PostAction, 0), hooks[0]);
+        assertEq(registry.hookAt(HookRegistry.HookType.PostAction, 1), hooks[1]);
+        assertEq(registry.hookIndex(HookRegistry.HookType.PostAction, hooks[0]), 0);
+        assertEq(registry.hookIndex(HookRegistry.HookType.PostAction, hooks[1]), 1);
+        assertEq(registry.totalHooks(HookRegistry.HookType.PostAction), hooks.length);
+        assertEq(registry.isRegistered(HookRegistry.HookType.PostAction, hooks[0]), true);
+        assertEq(registry.isRegistered(HookRegistry.HookType.PostAction, hooks[1]), true);
+
+        vm.stopPrank();
+    }
+
+    function test_hookRegistry_clearPreHooks() public {
+        address[] memory hooks = new address[](2);
+        hooks[0] = address(123);
+        hooks[1] = address(456);
+        vm.startPrank(admin);
+        registry.registerHooks(HookRegistry.HookType.PreAction, hooks);
+        vm.expectEmit(true, true, false, true);
+        emit HooksCleared(HookRegistry.HookType.PreAction);
+        registry.clearHooks(HookRegistry.HookType.PreAction);
+        vm.stopPrank();
+        assertEq(registry.hookIndex(HookRegistry.HookType.PreAction, hooks[0]), registry.INDEX_NOT_FOUND());
+        assertEq(registry.hookIndex(HookRegistry.HookType.PreAction, hooks[1]), registry.INDEX_NOT_FOUND());
+        assertEq(registry.totalHooks(HookRegistry.HookType.PreAction), 0);
+    }
+
+    function test_hookRegistry_clearPostHooks() public {
+        address[] memory hooks = new address[](2);
+        hooks[0] = address(123);
+        hooks[1] = address(456);
+        vm.startPrank(admin);
+        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);
+        vm.expectEmit(true, true, false, true);
+        emit HooksCleared(HookRegistry.HookType.PostAction);
+        registry.clearHooks(HookRegistry.HookType.PostAction);
+        vm.stopPrank();
+        assertEq(registry.hookIndex(HookRegistry.HookType.PostAction, hooks[0]), registry.INDEX_NOT_FOUND());
+        assertEq(registry.hookIndex(HookRegistry.HookType.PostAction, hooks[1]), registry.INDEX_NOT_FOUND());
+        assertEq(registry.totalHooks(HookRegistry.HookType.PostAction), 0);
+    }
+
+    function test_hookRegistry_revertClearHooksCallerNotAdmin() public {
+        address[] memory hooks = new address[](2);
+        hooks[0] = address(123);
+        hooks[1] = address(456);
+        vm.expectRevert(Errors.HookRegistry_CallerNotAdmin.selector);
+        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);        
+    }
 
 }

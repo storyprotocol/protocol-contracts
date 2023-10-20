@@ -40,10 +40,9 @@ library Errors {
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice The hook is already registered.
-    error HookRegistry_AlreadyRegistered();
-    error HookRegistry_HookNotFound();
+    error HookRegistry_RegisteringDuplicatedHook();
+    error HookRegistry_RegisteringZeroAddressHook();
     error HookRegistry_CallerNotAdmin();
-    error HookRegistry_IndexOutOfBounds();
     error HookRegistry_MaxHooksExceeded();
 
     ////////////////////////////////////////////////////////////////////////////
