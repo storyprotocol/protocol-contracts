@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import '../utils/BaseTest.sol';
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
-import "contracts/ip-assets/IPAssetGroup.sol";
+import "contracts/ip-assets/IPAssetOrg.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { Relationship } from "contracts/lib/modules/Relationship.sol";
 
@@ -17,8 +17,9 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
         deployProcessors = true;
         super.setUp();
 
-        vm.startPrank(franchiseOwner);
-        IPAsset.RegisterIPAssetGroupParams memory params = IPAsset.RegisterIPAssetGroupParams(
+        vm.startPrank(ipAssetOrgOwner);
+        IPAsset.RegisterIPAssetOrgParams memory params = IPAsset.RegisterIPAssetOrgParams(
+            address(registry),
             "name",
             "symbol",
             "description",
@@ -26,12 +27,12 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
             address(licensingModule),
             address(collectModule)
         );
-        (uint256 id, address ipAssets) = ipAssetController.registerIPAssetGroup(params);
-        ipAssetGroup = IPAssetGroup(ipAssets);
+        address ipAssets = ipAssetOrgFactory.registerIPAssetOrg(params);
+        ipAssetOrg = IPAssetOrg(ipAssets);
         vm.stopPrank();
         relationshipModule = ProtocolRelationshipModule(
             _deployUUPSProxy(
-                address(new ProtocolRelationshipModule(address(ipAssetController))),
+                address(new ProtocolRelationshipModule(address(ipAssetOrgFactory))),
                 abi.encodeWithSelector(
                     bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
                 )
@@ -53,7 +54,7 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
             allowedExternalSource: false,
             destIpAssets: destIpAssets,
             allowedExternalDest: true,
-            onlySameIPAssetGroup: true,
+            onlySameIPAssetOrg: true,
             processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: Relationship.TimeConfig({
@@ -68,7 +69,7 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
         Relationship.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relId);
         assertEq(config.sourceIpAssetTypeMask, 1 << (uint256(IPAsset.IPAssetType.STORY) & 0xff));
         assertEq(config.destIpAssetTypeMask, 1 << (uint256(IPAsset.IPAssetType.CHARACTER) & 0xff) | 1 << (uint256(IPAsset.IPAssetType.ART) & 0xff) | (uint256(IPAsset.EXTERNAL_ASSET) << 248));
-        assertTrue(config.onlySameIPAssetGroup);
+        assertTrue(config.onlySameIPAssetOrg);
         // TODO: test for event
 
     }
@@ -85,7 +86,7 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
             allowedExternalSource: false,
             destIpAssets: destIpAssets,
             allowedExternalDest: true,
-            onlySameIPAssetGroup: true,
+            onlySameIPAssetOrg: true,
             processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: Relationship.TimeConfig({
@@ -95,7 +96,7 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
             })
         });
         vm.expectRevert();
-        vm.prank(franchiseOwner);
+        vm.prank(ipAssetOrgOwner);
         relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
     }
 
@@ -111,7 +112,7 @@ contract ProtocolRelationshipModuleUnsetRelationshipsTest is BaseTest {
         super.setUp();
         relationshipModule = ProtocolRelationshipModule(
             _deployUUPSProxy(
-                address(new ProtocolRelationshipModule(address(ipAssetController))),
+                address(new ProtocolRelationshipModule(address(ipAssetOrgFactory))),
                 abi.encodeWithSelector(
                     bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
                 )
@@ -129,7 +130,7 @@ contract ProtocolRelationshipModuleUnsetRelationshipsTest is BaseTest {
             allowedExternalSource: false,
             destIpAssets: destIpAssets,
             allowedExternalDest: true,
-            onlySameIPAssetGroup: true,
+            onlySameIPAssetOrg: true,
             processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: Relationship.TimeConfig({
@@ -150,13 +151,13 @@ contract ProtocolRelationshipModuleUnsetRelationshipsTest is BaseTest {
         Relationship.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relId);
         assertEq(config.sourceIpAssetTypeMask, 0);
         assertEq(config.destIpAssetTypeMask, 0);
-        assertFalse(config.onlySameIPAssetGroup);
+        assertFalse(config.onlySameIPAssetOrg);
         // TODO: test for event
     }
 
     function test_revert_unsetRelationshipConfigNotAuthorized() public {
         vm.expectRevert();
-        vm.prank(franchiseOwner);
+        vm.prank(ipAssetOrgOwner);
         relationshipModule.unsetRelationshipConfig(relId);
     }
 

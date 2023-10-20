@@ -6,7 +6,7 @@ import "forge-std/Test.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { LibIPAssetMask } from "contracts/modules/relationships/LibIPAssetMask.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
-import { IPAssetController } from "contracts/IPAssetController.sol";
+import { IPAssetOrgFactory } from "contracts/IPAssetOrgFactory.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { MockERC721 } from "../mocks/MockERC721.sol";
 

@@ -9,9 +9,8 @@ import { Collect } from "contracts/lib/modules/Collect.sol";
 interface ICollectModule {
 
     /// @dev Emits when a Collect action is invoked.
-    /// TODO: Once global IPs are supported, we can index the collect NFTs as well.
+    /// TODO: Add logging for franchise and ipAssetOrg
     event Collected(
-        uint256 indexed franchiseid_,
         uint256 indexed ipAssetId_,
         address indexed collector_,
         address collectNft_,
@@ -21,8 +20,8 @@ interface ICollectModule {
     );
 
     /// @dev Emits when a new collect NFT is deployed.
+    /// TODO: Add logging for franchise and ipAssetOrg
     event NewCollectNFT(
-        uint256 indexed franchiseId_,
         uint256 indexed ipAssetId_,
         address collectNFT_
     );
@@ -42,11 +41,9 @@ interface ICollectModule {
     ) external payable returns (address collectNft, uint256 collectNftId);
 
     /// @notice Returns the collect NFT address associated with an IP asset.
-    /// @param  franchiseId_ The id of the franchise of the specified IP asset.
     /// @param  ipAssetId_ The id of the specified IP asset within the franchise.
     /// @return The Collect NFT address if it exists, else the zero address.
     function getCollectNFT(
-        uint256 franchiseId_,
         uint256 ipAssetId_
     ) external returns (address);
 }

@@ -19,8 +19,16 @@ contract LicenseRegistryTest is BaseTest {
     function setUp() virtual override public {
         deployProcessors = false;
         super.setUp();
-        ipAssetId = ipAssetGroup.createIpAsset(IPAsset.IPAssetType(1), "name", "description", "mediaUrl", licenseHolder, 0, "");
-        parentLicenseId = ipAssetGroup.getLicenseIdByTokenId(ipAssetId, false);
+        (, ipAssetId) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+            ipAssetType: IPAsset.IPAssetType(1),
+            name: "name",
+            description: "description",
+            mediaUrl: "mediaUrl",
+            to: licenseHolder,
+            parentIpAssetOrgId: 0,
+            collectData: ""
+        }));
+        parentLicenseId = ipAssetOrg.getLicenseIdByTokenId(ipAssetId, false);
         processor = getTermsProcessor();
     }
 
@@ -50,7 +58,7 @@ contract LicenseRegistryTest is BaseTest {
         assertFalse(processor.termsExecutedSuccessfully(encodedConfig), "terms should be inactive before start time");
 
         vm.prank(licenseHolder);
-        licenseId = ipAssetGroup.createLicense(
+        licenseId = ipAssetOrg.createLicense(
             ipAssetId,
             parentLicenseId,
             licenseHolder,
@@ -61,15 +69,15 @@ contract LicenseRegistryTest is BaseTest {
             termsConfig
         );
         vm.prank(licenseHolder);
-        ipAssetGroup.executeTerms(licenseId);
-        assertFalse(ipAssetGroup.isLicenseActive(licenseId), "execution is a noop if start time set");
+        ipAssetOrg.executeTerms(licenseId);
+        assertFalse(ipAssetOrg.isLicenseActive(licenseId), "execution is a noop if start time set");
         assertFalse(processor.termsExecutedSuccessfully(encodedConfig), "execution is a noop if start time set");
         vm.warp(startTime + 100);
-        assertTrue(ipAssetGroup.isLicenseActive(licenseId), "license should be active after start time");
+        assertTrue(ipAssetOrg.isLicenseActive(licenseId), "license should be active after start time");
         assertTrue(processor.termsExecutedSuccessfully(encodedConfig), "terms should be active after start time");
         vm.warp(startTime + ttl + 1);
         assertFalse(processor.termsExecutedSuccessfully(encodedConfig), "terms should be inactive after ttl");
-        assertFalse(ipAssetGroup.isLicenseActive(licenseId), "license should be inactive after ttl");
+        assertFalse(ipAssetOrg.isLicenseActive(licenseId), "license should be inactive after ttl");
 
     }
 
@@ -92,7 +100,7 @@ contract LicenseRegistryTest is BaseTest {
         assertFalse(processor.termsExecutedSuccessfully(encodedConfig));
 
         vm.prank(licenseHolder);
-        licenseId = ipAssetGroup.createLicense(
+        licenseId = ipAssetOrg.createLicense(
             ipAssetId,
             parentLicenseId,
             licenseHolder,
@@ -102,14 +110,14 @@ contract LicenseRegistryTest is BaseTest {
             false,
             termsConfig
         );
-        assertFalse(ipAssetGroup.isLicenseActive(licenseId));
+        assertFalse(ipAssetOrg.isLicenseActive(licenseId));
         assertFalse(processor.termsExecutedSuccessfully(encodedConfig));
         vm.warp(block.timestamp + 100);
-        assertFalse(ipAssetGroup.isLicenseActive(licenseId));
+        assertFalse(ipAssetOrg.isLicenseActive(licenseId));
         assertFalse(processor.termsExecutedSuccessfully(encodedConfig));
         vm.warp(block.timestamp + ttl + 1);
         assertFalse(processor.termsExecutedSuccessfully(encodedConfig));
-        assertFalse(ipAssetGroup.isLicenseActive(licenseId));
+        assertFalse(ipAssetOrg.isLicenseActive(licenseId));
 
     }
 
@@ -132,7 +140,7 @@ contract LicenseRegistryTest is BaseTest {
         assertFalse(processor.termsExecutedSuccessfully(encodedConfig), "terms should be inactive before start time");
 
         vm.prank(licenseHolder);
-        licenseId = ipAssetGroup.createLicense(
+        licenseId = ipAssetOrg.createLicense(
             ipAssetId,
             parentLicenseId,
             licenseHolder,
@@ -142,19 +150,19 @@ contract LicenseRegistryTest is BaseTest {
             false,
             termsConfig
         );
-        assertFalse(ipAssetGroup.isLicenseActive(licenseId), "terms not executed yet");
+        assertFalse(ipAssetOrg.isLicenseActive(licenseId), "terms not executed yet");
         vm.prank(licenseHolder);
-        ipAssetGroup.executeTerms(licenseId);
-        assertTrue(ipAssetGroup.isLicenseActive(licenseId), "license started after terms execution");
+        ipAssetOrg.executeTerms(licenseId);
+        assertTrue(ipAssetOrg.isLicenseActive(licenseId), "license started after terms execution");
         vm.warp(block.timestamp + 100);
-        assertTrue(ipAssetGroup.isLicenseActive(licenseId), "license should be active after start time");
+        assertTrue(ipAssetOrg.isLicenseActive(licenseId), "license should be active after start time");
         vm.warp(block.timestamp + ttl + 1);
-        assertFalse(ipAssetGroup.isLicenseActive(licenseId), "license should be inactive after ttl");
+        assertFalse(ipAssetOrg.isLicenseActive(licenseId), "license should be inactive after ttl");
 
     }
 
     function getTermsProcessor() internal virtual returns (ITermsProcessor) {
-        return new TimeTermsProcessor(address(ipAssetGroup));
+        return new TimeTermsProcessor(address(ipAssetOrg));
     }
 
     function getTermsData(bytes memory data) internal virtual returns (bytes memory) {

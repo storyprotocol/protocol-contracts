@@ -3,8 +3,9 @@ pragma solidity ^0.8.18;
 
 import { ICollectModule } from "contracts/interfaces/modules/collect/ICollectModule.sol";
 import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.sol";
-import { IIPAssetGroup } from "contracts/interfaces/ip-assets/IIPAssetGroup.sol";
+import { IIPAssetOrg } from "contracts/interfaces/ip-assets/IIPAssetOrg.sol";
 
+import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { Collect } from "contracts/lib/modules/Collect.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { ERC721 } from "./ERC721.sol";
@@ -20,7 +21,10 @@ abstract contract CollectNFTBase is ERC721, ICollectNFT {
     ICollectModule public collectModule;
 
     // The franchise registry that the IP asset is registered under.
-    IIPAssetGroup public ipAssetRegistry;
+    IIPAssetOrg public ipAssetOrg;
+    
+    // The registry of the IP Assets.
+    IPAssetRegistry public registry;
 
     // The id of the IP asset that the collect NFT is bound to.
     uint256 public ipAssetId;
@@ -55,12 +59,12 @@ abstract contract CollectNFTBase is ERC721, ICollectNFT {
 
         _initialized = true;
         collectModule = ICollectModule(msg.sender);
-        ipAssetRegistry = IIPAssetGroup(initParams_.ipAssetRegistry);
+        ipAssetOrg = IIPAssetOrg(initParams_.ipAssetOrg);
         ipAssetId = initParams_.ipAssetId;
+        registry = IPAssetRegistry(initParams_.registry);
 
         // Ensure the bound IP asset in fact exists.
-        try ipAssetRegistry.ownerOf(ipAssetId) {
-        } catch {
+        if (registry.ipAssetOwner(ipAssetId) == address(0)) {
             revert Errors.CollectNFT_IPAssetNonExistent();
         }
 

@@ -42,7 +42,7 @@ contract SetTestRelationship is Script, BroadcastManager, JsonDeploymentHandler 
             allowedExternalSource: true,
             destIpAssets: allIpAssets,
             allowedExternalDest: true,
-            onlySameIPAssetGroup: true,
+            onlySameIPAssetOrg: true,
             processor: processor,
             disputer: admin,
             timeConfig: Relationship.TimeConfig({

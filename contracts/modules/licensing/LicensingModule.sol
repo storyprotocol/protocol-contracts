@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 import { Errors } from "contracts/lib/Errors.sol";
-import { IPAssetController } from "contracts/IPAssetController.sol";
+import { IPAssetOrgFactory } from "contracts/IPAssetOrgFactory.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
+import { IIPAssetOrg } from "contracts/interfaces/ip-assets/IIPAssetOrg.sol";
 import { IERC5218 } from "contracts/interfaces/modules/licensing/IERC5218.sol";
 import { ILicensingModule } from "contracts/interfaces/modules/licensing/ILicensingModule.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
@@ -13,27 +14,27 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 /// @title LicensingModule
 /// @author Raul Martinez
-/// @notice Contract for configuring and managing licensing for a IPAssetGroup.
-/// A licensing framework may be definbed through a IPAssetGroupConfig, which is set by the IPAssetGroup owner.
+/// @notice Contract for configuring and managing licensing for a IPAssetOrg.
+/// A licensing framework may be definbed through a IPAssetOrgConfig, which is set by the IPAssetOrg owner.
 /// The non commercial license URI is set by a protocol admin key, since it will be common for all Story Protocol
 contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
 
     struct LicensingModuleStorage {
-        /// franchiseId => IPAssetGroupConfig
-        mapping(uint256 => Licensing.IPAssetGroupConfig) franchiseConfigs;
+        /// ipAssetOrgId => IPAssetOrgConfig
+        mapping(address => Licensing.IPAssetOrgConfig) ipAssetOrgConfigs;
         string nonCommercialLicenseURI;
     }
 
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.licensing-module.storage")) - 1)))
     bytes32 private constant _STORAGE_LOCATION = 0x80b4ea8c21e869c68acfd93c8ef2c0d867835b92e2fded15a1d74d7e7ff3312d;
 
-    IPAssetController public immutable FRANCHISE_REGISTRY;
+    IPAssetOrgFactory public immutable IP_ASSET_ORG_FACTORY;
 
-    constructor(address ipAssetController_) {
-        if (ipAssetController_ == address(0)) {
+    constructor(address franchise_) {
+        if (franchise_ == address(0)) {
             revert Errors.ZeroAddress();
         }
-        FRANCHISE_REGISTRY = IPAssetController(ipAssetController_);
+        IP_ASSET_ORG_FACTORY = IPAssetOrgFactory(franchise_);
         _disableInitializers();
     }
 
@@ -62,32 +63,32 @@ contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
     }
 
     
-    /// Set the IPAssetGroupConfig for a IPAssetGroup, configuring its licensing framework.
+    /// Set the IPAssetOrgConfig for a IPAssetOrg, configuring its licensing framework.
     /// @dev if setting root licenses, they should be active. A revoker address must be set, and it will be
-    /// common for all licenses in the IPAssetGroup.
-    /// @param franchiseId_ The ID of the IPAssetGroup to set the config for
-    /// @param config_ The IPAssetGroupConfig to set
-    function configureIPAssetGroupLicensing(uint256 franchiseId_, Licensing.IPAssetGroupConfig memory config_) external {
-        if (msg.sender != FRANCHISE_REGISTRY.ownerOf(franchiseId_)) {
+    /// common for all licenses in the IPAssetOrg.
+    /// @param ipAssetOrg_ The address of the IPAssetOrg to set the config for
+    /// @param config_ The IPAssetOrgConfig to set
+    function configureIpAssetOrgLicensing(address ipAssetOrg_, Licensing.IPAssetOrgConfig memory config_) external {
+        if (msg.sender != IIPAssetOrg(ipAssetOrg_).owner()) {
             revert Errors.Unauthorized();
         }
-        _verifyRootLicense(franchiseId_, config_.nonCommercialConfig.franchiseRootLicenseId);
-        _verifyRootLicense(franchiseId_, config_.commercialConfig.franchiseRootLicenseId);
+        _verifyRootLicense(ipAssetOrg_, config_.nonCommercialConfig.ipAssetOrgRootLicenseId);
+        _verifyRootLicense(ipAssetOrg_, config_.commercialConfig.ipAssetOrgRootLicenseId);
         if (config_.revoker == address(0)) {
             revert Errors.LicensingModule_ZeroRevokerAddress();
         }
         LicensingModuleStorage storage $ = _getLicensingModuleStorage();
-        $.franchiseConfigs[franchiseId_] = config_;
-        emit IPAssetGroupConfigSet(franchiseId_, config_);
+        $.ipAssetOrgConfigs[ipAssetOrg_] = config_;
+        emit IPAssetOrgConfigSet(ipAssetOrg_, config_);
     }
 
-    function _verifyRootLicense(uint256 franchiseId_, uint256 rootLicenseId_) internal view {
+    function _verifyRootLicense(address ipAssetOrg_, uint256 rootLicenseId_) internal view {
         if (rootLicenseId_ != 0) {
-            IERC5218 rightsManager = IERC5218(FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId_));
+            IERC5218 rightsManager = IERC5218(ipAssetOrg_);
             if (address(rightsManager) == address(0)) {
-                // FRANCHISE_REGISTRY.ownerOf(franchiseId) should take care of this,
+                // IP_ASSET_ORG_FACTORY.ownerOf(ipAssetOrgId) should take care of this,
                 // but leaving it in case IPAssetRegistration creation fails somewhow.
-                revert Errors.LicensingModule_NonExistentIPAssetGroup();
+                revert Errors.LicensingModule_NonExistentIPAssetOrg();
             }
             if (!rightsManager.isLicenseActive(rootLicenseId_)) {
                 revert Errors.LicensingModule_RootLicenseNotActive(rootLicenseId_);
@@ -95,8 +96,8 @@ contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
         }
     }
 
-    function getIPAssetGroupConfig(uint256 franchiseId_) public view returns (Licensing.IPAssetGroupConfig memory) {
-        return _getLicensingModuleStorage().franchiseConfigs[franchiseId_];
+    function getIpAssetOrgConfig(address ipAssetOrg_) public view returns (Licensing.IPAssetOrgConfig memory) {
+        return _getLicensingModuleStorage().ipAssetOrgConfigs[ipAssetOrg_];
     }
 
     function _authorizeUpgrade(

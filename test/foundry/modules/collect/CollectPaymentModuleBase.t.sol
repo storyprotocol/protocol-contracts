@@ -96,7 +96,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
 
     /// @notice Tests that the collect payment module is correctly initialized.
     function test_CollectPaymentModuleInit() public parameterizePaymentInfo(paymentSuite()) {
-        Collect.CollectPaymentInfo memory p = collectPaymentModule.getPaymentInfo(franchiseId, ipAssetId);
+        Collect.CollectPaymentInfo memory p = collectPaymentModule.getPaymentInfo(ipAssetId);
         assertEq(p.paymentToken, paymentInfo.paymentToken);
         assertEq(uint8(p.paymentType), uint8(paymentInfo.paymentType));
         assertEq(p.paymentAmount, paymentInfo.paymentAmount);
@@ -105,27 +105,23 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
 
     /// @notice Tests that native payments with no sent funds revert.
     function test_CollectPaymentModuleZeroPaymentReverts() public {
-        vm.prank(address(ipAssetGroup));
         paymentInfo = Collect.CollectPaymentInfo(address(0), Collect.PaymentType.NATIVE, 0 ether, alice);
         vm.expectRevert(Errors.CollectPaymentModule_AmountInvalid.selector);
-        _initCollectModule(franchiseId, defaultCollectNftImpl);
+        _createIpAsset(collector, 1, abi.encode(paymentInfo));
     }
 
     /// @notice Tests that payments with invalid settings revert.
     function test_CollectPaymentModuleInvalidSettingsReverts() public {
-        vm.prank(address(ipAssetGroup));
         paymentInfo = Collect.CollectPaymentInfo(address(erc20), Collect.PaymentType.NATIVE, 1 ether, alice);
         vm.expectRevert(Errors.CollectPaymentModule_InvalidSettings.selector);
-        _initCollectModule(franchiseId, defaultCollectNftImpl);
+        _createIpAsset(collector, 1, abi.encode(paymentInfo));
     }
 
     /// @notice Tests that payments with invalid tokens revert.
     function test_CollectPaymentModuleInvalidTokenReverts() public {
-
-        vm.prank(address(ipAssetGroup));
         paymentInfo = Collect.CollectPaymentInfo(bob, Collect.PaymentType.ERC20, 1 ether, alice);
         vm.expectRevert(Errors.CollectPaymentModule_TokenInvalid.selector);
-        _initCollectModule(franchiseId, defaultCollectNftImpl);
+        _createIpAsset(collector, 1, abi.encode(paymentInfo));
     }
 
     /// @notice Tests that native payments work as expected.
@@ -133,7 +129,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
         uint256 recipientStartingBalance = paymentRecipient.balance;
         uint256 collectorStartingBalance = collector.balance;
         paymentAmount = paymentParams.paymentAmount;
-        _collect(franchiseId, ipAssetId);
+        _collect(ipAssetId);
         assertEq(collector.balance, collectorStartingBalance - paymentAmount);
         assertEq(paymentRecipient.balance, recipientStartingBalance + paymentAmount);
     }
@@ -158,7 +154,6 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
         vm.prank(collector);
         vm.expectRevert(Errors.CollectPaymentModule_NativeTransferFailed.selector);
         collectModule.collect{value: 10}(Collect.CollectParams({
-            franchiseId: franchiseId,
             ipAssetId: ipAssetId,
             collector: collector,
             collectData: abi.encode(paymentParams),
@@ -182,7 +177,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
         });
         ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
         vm.expectRevert(Errors.CollectPaymentModule_PaymentParamsInvalid.selector);
-        _collect(franchiseId, ipAssetId);
+        _collect(ipAssetId);
     }
 
     /// @notice Tests that ERC20 payments with failing transfers revert.
@@ -203,7 +198,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
         });
         ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
         vm.expectRevert(Errors.CollectPaymentModule_ERC20TransferFailed.selector);
-        _collect(franchiseId, ipAssetId);
+        _collect(ipAssetId);
     }
 
     /// @notice Tests that ERC20 payments with invalid payments revert.
@@ -222,7 +217,6 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
         ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
         vm.expectRevert(Errors.CollectPaymentModule_NativeTokenNotAllowed.selector);
         collectModule.collect{value: 10}(Collect.CollectParams({
-            franchiseId: franchiseId,
             ipAssetId: ipAssetId,
             collector: collector,
             collectData: abi.encode(paymentParams),
@@ -246,7 +240,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
         });
         ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
         vm.expectRevert(Errors.CollectPaymentModule_PaymentInsufficient.selector);
-        _collect(franchiseId, ipAssetId);
+        _collect(ipAssetId);
 
     }
 
@@ -268,7 +262,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
         });
         ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
         vm.expectRevert(Errors.CollectPaymentModule_ERC20TransferInvalidABIEncoding.selector);
-        _collect(franchiseId, ipAssetId);
+        _collect(ipAssetId);
     }
 
     /// @notice Tests that ERC20 payments with invalid return values revert.
@@ -289,7 +283,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
         });
         ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
         vm.expectRevert(Errors.CollectPaymentModule_ERC20TransferInvalidReturnValue.selector);
-        _collect(franchiseId, ipAssetId);
+        _collect(ipAssetId);
     }
 
     /// @notice Tests that ERC20 payments work as expected.
@@ -297,7 +291,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
         uint256 recipientStartingBalance = erc20.balanceOf(paymentRecipient);
         uint256 collectorStartingBalance = erc20.balanceOf(collector);
         paymentAmount = paymentParams.paymentAmount;
-        _collect(franchiseId, ipAssetId);
+        _collect(ipAssetId);
         assertEq(erc20.balanceOf(paymentRecipient), recipientStartingBalance + paymentAmount);
         assertEq(erc20.balanceOf(collector), collectorStartingBalance - paymentAmount);
     }
@@ -320,7 +314,6 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
         vm.prank(collector);
         vm.expectRevert(Errors.CollectPaymentModule_PaymentInsufficient.selector);
         collectModule.collect{value: 0}(Collect.CollectParams({
-            franchiseId: franchiseId,
             ipAssetId: ipAssetId,
             collector: collector,
             collectData: abi.encode(paymentParams),
@@ -384,11 +377,9 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
     }
 
     /// @dev Helper function that initializes a collect module.
-    /// @param franchiseId The id of the franchise associated with the module.
     /// @param collectNftImpl Collect NFT impl address used for collecting.
-    function _initCollectModule(uint256 franchiseId, address collectNftImpl) internal virtual override {
+    function _initCollectModule(address collectNftImpl) internal virtual override {
         collectModule.initCollect(Collect.InitCollectParams({
-            franchiseId: franchiseId,
             ipAssetId: ipAssetId,
             collectNftImpl: collectNftImpl,
             data: abi.encode(paymentInfo)
@@ -396,13 +387,11 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
     }
 
     /// @dev Helper function that performs collect module collection.
-    /// @param franchiseId The id of the franchise of the IP asset.
     /// @param ipAssetId_ The id of the IP asset being collected.
-    function _collect(uint256 franchiseId, uint256 ipAssetId_) internal virtual override returns (address, uint256) {
+    function _collect(uint256 ipAssetId_) internal virtual override returns (address, uint256) {
         vm.prank(collector);
         if (paymentParams.paymentType == Collect.PaymentType.NATIVE) {
             return collectModule.collect{value: paymentParams.paymentAmount}(Collect.CollectParams({
-                franchiseId: franchiseId,
                 ipAssetId: ipAssetId_,
                 collector: collector,
                 collectData: abi.encode(paymentParams),
@@ -411,7 +400,6 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
             }));
         }
         return collectModule.collect(Collect.CollectParams({
-            franchiseId: franchiseId,
             ipAssetId: ipAssetId_,
             collector: collector,
             collectData: abi.encode(paymentParams),
@@ -423,7 +411,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
     /// @notice Changes the base testing collect module deployment to deploy the 
     ///         mock payment collect module instead.
     function _deployCollectModule(address collectNftImpl) internal virtual override  returns (address) {
-        collectModuleImpl = address(new MockCollectPaymentModule(address(ipAssetController), collectNftImpl));
+        collectModuleImpl = address(new MockCollectPaymentModule(address(registry), collectNftImpl));
 
         collectPaymentModule = ICollectPaymentModule(
             _deployUUPSProxy(

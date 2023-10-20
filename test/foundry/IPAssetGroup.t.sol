@@ -2,17 +2,18 @@
 pragma solidity ^0.8.13;
 
 import { Errors } from "contracts/lib/Errors.sol";
-import { IPAssetGroup } from "../../contracts/ip-assets/IPAssetGroup.sol";
-import { IPAssetController } from "contracts/IPAssetController.sol";
+import { IPAssetOrg } from "../../contracts/ip-assets/IPAssetOrg.sol";
+import { IPAssetOrgFactory } from "contracts/IPAssetOrgFactory.sol";
 import { IPAsset } from "../../contracts/lib/IPAsset.sol";
+import { IPAssetRegistry } from "../../contracts/IPAssetRegistry.sol";
 import { MockIPAssetEventEmitter } from "./mocks/MockIPAssetEventEmitter.sol";
 import { MockCollectNFT } from "./mocks/MockCollectNFT.sol";
 import { MockCollectModule } from "./mocks/MockCollectModule.sol";
 import { MockLicensingModule } from "./mocks/MockLicensingModule.sol";
-import { MockIPAssetController } from "./mocks/MockIPAssetController.sol";
+import { MockIPAssetOrgFactory } from "./mocks/MockIPAssetOrgFactory.sol";
 import "forge-std/Test.sol";
 
-contract IPAssetGroupTest is Test {
+contract IPAssetOrgTest is Test {
     using stdStorage for StdStorage;
 
     event CollectionCreated(address indexed collection, string name, string indexed symbol);
@@ -23,25 +24,29 @@ contract IPAssetGroupTest is Test {
     error IdOverBounds();
     error InvalidBlockType();
 
-    IPAssetController public controller;
-    IPAssetGroup public ipAssetGroup;
+    IPAssetRegistry public registry;
+    IPAssetOrgFactory public ipAssetOrgFactory;
+    IPAssetOrg public ipAssetOrg;
     address owner = address(this);
     address mintee = address(1);
     address mintee2 = address(2);
     address mockLicenseModule;
 
-    uint256 internal ipAssetGroupOwnerPk = 0xa11ce;
-    address payable internal ipAssetGroupOwner = payable(vm.addr(ipAssetGroupOwnerPk));
+    uint256 internal ipAssetOrgOwnerPk = 0xa11ce;
+    address payable internal ipAssetOrgOwner = payable(vm.addr(ipAssetOrgOwnerPk));
 
     function setUp() public {
-        controller = new IPAssetController();
+        registry = new IPAssetRegistry();
+        ipAssetOrgFactory = new IPAssetOrgFactory();
 
         address mockEventEmitter = address(new MockIPAssetEventEmitter());
         mockLicenseModule = address(new MockLicensingModule());
 
-        address mockCollectModule = address(new MockCollectModule(address(controller), address(new MockCollectNFT())));
+        address mockCollectModule = address(new MockCollectModule(address(registry), address(new MockCollectNFT())));
 
-        IPAsset.RegisterIPAssetGroupParams memory params = IPAsset.RegisterIPAssetGroupParams(
+
+        IPAsset.RegisterIPAssetOrgParams memory ipAssetOrgParams = IPAsset.RegisterIPAssetOrgParams(
+            address(registry),
             "name",
             "symbol",
             "description",
@@ -49,16 +54,16 @@ contract IPAssetGroupTest is Test {
             mockLicenseModule,
             mockCollectModule
         );
-        vm.prank(ipAssetGroupOwner);
-        (uint256 ipAssetGroupId, address ipAssetGroupAddr) = controller.registerIPAssetGroup(params);
-        ipAssetGroup = IPAssetGroup(ipAssetGroupAddr);
+        vm.prank(ipAssetOrgOwner);
+        address ipAssetOrgAddr;
+        ipAssetOrgAddr = ipAssetOrgFactory.registerIPAssetOrg(ipAssetOrgParams);
+        ipAssetOrg = IPAssetOrg(ipAssetOrgAddr);
     }
 
     function test_setUp() public {
-        assertEq(ipAssetGroup.name(), "name");
-        assertEq(ipAssetGroup.symbol(), "symbol");
-        assertEq(ipAssetGroup.description(), "description");
-        assertEq(ipAssetGroup.version(), "0.1.0");
+        assertEq(ipAssetOrg.name(), "name");
+        assertEq(ipAssetOrg.symbol(), "symbol");
+        assertEq(ipAssetOrg.version(), "0.1.0");
     }
 
     function test_mintIdAssignment() public {
@@ -67,15 +72,31 @@ contract IPAssetGroupTest is Test {
         for(uint8 i = firstIPAssetType; i < lastIPAssetTypeId; i++) {
             IPAsset.IPAssetType ipAsset = IPAsset.IPAssetType(i);
             uint256 zero = IPAsset._zeroId(ipAsset);
-            assertEq(ipAssetGroup.currentIdFor(ipAsset), zero, "starts with zero");
-            vm.prank(address(controller));
-            uint256 blockId1 = ipAssetGroup.createIpAsset(ipAsset, "name", "description", "mediaUrl", mintee, 0, "");
+            assertEq(ipAssetOrg.currentIdFor(ipAsset), zero, "starts with zero");
+            vm.prank(address(ipAssetOrgFactory));
+            (, uint256 blockId1) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+                ipAssetType: ipAsset,
+                name: "name",
+                description: "description",
+                mediaUrl: "mediaUrl",
+                to: mintee,
+                parentIpAssetOrgId: 0,
+                collectData: ""
+            }));
             assertEq(blockId1, zero + 1, "returned blockId is incremented by one");
-            assertEq(ipAssetGroup.currentIdFor(ipAsset), zero + 1, "mint increments currentIdFor by one");
-            vm.prank(address(controller));
-            uint256 blockId2 = ipAssetGroup.createIpAsset(ipAsset, "name2", "description2", "mediaUrl2", mintee, 0, "");
+            assertEq(ipAssetOrg.currentIdFor(ipAsset), zero + 1, "mint increments currentIdFor by one");
+            vm.prank(address(ipAssetOrgFactory));
+            (, uint256 blockId2) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+                ipAssetType: ipAsset,
+                name: "name2",
+                description: "description2",
+                mediaUrl: "mediaUrl2",
+                to: mintee,
+                parentIpAssetOrgId: 0,
+                collectData: ""
+            }));
             assertEq(blockId2, zero + 2, "returned blockId is incremented by one again");
-            assertEq(ipAssetGroup.currentIdFor(ipAsset), zero + 2, "2 mint increments currentIdFor by one again");
+            assertEq(ipAssetOrg.currentIdFor(ipAsset), zero + 2, "2 mint increments currentIdFor by one again");
         }
         
     }
@@ -85,34 +106,66 @@ contract IPAssetGroupTest is Test {
         uint8 lastIPAssetTypeId = uint8(IPAsset.IPAssetType.ITEM);
         for(uint8 i = firstIPAssetType; i < lastIPAssetTypeId; i++) {
             IPAsset.IPAssetType ipAsset = IPAsset.IPAssetType(i);
-            uint256 loopBalance = ipAssetGroup.balanceOf(mintee);
+            uint256 loopBalance = ipAssetOrg.balanceOf(mintee);
             assertEq(loopBalance, (i - 1) * 2, "balance is zero for block type");
-            vm.prank(address(controller));
-            uint256 blockId1 = ipAssetGroup.createIpAsset(ipAsset, "name", "description", "mediaUrl", mintee, 0, "");
-            assertEq(ipAssetGroup.balanceOf(mintee), loopBalance + 1, "balance is incremented by one");
-            assertEq(ipAssetGroup.ownerOf(blockId1), mintee);
-            vm.prank(address(controller));
-            uint256 blockId2 = ipAssetGroup.createIpAsset(ipAsset, "name", "description", "mediaUrl", mintee, 0, "");
-            assertEq(ipAssetGroup.balanceOf(mintee), loopBalance + 2, "balance is incremented by one again");
-            assertEq(ipAssetGroup.ownerOf(blockId2), mintee);
+            vm.prank(address(ipAssetOrgFactory));
+            (, uint256 blockId1) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+                ipAssetType: ipAsset,
+                name: "name",
+                description: "description",
+                mediaUrl: "mediaUrl",
+                to: mintee,
+                parentIpAssetOrgId: 0,
+                collectData: ""
+            }));
+            assertEq(ipAssetOrg.balanceOf(mintee), loopBalance + 1, "balance is incremented by one");
+            assertEq(ipAssetOrg.ownerOf(blockId1), mintee);
+            vm.prank(address(ipAssetOrgFactory));
+            (, uint256 blockId2) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+                ipAssetType: ipAsset,
+                name: "name",
+                description: "description",
+                mediaUrl: "mediaUrl",
+                to: mintee,
+                parentIpAssetOrgId: 0,
+                collectData: ""
+            }));
+            assertEq(ipAssetOrg.balanceOf(mintee), loopBalance + 2, "balance is incremented by one again");
+            assertEq(ipAssetOrg.ownerOf(blockId2), mintee);
         }
     }
 
     function test_revertMintUnknownIPAsset() public {
-        vm.prank(address(controller));
+        vm.prank(address(ipAssetOrgFactory));
         vm.expectRevert(
             abi.encodeWithSelector(Errors.IPAsset_InvalidType.selector, IPAsset.IPAssetType.UNDEFINED)
         );
-        ipAssetGroup.createIpAsset(IPAsset.IPAssetType.UNDEFINED, "name", "description", "mediaUrl", mintee, 0, "");
+        ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+            ipAssetType: IPAsset.IPAssetType.UNDEFINED,
+            name: "name",
+            description: "description",
+            mediaUrl: "mediaUrl",
+            to: mintee,
+            parentIpAssetOrgId: 0,
+            collectData: ""
+        }));
     }
 
     function test_IPAssetCreationData() public {
-        vm.prank(address(controller));
-        uint256 blockId = ipAssetGroup.createIpAsset(IPAsset.IPAssetType.STORY, "name", "description", "mediaUrl", mintee, 0, "");
+        vm.prank(address(ipAssetOrgFactory));
+        (, uint256 blockId) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+            ipAssetType: IPAsset.IPAssetType.STORY,
+            name: "name",
+            description: "description",
+            mediaUrl: "mediaUrl",
+            to: mintee,
+            parentIpAssetOrgId: 0,
+            collectData: ""
+        }));
     }
 
     function test_emptyIPAssetRead() public {
-        IPAssetGroup.IPAssetData memory data = ipAssetGroup.readIPAsset(12312313);
+        IPAssetOrg.IPAssetData memory data = ipAssetOrg.readIPAsset(12312313);
         assertEq(uint8(data.blockType), uint8(IPAsset.IPAssetType.UNDEFINED));
         assertEq(data.name, "");
         assertEq(data.description, "");
@@ -120,9 +173,17 @@ contract IPAssetGroupTest is Test {
     }
 
     function test_tokenUriReturnsMediaURL() public {
-        vm.prank(address(controller));
-        uint256 blockId = ipAssetGroup.createIpAsset(IPAsset.IPAssetType.STORY, "name", "description", "https://mediaUrl.xyz", mintee, 0, "");
-        assertEq(ipAssetGroup.tokenURI(blockId), "https://mediaUrl.xyz");    
+        vm.prank(address(ipAssetOrgFactory));
+        (, uint256 blockId) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+            ipAssetType: IPAsset.IPAssetType.STORY,
+            name: "name",
+            description: "description",
+            mediaUrl: "https://mediaUrl.xyz",
+            to: mintee,
+            parentIpAssetOrgId: 0,
+            collectData: ""
+        }));
+        assertEq(ipAssetOrg.tokenURI(blockId), "https://mediaUrl.xyz");    
     }
 
 }

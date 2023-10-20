@@ -3,11 +3,11 @@ pragma solidity ^0.8.19;
 
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { Unauthorized, NonExistentID, ZeroAddress } from "contracts/errors/General.sol";
-import { IIPAssetGroupDataManager } from "contracts/interfaces/ip-assets/storage/IIPAssetGroupDataManager.sol";
+import { IIPAssetOrgDataManager } from "contracts/interfaces/ip-assets/storage/IIPAssetOrgDataManager.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 
-abstract contract IPAssetGroupDataManager is Initializable, IIPAssetGroupDataManager {
+abstract contract IPAssetOrgDataManager is Initializable, IIPAssetOrgDataManager {
 
     /// @custom:storage-location erc7201:story-protocol.ip-asset-data.storage
     struct IPAssetDataStorage {
@@ -19,27 +19,29 @@ abstract contract IPAssetGroupDataManager is Initializable, IIPAssetGroupDataMan
 
     function __IPAssetData_init() public initializer {}
 
-    function readIPAsset(uint256 ipAssetGroupId_) public view returns (IPAssetData memory) {
+    function readIPAsset(uint256 ipAssetOrgId_) public view returns (IPAssetData memory) {
         IPAssetDataStorage storage $ = _getIPAssetDataStorage();
-        return $.ipAssetsData[ipAssetGroupId_];
+        return $.ipAssetsData[ipAssetOrgId_];
     }
 
     function _writeIPAsset(
-        uint256 ipAssetGroupId_,
+        uint256 ipAssetId_,
+        uint256 ipAssetOrgId_,
         string calldata name_,
         string calldata description_,
         string calldata mediaUrl_
     ) internal returns (IPAsset.IPAssetType) {
         IPAssetDataStorage storage $ = _getIPAssetDataStorage();
-        IPAssetData storage ipAsseData = $.ipAssetsData[ipAssetGroupId_];
-        if (ipAsseData.blockType == IPAsset.IPAssetType.UNDEFINED) {
-            ipAsseData.blockType = IPAsset._ipAssetTypeFor(ipAssetGroupId_);
+        IPAssetData storage ipAssetData = $.ipAssetsData[ipAssetOrgId_];
+        if (ipAssetData.blockType == IPAsset.IPAssetType.UNDEFINED) {
+            ipAssetData.blockType = IPAsset._ipAssetTypeFor(ipAssetOrgId_);
         }
-        ipAsseData.name = name_;
-        ipAsseData.description = description_;
-        ipAsseData.mediaUrl = mediaUrl_;
-        emit IPAssetWritten(ipAssetGroupId_, ipAsseData.blockType, name_, description_, mediaUrl_);
-        return ipAsseData.blockType;
+        ipAssetData.name = name_;
+        ipAssetData.description = description_;
+        ipAssetData.mediaUrl = mediaUrl_;
+        ipAssetData.ipAssetId = ipAssetId_;
+        emit IPAssetWritten(ipAssetId_, ipAssetOrgId_, ipAssetData.blockType, name_, description_, mediaUrl_);
+        return ipAssetData.blockType;
     }
 
     function _getIPAssetDataStorage() private pure returns (IPAssetDataStorage storage $) {

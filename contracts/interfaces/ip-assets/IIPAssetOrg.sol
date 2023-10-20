@@ -2,17 +2,21 @@
 pragma solidity ^0.8.13;
 
 import { IVersioned } from "../utils/IVersioned.sol";
-import { IIPAssetGroupDataManager } from "./storage/IIPAssetGroupDataManager.sol";
+import { IIPAssetOrgDataManager } from "./storage/IIPAssetOrgDataManager.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
+import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC5218 } from "../modules/licensing/IERC5218.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 
-interface IIPAssetGroup is
+interface IIPAssetOrg is
     IVersioned,
     IERC165Upgradeable,
     IERC5218,
-    IIPAssetGroupDataManager
+    IIPAssetOrgDataManager
 {
+
+    function owner() external returns (address);
+
     function franchiseId() external view returns (uint256);
 
     function createIpAsset(

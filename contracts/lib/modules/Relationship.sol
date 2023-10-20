@@ -18,7 +18,7 @@ library Relationship {
     struct RelationshipConfig {
         uint256 sourceIpAssetTypeMask;
         uint256 destIpAssetTypeMask;
-        bool onlySameIPAssetGroup;
+        bool onlySameIPAssetOrg;
         IRelationshipProcessor processor;
         address disputer;
         TimeConfig timeConfig;
@@ -30,7 +30,7 @@ library Relationship {
         bool allowedExternalSource;
         IPAsset.IPAssetType[] destIpAssets;
         bool allowedExternalDest;
-        bool onlySameIPAssetGroup;
+        bool onlySameIPAssetOrg;
         address processor;
         address disputer;
         TimeConfig timeConfig;

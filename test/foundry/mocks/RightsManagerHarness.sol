@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import { IPAssetGroup } from "contracts/ip-assets/IPAssetGroup.sol";
+import { IPAssetOrg } from "contracts/ip-assets/IPAssetOrg.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { ILicensingModule } from "contracts/interfaces/modules/licensing/ILicensingModule.sol";
 import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 
-contract RightsManagerHarness is IPAssetGroup {
+contract RightsManagerHarness is IPAssetOrg {
 
     function mockMint(address to, uint256 tokenId) external {
         _mint(to, tokenId);
@@ -18,7 +18,7 @@ contract RightsManagerHarness is IPAssetGroup {
         _mint(to, tokenId);
         _setNonCommercialRights(tokenId, 0, to, revoker, Licensing.IpAssetConfig({
             canSublicense: true,
-            franchiseRootLicenseId: 0
+            ipAssetOrgRootLicenseId: 0
         }), Licensing.TermsProcessorConfig({
             processor: ITermsProcessor(address(0)),
             data: ""

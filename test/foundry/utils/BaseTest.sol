@@ -6,10 +6,10 @@ import 'test/foundry/utils/BaseTestUtils.sol';
 import "test/foundry/mocks/RelationshipModuleHarness.sol";
 import "test/foundry/mocks/MockCollectNFT.sol";
 import "test/foundry/mocks/MockCollectModule.sol";
-import "contracts/IPAssetController.sol";
+import "contracts/IPAssetOrgFactory.sol";
 import "contracts/IPAssetRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/ip-assets/IPAssetGroup.sol";
+import "contracts/ip-assets/IPAssetOrg.sol";
 import "contracts/lib/IPAsset.sol";
 import "contracts/errors/General.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
@@ -19,6 +19,7 @@ import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
 import "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
 import "contracts/modules/licensing/LicenseRegistry.sol";
+import "contracts/IPAssetRegistry.sol";
 import "contracts/interfaces/modules/collect/ICollectModule.sol";
 import '../mocks/MockTermsProcessor.sol';
 
@@ -27,10 +28,9 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 contract BaseTest is BaseTestUtils, ProxyHelper {
 
-    IPAssetGroup public ipAssetGroup;
-    uint256 public franchiseId;
-    address ipAssetGroupImpl;
-    IPAssetController public ipAssetController;
+    IPAssetOrg public ipAssetOrg;
+    address ipAssetOrgImpl;
+    IPAssetOrgFactory public ipAssetOrgFactory;
     RelationshipModuleBase public relationshipModule;
     AccessControlSingleton accessControl;
     PermissionlessRelationshipProcessor public relationshipProcessor;
@@ -41,7 +41,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     MockTermsProcessor public commercialTermsProcessor;
     ICollectModule public collectModule;
     RelationshipModuleHarness public relationshipModuleHarness;
-    address eventEmitter;
+    IPAssetRegistry public registry;
+
     address public defaultCollectNftImpl;
     address public collectModuleImpl;
     address public accessControlSingletonImpl;
@@ -50,7 +51,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
 
     address constant admin = address(123);
     address constant upgrader = address(6969);
-    address constant franchiseOwner = address(456);
+    address constant ipAssetOrgOwner = address(456);
     address constant revoker = address(789);
     string constant NON_COMMERCIAL_LICENSE_URI = "https://noncommercial.license";
     string constant COMMERCIAL_LICENSE_URI = "https://commercial.license";
@@ -73,11 +74,14 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         vm.prank(admin);
         accessControl.grantRole(AccessControl.UPGRADER_ROLE, upgrader);
         
-        // Create IPAssetGroup Registry
-        ipAssetController = new IPAssetController();
+        // Create IPAssetRegistry 
+        registry = new IPAssetRegistry();
+
+        // Create IPAssetOrg Factory
+        ipAssetOrgFactory = new IPAssetOrgFactory();
         
         // Create Licensing Module
-        address licensingImplementation = address(new LicensingModule(address(ipAssetController)));
+        address licensingImplementation = address(new LicensingModule(address(ipAssetOrgFactory)));
         licensingModule = LicensingModule(
             _deployUUPSProxy(
                 licensingImplementation,
@@ -90,9 +94,10 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
 
         defaultCollectNftImpl = _deployCollectNFTImpl();
         collectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));
-        
-        IPAsset.RegisterIPAssetGroupParams memory params = IPAsset.RegisterIPAssetGroupParams(
-            "IPAssetGroupName",
+
+        IPAsset.RegisterIPAssetOrgParams memory ipAssetOrgParams = IPAsset.RegisterIPAssetOrgParams(
+            address(registry),
+            "IPAssetOrgName",
             "FRN",
             "description",
             "tokenURI",
@@ -100,21 +105,21 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
             address(collectModule)
         );
 
-        vm.startPrank(franchiseOwner);
+        vm.startPrank(ipAssetOrgOwner);
         address ipAssets;
-        (franchiseId, ipAssets) = ipAssetController.registerIPAssetGroup(params);
-        ipAssetGroup = IPAssetGroup(ipAssets);
-        licenseRegistry = ILicenseRegistry(ipAssetGroup.getLicenseRegistry());
+        ipAssets = ipAssetOrgFactory.registerIPAssetOrg(ipAssetOrgParams);
+        ipAssetOrg = IPAssetOrg(ipAssets);
+        licenseRegistry = ILicenseRegistry(ipAssetOrg.getLicenseRegistry());
 
-        // Configure Licensing for IPAssetGroup
+        // Configure Licensing for IPAssetOrg
         nonCommercialTermsProcessor = new MockTermsProcessor();
         commercialTermsProcessor = new MockTermsProcessor();
-        licensingModule.configureIPAssetGroupLicensing(franchiseId, _getLicensingConfig());
+        licensingModule.configureIpAssetOrgLicensing(address(ipAssetOrg), _getLicensingConfig());
 
         vm.stopPrank();
 
         // Create Relationship Module
-        relationshipModuleHarness = new RelationshipModuleHarness(address(ipAssetController));
+        relationshipModuleHarness = new RelationshipModuleHarness(address(ipAssetOrgFactory));
         relationshipModule = RelationshipModuleBase(
             _deployUUPSProxy(
                 address(relationshipModuleHarness),
@@ -130,11 +135,11 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         }
     }
 
-    function _getLicensingConfig() view internal returns (Licensing.IPAssetGroupConfig memory) {
-        return Licensing.IPAssetGroupConfig({
+    function _getLicensingConfig() view internal returns (Licensing.IPAssetOrgConfig memory) {
+        return Licensing.IPAssetOrgConfig({
             nonCommercialConfig: Licensing.IpAssetConfig({
                 canSublicense: true,
-                franchiseRootLicenseId: 0
+                ipAssetOrgRootLicenseId: 0
             }),
             nonCommercialTerms: Licensing.TermsProcessorConfig({
                 processor: nonCommercialTermsProcessor,
@@ -142,7 +147,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
             }),
             commercialConfig: Licensing.IpAssetConfig({
                 canSublicense: false,
-                franchiseRootLicenseId: 0
+                ipAssetOrgRootLicenseId: 0
             }),
             commercialTerms: Licensing.TermsProcessorConfig({
                 processor: commercialTermsProcessor,
@@ -159,7 +164,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     }
 
     function _deployCollectModule(address collectNftImpl) internal virtual returns (address) {
-        collectModuleImpl = address(new MockCollectModule(address(ipAssetController), collectNftImpl));
+        collectModuleImpl = address(new MockCollectModule(address(registry), collectNftImpl));
         return _deployUUPSProxy(
                 collectModuleImpl,
                 abi.encodeWithSelector(
@@ -176,8 +181,17 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     function _createIpAsset(address ipAssetOwner, uint8 ipAssetType, bytes memory collectData) internal isValidReceiver(ipAssetOwner) returns (uint256) {
         vm.assume(ipAssetType > uint8(type(IPAsset.IPAssetType).min));
         vm.assume(ipAssetType < uint8(type(IPAsset.IPAssetType).max));
-        vm.prank(ipAssetOwner);
-        return ipAssetGroup.createIpAsset(IPAsset.IPAssetType(ipAssetType), "name", "description", "mediaUrl", ipAssetOwner, 0, collectData);
+        vm.prank(address(ipAssetOrg));
+        (uint256 id, ) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+            ipAssetType: IPAsset.IPAssetType(ipAssetType),
+            name: "name",
+            description: "description",
+            mediaUrl: "mediaUrl",
+            to: ipAssetOwner,
+            parentIpAssetOrgId: 0,
+            collectData: collectData
+        }));
+        return id;
     }
 
 }

@@ -5,6 +5,7 @@ import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC
 import { LibDuration } from "../timing/LibDuration.sol";
 import { IERC5218 } from "contracts/interfaces/modules/licensing/IERC5218.sol";
 import { ILicenseRegistry } from "contracts/interfaces/modules/licensing/ILicenseRegistry.sol";
+import { IIPAssetOrg } from "contracts/interfaces/ip-assets/IIPAssetOrg.sol";
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
@@ -17,7 +18,7 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 /// Allows us to grant 2 type of licenses:
 /// 1. Rights: Licenses tied to a tokenId (IPAsset id), in which the license holder is always the owner of the tokenId. Each tokenId can have commercial or non commercial license tied to it defining it.
 /// 2. Tradeable Licenses): The license holder is the owner of the correspondent LicenseRegistry NFT. They are either:
-/// 2.1 IPAssetGroup root license: LicenseRegistry enabled license minted by a IPAssetGroup owner to govern commercial or non commercial rights for all the IPAssetRegistries.
+/// 2.1 IPAssetOrg root license: LicenseRegistry enabled license minted by a IPAssetOrg owner to govern commercial or non commercial rights for all the IPAssetRegistries.
 /// 2.2 Sublicense: a license coming from Rights or other Licenses, minted by the parent license owner. These would be the future "movie adaptation" type licenses that can be sold.
 /// Allows license holders to execute terms to activate the license to activate them.
 /// Tracks active licenses along the license trees.
@@ -37,22 +38,27 @@ abstract contract RightsManager is
 
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.rights-manager.storage")) - 1)))
     bytes32 private constant _STORAGE_LOCATION = 0x315576c20e31e03ef3e70482445a4c33e45baf13beff28e79f2adf6d06cc0bee;
-    uint256 private constant _UNSET_LICENSE_ID = 0;
-    uint256 public constant FRANCHISE_REGISTRY_OWNED_TOKEN_ID = type(uint256).max;
-    IERC721 public FRANCHISE_REGISTRY;
 
+    // TODO(ramarti): Refactor licensing ids to work via the registry modules.
+    uint256 private constant _UNSET_LICENSE_ID = 0;
+    uint256 public constant ROOT_LICENSE_ID = type(uint256).max;
+
+    // TODO(ramarti): Separate IP Asset Org from the Rights Manager so that they are decoupled.
+    IIPAssetOrg public IP_ASSET_ORG;
+
+    /// @dev Initialize the Rights Manager contract.
+    /// TODO(ramarti): Ensure the rights manager depends on the IP Asset Registry instead of an IP Asset Org.
     function __RightsManager_init(
-        address ipAssetController_,
+        address ipAssetOrg_,
         string memory name_,
         string memory symbol_
     ) public {
-        if (ipAssetController_ == address(0)) {
+        if (ipAssetOrg_ == address(0)) {
             revert Errors.ZeroAddress();
         }
-        FRANCHISE_REGISTRY = IERC721(ipAssetController_);
+        IP_ASSET_ORG = IIPAssetOrg(ipAssetOrg_);
         __ERC721_init(name_, symbol_);
     }
-
 
     function setLicenseRegistry(address licenseRegistry_) external {
         // NOTE: This assumes no need to change ILicenseRegistry implementation.
@@ -72,9 +78,9 @@ abstract contract RightsManager is
     }
 
     
-    /// Creates a tradeable sublicense.
+    /// @notice Creates a tradeable sublicense.
     /// @dev Throws if trying to create a franchise level or root license.
-    /// @param tokenId_ The tokenId of the IPAsset to create the sublicense for.
+    /// @param tokenId_ The tokenId of the specific IPAssetOrg to create the sublicense for.
     /// @param parentLicenseId_  The parent license to create the sublicense from.
     /// @param licenseHolder_ The address of the sublicense holder, will own the ILicenseRegistry NFT.
     /// @param uri_ License terms URI.
@@ -83,6 +89,7 @@ abstract contract RightsManager is
     /// @param canSublicense_ if the license can be parentLicense of another one
     /// @param terms_ the on chain terms of the license, via executor and data
     /// @return licenseId
+    /// TODO(ramarti): Refactor license creation to use the IP Asset Registry id instead of IP Asset Org id.
     function createLicense(
         uint256 tokenId_, // Question: should sublicenses be created with a tokenId or just a parentLicenseId?
         uint256 parentLicenseId_,
@@ -93,8 +100,8 @@ abstract contract RightsManager is
         bool canSublicense_,
         Licensing.TermsProcessorConfig memory terms_
     ) external override returns (uint256) {
-        if (tokenId_ == FRANCHISE_REGISTRY_OWNED_TOKEN_ID || parentLicenseId_ == _UNSET_LICENSE_ID) {
-            revert Errors.RightsManager_UseCreateIPAssetGroupRootLicenseInstead();
+        if (tokenId_ == ROOT_LICENSE_ID || parentLicenseId_ == _UNSET_LICENSE_ID) {
+            revert Errors.RightsManager_UseCreateIPAssetOrgRootLicenseInstead();
         }
         if (msg.sender != getLicenseHolder(parentLicenseId_)) revert Errors.Unauthorized();
         return _createLicense(
@@ -111,9 +118,8 @@ abstract contract RightsManager is
     }
 
     
-    /// Creates the root licenses that all other licenses of a IPAssetGroup may be based on.
-    /// @dev Throws if caller not owner of the IPAssetController NFt.
-    /// @param franchiseId_ in the FranhiseRegistry
+    /// Creates the root licenses that all other licenses of a IPAssetOrg may be based on.
+    /// @dev Throws if caller not owner of the IPAssetOrgFactory NFt.
     /// @param licenseHolder_ The address of the sublicense holder, will own the ILicenseRegistry NFT.
     /// @param uri_ License terms URI.
     /// @param revoker_ address that can revoke the license.
@@ -121,8 +127,7 @@ abstract contract RightsManager is
     /// @param canSublicense_ if the license can be parentLicense of another one
     /// @param terms_ the on chain terms of the license, via executor and data
     /// @return licenseId
-    function createIPAssetGroupRootLicense(
-        uint256 franchiseId_,
+    function createIPAssetOrgRootLicense(
         address licenseHolder_,
         string memory uri_,
         address revoker_,
@@ -130,9 +135,9 @@ abstract contract RightsManager is
         bool canSublicense_,
         Licensing.TermsProcessorConfig memory terms_
     ) external returns (uint256) {
-        if (msg.sender != FRANCHISE_REGISTRY.ownerOf(franchiseId_)) revert Errors.Unauthorized();
+        if (msg.sender != IP_ASSET_ORG.owner()) revert Errors.Unauthorized();
         return _createLicense(
-            FRANCHISE_REGISTRY_OWNED_TOKEN_ID,
+            ROOT_LICENSE_ID,
             _UNSET_LICENSE_ID,
             licenseHolder_,
             uri_,
@@ -143,7 +148,6 @@ abstract contract RightsManager is
             true
         );
     }
-
 
     function _createLicense(
         uint256 tokenId_,
@@ -159,10 +163,10 @@ abstract contract RightsManager is
         // TODO: should revoker come from allowed revoker list?
         if (revoker_ == address(0)) revert Errors.RightsManager_ZeroRevokerAddress();
         RightsManagerStorage storage $ = _getRightsManagerStorage();
-        // Only licenses minted to the IPAssetController Owner as a root license should
-        // have tokenId = FRANCHISE_REGISTRY_OWNED_TOKEN_ID, otherwise the tokenId should be a minted NFT (IPAsset.IPAssetType)
-        // Checks for the IPAssetController Owner should be done in the calling function
-        if (tokenId_ != FRANCHISE_REGISTRY_OWNED_TOKEN_ID) {
+        // Only licenses minted to the IPAssetOrgFactory Owner as a root license should
+        // have tokenId = ROOT_LICENSE_ID, otherwise the tokenId should be a minted NFT (IPAsset.IPAssetType)
+        // Checks for the IPAssetOrgFactory Owner should be done in the calling function
+        if (tokenId_ != ROOT_LICENSE_ID) {
             if (!_exists(tokenId_)) {
                 revert Errors.NonExistentID(tokenId_);
             }
@@ -174,7 +178,7 @@ abstract contract RightsManager is
             }
         } else {
             if($.licenseRegistry == ILicenseRegistry(address(0))) revert Errors.RightsManager_LicenseRegistryNotConfigured();
-            if(tokenId_ != FRANCHISE_REGISTRY_OWNED_TOKEN_ID && parentLicenseId_ != _UNSET_LICENSE_ID) {
+            if(tokenId_ != ROOT_LICENSE_ID && parentLicenseId_ != _UNSET_LICENSE_ID) {
                 // If this is a sublicense, check that this is a valid sublicense
                 Licensing.License memory parentLicense = $.licenses[parentLicenseId_];
                 if (!parentLicense.active) revert Errors.RightsManager_InactiveParentLicense();

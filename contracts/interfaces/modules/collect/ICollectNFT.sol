@@ -7,7 +7,7 @@ import { Collect } from "contracts/lib/modules/Collect.sol";
 
 /// @title Collect NFT Interface
 /// @notice Contracts implementing the Collect NFT interface may be collected
-///         through a collect module for a bound franchise IP asset.
+///         through a collect module for a bound IP asset collection.
 interface ICollectNFT is IERC721 {
     /// @notice Initializes a collect NFT for subsequent collection.
     /// @param initParams_ Collect NFT init data, including bound franchise IP

@@ -18,7 +18,6 @@ contract SimpleCollectModuleTest is BaseCollectModuleTest {
         vm.prank(alice);
         vm.expectRevert(Errors.CollectModule_CollectUnauthorized.selector);
         collectModule.collect(Collect.CollectParams({
-            franchiseId: franchiseId,
             ipAssetId: ipAssetId,
             collector: collector,
             collectData: "",
@@ -29,7 +28,7 @@ contract SimpleCollectModuleTest is BaseCollectModuleTest {
 
     /// @notice Tests that upgrades work as expected.
     function test_CollectModuleUpgrade() public {
-        address newCollectModuleImpl = address(new SimpleCollectModule(address(ipAssetController), defaultCollectNftImpl));
+        address newCollectModuleImpl = address(new SimpleCollectModule(address(registry), defaultCollectNftImpl));
         vm.prank(upgrader);
 
         bytes memory data = abi.encodeWithSelector(
@@ -45,24 +44,17 @@ contract SimpleCollectModuleTest is BaseCollectModuleTest {
         assertTrue(success);
     }
 
-    /// @notice Tests whether collect reverts if the registry of the IP asset being collected does not exist.
-    function test_CollectModuleCollectNonExistentIPAssetGroupReverts(uint256 nonExistentIPAssetGroupId, uint8 ipAssetType) createIpAsset(collector, ipAssetType) public virtual override {
-        vm.assume(nonExistentIPAssetGroupId != franchiseId);
-        vm.expectRevert();
-        _collect(nonExistentIPAssetGroupId, ipAssetId);
-    }
-
 
     /// @notice Tests whether collect reverts if the IP asset being collected from does not exist.
     function test_CollectModuleCollectNonExistentIPAssetReverts(uint256 nonExistentipAssetId, uint8 ipAssetType) createIpAsset(collector, ipAssetType) public virtual override {
         vm.assume(nonExistentipAssetId != ipAssetId);
         vm.expectRevert();
-        _collect(franchiseId, nonExistentipAssetId);
+        _collect(99);
     }
 
     /// @notice Changes the base testing collect module deployment to deploy the mock payment collect module instead.
     function _deployCollectModule(address collectNftImpl) internal virtual override  returns (address) {
-        collectModuleImpl = address(new SimpleCollectModule(address(ipAssetController), collectNftImpl));
+        collectModuleImpl = address(new SimpleCollectModule(address(registry), collectNftImpl));
 
         return _deployUUPSProxy(
                 collectModuleImpl,

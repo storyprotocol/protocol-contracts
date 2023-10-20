@@ -13,7 +13,7 @@ import { Relationship } from "contracts/lib/modules/Relationship.sol";
 /// Upgrades are done by the UPGRADER_ROLE.
 contract ProtocolRelationshipModule is RelationshipModuleBase {
 
-    constructor(address ipAssetController_) RelationshipModuleBase(ipAssetController_) {}
+    constructor(address ipAssetOrgFactory_) RelationshipModuleBase(ipAssetOrgFactory_) {}
 
     function initialize(address accessControl_) public initializer {
         __RelationshipModuleBase_init(accessControl_);

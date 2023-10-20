@@ -20,11 +20,19 @@ contract LicenseRegistryTest is BaseTest {
         deployProcessors = false;
         super.setUp();
         vm.prank(licenseHolder);
-        uint256 ipAssetId = ipAssetGroup.createIpAsset(IPAsset.IPAssetType(1), "name", "description", "mediaUrl", licenseHolder, 0, "");
-        uint256 parentLicenseId = ipAssetGroup.getLicenseIdByTokenId(ipAssetId, false);
-        (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetGroupConfig.getTermsProcessorConfig();
+        (, uint256 ipAssetId) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+            ipAssetType: IPAsset.IPAssetType(1),
+            name: "name",
+            description: "description",
+            mediaUrl: "mediaUrl",
+            to: licenseHolder,
+            parentIpAssetOrgId: 0,
+            collectData: ""
+        }));
+        uint256 parentLicenseId = ipAssetOrg.getLicenseIdByTokenId(ipAssetId, false);
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
         vm.prank(licenseHolder);
-        licenseId = ipAssetGroup.createLicense(
+        licenseId = ipAssetOrg.createLicense(
             ipAssetId,
             parentLicenseId,
             licenseHolder,
@@ -39,9 +47,9 @@ contract LicenseRegistryTest is BaseTest {
 
     function test_setUp() public {
         assertEq(licenseRegistry.ownerOf(licenseId), licenseHolder);
-        assertEq(licenseRegistry.name(), "Licenses for IPAssetGroupName");
+        assertEq(licenseRegistry.name(), "Licenses for IPAssetOrgName");
         assertEq(licenseRegistry.symbol(), "slFRN");
-        assertEq(address(licenseRegistry.getRightsManager()), address(ipAssetGroup));
+        assertEq(address(licenseRegistry.getRightsManager()), address(ipAssetOrg));
         assertEq(licenseRegistry.exists(licenseId), true);
     }
 
@@ -59,7 +67,7 @@ contract LicenseRegistryTest is BaseTest {
 
     function test_revert_transfer_inactive_license() public {
         vm.prank(revoker);
-        ipAssetGroup.revokeLicense(licenseId);
+        ipAssetOrg.revokeLicense(licenseId);
 
         vm.expectRevert(Errors.RightsManager_InactiveLicense.selector);
         vm.prank(licenseHolder);

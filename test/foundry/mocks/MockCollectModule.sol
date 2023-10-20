@@ -11,16 +11,16 @@ contract MockCollectModule is CollectModuleBase {
     mapping(uint256 => mapping(uint256 => bool)) collectEnabled;
 
     /// @notice Initializes a mock collect module.
-    /// @param ipAssetController The protocol-wide franchise registry address.
-    /// @param defaultCollectNftImpl The default collect NFT impl address.
-    constructor(address ipAssetController, address defaultCollectNftImpl) CollectModuleBase(ipAssetController, defaultCollectNftImpl) {}
+    /// @param registry_ The protocol-wide franchise registry address.
+    /// @param defaultCollectNftImpl_ The default collect NFT impl address.
+    constructor(address registry_, address defaultCollectNftImpl_) CollectModuleBase(registry_, defaultCollectNftImpl_) {}
 
     /// @notice Initializes the collect module via UUPS proxying.
-    /// @param accessControl The address utilized for contract access control.
-    function initialize(address accessControl) public initializer {}
+    /// @param accessControl_ The address utilized for contract access control.
+    function initialize(address accessControl_) public initializer {}
 
     /// @dev Checks whether the collect action is authorized for an IP asset.
-    function _isCollectAuthorized(uint256, uint256) internal pure virtual override returns (bool) {
+    function _isCollectAuthorized(uint256) internal pure virtual override returns (bool) {
         return true;
     }
 

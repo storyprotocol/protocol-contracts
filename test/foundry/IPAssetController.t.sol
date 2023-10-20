@@ -4,12 +4,12 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import './utils/BaseTest.sol';
 
-contract IPAssetControllerTest is BaseTest {
+contract IPAssetOrgFactoryTest is BaseTest {
 
-    event IPAssetGroupRegistered(
+    event IPAssetOrgRegistered(
         address owner,
         uint256 id,
-        address ipAssetRegistryForId,
+        address ipAssetOrgForId,
         string name,
         string symbol,
         string tokenURI
@@ -21,17 +21,17 @@ contract IPAssetControllerTest is BaseTest {
     }
 
     // function test_setUp() public {
-    //     assertEq(ipAssetController.version(), "0.1.0");
-    //     assertEq(ipAssetController.name(), "Story Protocol");
-    //     assertEq(ipAssetController.symbol(), "SP");
+    //     assertEq(franchise.version(), "0.1.0");
+    //     assertEq(franchise.name(), "Story Protocol");
+    //     assertEq(franchise.symbol(), "SP");
     // }
 
-    // function test_registerIPAssetGroup() public {
-    //     IPAssetController.IPAssetGroupCreationParams memory params = IPAssetController.IPAssetGroupCreationParams("name2", "symbol2", "description2", "tokenURI2");
+    // function test_registerIPAssetOrg() public {
+    //     IPAssetOrgFactory.IPAssetOrgCreationParams memory params = IPAssetOrgFactory.IPAssetOrgCreationParams("name2", "symbol2", "description2", "tokenURI2");
     //     vm.startPrank(franchiseOwner);
     //     vm.expectCall(address(factory),
     //         abi.encodeCall(
-    //             factory.createIPAssetGroupIpAssets,
+    //             factory.createIPAssetOrgIpAssets,
     //             (
     //                 2,
     //                 "name2",
@@ -41,57 +41,57 @@ contract IPAssetControllerTest is BaseTest {
     //         )
     //     );
     //     vm.expectEmit(false, true, false, false);
-    //     emit IPAssetGroupRegistered(address(0x123), 2, address(0x234), "name2", "symbol2", "tokenURI2");
-    //     (uint256 id, address ipAsset) = ipAssetController.registerIPAssetGroup(params);
+    //     emit IPAssetOrgRegistered(address(0x123), 2, address(0x234), "name2", "symbol2", "tokenURI2");
+    //     (uint256 id, address ipAsset) = franchise.registerIPAssetOrg(params);
     //     assertEq(id, 2);
     //     assertFalse(ipAsset == address(0));
-    //     assertEq(ipAsset, ipAssetController.ipAssetRegistryForId(id));
-    //     assertEq(ipAssetController.ownerOf(id), franchiseOwner);
-    //     assertEq(ipAssetController.tokenURI(id), "tokenURI2");
+    //     assertEq(ipAsset, franchise.ipAssetOrgForId(id));
+    //     assertEq(franchise.ownerOf(id), franchiseOwner);
+    //     assertEq(franchise.tokenURI(id), "tokenURI2");
     //     vm.stopPrank();
     // }
 
-    // function test_isIpAssetRegistry() public {
+    // function test_isIpAssetOrg() public {
     //     vm.prank(franchiseOwner);
-    //     IPAssetController.IPAssetGroupCreationParams memory params = IPAssetController.IPAssetGroupCreationParams("name", "symbol2", "description2", "tokenURI2");   
-    //     (uint256 id, address ipAsset) = ipAssetController.registerIPAssetGroup(params);
-    //     assertTrue(ipAssetController.isIpAssetRegistry(ipAsset));
+    //     IPAssetOrgFactory.IPAssetOrgCreationParams memory params = IPAssetOrgFactory.IPAssetOrgCreationParams("name", "symbol2", "description2", "tokenURI2");   
+    //     (uint256 id, address ipAsset) = franchise.registerIPAssetOrg(params);
+    //     assertTrue(franchise.isIpAssetOrg(ipAsset));
     // }
 
-    // function test_isNotIpAssetRegistry() public {
-    //     assertFalse(ipAssetController.isIpAssetRegistry(address(ipAssetController)));
+    // function test_isNotIPAssetOrg() public {
+    //     assertFalse(franchise.isIpAssetOrg(address(franchise)));
     // }
 
     // function test_revert_tokenURI_not_registered() public {
     //     vm.expectRevert("ERC721: invalid token ID");
-    //     ipAssetController.tokenURI(420);
+    //     franchise.tokenURI(420);
     // }
 
-    // function test_CreateIPAssetGroupBlocks() public {
+    // function test_CreateIPAssetOrgBlocks() public {
     //     vm.expectEmit(false, true, true, true);
-    //     emit IPAssetGroupCreated(address(0x123), "name", "symbol");
+    //     emit IPAssetOrgCreated(address(0x123), "name", "symbol");
     //     // TODO: figure why this is not matching correctly, the event is emitted according to traces
     //     // vm.expectEmit();
     //     // emit BeaconUpgraded(address(0x123));
-    //     address collection = factory.createIPAssetGroupIpAssets(1, "name", "symbol", "description");
+    //     address collection = factory.createIPAssetOrgIpAssets(1, "name", "symbol", "description");
     //     assertTrue(collection != address(0));
-    //     assertEq(IPAssetGroup(collection).name(), "name");
-    //     assertEq(IPAssetGroup(collection).symbol(), "symbol");
+    //     assertEq(IPAssetOrg(collection).name(), "name");
+    //     assertEq(IPAssetOrg(collection).symbol(), "symbol");
     // }
 
     // function test_UpgradeCollections() public {
-    //     IPAssetGroupv2 newImplementation = new IPAssetGroupv2(_mockEventEmitter, mockLicenseModule, mockIPAssetController, mockCollectModule);
+    //     IPAssetOrgv2 newImplementation = new IPAssetOrgv2(_mockEventEmitter, mockLicenseModule, mockIPAssetOrgFactory, mockCollectModule);
     //     //vm.expectEmit(true, true, true, true);
     //     //emit CollectionsUpgraded(address(newImplementation), "2.0.0");
-    //     factory.upgradeIPAssetGroups(address(newImplementation));
+    //     factory.upgradeIPAssetOrgs(address(newImplementation));
     //     UpgradeableBeacon beacon = factory.BEACON();
-    //     assertEq(IPAssetGroup(beacon.implementation()).version(), "2.0.0");
+    //     assertEq(IPAssetOrg(beacon.implementation()).version(), "2.0.0");
     // }
 
     // function test_revertIfNotOwnerUpgrades() public {
-    //     IPAssetGroupv2 newImplementation = new IPAssetGroupv2(_mockEventEmitter, mockLicenseModule, mockIPAssetController, mockCollectModule);
+    //     IPAssetOrgv2 newImplementation = new IPAssetOrgv2(_mockEventEmitter, mockLicenseModule, mockIPAssetOrgFactory, mockCollectModule);
     //     vm.prank(notOwner);
     //     vm.expectRevert("Ownable: caller is not the owner");
-    //     factory.upgradeIPAssetGroups(address(newImplementation));
+    //     factory.upgradeIPAssetOrgs(address(newImplementation));
     // }
 }
