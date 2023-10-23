@@ -23,7 +23,11 @@ jobs:
       - name: List files in the repository
         run: |
           ls -R ${{ github.workspace }}
-  
+
+      - name: Test Env Variables
+        run: |
+          echo "MAINNET_RPC_URL is ${{ secrets.MAINNET_RPC_URL}}"
+
       - name: Run install
         uses: borales/actions-yarn@v4
         with:
