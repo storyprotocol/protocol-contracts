@@ -26,7 +26,9 @@ jobs:
 
       - name: Test Env Variables
         run: |
-          echo "MAINNET_RPC_URL is ${{ secrets.MAINNET_RPC_URL}}"
+          echo "MAINNET_RPC_URL is ${{ secrets.MAINNET_RPC_URL }}"
+          echo "env.MAINNET_RPC_URL is $MAINNET_RPC_URL"
+          echo "env.FOUNDRY_PROFILE is $FOUNDRY_PROFILE"
 
       - name: Run install
         uses: borales/actions-yarn@v4
