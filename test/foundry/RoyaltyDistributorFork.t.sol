@@ -9,7 +9,7 @@ contract RoyaltyDistributorForkTest is RoyaltyDistributorTest {
         try vm.envString("MAINNET_RPC_URL") returns (string memory rpcUrl) {
             mainnetRpc = rpcUrl;
         } catch {
-            mainnetRpc = "https://eth-mainnet.g.alchemy.com/v2/demo";
+            mainnetRpc = "https://rpc.ankr.com/eth";
         }
         console.log(mainnetRpc);
         uint256 mainnetFork = vm.createFork(mainnetRpc);
