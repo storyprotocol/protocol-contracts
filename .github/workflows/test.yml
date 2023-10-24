@@ -25,6 +25,8 @@ jobs:
           ls -R ${{ github.workspace }}
 
       - name: Test Env Variables
+        env:
+          MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
         run: |
           echo "MAINNET_RPC_URL is ${{ secrets.MAINNET_RPC_URL }}"
           echo "env.MAINNET_RPC_URL is $MAINNET_RPC_URL"
