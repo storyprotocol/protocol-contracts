@@ -14,7 +14,6 @@ contract RoyaltyDistributorForkTest is RoyaltyDistributorTest {
             mainnetRpc = "https://rpc.ankr.com/eth";
             console.log("Using public mainnet RPC: ", mainnetRpc);
         }
-        console.log(mainnetRpc);
         uint256 mainnetFork = vm.createFork(mainnetRpc);
         vm.selectFork(mainnetFork);
         assertEq(vm.activeFork(), mainnetFork);
