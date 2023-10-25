@@ -8,8 +8,10 @@ contract RoyaltyDistributorForkTest is RoyaltyDistributorTest {
         string memory mainnetRpc;
         try vm.envString("MAINNET_RPC_URL") returns (string memory rpcUrl) {
             mainnetRpc = rpcUrl;
+            console.log("Using mainnet RPC in environment variable $MAINNET_RPC_URL");
         } catch {
             mainnetRpc = "https://rpc.ankr.com/eth";
+            console.log("Using public mainnet RPC: ", mainnetRpc);
         }
         console.log(mainnetRpc);
         uint256 mainnetFork = vm.createFork(mainnetRpc);
