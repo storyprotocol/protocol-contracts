@@ -6,9 +6,10 @@ import "test/foundry/RoyaltyDistributor.t.sol";
 contract RoyaltyDistributorForkTest is RoyaltyDistributorTest {
     function _getSplitMain() internal virtual override returns(ISplitMain) {
         string memory mainnetRpc;
+        console.log("fork mainnet");
         try vm.envString("MAINNET_RPC_URL") returns (string memory rpcUrl) {
             mainnetRpc = rpcUrl;
-            console.log("Using mainnet RPC in environment variable $MAINNET_RPC_URL");
+            console.log("Using mainnet RPC in environment variable");
         } catch {
             mainnetRpc = "https://rpc.ankr.com/eth";
             console.log("Using public mainnet RPC: ", mainnetRpc);
