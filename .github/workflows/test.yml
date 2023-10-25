@@ -1,9 +1,10 @@
 name: UnitTest
 
-on: [pull_request]
+on: [pull_request_target]
 
 env:
   FOUNDRY_PROFILE: ci
+  MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
 
 jobs:
 
@@ -22,7 +23,16 @@ jobs:
       - name: List files in the repository
         run: |
           ls -R ${{ github.workspace }}
-  
+
+      - name: Test Env Variables
+        env:
+          MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
+        run: |
+          echo "MAINNET_RPC_URL is ${{ secrets.MAINNET_RPC_URL }}"
+          echo "env.MAINNET_RPC_URL is $MAINNET_RPC_URL"
+          echo "env.FOUNDRY_PROFILE is $FOUNDRY_PROFILE"
+          echo "DONE."
+
       - name: Run install
         uses: borales/actions-yarn@v4
         with:
