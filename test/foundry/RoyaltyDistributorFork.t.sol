@@ -11,7 +11,7 @@ contract RoyaltyDistributorForkTest is RoyaltyDistributorTest {
             mainnetRpc = rpcUrl;
             console.log("Using mainnet RPC in environment variable");
         } catch {
-            console.log("Using public mainnet RPC");
+            fail("Missing environment variable 'MAINNET_RPC_URL'");
         }
         uint256 mainnetFork = vm.createFork(mainnetRpc);
         vm.selectFork(mainnetFork);
