@@ -42,6 +42,12 @@ contract IPAssetOrg is
     // TODO(ramarti): Refactor to configure IP Asset types via registry modules.
     uint256 private constant _ROOT_IP_ASSET = 0;
 
+    /// @notice Returns the current version of the IP asset org contract.
+    function version() external pure virtual returns (string memory) {
+        return _VERSION;
+    }
+
+
     function initialize(IPAsset.InitIPAssetOrgParams memory params_) public initializer {
 
         // TODO(ramarti) Decouple IPAssetOrg from the RightsManager and make sure to move `__ERC721_init` here.
@@ -61,11 +67,6 @@ contract IPAssetOrg is
 
         if (params_.collectModule == address(0)) revert Errors.ZeroAddress();
         COLLECT_MODULE = ICollectModule(params_.collectModule);
-    }
-
-    /// @notice Returns the current version of the IP asset org contract.
-    function version() external pure virtual returns (string memory) {
-        return _VERSION;
     }
 
     /// Creates a new IPAsset, and assigns licenses (rights) to it, according to the IPAssetOrg

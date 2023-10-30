@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
+import { IIPAssetRegistry } from "contracts/interfaces/IIPAssetRegistry.sol";
+
 /// @title IP Asset Registry
 /// @notice The source of truth for IP on Story Protocol.
 // TO-DO(@leeren): Add authorization around IP Asset registration and ownership transferring.
 // TO-DO(ramarti): Add authorization around IP Asset Org transfer of IP Assets.
-contract IPAssetRegistry {
+contract IPAssetRegistry is IIPAssetRegistry {
 
     /// @notice Core attributes that make up an IP Asset.
     // TO-DO: Add other core IP Asset primitives (namely module linking).
     struct IPAsset {
-        address owner;
+        address owner; // TO-DO: Consider removing this in the future.
         address ipAssetOrg;
     }
 
@@ -31,7 +33,19 @@ contract IPAssetRegistry {
             owner: owner_,
             ipAssetOrg: ipAssetOrg_
         });
+
+        emit IPAssetRegistered(ipAssetId, owner_, ipAssetOrg_);
         return ipAssetId;
+    }
+
+    function setOwner(uint256 ipAssetId_, address owner_) public {
+        ipAssets[ipAssetId_].owner = owner_;
+        emit OwnerTransferred(ipAssetId_, owner_);
+    }
+
+    function setIpAssetOrg(uint256 ipAssetId_, address ipAssetOrg_) public {
+        ipAssets[ipAssetId_].ipAssetOrg = ipAssetOrg_;
+        emit OrgTransferred(ipAssetId_, ipAssetOrg_);
     }
 
     /// @notice Gets the IP Asset Org that administers a specific IP Asset.

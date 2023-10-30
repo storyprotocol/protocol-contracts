@@ -35,10 +35,27 @@ contract IPAssetOrgFactory is
         mapping(address => bool) registered;
     }
 
+    /// @notice Checks if an address is a valid IP Asset Organization.
+    /// @param ipAssetOrg_ the address to check
+    /// @return true if `ipAssetOrg_` is a valid IP Asset Organization, false otherwise
+    function isIpAssetOrg(
+        address ipAssetOrg_
+    ) external view returns (bool) {
+        IPAssetOrgFactoryStorage storage $ = _getIpAssetOrgFactoryStorage();
+        return $.registered[ipAssetOrg_];
+    }
+
+    /// @notice Returns the current version of the factory contract.
+    function version() external pure override returns (string memory) {
+        return _VERSION;
+    }
+
+
     /// @notice Registers a new ipAssetOrg for IP asset collection management.
     /// @param params_ Parameters required for ipAssetOrg creation.
     /// TODO: Converge on core primitives utilized for ipAssetOrg management.
     /// TODO: Add ipAssetOrg-wide module configurations to the registration process.
+    // TODO: Remove registry
     function registerIPAssetOrg(
         IPAsset.RegisterIPAssetOrgParams calldata params_
     ) public returns (address) {
@@ -74,21 +91,6 @@ contract IPAssetOrgFactory is
         );
         return ipAssetOrg;
 
-    }
-
-    /// @notice Checks if an address is a valid IP Asset Organization.
-    /// @param ipAssetOrg_ the address to check
-    /// @return true if `ipAssetOrg_` is a valid IP Asset Organization, false otherwise
-    function isIpAssetOrg(
-        address ipAssetOrg_
-    ) external view returns (bool) {
-        IPAssetOrgFactoryStorage storage $ = _getIpAssetOrgFactoryStorage();
-        return $.registered[ipAssetOrg_];
-    }
-
-    /// @notice Returns the current version of the factory contract.
-    function version() external pure override returns (string memory) {
-        return _VERSION;
     }
 
     /// @notice Initializes the IPAssetOrgFactory contract.
