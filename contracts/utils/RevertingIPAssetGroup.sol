@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.13;
 
-/// @title RevertingIPAssetRegistry
+/// @title RevertingIPAssetOrg
 /// @author Raul Martinez
-/// @notice Only used to initialize the beacon in IPAssetRegistryFactor,
+/// @notice Only used to initialize the beacon in IPAssetOrgFactor,
 /// breaking a circular dependency on creation and keeping the beacon immutable
-contract RevertingIPAssetRegistry {
+contract RevertingIPAssetOrg {
     error DontUseThisContract();
 
     function initialize() external pure {

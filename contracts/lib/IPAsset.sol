@@ -22,6 +22,36 @@ library IPAsset {
         ITEM
     }
 
+    struct CreateIpAssetParams {
+        IPAsset.IPAssetType ipAssetType;
+        string name;
+        string description;
+        string mediaUrl;
+        address to;
+        uint256 parentIpAssetOrgId;
+        bytes collectData;
+    }
+
+    struct RegisterIPAssetOrgParams {
+        address registry;
+        string name;
+        string symbol;
+        string description;
+        string tokenURI;
+        address licensingModule;
+        address collectModule;
+    }
+
+    struct InitIPAssetOrgParams {
+        address registry;
+        address owner;
+        string name;
+        string symbol;
+        string description;
+        address licensingModule;
+        address collectModule;
+    }
+
     function _zeroId(IPAssetType ipAsset_) internal pure returns (uint256) {
         if (ipAsset_ == IPAssetType.UNDEFINED) revert Errors.IPAsset_InvalidType(ipAsset_);
         return _ID_RANGE * (uint256(ipAsset_) - 1);

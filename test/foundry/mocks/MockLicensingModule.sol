@@ -5,17 +5,17 @@ import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/IT
 import { MockTermsProcessor } from "./MockTermsProcessor.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
-library LibMockFranchiseConfig {
-    function getMockFranchiseConfig()
+library LibMockIPAssetOrgConfig {
+    function getMockIPAssetOrgConfig()
         internal
         pure
-        returns (Licensing.FranchiseConfig memory)
+        returns (Licensing.IPAssetOrgConfig memory)
     {
         return
-            Licensing.FranchiseConfig({
+            Licensing.IPAssetOrgConfig({
                 nonCommercialConfig: Licensing.IpAssetConfig({
                     canSublicense: false,
-                    franchiseRootLicenseId: 0
+                    ipAssetOrgRootLicenseId: 0
                 }),
                 nonCommercialTerms: Licensing.TermsProcessorConfig({
                     processor: ITermsProcessor(address(0)),
@@ -23,7 +23,7 @@ library LibMockFranchiseConfig {
                 }),
                 commercialConfig: Licensing.IpAssetConfig({
                     canSublicense: false,
-                    franchiseRootLicenseId: 0
+                    ipAssetOrgRootLicenseId: 0
                 }),
                 commercialTerms: Licensing.TermsProcessorConfig({
                     processor: ITermsProcessor(address(0)),
@@ -45,17 +45,17 @@ library LibMockFranchiseConfig {
 }
 
 contract MockLicensingModule is ILicensingModule {
-    function configureFranchiseLicensing(
-        uint256 franchiseId,
-        Licensing.FranchiseConfig memory config
+    function configureIpAssetOrgLicensing(
+        address ipAssetOrg,
+        Licensing.IPAssetOrgConfig memory config
     ) external override {
         // No-op
     }
 
-    function getFranchiseConfig(
-        uint256
-    ) external pure override returns (Licensing.FranchiseConfig memory) {
-        return LibMockFranchiseConfig.getMockFranchiseConfig();
+    function getIpAssetOrgConfig(
+        address
+    ) external pure override returns (Licensing.IPAssetOrgConfig memory) {
+        return LibMockIPAssetOrgConfig.getMockIPAssetOrgConfig();
     }
 
     function getNonCommercialLicenseURI()

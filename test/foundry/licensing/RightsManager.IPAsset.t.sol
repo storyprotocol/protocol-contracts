@@ -21,18 +21,18 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
     }
 
     function test_setUp() public {
-        assertEq(licenseRegistry.name(), "Licenses for FranchiseName");
+        assertEq(licenseRegistry.name(), "Licenses for IPAssetOrgName");
         assertEq(licenseRegistry.symbol(), "slFRN");
-        assertEq(address(licenseRegistry.getRightsManager()), address(ipAssetRegistry));
+        assertEq(address(licenseRegistry.getRightsManager()), address(ipAssetOrg));
 
         // Default licensing is root non-commercial with sublicense on, no commercial rights
-        Licensing.FranchiseConfig memory configResult = licensingModule.getFranchiseConfig(1);
+        Licensing.IPAssetOrgConfig memory configResult = licensingModule.getIpAssetOrgConfig(address(ipAssetOrg));
         assertEq(configResult.nonCommercialConfig.canSublicense, true, "nonCommercialConfig.canSublicense");
-        assertEq(configResult.nonCommercialConfig.franchiseRootLicenseId, 0, "nonCommercialConfig.franchiseRootLicenseId");
+        assertEq(configResult.nonCommercialConfig.ipAssetOrgRootLicenseId, 0, "nonCommercialConfig.ipAssetOrgRootLicenseId");
         assertEq(address(configResult.nonCommercialTerms.processor), address(nonCommercialTermsProcessor), "nonCommercialTerms.processor");
         assertEq(configResult.nonCommercialTerms.data, abi.encode("nonCommercial"), "nonCommercialTerms.data");
         assertEq(configResult.commercialConfig.canSublicense, false, "commercialConfig.canSublicense");
-        assertEq(configResult.commercialConfig.franchiseRootLicenseId, 0, "commercialConfig.franchiseRootLicenseId");
+        assertEq(configResult.commercialConfig.ipAssetOrgRootLicenseId, 0, "commercialConfig.ipAssetOrgRootLicenseId");
         assertEq(address(configResult.commercialTerms.processor), address(commercialTermsProcessor), "commercialTerms.processor");
         assertEq(configResult.commercialTerms.data, abi.encode("commercial"), "commercialTerms.data");
         assertEq(configResult.rootIpAssetHasCommercialRights, false, "rootIpAssetHasCommercialRights");
@@ -41,12 +41,20 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
     }
 
     function test_create_ip_asset_root_noncommercial() public {
-        uint256 ipAssetId = ipAssetRegistry.createIpAsset(IPAsset.IPAssetType(1), "name", "description", "mediaUrl", ipAssetCreator, 0, "");
+        (, uint256 ipAssetId) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+            ipAssetType: IPAsset.IPAssetType(1),
+            name: "name",
+            description: "description",
+            mediaUrl: "mediaUrl",
+            to: ipAssetCreator,
+            parentIpAssetOrgId: 0,
+            collectData: ""
+        }));
         bool commercial = false;
-        uint256 licenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, commercial);
+        uint256 licenseId = ipAssetOrg.getLicenseIdByTokenId(ipAssetId, commercial);
         assertEq(licenseId, 1);
-        assertEq(ipAssetRegistry.getLicenseTokenId(licenseId), ipAssetId);
-        (Licensing.License memory license, address owner) = ipAssetRegistry.getLicense(licenseId);
+        assertEq(ipAssetOrg.getLicenseTokenId(licenseId), ipAssetId);
+        (Licensing.License memory license, address owner) = ipAssetOrg.getLicense(licenseId);
         assertEq(owner, ipAssetCreator);
         assertEq(license.active, true);
         assertEq(license.canSublicense, true);
@@ -59,20 +67,28 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
         assertEq(license.termsData, abi.encode("nonCommercial"));
 
         commercial = true;
-        licenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, commercial);
+        licenseId = ipAssetOrg.getLicenseIdByTokenId(ipAssetId, commercial);
         assertEq(licenseId, 0);
         vm.expectRevert("ERC721: invalid token ID");
         licenseRegistry.ownerOf(licenseId);
     }
 
     function test_create_ip_asset_noncommercial_and_commercial() public {
-        _configFranchise(true, true, true);
-        uint256 ipAssetId = ipAssetRegistry.createIpAsset(IPAsset.IPAssetType(1), "name", "description", "mediaUrl", ipAssetCreator, 0, "");
+        _configIPAssetOrg(true, true, true);
+        (, uint256 ipAssetId) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+            ipAssetType: IPAsset.IPAssetType(1),
+            name: "name",
+            description: "description",
+            mediaUrl: "mediaUrl",
+            to: ipAssetCreator,
+            parentIpAssetOrgId: 0,
+            collectData: ""
+        }));
         bool commercial = false;
-        uint256 licenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, commercial);
+        uint256 licenseId = ipAssetOrg.getLicenseIdByTokenId(ipAssetId, commercial);
         assertEq(licenseId, 1);
-        assertEq(ipAssetRegistry.getLicenseTokenId(licenseId), ipAssetId);
-        (Licensing.License memory license, address owner) = ipAssetRegistry.getLicense(licenseId);
+        assertEq(ipAssetOrg.getLicenseTokenId(licenseId), ipAssetId);
+        (Licensing.License memory license, address owner) = ipAssetOrg.getLicense(licenseId);
         assertEq(owner, ipAssetCreator);
         assertEq(license.active, true);
         assertEq(license.canSublicense, true);
@@ -87,10 +103,10 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
         licenseRegistry.ownerOf(licenseId);
 
         commercial = true;
-        uint256 commercialLicenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, commercial);
+        uint256 commercialLicenseId = ipAssetOrg.getLicenseIdByTokenId(ipAssetId, commercial);
         assertEq(commercialLicenseId, 2);
-        assertEq(ipAssetRegistry.getLicenseTokenId(commercialLicenseId), ipAssetId);
-        (license, owner) = ipAssetRegistry.getLicense(commercialLicenseId);
+        assertEq(ipAssetOrg.getLicenseTokenId(commercialLicenseId), ipAssetId);
+        (license, owner) = ipAssetOrg.getLicense(commercialLicenseId);
         assertEq(owner, ipAssetCreator);
         assertEq(license.active, true);
         assertEq(license.canSublicense, true);
@@ -108,17 +124,33 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
     }
 
     function test_create_derivative_ip_asset_from_non_commercial() public {
-        uint256 rootIpAsset = ipAssetRegistry.createIpAsset(IPAsset.IPAssetType(1), "name", "description", "mediaUrl", ipAssetCreator, 0, "");
-        uint256 ipAssetId = ipAssetRegistry.createIpAsset(IPAsset.IPAssetType(1), "name derv", "description deriv", "mediaUrl deriv", ipAssetCreator, rootIpAsset, "");
+        (, uint256 rootIpAsset) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+            ipAssetType: IPAsset.IPAssetType(1),
+            name: "name",
+            description: "description",
+            mediaUrl: "mediaUrl",
+            to: ipAssetCreator,
+            parentIpAssetOrgId: 0,
+            collectData: ""
+        }));
+        (, uint256 ipAssetId) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+            ipAssetType: IPAsset.IPAssetType(1),
+            name: "name derv",
+            description: "description deriv",
+            mediaUrl: "mediaUrl deriv",
+            to: ipAssetCreator,
+            parentIpAssetOrgId: rootIpAsset,
+            collectData: ""
+        }));
         
         bool commercial = false;
-        uint256 licenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, commercial);
+        uint256 licenseId = ipAssetOrg.getLicenseIdByTokenId(ipAssetId, commercial);
         
         vm.expectRevert("ERC721: invalid token ID");
         licenseRegistry.ownerOf(licenseId);
         assertEq(licenseId, 2);
-        assertEq(ipAssetRegistry.getLicenseTokenId(licenseId), ipAssetId);
-        (Licensing.License memory license, address owner) = ipAssetRegistry.getLicense(licenseId);
+        assertEq(ipAssetOrg.getLicenseTokenId(licenseId), ipAssetId);
+        (Licensing.License memory license, address owner) = ipAssetOrg.getLicense(licenseId);
         assertEq(owner, ipAssetCreator);
         assertEq(license.active, true);
         assertEq(license.canSublicense, true);
@@ -131,24 +163,40 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
         assertEq(license.termsData, abi.encode("nonCommercial"));
 
         commercial = true;
-        licenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, commercial);
+        licenseId = ipAssetOrg.getLicenseIdByTokenId(ipAssetId, commercial);
         assertEq(licenseId, 0);
     }
 
     function test_create_derivative_ip_asset_from_commercial() public {
-        _configFranchise(true, true, true);
-        uint256 rootIpAsset = ipAssetRegistry.createIpAsset(IPAsset.IPAssetType(1), "name", "description", "mediaUrl", ipAssetCreator, 0, "");
-        uint256 ipAssetId = ipAssetRegistry.createIpAsset(IPAsset.IPAssetType(1), "name derv", "description deriv", "mediaUrl deriv", ipAssetCreator, rootIpAsset, "");
+        _configIPAssetOrg(true, true, true);
+        (, uint256 rootIpAsset) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+            ipAssetType: IPAsset.IPAssetType(1),
+            name: "name",
+            description: "description",
+            mediaUrl: "mediaUrl",
+            to: ipAssetCreator,
+            parentIpAssetOrgId: 0,
+            collectData: ""
+        }));
+        (, uint256 ipAssetId) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+            ipAssetType: IPAsset.IPAssetType(1),
+            name: "name deriv",
+            description: "description deriv",
+            mediaUrl: "mediaUrl deriv",
+            to: ipAssetCreator,
+            parentIpAssetOrgId: rootIpAsset,
+            collectData: ""
+        }));
         
         bool commercial = false;
-        uint256 licenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, commercial);
+        uint256 licenseId = ipAssetOrg.getLicenseIdByTokenId(ipAssetId, commercial);
         
         vm.expectRevert("ERC721: invalid token ID");
         licenseRegistry.ownerOf(licenseId);
 
         assertEq(licenseId, 3);
-        assertEq(ipAssetRegistry.getLicenseTokenId(licenseId), ipAssetId);
-        (Licensing.License memory license, address owner) = ipAssetRegistry.getLicense(licenseId);
+        assertEq(ipAssetOrg.getLicenseTokenId(licenseId), ipAssetId);
+        (Licensing.License memory license, address owner) = ipAssetOrg.getLicense(licenseId);
         assertEq(owner, ipAssetCreator);
         assertEq(license.active, true);
         assertEq(license.canSublicense, true);
@@ -161,17 +209,25 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
         assertEq(license.termsData, abi.encode("nonCommercial"));
 
         commercial = true;
-        licenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, commercial);
+        licenseId = ipAssetOrg.getLicenseIdByTokenId(ipAssetId, commercial);
         assertEq(licenseId, 0);
 
     }
 
     function test_create_license() public {
-        uint256 ipAssetId = ipAssetRegistry.createIpAsset(IPAsset.IPAssetType(1), "name", "description", "mediaUrl", licenseHolder, 0, "");
-        uint256 parentLicenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, false);
+        (, uint256 ipAssetId) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+            ipAssetType: IPAsset.IPAssetType(1),
+            name: "name",
+            description: "description",
+            mediaUrl: "mediaUrl",
+            to: licenseHolder,
+            parentIpAssetOrgId: 0,
+            collectData: ""
+        }));
+        uint256 parentLicenseId = ipAssetOrg.getLicenseIdByTokenId(ipAssetId, false);
         bool commercial = false;
         vm.prank(licenseHolder);
-        uint256 licenseId = ipAssetRegistry.createLicense(
+        uint256 licenseId = ipAssetOrg.createLicense(
             ipAssetId,
             parentLicenseId,
             licenseHolder,
@@ -184,7 +240,7 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
                 data: abi.encode("terms")
             })
         );
-        (Licensing.License memory license, address owner) = ipAssetRegistry.getLicense(licenseId);
+        (Licensing.License memory license, address owner) = ipAssetOrg.getLicense(licenseId);
         assertEq(owner, licenseHolder);
         assertEq(license.active, true);
         assertEq(license.canSublicense, false);
@@ -200,11 +256,19 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
     }
 
     function test_revert_create_license_unauthorized() public {
-        uint256 ipAssetId = ipAssetRegistry.createIpAsset(IPAsset.IPAssetType(1), "name", "description", "mediaUrl", ipAssetCreator, 0, "");
+        (, uint256 ipAssetId) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+            ipAssetType: IPAsset.IPAssetType(1),
+            name: "name",
+            description: "description",
+            mediaUrl: "mediaUrl",
+            to: ipAssetCreator,
+            parentIpAssetOrgId: 0,
+            collectData: ""
+        }));
         uint256 parentLicenseId = 1;
-        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
         vm.expectRevert(Errors.Unauthorized.selector);
-        ipAssetRegistry.createLicense(
+        ipAssetOrg.createLicense(
             ipAssetId,
             parentLicenseId,
             licenseHolder,
@@ -217,12 +281,12 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
     }
 
     function test_revert_create_license_franchise_owned_tokenId() public {
-        uint256 tokenId = ipAssetRegistry.FRANCHISE_REGISTRY_OWNED_TOKEN_ID();
+        uint256 tokenId = ipAssetOrg.ROOT_LICENSE_ID();
         uint256 parentLicenseId = 1;
-        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
-        vm.startPrank(franchiseOwner);
-        vm.expectRevert(Errors.RightsManager_UseCreateFranchiseRootLicenseInstead.selector);
-        ipAssetRegistry.createLicense(
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+        vm.startPrank(ipAssetOrgOwner);
+        vm.expectRevert(Errors.RightsManager_UseCreateIPAssetOrgRootLicenseInstead.selector);
+        ipAssetOrg.createLicense(
             tokenId,
             parentLicenseId,
             licenseHolder,
@@ -238,10 +302,10 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
     function test_revert_create_license_unset_parent() public {
         uint256 tokenId = 1;
         uint256 parentLicenseId = 0;
-        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
-        vm.startPrank(franchiseOwner);
-        vm.expectRevert(Errors.RightsManager_UseCreateFranchiseRootLicenseInstead.selector);
-        ipAssetRegistry.createLicense(
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+        vm.startPrank(ipAssetOrgOwner);
+        vm.expectRevert(Errors.RightsManager_UseCreateIPAssetOrgRootLicenseInstead.selector);
+        ipAssetOrg.createLicense(
             tokenId,
             parentLicenseId,
             licenseHolder,
@@ -255,12 +319,21 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
     }
 
     function test_revert_create_license_terms_mismatch() public {
-        uint256 ipAssetId = ipAssetRegistry.createIpAsset(IPAsset.IPAssetType(1), "name", "description", "mediaUrl", ipAssetCreator, 0, "");
-        uint256 parentLicenseId = ipAssetRegistry.getLicenseIdByTokenId(ipAssetId, false);
+        (, uint256 ipAssetId) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+            ipAssetType: IPAsset.IPAssetType(1),
+            name: "name",
+            description: "description",
+            mediaUrl: "mediaUrl",
+            to: ipAssetCreator,
+            parentIpAssetOrgId: 0,
+            collectData: ""
+        }));
+
+        uint256 parentLicenseId = ipAssetOrg.getLicenseIdByTokenId(ipAssetId, false);
         bool commercial = true;
         vm.expectRevert(Errors.RightsManager_CommercialTermsMismatch.selector);
         vm.prank(ipAssetCreator);
-        ipAssetRegistry.createLicense(
+        ipAssetOrg.createLicense(
             ipAssetId,
             parentLicenseId,
             licenseHolder,
@@ -277,24 +350,23 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
 
     // This one we can just call the internal method
     function test_create_root_license() public {
-        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
-        vm.prank(franchiseOwner);
-        uint256 licenseId = ipAssetRegistry.createFranchiseRootLicense(
-            1,
-            franchiseOwner,
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+        vm.prank(ipAssetOrgOwner);
+        uint256 licenseId = ipAssetOrg.createIPAssetOrgRootLicense(
+            ipAssetOrgOwner,
             "licenseUri",
             revoker,
             true,
             true,
             terms
         );
-        (Licensing.License memory license, address owner) = ipAssetRegistry.getLicense(licenseId);
-        assertEq(owner, franchiseOwner);
+        (Licensing.License memory license, address owner) = ipAssetOrg.getLicense(licenseId);
+        assertEq(owner, ipAssetOrgOwner);
         assertEq(license.active, true);
         assertEq(license.canSublicense, true);
         assertEq(license.commercial, true);
         assertEq(license.parentLicenseId, 0);
-        assertEq(license.tokenId, ipAssetRegistry.FRANCHISE_REGISTRY_OWNED_TOKEN_ID());
+        assertEq(license.tokenId, ipAssetOrg.ROOT_LICENSE_ID());
         assertEq(license.revoker, revoker);
         assertEq(license.uri, "licenseUri");
         assertEq(address(license.termsProcessor), address(terms.processor));
@@ -302,11 +374,10 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
     }
 
     function test_revert_create_root_license_unauthorized() public {
-        (Licensing.TermsProcessorConfig memory terms,) = LibMockFranchiseConfig.getTermsProcessorConfig();
+        (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
         vm.expectRevert(Errors.Unauthorized.selector);
-        ipAssetRegistry.createFranchiseRootLicense(
-            1,
-            franchiseOwner,
+        ipAssetOrg.createIPAssetOrgRootLicense(
+            ipAssetOrgOwner,
             "licenseUri",
             revoker,
             true,
@@ -316,13 +387,13 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
     }
 
     function _verifyLicense(uint256 tokenId, MockTermsProcessor termsProcessor) private returns(uint256) {
-        uint256 licenseId = ipAssetRegistry.getLicenseIdByTokenId(tokenId, true);
+        uint256 licenseId = ipAssetOrg.getLicenseIdByTokenId(tokenId, true);
         assertEq(licenseId, 1);
-        assertEq(ipAssetRegistry.getLicenseTokenId(licenseId), tokenId);
-        assertEq(ipAssetRegistry.getParentLicenseId(licenseId), 0);
-        assertTrue(ipAssetRegistry.isLicenseActive(licenseId));
-        assertEq(ipAssetRegistry.getLicenseURI(licenseId), "licenseUri");
-        (Licensing.License memory license, address owner) = ipAssetRegistry.getLicense(licenseId);
+        assertEq(ipAssetOrg.getLicenseTokenId(licenseId), tokenId);
+        assertEq(ipAssetOrg.getParentLicenseId(licenseId), 0);
+        assertTrue(ipAssetOrg.isLicenseActive(licenseId));
+        assertEq(ipAssetOrg.getLicenseURI(licenseId), "licenseUri");
+        (Licensing.License memory license, address owner) = ipAssetOrg.getLicense(licenseId);
         assertEq(owner, licenseHolder, "internal method will not create ipasset, but we mockMinted in RightsManagerHarness");
         assertEq(license.active, true, "license active");
         assertEq(license.canSublicense, true, "license canSublicense");
@@ -336,11 +407,11 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
         return licenseId;
     }
 
-    function _configFranchise(bool sublicenseCommercial, bool sublicenseNonCommercial, bool rootIpAssetHasCommercialRights) private {
-        Licensing.FranchiseConfig memory config = Licensing.FranchiseConfig({
+    function _configIPAssetOrg(bool sublicenseCommercial, bool sublicenseNonCommercial, bool rootIpAssetHasCommercialRights) private {
+        Licensing.IPAssetOrgConfig memory config = Licensing.IPAssetOrgConfig({
             nonCommercialConfig: Licensing.IpAssetConfig({
                 canSublicense: sublicenseNonCommercial,
-                franchiseRootLicenseId: 0
+                ipAssetOrgRootLicenseId: 0
             }),
             nonCommercialTerms: Licensing.TermsProcessorConfig({
                 processor: nonCommercialTermsProcessor,
@@ -348,7 +419,7 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
             }),
             commercialConfig: Licensing.IpAssetConfig({
                 canSublicense: sublicenseCommercial,
-                franchiseRootLicenseId: 0
+                ipAssetOrgRootLicenseId: 0
             }),
             commercialTerms: Licensing.TermsProcessorConfig({
                 processor: commercialTermsProcessor,
@@ -358,8 +429,8 @@ contract RightsManagerIPAssetRightsTest is BaseTest {
             revoker: revoker,
             commercialLicenseUri: "https://commercial.license"
         });
-        vm.prank(franchiseOwner);
-        licensingModule.configureFranchiseLicensing(1, config);
+        vm.prank(ipAssetOrgOwner);
+        licensingModule.configureIpAssetOrgLicensing(address(ipAssetOrg), config);
     }
 
 }

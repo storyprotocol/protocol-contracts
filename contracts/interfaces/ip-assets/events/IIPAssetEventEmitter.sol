@@ -7,7 +7,7 @@ interface IIPAssetEventEmitter  {
 
     event IPAssetCreated(
         uint256 indexed franchiseId,
-        address indexed ipAssetRegistry,
+        address indexed ipAssetOrg,
         uint256 ipAssetId,
         IPAsset.IPAssetType ipAssetType
     );

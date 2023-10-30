@@ -30,11 +30,9 @@ interface ICollectPaymentModule is ICollectModule {
         returns (address collectNft, uint256 collectNftId);
 
     /// @notice Returns the collect payment info associated with an IP asset.
-    /// @param  franchiseId_ The id of the franchise of the specified IP asset.
-    /// @param  ipAssetId_ The id of the specified IP asset within the franchise.
+    /// @param  ipAssetId_ The id of the specified IP asset.
     /// @return Payment info associated with the configured IP asset collect.
     function getPaymentInfo(
-        uint256 franchiseId_,
         uint256 ipAssetId_
     ) external view returns (Collect.CollectPaymentInfo memory);
 }
