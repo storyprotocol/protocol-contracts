@@ -50,9 +50,7 @@ contract IPAssetOrgTest is Test {
             "name",
             "symbol",
             "description",
-            "uri",
-            mockLicenseModule,
-            mockCollectModule
+            "uri"
         );
         vm.prank(ipAssetOrgOwner);
         address ipAssetOrgAddr;

@@ -16,13 +16,13 @@ contract RightsManagerHarness is IPAssetOrg {
 
     function mockMintWithRights(address to, uint256 tokenId, address revoker) external {
         _mint(to, tokenId);
-        _setNonCommercialRights(tokenId, 0, to, revoker, Licensing.IpAssetConfig({
-            canSublicense: true,
-            ipAssetOrgRootLicenseId: 0
-        }), Licensing.TermsProcessorConfig({
-            processor: ITermsProcessor(address(0)),
-            data: ""
-        }));
+        // _setNonCommercialRights(tokenId, 0, to, revoker, Licensing.IpAssetConfig({
+        //     canSublicense: true,
+        //     ipAssetOrgRootLicenseId: 0
+        // }), Licensing.TermsProcessorConfig({
+        //     processor: ITermsProcessor(address(0)),
+        //     data: ""
+        // }));
     }
 
     function createLicense_exposed(
@@ -36,17 +36,17 @@ contract RightsManagerHarness is IPAssetOrg {
         Licensing.TermsProcessorConfig memory _terms,
         bool inLicenseRegistry
     ) external returns(uint256 licenseId) {
-        return _createLicense(
-            tokenId,
-            parentLicenseId,
-            licenseHolder,
-            uri,
-            revoker,
-            commercial,
-            canSublicense,
-            _terms,
-            inLicenseRegistry
-        );
+        // return _createLicense(
+        //     tokenId,
+        //     parentLicenseId,
+        //     licenseHolder,
+        //     uri,
+        //     revoker,
+        //     commercial,
+        //     canSublicense,
+        //     _terms,
+        //     inLicenseRegistry
+        // );
     }
 
 }

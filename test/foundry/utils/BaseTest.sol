@@ -16,16 +16,20 @@ import "contracts/modules/relationships/processors/PermissionlessRelationshipPro
 import "contracts/modules/relationships/processors/DstOwnerRelationshipProcessor.sol";
 import "contracts/modules/relationships/RelationshipModuleBase.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
-import "contracts/modules/licensing/LicensingModule.sol";
-import "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
-import "contracts/modules/licensing/LicenseRegistry.sol";
 import "contracts/IPAssetRegistry.sol";
 import "contracts/interfaces/modules/collect/ICollectModule.sol";
-import '../mocks/MockTermsProcessor.sol';
 
 import { AccessControl } from "contracts/lib/AccessControl.sol";
-import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
+// On active refactor
+// import "contracts/modules/licensing/LicensingModule.sol";
+// import "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
+// import "contracts/modules/licensing/LicenseRegistry.sol";
+// import '../mocks/MockTermsProcessor.sol';
+// import { Licensing } from "contracts/lib/modules/Licensing.sol";
+
+// TODO: Commented out contracts in active refactor. 
+// Run tests from make lint, which will not run collect and license
 contract BaseTest is BaseTestUtils, ProxyHelper {
 
     IPAssetOrg public ipAssetOrg;
@@ -35,10 +39,10 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     AccessControlSingleton accessControl;
     PermissionlessRelationshipProcessor public relationshipProcessor;
     DstOwnerRelationshipProcessor public dstOwnerRelationshipProcessor;
-    LicensingModule public licensingModule;
-    ILicenseRegistry public licenseRegistry;
-    MockTermsProcessor public nonCommercialTermsProcessor;
-    MockTermsProcessor public commercialTermsProcessor;
+    // LicensingModule public licensingModule;
+    // ILicenseRegistry public licenseRegistry;
+    // MockTermsProcessor public nonCommercialTermsProcessor;
+    // MockTermsProcessor public commercialTermsProcessor;
     ICollectModule public collectModule;
     RelationshipModuleHarness public relationshipModuleHarness;
     IPAssetRegistry public registry;
@@ -53,8 +57,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     address constant upgrader = address(6969);
     address constant ipAssetOrgOwner = address(456);
     address constant revoker = address(789);
-    string constant NON_COMMERCIAL_LICENSE_URI = "https://noncommercial.license";
-    string constant COMMERCIAL_LICENSE_URI = "https://commercial.license";
+    // string constant NON_COMMERCIAL_LICENSE_URI = "https://noncommercial.license";
+    // string constant COMMERCIAL_LICENSE_URI = "https://commercial.license";
 
     constructor() {}
 
@@ -81,16 +85,16 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         ipAssetOrgFactory = new IPAssetOrgFactory();
         
         // Create Licensing Module
-        address licensingImplementation = address(new LicensingModule(address(ipAssetOrgFactory)));
-        licensingModule = LicensingModule(
-            _deployUUPSProxy(
-                licensingImplementation,
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address,string)"))),
-                    address(accessControl), NON_COMMERCIAL_LICENSE_URI
-                )
-            )
-        );
+        // address licensingImplementation = address(new LicensingModule(address(ipAssetOrgFactory)));
+        // licensingModule = LicensingModule(
+        //     _deployUUPSProxy(
+        //         licensingImplementation,
+        //         abi.encodeWithSelector(
+        //             bytes4(keccak256(bytes("initialize(address,string)"))),
+        //             address(accessControl), NON_COMMERCIAL_LICENSE_URI
+        //         )
+        //     )
+        // );
 
         defaultCollectNftImpl = _deployCollectNFTImpl();
         collectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));
@@ -100,21 +104,19 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
             "IPAssetOrgName",
             "FRN",
             "description",
-            "tokenURI",
-            address(licensingModule),
-            address(collectModule)
+            "tokenURI"
         );
 
         vm.startPrank(ipAssetOrgOwner);
         address ipAssets;
         ipAssets = ipAssetOrgFactory.registerIPAssetOrg(ipAssetOrgParams);
         ipAssetOrg = IPAssetOrg(ipAssets);
-        licenseRegistry = ILicenseRegistry(ipAssetOrg.getLicenseRegistry());
+        // licenseRegistry = ILicenseRegistry(ipAssetOrg.getLicenseRegistry());
 
         // Configure Licensing for IPAssetOrg
-        nonCommercialTermsProcessor = new MockTermsProcessor();
-        commercialTermsProcessor = new MockTermsProcessor();
-        licensingModule.configureIpAssetOrgLicensing(address(ipAssetOrg), _getLicensingConfig());
+        // nonCommercialTermsProcessor = new MockTermsProcessor();
+        // commercialTermsProcessor = new MockTermsProcessor();
+        // licensingModule.configureIpAssetOrgLicensing(address(ipAssetOrg), _getLicensingConfig());
 
         vm.stopPrank();
 
@@ -135,29 +137,29 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         }
     }
 
-    function _getLicensingConfig() view internal returns (Licensing.IPAssetOrgConfig memory) {
-        return Licensing.IPAssetOrgConfig({
-            nonCommercialConfig: Licensing.IpAssetConfig({
-                canSublicense: true,
-                ipAssetOrgRootLicenseId: 0
-            }),
-            nonCommercialTerms: Licensing.TermsProcessorConfig({
-                processor: nonCommercialTermsProcessor,
-                data: abi.encode("nonCommercial")
-            }),
-            commercialConfig: Licensing.IpAssetConfig({
-                canSublicense: false,
-                ipAssetOrgRootLicenseId: 0
-            }),
-            commercialTerms: Licensing.TermsProcessorConfig({
-                processor: commercialTermsProcessor,
-                data: abi.encode("commercial")
-            }),
-            rootIpAssetHasCommercialRights: false,
-            revoker: revoker,
-            commercialLicenseUri: "uriuri"
-        });
-    }
+    // function _getLicensingConfig() view internal returns (Licensing.IPAssetOrgConfig memory) {
+    //     return Licensing.IPAssetOrgConfig({
+    //         nonCommercialConfig: Licensing.IpAssetConfig({
+    //             canSublicense: true,
+    //             ipAssetOrgRootLicenseId: 0
+    //         }),
+    //         nonCommercialTerms: Licensing.TermsProcessorConfig({
+    //             processor: address(0), //nonCommercialTermsProcessor,
+    //             data: abi.encode("nonCommercial")
+    //         }),
+    //         commercialConfig: Licensing.IpAssetConfig({
+    //             canSublicense: false,
+    //             ipAssetOrgRootLicenseId: 0
+    //         }),
+    //         commercialTerms: Licensing.TermsProcessorConfig({
+    //             processor: address(0),// commercialTermsProcessor,
+    //             data: abi.encode("commercial")
+    //         }),
+    //         rootIpAssetHasCommercialRights: false,
+    //         revoker: revoker,
+    //         commercialLicenseUri: "uriuri"
+    //     });
+    // }
 
     function _deployCollectNFTImpl() internal virtual returns (address) {
         return address(new MockCollectNFT());
