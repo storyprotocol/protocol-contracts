@@ -51,7 +51,7 @@ jobs:
 
       - name: Run Forge tests
         run: |
-          forge test -vvv
+          make test
         id: forge-test
 
       - name: Gas Difference

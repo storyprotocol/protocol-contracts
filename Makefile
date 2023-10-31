@@ -19,8 +19,8 @@ forge-update:; forge update
 forge-build:; forge build
 build :; npx hardhat compile
 
-# TODO: 
-test :; forge test --no-match-path $(shell pwd)/modules/collect
+# TODO: remove --no-match-path after refactor
+test :; forge test --no-match-path 'test/foundry/modules/*' -vvv
 
 snapshot :; forge snapshot
 
