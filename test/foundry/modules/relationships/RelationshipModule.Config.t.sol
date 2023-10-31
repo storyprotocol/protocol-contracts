@@ -1,48 +1,18 @@
 // SPDX-License-Identifier: BUSDL-1.1
 pragma solidity ^0.8.13;
 
-import "forge-std/Test.sol";
-import '../utils/BaseTest.sol';
-import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
-import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
-import "contracts/ip-assets/IPAssetOrg.sol";
-import { AccessControl } from "contracts/lib/AccessControl.sol";
+import 'test/foundry/utils/BaseTest.sol';
+import { Errors } from "contracts/lib/Errors.sol";
 import { Relationship } from "contracts/lib/modules/Relationship.sol";
 
-contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
+contract RelationshipModuleSetupRelationshipsTest is BaseTest {
 
-    address relationshipManager = address(0x234);
-
-    function setUp() override public {
+    function setUp() virtual override public {
         deployProcessors = true;
         super.setUp();
-
-        vm.startPrank(ipAssetOrgOwner);
-        IPAsset.RegisterIPAssetOrgParams memory params = IPAsset.RegisterIPAssetOrgParams(
-            address(registry),
-            "name",
-            "symbol",
-            "description",
-            "tokenURI",
-            address(licensingModule),
-            address(collectModule)
-        );
-        address ipAssets = ipAssetOrgFactory.registerIPAssetOrg(params);
-        ipAssetOrg = IPAssetOrg(ipAssets);
-        vm.stopPrank();
-        relationshipModule = ProtocolRelationshipModule(
-            _deployUUPSProxy(
-                address(new ProtocolRelationshipModule(address(ipAssetOrgFactory))),
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
-                )
-            )
-        );
-        vm.prank(admin);
-        accessControl.grantRole(AccessControl.RELATIONSHIP_MANAGER_ROLE, relationshipManager);
     }
 
-    function test_setProtocolLevelRelationship() public {
+    function test_setRelationship() public {
         IPAsset.IPAssetType[] memory sourceIpAssets = new IPAsset.IPAssetType[](1);
         sourceIpAssets[0] = IPAsset.IPAssetType.STORY;
         IPAsset.IPAssetType[] memory destIpAssets = new IPAsset.IPAssetType[](2);
@@ -63,8 +33,9 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
                 renewable: false
             })
         });
-        vm.prank(relationshipManager);
+
         bytes32 relId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
+        assertEq(relId, keccak256(abi.encode("RELATIONSHIP")));
 
         Relationship.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relId);
         assertEq(config.sourceIpAssetTypeMask, 1 << (uint256(IPAsset.IPAssetType.STORY) & 0xff));
@@ -74,12 +45,10 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
 
     }
 
-    function test_revert_IfSettingProtocolLevelRelationshipUnauthorized() public {
+    function test_revert_IfMasksNotConfigured() public {
         IPAsset.IPAssetType[] memory sourceIpAssets = new IPAsset.IPAssetType[](1);
-        sourceIpAssets[0] = IPAsset.IPAssetType.STORY;
+        sourceIpAssets[0] = IPAsset.IPAssetType.UNDEFINED;
         IPAsset.IPAssetType[] memory destIpAssets = new IPAsset.IPAssetType[](2);
-        destIpAssets[0] = IPAsset.IPAssetType.CHARACTER;
-        destIpAssets[1] = IPAsset.IPAssetType.ART;
 
         Relationship.SetRelationshipConfigParams memory params = Relationship.SetRelationshipConfigParams({
             sourceIpAssets: sourceIpAssets,
@@ -95,32 +64,69 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
                 renewable: false
             })
         });
+
         vm.expectRevert();
-        vm.prank(ipAssetOrgOwner);
         relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
+    }
+
+    function test_relationshipConfigDecoded() public {
+        IPAsset.IPAssetType[] memory sourceIpAssets = new IPAsset.IPAssetType[](1);
+        sourceIpAssets[0] = IPAsset.IPAssetType.STORY;
+        IPAsset.IPAssetType[] memory destIpAssets = new IPAsset.IPAssetType[](2);
+        destIpAssets[0] = IPAsset.IPAssetType.CHARACTER;
+        destIpAssets[1] = IPAsset.IPAssetType.ART;
+        
+        Relationship.SetRelationshipConfigParams memory params = Relationship.SetRelationshipConfigParams({
+            sourceIpAssets: sourceIpAssets,
+            allowedExternalSource: false,
+            destIpAssets: destIpAssets,
+            allowedExternalDest: true,
+            onlySameIPAssetOrg: true,
+            processor: address(relationshipProcessor),
+            disputer: address(this),
+            timeConfig: Relationship.TimeConfig({
+                minTtl: 0,
+                maxTtl: 0,
+                renewable: false
+            })
+        });
+        bytes32 relId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
+
+        Relationship.SetRelationshipConfigParams memory result = relationshipModule.getRelationshipConfigDecoded(relId);
+
+        _assertEqIPAssetArray(result.sourceIpAssets, params.sourceIpAssets);
+        _assertEqIPAssetArray(result.destIpAssets, params.destIpAssets);
+        assertEq(result.allowedExternalSource, params.allowedExternalSource);
+        assertEq(result.allowedExternalDest, params.allowedExternalDest);
+        assertEq(result.onlySameIPAssetOrg, params.onlySameIPAssetOrg);
+        assertEq(result.processor, params.processor);
+        assertEq(result.disputer, params.disputer);
+        assertEq(result.timeConfig.minTtl, params.timeConfig.minTtl);
+        assertEq(result.timeConfig.maxTtl, params.timeConfig.maxTtl);
+        assertEq(result.timeConfig.renewable, params.timeConfig.renewable);
+
+    }
+
+    function _assertEqIPAssetArray(IPAsset.IPAssetType[] memory result, IPAsset.IPAssetType[] memory expected) internal {
+        for (uint256 i = 0; i < result.length; i++) {
+            if (i < expected.length) {
+                assertEq(uint256(result[i]), uint256(expected[i]));
+            } else {
+                assertEq(uint256(result[i]), 0);
+            }
+        }
     }
 
 }
 
-contract ProtocolRelationshipModuleUnsetRelationshipsTest is BaseTest {
+contract RelationshipModuleUnsetRelationshipsTest is BaseTest {
 
-    bytes32 relId;
-    address relationshipManager = address(0x234);
 
-    function setUp() override public {
+    bytes32 relationshipId;
+
+    function setUp() virtual override public {
         deployProcessors = true;
         super.setUp();
-        relationshipModule = ProtocolRelationshipModule(
-            _deployUUPSProxy(
-                address(new ProtocolRelationshipModule(address(ipAssetOrgFactory))),
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
-                )
-            )
-        );
-        vm.prank(admin);
-        accessControl.grantRole(AccessControl.RELATIONSHIP_MANAGER_ROLE, relationshipManager);
-
         IPAsset.IPAssetType[] memory sourceIpAssets = new IPAsset.IPAssetType[](1);
         sourceIpAssets[0] = IPAsset.IPAssetType.STORY;
         IPAsset.IPAssetType[] memory destIpAssets = new IPAsset.IPAssetType[](1);
@@ -139,26 +145,23 @@ contract ProtocolRelationshipModuleUnsetRelationshipsTest is BaseTest {
                 renewable: false
             })
         });
-        vm.prank(relationshipManager);
-        relId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
-        
+        relationshipId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
     }
 
     function test_unsetRelationshipConfig() public {
-        vm.prank(relationshipManager);
-        relationshipModule.unsetRelationshipConfig(relId);
+        relationshipModule.unsetRelationshipConfig(relationshipId);
 
-        Relationship.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relId);
+        Relationship.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relationshipId);
         assertEq(config.sourceIpAssetTypeMask, 0);
         assertEq(config.destIpAssetTypeMask, 0);
         assertFalse(config.onlySameIPAssetOrg);
         // TODO: test for event
     }
 
-    function test_revert_unsetRelationshipConfigNotAuthorized() public {
-        vm.expectRevert();
-        vm.prank(ipAssetOrgOwner);
-        relationshipModule.unsetRelationshipConfig(relId);
+    function test_revert_unsetRelationshipConfigNonExistingRelationship() public {
+        bytes32 id = relationshipModule.getRelationshipId("UNDEFINED_Relationship");
+        vm.expectRevert(Errors.RelationshipModule_NonExistingRelationship.selector);
+        relationshipModule.unsetRelationshipConfig(id);
     }
 
 }

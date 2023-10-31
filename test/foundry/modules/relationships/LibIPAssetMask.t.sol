@@ -8,7 +8,7 @@ import { LibIPAssetMask } from "contracts/modules/relationships/LibIPAssetMask.s
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { IPAssetOrgFactory } from "contracts/IPAssetOrgFactory.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import { MockERC721 } from "../mocks/MockERC721.sol";
+import { MockERC721 } from "test/foundry/mocks/MockERC721.sol";
 
 contract LibIPAssetMaskHarness {
 

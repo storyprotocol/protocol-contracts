@@ -65,18 +65,8 @@ contract IPAssetOrgFactory is
             owner: msg.sender,
             name: params_.name,
             symbol: params_.symbol,
-            description: params_.description,
-            licensingModule: params_.licensingModule,
-            collectModule: params_.collectModule
+            description: params_.description
         }));
-
-        /// TODO(ramarti): Switch to global licensing registry.
-        LicenseRegistry licenseRegistry = new LicenseRegistry(
-            ipAssetOrg,
-            string.concat("Licenses for ", params_.name),
-            string.concat("sl", params_.symbol)
-        );
-        IPAssetOrg(ipAssetOrg).setLicenseRegistry(address(licenseRegistry));
 
         // Set the registration status of the IP Asset Org to be true.
         IPAssetOrgFactoryStorage storage $ = _getIpAssetOrgFactoryStorage();

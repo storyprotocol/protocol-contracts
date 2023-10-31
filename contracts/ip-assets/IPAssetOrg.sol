@@ -89,21 +89,6 @@ contract IPAssetOrg is
         return readIPAsset(tokenId_).mediaUrl;
     }
 
-    /// @notice Checks if the contract supports interface `interfaceId_`.
-    /// @param interfaceId_ The id of the interface being checked.
-    function supportsInterface(
-        bytes4 interfaceId_
-    ) public
-    view
-    virtual
-    override(ERC721Upgradeable, IERC165Upgradeable)
-    returns (bool)
-    {
-        return
-            interfaceId_ == type(IIPAssetOrg).interfaceId ||
-            super.supportsInterface(interfaceId_);
-    }
-
     /// @notice Mints a new IP asset localized for the IP Asset Org.
     /// @param to_ Address of the owner of the IP Asset.
     /// @param ipAssetType_ Type of the IP Asset.

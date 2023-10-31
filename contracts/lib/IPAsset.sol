@@ -38,8 +38,6 @@ library IPAsset {
         string symbol;
         string description;
         string tokenURI;
-        address licensingModule;
-        address collectModule;
     }
 
     struct InitIPAssetOrgParams {
@@ -48,8 +46,6 @@ library IPAsset {
         string name;
         string symbol;
         string description;
-        address licensingModule;
-        address collectModule;
     }
 
     function _zeroId(IPAssetType ipAsset_) internal pure returns (uint256) {

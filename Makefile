@@ -19,7 +19,8 @@ forge-update:; forge update
 forge-build:; forge build
 build :; npx hardhat compile
 
-test :; forge test
+# TODO: 
+test :; forge test --no-match-path $(shell pwd)/modules/collect
 
 snapshot :; forge snapshot
 

@@ -2,9 +2,9 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import '../utils/ProxyHelper.sol';
-import '../utils/BaseTest.sol';
-import "../mocks/MockLicensingModule.sol";
+import 'test/foundry/utils/ProxyHelper.sol';
+import 'test/foundry/utils/BaseTest.sol';
+import "test/foundry/mocks/MockLicensingModule.sol";
 import "contracts/lib/IPAsset.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
