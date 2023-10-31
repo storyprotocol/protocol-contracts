@@ -10,9 +10,9 @@ import { CollectModuleBase } from "contracts/modules/collect/CollectModuleBase.s
 contract SimpleCollectModule is CollectModuleBase {
 
     /// @notice Initializes a mock collect module.
-    /// @param franchiseRegistry_ The protocol-wide franchise registry address.
+    /// @param franchise_ The protocol-wide franchise registry address.
     /// @param defaultCollectNftImpl_ The default collect NFT impl address.
-    constructor(address franchiseRegistry_, address defaultCollectNftImpl_) CollectModuleBase(franchiseRegistry_, defaultCollectNftImpl_) {}
+    constructor(address franchise_, address defaultCollectNftImpl_) CollectModuleBase(franchise_, defaultCollectNftImpl_) {}
 
     /// @notice Initializes the collect module via UUPS proxying.
     /// @param accessControl_ The address utilized for contract access control.
@@ -25,8 +25,8 @@ contract SimpleCollectModule is CollectModuleBase {
     function _authorizeUpgrade(address newImplementation_) internal override onlyRole(AccessControl.UPGRADER_ROLE) {}
 
     /// @dev Checks whether the collect action is authorized for an IP asset.
-    function _isCollectAuthorized(uint256 franchiseId_, uint256 ipAssetId_) internal view override returns (bool) {
-        address ipAssetRegistry = FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId_);
-        return msg.sender == IERC721(ipAssetRegistry).ownerOf(ipAssetId_);
+    function _isCollectAuthorized(uint256 ipAssetId_) internal override returns (bool) {
+        address ipAssetOrg = REGISTRY.ipAssetOrg(ipAssetId_);
+        return msg.sender == ipAssetOrg;
     }
 }

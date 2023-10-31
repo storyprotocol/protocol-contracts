@@ -6,10 +6,8 @@ import "test/foundry/utils/ProxyHelper.sol";
 import "script/foundry/utils/StringUtil.sol";
 import "script/foundry/utils/BroadcastManager.s.sol";
 import "script/foundry/utils/JsonDeploymentHandler.s.sol";
-import "contracts/ip-assets/IPAssetRegistryFactory.sol";
-import "contracts/ip-assets/IPAssetRegistry.sol";
-import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
-import "contracts/FranchiseRegistry.sol";
+import "contracts/ip-assets/IPAssetOrg.sol";
+import "contracts/IPAssetOrgFactory.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
@@ -27,9 +25,8 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
     using StringUtil for uint256;
     using stdJson for string;
 
-    address ipAssetsFactory;
     address accessControl;
-    address franchiseRegistry;
+    address franchise;
     address commonIPAssetEventEmitter;
 
     string constant NON_COMMERCIAL_LICENSE_URI = "https://noncommercial.license";
@@ -46,16 +43,6 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         string memory contractKey;
         address newAddress;
         
-        /// IP ASSETS REGISTRY FACTORY
-        contractKey = "IPAssetRegistryFactory";
-
-        console.log(string.concat("Deploying ", contractKey, "..."));
-        newAddress = address(new IPAssetRegistryFactory());
-        _writeAddress(contractKey, newAddress);
-        console.log(string.concat(contractKey, " deployed to:"), newAddress);
-        
-        ipAssetsFactory = newAddress;
-
         /// ACCESS CONTROL SINGLETON
         contractKey = "AccessControlSingleton-Impl";
 
@@ -79,15 +66,15 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
         accessControl = newAddress;
 
-        /// FRANCHISE REGISTRY
-        contractKey = "FranchiseRegistry-Impl";
+        /// IP_ORG_FACTORY REGISTRY
+        contractKey = "IPAssetOrgFactory-Impl";
 
         console.log(string.concat("Deploying ", contractKey, "..."));
-        newAddress = address(new FranchiseRegistry(ipAssetsFactory));
+        newAddress = address(new IPAssetOrgFactory());
         _writeAddress(contractKey, newAddress);
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-        contractKey = "FranchiseRegistry-Proxy";
+        contractKey = "IPAssetOrgFactory-Proxy";
 
         console.log(string.concat("Deploying ", contractKey, "..."));
         newAddress = _deployUUPSProxy(
@@ -99,25 +86,14 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         _writeAddress(contractKey, newAddress);
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-        franchiseRegistry = newAddress;
-
-        /// COMMON EVENT EMITTER
-        contractKey = "CommonIPAssetEventEmitter";
-
-        console.log(string.concat("Deploying ", contractKey, "..."));
-        newAddress = address(new CommonIPAssetEventEmitter(franchiseRegistry));
-        _writeAddress(contractKey, newAddress);
-        console.log(string.concat(contractKey, " deployed to:"), newAddress);
-
-        commonIPAssetEventEmitter = newAddress;
-
+        franchise = newAddress;
 
         /// LICENSING MODULE
         contractKey = "LicensingModule-Impl";
 
         console.log(string.concat("Deploying ", contractKey, "..."));
 
-        newAddress = address(new LicensingModule(address(franchiseRegistry)));
+        newAddress = address(new LicensingModule(address(franchise)));
         _writeAddress(contractKey, newAddress);
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
@@ -148,7 +124,7 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         contractKey = "CollectModule-Impl";
         console.log(string.concat("Deploying ", contractKey, "..."));
 
-        newAddress = address(new MockCollectModule(address(franchiseRegistry), defaultCollectNFTImpl));
+        newAddress = address(new MockCollectModule(address(franchise), defaultCollectNFTImpl));
         _writeAddress(contractKey, newAddress);
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
@@ -205,32 +181,11 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         _writeAddress(contractKey, newAddress);
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-        /// UPDATE BEACON
-
-        contractKey = "IPAssetRegistry-Template";
-
-        console.log(string.concat("Deploying ", contractKey, "..."));
-        newAddress = address(
-            new IPAssetRegistry(
-                commonIPAssetEventEmitter,
-                licensingModule,
-                franchiseRegistry,
-                collectModule
-            )
-        );
-        _writeAddress(contractKey, newAddress);
-        console.log(string.concat(contractKey, " deployed to:"), newAddress);
-
-        console.log(string.concat("Updating ", contractKey, " beacon..."));
-        IPAssetRegistryFactory(ipAssetsFactory).upgradeFranchises(newAddress);
-        console.log(string.concat(contractKey, " beacon updated to:"), newAddress);
-
-
         /// PROTOCOL RELATIONSHIP MODULE
         contractKey = "ProtocolRelationshipModule-Impl";
        
         console.log(string.concat("Deploying ", contractKey, "..."));
-        newAddress = address(new ProtocolRelationshipModule(franchiseRegistry));
+        newAddress = address(new ProtocolRelationshipModule(franchise));
         _writeAddress(contractKey, newAddress);
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
         

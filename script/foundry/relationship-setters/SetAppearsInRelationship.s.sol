@@ -46,7 +46,7 @@ contract SetAppearsInRelationship is Script, BroadcastManager, JsonDeploymentHan
             allowedExternalSource: false,
             destIpAssets: destIPAssets,
             allowedExternalDest: false,
-            onlySameFranchise: true,
+            onlySameIPAssetOrg: true,
             processor: processor,
             disputer: admin,
             timeConfig: Relationship.TimeConfig({

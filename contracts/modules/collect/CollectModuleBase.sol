@@ -11,8 +11,9 @@ import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.so
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { Collect } from "contracts/lib/modules/Collect.sol";
 import { Errors } from "contracts/lib/Errors.sol";
-import { FranchiseRegistry } from "contracts/FranchiseRegistry.sol";
-import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistry.sol";
+import { IPAssetOrgFactory } from "contracts/IPAssetOrgFactory.sol";
+import { IIPAssetOrg } from "contracts/interfaces/ip-assets/IIPAssetOrg.sol";
+import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 
 
 /// @title Collect Module Base Implementation
@@ -20,10 +21,11 @@ import { IIPAssetRegistry } from "contracts/interfaces/ip-assets/IIPAssetRegistr
 ///         extended when creating collect modules for franchise IP assets.
 ///         A collect module allows users to bind enrolled IP assets to NFTs
 ///         that may be minted according to franchise configured collect rules.
+/// TODO: Add ipAssetOrg-wide module settings (currently it is granular at the individual IP asset level).
 abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModule {
 
-    // The Story Protocol franchise registry - used for IP asset identification.
-    FranchiseRegistry public immutable FRANCHISE_REGISTRY;
+    // The Story Protocol IP asset  registry - used for IP asset identification.
+    IPAssetRegistry public immutable REGISTRY;
 
     // The default collect NFT impl address to be used for minting collect NFTs.
     address public immutable DEFAULT_COLLECT_NFT_IMPL;
@@ -34,17 +36,25 @@ abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModu
 
     // ERC-1967 style storage slots used for collect module storage.
     struct CollectModuleStorage {
-        // Maps IP assets (franchiseId, ipAssetId) to collect module settings.
-        mapping(uint256 => mapping(uint256 => Collect.CollectInfo)) collectInfo;
+        // Maps IP assets (ipAssetId) to collect module settings.
+        mapping(uint256 => Collect.CollectInfo) collectInfo;
     }
 
     /// @notice Instantiates a new collect module.
-    /// @param franchiseRegistry_ The protocol-wide franchise registry address.
+    /// @param ipAssetRegistry_ The protocol-wide franchise registry address.
     /// @param defaultCollectNftImpl_ The default collect NFT impl address.
-    constructor(address franchiseRegistry_, address defaultCollectNftImpl_) {
-        FRANCHISE_REGISTRY = FranchiseRegistry(franchiseRegistry_);
+    constructor(address ipAssetRegistry_, address defaultCollectNftImpl_) {
+        REGISTRY = IPAssetRegistry(ipAssetRegistry_);
         DEFAULT_COLLECT_NFT_IMPL = defaultCollectNftImpl_;
         _disableInitializers();
+    }
+
+    /// @notice Returns the collect NFT address associated with an IP asset.
+    /// @param  ipAssetId_ The id of the specified IP asset within the franchise.
+    /// @return The Collect NFT address if it exists, else the zero address.
+    function getCollectNFT(uint256 ipAssetId_) public view returns (address) {
+        Collect.CollectInfo memory info = _getCollectModuleStorage().collectInfo[ipAssetId_];
+        return info.collectNft;
     }
 
     /// @notice Initializes the collect module for a specific IP asset.
@@ -54,28 +64,27 @@ abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModu
     ///      collect NFT impl `DEFAULT_COLLECT_NFT_IMPL` will be used instead.
     function initCollect(Collect.InitCollectParams calldata initCollectParams_) public virtual {
 
-        // An IP asset is identified by the tuple (franchiseId, ipAssetId).
-        uint256 franchiseId = initCollectParams_.franchiseId;
+        // An IP asset is identified by ipAssetId.
         uint256 ipAssetId = initCollectParams_.ipAssetId;
 
         // Only the IP asset registry may initialize its asset's collect module.
         address collectNftImpl = initCollectParams_.collectNftImpl;
 
-        if (msg.sender != FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId)) {
+        if (msg.sender != REGISTRY.ipAssetOrg(ipAssetId)) {
             revert Errors.CollectModule_CallerUnauthorized();
         }
 
         // Revert if an IP asset collect module has already been initialized.
         CollectModuleStorage storage $ = _getCollectModuleStorage();
-        if ($.collectInfo[franchiseId][ipAssetId].initialized) {
+        if ($.collectInfo[ipAssetId].initialized) {
             revert Errors.CollectModule_IPAssetAlreadyInitialized();
         }
 
         // If an NFT impl address is not passed in, use the module default.
         if (collectNftImpl != address(0)) {
-            $.collectInfo[franchiseId][ipAssetId].collectNftImpl = collectNftImpl;
+            $.collectInfo[ipAssetId].collectNftImpl = collectNftImpl;
         }
-        $.collectInfo[franchiseId][ipAssetId].initialized = true;
+        $.collectInfo[ipAssetId].initialized = true;
 
         // Perform any additional collect module initialization.
         _initCollect(initCollectParams_);
@@ -90,27 +99,22 @@ abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModu
     /// @return collectNftId The id of the collected collect NFT.
     function collect(Collect.CollectParams calldata collectParams_) public virtual payable returns (address collectNft, uint256 collectNftId) {
 
-        // An IP asset is identified by the tuple (franchiseId, ipAssetId).
-        uint256 franchiseId = collectParams_.franchiseId;
+        // An IP asset is identified by the ipAssetId.
         uint256 ipAssetId = collectParams_.ipAssetId;
 
         // If collects are not authorized for the configured IP asset, revert.
-        if (!_isCollectAuthorized(franchiseId, ipAssetId)) {
+        if (!_isCollectAuthorized(ipAssetId)) {
             revert Errors.CollectModule_CollectUnauthorized();
         }
 
         // Check that the specified IP asset actually exists.
-        address ipAssetRegistry = FRANCHISE_REGISTRY.ipAssetRegistryForId(franchiseId);
-        if (ipAssetRegistry == address(0)) {
-            revert Errors.CollectModule_IPAssetRegistryNonExistent();
-        }
-        try IIPAssetRegistry(ipAssetRegistry).ownerOf(ipAssetId) {
-        } catch {
+        address ipAssetOrg = REGISTRY.ipAssetOrg(ipAssetId);
+        if (ipAssetOrg == address(0)) {
             revert Errors.CollectModule_IPAssetNonExistent();
         }
 
         // Get the bound collect NFT, deploying it if it has yet to exist.
-        collectNft = _getCollectNft(franchiseId, ipAssetRegistry, ipAssetId, collectParams_.collectNftInitData);
+        collectNft = _getCollectNft(ipAssetOrg, ipAssetId, collectParams_.collectNftInitData);
 
         // Perform the collect, minting a collect NFT for the collector.
         collectNftId = ICollectNFT(collectNft).collect(collectParams_.collector, collectParams_.collectNftData);
@@ -120,7 +124,6 @@ abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModu
 
         // Emit the Collect event.
         emit Collected(
-            franchiseId,
             ipAssetId,
             collectParams_.collector,
             collectNft,
@@ -130,15 +133,6 @@ abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModu
         );
 
         return (collectNft, collectNftId);
-    }
-
-    /// @notice Returns the collect NFT address associated with an IP asset.
-    /// @param  franchiseId_ The id of the franchise of the specified IP asset.
-    /// @param  ipAssetId_ The id of the specified IP asset within the franchise.
-    /// @return The Collect NFT address if it exists, else the zero address.
-    function getCollectNFT(uint256 franchiseId_, uint256 ipAssetId_) public view returns (address) {
-        Collect.CollectInfo memory info = _getCollectModuleStorage().collectInfo[franchiseId_][ipAssetId_];
-        return info.collectNft;
     }
 
     /// @dev Perform any additional processing on collect module initialization.
@@ -151,15 +145,18 @@ abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModu
     ///         collector address, and generic unformatted collect and NFT data.
     function _collect(Collect.CollectParams calldata collectParams_) internal virtual {}
 
+    /// @dev Performs any authorization on an IP asset collection.
+    /// @param  ipAssetId_ The id of the specified IP asset within the franchise.
+    function _isCollectAuthorized(uint256 ipAssetId_) internal virtual returns (bool);
+
     /// @dev Gets a collect NFT, deploying one if it does not yet exist.
-    /// @param  franchiseId_ The id of the franchise of the specified IP asset.
     /// @param  ipAssetId_ The id of the specified IP asset within the franchise.
     /// @param  initData_ Additional unformatted collect NFT initialization data.
-    function _getCollectNft(uint256 franchiseId_, address ipAssetRegistry_, uint256 ipAssetId_, bytes memory initData_) internal returns (address) {
+    function _getCollectNft(address ipAssetOrg_, uint256 ipAssetId_, bytes memory initData_) internal returns (address) {
 
         // Retrieve the collect module settings for the IP asset.
         CollectModuleStorage storage $ = _getCollectModuleStorage();
-        Collect.CollectInfo storage info = $.collectInfo[franchiseId_][ipAssetId_];
+        Collect.CollectInfo storage info = $.collectInfo[ipAssetId_];
         if (!info.initialized) {
             revert Errors.CollectModule_CollectNotYetInitialized();
         }
@@ -175,22 +172,18 @@ abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModu
 
             // Perform collect NFT initialization for the IP asset.
             ICollectNFT(collectNft).initialize(Collect.InitCollectNFTParams({
-                ipAssetRegistry: ipAssetRegistry_,
+                registry: address(REGISTRY),
+                ipAssetOrg: ipAssetOrg_,
                 ipAssetId: ipAssetId_,
                 data: initData_
             }));
-            $.collectInfo[franchiseId_][ipAssetId_].collectNft = collectNft;
+            $.collectInfo[ipAssetId_].collectNft = collectNft;
 
             // Emit the event indicating a new Collect NFT was created.
-            emit NewCollectNFT(franchiseId_, ipAssetId_, collectNft);
+            emit NewCollectNFT(ipAssetId_, collectNft);
         }
         return collectNft;
     }
-
-    /// @dev Performs any authorization on an IP asset collection.
-    /// @param  franchiseId_ The id of the franchise of the specified IP asset.
-    /// @param  ipAssetId_ The id of the specified IP asset within the franchise.
-    function _isCollectAuthorized(uint256 franchiseId_, uint256 ipAssetId_) internal view virtual returns (bool);
 
     /// @dev Gets the ERC-1967 configured collect module storage slot.
     function _getCollectModuleStorage() private pure returns (CollectModuleStorage storage $) {

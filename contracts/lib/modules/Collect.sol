@@ -10,7 +10,6 @@ library Collect {
 
     /// @notice Parameters passed to initialize a collect module for an IP asset.
     struct InitCollectParams {
-        uint256 franchiseId; // The id of the franchise tied to the IP asset.
         uint256 ipAssetId; // The id of the IP asset under the franchise.
         address collectNftImpl; // The address of the collect NFT impl to use.
         bytes data; // Additional data to be used for initialization.
@@ -18,7 +17,6 @@ library Collect {
 
     /// @notice Parameters passed for collect processing for an IP asset.
     struct CollectParams {
-        uint256 franchiseId; // The id of the franchise tied to the IP asset.
         uint256 ipAssetId; // The id of the IP asset being collected.
         address collector; // The address designated for NFT collection.
         bytes collectData; // Additional data passed for module collection.
@@ -63,7 +61,8 @@ library Collect {
 
     /// @notice Parameters passed to initialize a collect NFT.
     struct InitCollectNFTParams {
-        address ipAssetRegistry; // Address of the registry of the bound IP asset.
+        address registry; // Address of the registry
+        address ipAssetOrg; // Address of the IP asset collection tied to the collect module.
         uint256 ipAssetId; // The id of the IP asset bound to the collect NFT.
         bytes data; // Additional data used for NFT initialization.
     }

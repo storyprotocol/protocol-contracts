@@ -21,7 +21,6 @@ contract BaseCollectModuleTest is BaseTest {
     // TODO: Currently, when compiling with 0.8.21, there is a known ICE bug that prevents us from emitting from the interface directly e.g. via ICollectModule.Collected - these two should be refactored in favor of emitting through the interface once we officially migrate to 0.8.22.
     // See: https://github.com/ethereum/solidity/issues/14430
     event Collected(
-        uint256 indexed franchiseid_,
         uint256 indexed ipAssetId_,
         address indexed collector_,
         address collectNft_,
@@ -32,7 +31,6 @@ contract BaseCollectModuleTest is BaseTest {
 
     // TODO: Refactor once we migrate to compiling via 0.8.22 as explained above.
     event NewCollectNFT(
-        uint256 indexed franchiseId_,
         uint256 indexed ipAssetId_,
         address collectNFT_
     );
@@ -59,48 +57,24 @@ contract BaseCollectModuleTest is BaseTest {
         collector = cal;
     }
 
-    /// @notice Tests whether unitialized modules revert on invoking collect.
-    function test_CollectModuleCollectUninitializedReverts(uint8 ipAssetType) createIpAsset(collector, ipAssetType) public {
-        ICollectModule uninitializedCollectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));
-
-        vm.expectRevert(Errors.CollectModule_CollectNotYetInitialized.selector);
-        vm.prank(collector);
-        uninitializedCollectModule.collect(Collect.CollectParams({
-            franchiseId: franchiseId,
-            ipAssetId: ipAssetId,
-            collector: collector,
-            collectData: "",
-            collectNftInitData: "",
-            collectNftData: ""
-        }));
-    }
-
-    /// @notice Tests whether collect reverts if the registry of the IP asset being collected does not exist.
-    function test_CollectModuleCollectNonExistentIPAssetRegistryReverts(uint256 nonExistentFranchiseId, uint8 ipAssetType) createIpAsset(collector, ipAssetType) public virtual {
-        vm.assume(nonExistentFranchiseId != franchiseId);
-        vm.expectRevert(Errors.CollectModule_IPAssetRegistryNonExistent.selector);
-        _collect(nonExistentFranchiseId, ipAssetId);
-    }
 
     /// @notice Tests whether collect reverts if the IP asset being collected from does not exist.
     function test_CollectModuleCollectNonExistentIPAssetReverts(uint256 nonExistentipAssetId, uint8 ipAssetType) createIpAsset(collector, ipAssetType) public virtual {
         vm.assume(nonExistentipAssetId != ipAssetId);
         vm.expectRevert(Errors.CollectModule_IPAssetNonExistent.selector);
-        _collect(franchiseId, nonExistentipAssetId);
+        _collect(nonExistentipAssetId);
     }
 
     /// @notice Tests that collects with the module-default collect NFT succeed.
     function test_CollectModuleCollectDefaultCollectNFT(uint8 ipAssetType) createIpAsset(collector, ipAssetType) public {
-        assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), address(0));
+        assertEq(collectModule.getCollectNFT(ipAssetId), address(0));
         vm.expectEmit(true, true, false, false, address(collectModule));
         emit NewCollectNFT(
-            franchiseId,
             ipAssetId,
             defaultCollectNftImpl
         );
         vm.expectEmit(true, true, true, false, address(collectModule));
         emit Collected(
-            franchiseId,
             ipAssetId,
             collector,
             defaultCollectNftImpl,
@@ -108,24 +82,22 @@ contract BaseCollectModuleTest is BaseTest {
             "",
             ""
         );
-        (address collectNft, uint256 collectNftId) = _collect(franchiseId, ipAssetId);
-        assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), collectNft);
+        (address collectNft, uint256 collectNftId) = _collect(ipAssetId);
+        assertEq(collectModule.getCollectNFT(ipAssetId), collectNft);
         assertTrue(ICollectNFT(collectNft).ownerOf(collectNftId) == cal);
-        assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), collectNft);
+        assertEq(collectModule.getCollectNFT(ipAssetId), collectNft);
     }
 
     /// @notice Tests that collects with customized collect NFTs succeed.
     function test_CollectModuleCollectCustomCollectNFT(uint8 ipAssetType) public createIpAsset(collector, ipAssetType) {
-        assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), address(0));
+        assertEq(collectModule.getCollectNFT(ipAssetId), address(0));
         vm.expectEmit(true, true, false, false, address(collectModule));
         emit NewCollectNFT(
-            franchiseId,
             ipAssetId,
             defaultCollectNftImpl
         );
         vm.expectEmit(true, true, true, false, address(collectModule));
         emit Collected(
-            franchiseId,
             ipAssetId,
             collector,
             defaultCollectNftImpl,
@@ -133,29 +105,27 @@ contract BaseCollectModuleTest is BaseTest {
             "",
             ""
         );
-        (address collectNft, uint256 collectNftId) = _collect(franchiseId, ipAssetId);
-        assertEq(collectModule.getCollectNFT(franchiseId, ipAssetId), collectNft);
+        (address collectNft, uint256 collectNftId) = _collect(ipAssetId);
+        assertEq(collectModule.getCollectNFT(ipAssetId), collectNft);
         assertTrue(ICollectNFT(collectNft).ownerOf(collectNftId) == cal);
     }
 
     /// @notice Tests expected behavior of the collect module constructor.
     function test_CollectModuleConstructor() public {
-        MockCollectModule mockCollectModule = new MockCollectModule(address(franchiseRegistry), defaultCollectNftImpl);
-        assertEq(address(mockCollectModule.FRANCHISE_REGISTRY()), address(franchiseRegistry));
+        MockCollectModule mockCollectModule = new MockCollectModule(address(registry), defaultCollectNftImpl);
+        assertEq(address(mockCollectModule.REGISTRY()), address(registry));
     }
 
     /// @notice Tests expected behavior of collect module initialization.
     function test_CollectModuleInit() public {
-        assertEq(address(0), collectModule.getCollectNFT(franchiseId, ipAssetId));
+        assertEq(address(0), collectModule.getCollectNFT(ipAssetId));
     }
 
     /// @notice Tests collect module reverts on unauthorized calls.
-    function test_CollectModuleInitCollectInvalidCallerReverts(uint256 nonExistentFranchiseId, uint8 ipAssetType) public createIpAsset(collector, ipAssetType)  {
-        vm.assume(nonExistentFranchiseId != franchiseId);
+    function test_CollectModuleInitCollectInvalidCallerReverts(uint256 nonExistentIPAssetOrgId, uint8 ipAssetType) public createIpAsset(collector, ipAssetType)  {
         vm.expectRevert(Errors.CollectModule_CallerUnauthorized.selector);
         vm.prank(address(this));
         collectModule.initCollect(Collect.InitCollectParams({
-            franchiseId: franchiseId,
             ipAssetId: ipAssetId,
             collectNftImpl: defaultCollectNftImpl,
             data: ""
@@ -165,16 +135,14 @@ contract BaseCollectModuleTest is BaseTest {
     /// @notice Tests collect module reverts on duplicate initialization.
     function test_CollectModuleDuplicateInitReverts(uint8 ipAssetType) createIpAsset(collector, ipAssetType) public {
         vm.expectRevert(Errors.CollectModule_IPAssetAlreadyInitialized.selector);
-        vm.prank(address(ipAssetRegistry));
-        _initCollectModule(franchiseId, defaultCollectNftImpl);
+        vm.prank(address(ipAssetOrg));
+        _initCollectModule(defaultCollectNftImpl);
     }
 
     /// @dev Helper function that initializes a collect module.
-    /// @param franchiseId The id of the franchise associated with the module.
     /// @param collectNftImpl Collect NFT impl address used for collecting.
-    function _initCollectModule(uint256 franchiseId, address collectNftImpl) internal virtual {
+    function _initCollectModule( address collectNftImpl) internal virtual {
         collectModule.initCollect(Collect.InitCollectParams({
-            franchiseId: franchiseId,
             ipAssetId: ipAssetId,
             collectNftImpl: collectNftImpl,
             data: ""
@@ -182,12 +150,10 @@ contract BaseCollectModuleTest is BaseTest {
     }
 
     /// @dev Helper function that performs collect module collection.
-    /// @param franchiseId The id of the franchise of the IP asset.
     /// @param ipAssetId_ The id of the IP asset being collected.
-    function _collect(uint256 franchiseId, uint256 ipAssetId_) internal virtual returns (address, uint256) {
-        vm.prank(collector);
+    function _collect(uint256 ipAssetId_) internal virtual returns (address, uint256) {
+        vm.prank(address(ipAssetOrg));
         return collectModule.collect(Collect.CollectParams({
-            franchiseId: franchiseId,
             ipAssetId: ipAssetId_,
             collector: collector,
             collectData: "",

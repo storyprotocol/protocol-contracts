@@ -7,10 +7,9 @@ import "script/foundry/utils/JsonDeploymentHandler.s.sol";
 import "script/foundry/utils/BroadcastManager.s.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/modules/relationships/RelationshipModuleBase.sol";
-import "contracts/FranchiseRegistry.sol";
+import "contracts/IPAssetOrgFactory.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/ip-assets/events/CommonIPAssetEventEmitter.sol";
-import "contracts/ip-assets/IPAssetRegistry.sol";
+import "contracts/ip-assets/IPAssetOrg.sol";
 
 
 /**
@@ -31,10 +30,10 @@ contract UpgradeRelationships is Script, BroadcastManager, JsonDeploymentHandler
         if (address(relModule) == address(0)) {
             revert("ProtocolRelationshipModule-Proxy not found");
         }
-        address franchiseRegistryProxy = _readAddress(".main.FranchiseRegistry-Proxy");
+        address franchiseProxy = _readAddress(".main.IPAssetOrgFactory-Proxy");
 
          
-        address newProtocolRelationship = address(new ProtocolRelationshipModule(franchiseRegistryProxy));
+        address newProtocolRelationship = address(new ProtocolRelationshipModule(franchiseProxy));
         console.log("Upgrading ProtocolRelationshipModule to ", newProtocolRelationship);
         relModule.upgradeTo(newProtocolRelationship);
         console.log("Upgraded");
@@ -43,7 +42,7 @@ contract UpgradeRelationships is Script, BroadcastManager, JsonDeploymentHandler
 
 }
 
-contract UpgradeFranchiseRegistry is Script, BroadcastManager, JsonDeploymentHandler {
+contract UpgradeIPAssetOrgFactory is Script, BroadcastManager, JsonDeploymentHandler {
 
     using StringUtil for uint256;
     using stdJson for string;
@@ -54,23 +53,23 @@ contract UpgradeFranchiseRegistry is Script, BroadcastManager, JsonDeploymentHan
         _readDeployment();
         _beginBroadcast();
 
-        address franchiseRegistryProxy = _readAddress(".main.FranchiseRegistry-Proxy");
-        address ipAssetRegistryFactory = _readAddress(".main.IPAssetRegistryFactory");
-        if (address(ipAssetRegistryFactory) == address(0)) {
-            revert("ipAssetRegistryFactory not found");
+        address franchiseProxy = _readAddress(".main.IPAssetOrgFactory-Proxy");
+        address ipAssetOrgFactory = _readAddress(".main.IPAssetOrgFactory");
+        if (address(ipAssetOrgFactory) == address(0)) {
+            revert("ipAssetOrgFactory not found");
         }
 
-        FranchiseRegistry franchiseRegistry = FranchiseRegistry(franchiseRegistryProxy);
-        address newFranchiseRegistry = address(new FranchiseRegistry(ipAssetRegistryFactory));
-        console.log("Upgrading FranchiseRegistry to ", newFranchiseRegistry);
-        franchiseRegistry.upgradeTo(newFranchiseRegistry);
+        IPAssetOrgFactory franchise = IPAssetOrgFactory(franchiseProxy);
+        address newIPAssetOrgFactory = address(new IPAssetOrgFactory());
+        console.log("Upgrading IPAssetOrgFactory to ", newIPAssetOrgFactory);
+        franchise.upgradeTo(newIPAssetOrgFactory);
 
-        console.log("Upgrading IPAssetRegistryFactory to ", newFranchiseRegistry);
+        console.log("Upgrading IPAssetOrgFactory to ", newIPAssetOrgFactory);
     }
 
 }
 /**
-contract UpgradeIPAssetRegistry is Script, BroadcastManager, JsonDeploymentHandler {
+contract UpgradeIPAssetOrg is Script, BroadcastManager, JsonDeploymentHandler {
 
     using StringUtil for uint256;
     using stdJson for string;
@@ -81,26 +80,20 @@ contract UpgradeIPAssetRegistry is Script, BroadcastManager, JsonDeploymentHandl
         _readDeployment();
         _beginBroadcast();
 
-        address franchiseRegistryProxy = _readAddress(".main.FranchiseRegistry-Proxy");
-        address ipAssetRegistryFactory = _readAddress(".main.IPAssetRegistryFactory");
-        if (address(ipAssetRegistryFactory) == address(0)) {
-            revert("ipAssetRegistryFactory not found");
+        address franchiseProxy = _readAddress(".main.IPAssetOrgFactory-Proxy");
+        address ipAssetOrgFactory = _readAddress(".main.IPAssetOrgFactory");
+        if (address(ipAssetOrgFactory) == address(0)) {
+            revert("ipAssetOrgFactory not found");
         }
 
-        string memory contractKey = "CommonEventEmitter";
-
+        contractKey = "IPAssetOrg-Impl";
         console.log(string.concat("Deploying ", contractKey, "..."));
-        address eventEmitter = address(new CommonIPAssetEventEmitter(franchiseRegistryProxy));
-        console.log(string.concat(contractKey, " deployed to:"), eventEmitter);
-
-        contractKey = "IPAssetRegistry-Impl";
-        console.log(string.concat("Deploying ", contractKey, "..."));
-        address ipAssetRegistry = address(new IPAssetRegistry(eventEmitter, franchiseRegistryProxy));
-        console.log(string.concat(contractKey, " deployed to:"), ipAssetRegistry);
+        address ipAssetOrg = address(new IPAssetOrg(eventEmitter, franchiseProxy));
+        console.log(string.concat(contractKey, " deployed to:"), ipAssetOrg);
 
         console.log(string.concat("Updating ", contractKey, " beacon..."));
-        IPAssetRegistryFactory(ipAssetRegistryFactory).upgradeFranchises(ipAssetRegistry);
-        console.log(string.concat(contractKey, " beacon updated to:"), ipAssetRegistry);
+        IPAssetOrgFactory(ipAssetOrgFactory).upgradeIPAssetOrgs(ipAssetRegistry);
+        console.log(string.concat(contractKey, " beacon updated to:"), ipAssetOrg);
         
     }
 

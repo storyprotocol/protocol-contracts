@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSDL-1.1
 pragma solidity ^0.8.13;
 
-import '../utils/BaseTest.sol';
+import 'test/foundry/utils/BaseTest.sol';
 import { Errors } from "contracts/lib/Errors.sol";
 import { Relationship } from "contracts/lib/modules/Relationship.sol";
 
@@ -24,7 +24,7 @@ contract RelationshipModuleSetupRelationshipsTest is BaseTest {
             allowedExternalSource: false,
             destIpAssets: destIpAssets,
             allowedExternalDest: true,
-            onlySameFranchise: true,
+            onlySameIPAssetOrg: true,
             processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: Relationship.TimeConfig({
@@ -40,7 +40,7 @@ contract RelationshipModuleSetupRelationshipsTest is BaseTest {
         Relationship.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relId);
         assertEq(config.sourceIpAssetTypeMask, 1 << (uint256(IPAsset.IPAssetType.STORY) & 0xff));
         assertEq(config.destIpAssetTypeMask, 1 << (uint256(IPAsset.IPAssetType.CHARACTER) & 0xff) | 1 << (uint256(IPAsset.IPAssetType.ART) & 0xff) | (uint256(IPAsset.EXTERNAL_ASSET) << 248));
-        assertTrue(config.onlySameFranchise);
+        assertTrue(config.onlySameIPAssetOrg);
         // TODO: test for event
 
     }
@@ -55,7 +55,7 @@ contract RelationshipModuleSetupRelationshipsTest is BaseTest {
             allowedExternalSource: false,
             destIpAssets: destIpAssets,
             allowedExternalDest: true,
-            onlySameFranchise: true,
+            onlySameIPAssetOrg: true,
             processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: Relationship.TimeConfig({
@@ -81,7 +81,7 @@ contract RelationshipModuleSetupRelationshipsTest is BaseTest {
             allowedExternalSource: false,
             destIpAssets: destIpAssets,
             allowedExternalDest: true,
-            onlySameFranchise: true,
+            onlySameIPAssetOrg: true,
             processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: Relationship.TimeConfig({
@@ -98,7 +98,7 @@ contract RelationshipModuleSetupRelationshipsTest is BaseTest {
         _assertEqIPAssetArray(result.destIpAssets, params.destIpAssets);
         assertEq(result.allowedExternalSource, params.allowedExternalSource);
         assertEq(result.allowedExternalDest, params.allowedExternalDest);
-        assertEq(result.onlySameFranchise, params.onlySameFranchise);
+        assertEq(result.onlySameIPAssetOrg, params.onlySameIPAssetOrg);
         assertEq(result.processor, params.processor);
         assertEq(result.disputer, params.disputer);
         assertEq(result.timeConfig.minTtl, params.timeConfig.minTtl);
@@ -136,7 +136,7 @@ contract RelationshipModuleUnsetRelationshipsTest is BaseTest {
             allowedExternalSource: false,
             destIpAssets: destIpAssets,
             allowedExternalDest: true,
-            onlySameFranchise: true,
+            onlySameIPAssetOrg: true,
             processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: Relationship.TimeConfig({
@@ -154,7 +154,7 @@ contract RelationshipModuleUnsetRelationshipsTest is BaseTest {
         Relationship.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relationshipId);
         assertEq(config.sourceIpAssetTypeMask, 0);
         assertEq(config.destIpAssetTypeMask, 0);
-        assertFalse(config.onlySameFranchise);
+        assertFalse(config.onlySameIPAssetOrg);
         // TODO: test for event
     }
 

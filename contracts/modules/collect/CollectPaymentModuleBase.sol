@@ -12,14 +12,15 @@ import { Errors } from "contracts/lib/Errors.sol";
 /// @title Collect Payment Module Base
 /// @notice This is the Story Protocol base payment collect module, which allows
 ///         binding enrolled IP assets to NFTs that can be minted for a specific
-///         fee according to franchise configured payment rules.
+///         fee according to registry configured payment rules.
+/// TODO: Add IP Asset Collection wide collect payment module settings.
 abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPaymentModule {
 
     // ERC-1967 style storage slots used for collect payment module storage.
     struct CollectPaymentModuleStorage {
 
-        // Maps IP assets (franchiseId, ipAssetId) to collect payment settings.
-        mapping(uint256 => mapping(uint256 => Collect.CollectPaymentInfo)) paymentInfo;
+        // Maps IP assets (ipAssetId) to collect payment settings.
+        mapping(uint256 => Collect.CollectPaymentInfo) paymentInfo;
     }
 
     // The ERC-1967 storage slot associated with the collect payment module:
@@ -27,12 +28,12 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
     bytes32 private constant _COLLECT_PAYMENT_MODULE_STORAGE = 0x5dfab49ded706b2f2f30c864b856c7ede3dea7f2e0652ef85d5676b6e4568675;
 
     /// @notice Instantiates a new collect payment module.
-    /// @param franchiseRegistry_ The protocol-wide franchise registry address.
+    /// @param registry_ The IP Asset registry address.
     /// @param defaultCollectNftImpl_ The default collect NFT impl address.
     constructor(
-        address franchiseRegistry_,
+        address registry_,
         address defaultCollectNftImpl_
-    ) CollectModuleBase(franchiseRegistry_, defaultCollectNftImpl_) {}
+    ) CollectModuleBase(registry_, defaultCollectNftImpl_) {}
 
     /// @notice Initializes the collect payment module for a specific IP asset.
     /// @param initCollectParams_ Collect module init data, including IP asset
@@ -53,12 +54,11 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
     }
 
     /// @notice Returns the collect payment info associated with an IP asset.
-    /// @param  franchiseId_ The id of the franchise of the specified IP asset.
-    /// @param  ipAssetId_ The id of the specified IP asset within the franchise.
+    /// @param  ipAssetId_ The id of the specified IP asset within the registry.
     /// @return Payment info associated with the configured IP asset collect.
-    function getPaymentInfo(uint256 franchiseId_, uint256 ipAssetId_) public view returns (Collect.CollectPaymentInfo memory) {
+    function getPaymentInfo(uint256 ipAssetId_) public view returns (Collect.CollectPaymentInfo memory) {
         CollectPaymentModuleStorage storage $ = _getCollectPaymentModuleStorage();
-        return $.paymentInfo[franchiseId_][ipAssetId_];
+        return $.paymentInfo[ipAssetId_];
     }
 
     /// @dev Perform initialization of the collect payment module.
@@ -73,7 +73,7 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
         _validatePaymentInfo(paymentInfo);
 
         CollectPaymentModuleStorage storage $ = _getCollectPaymentModuleStorage();
-        $.paymentInfo[initCollectParams_.franchiseId][initCollectParams_.ipAssetId] = paymentInfo;
+        $.paymentInfo[initCollectParams_.ipAssetId] = paymentInfo;
     }
 
     /// @dev Perform collect module payment processing.
@@ -85,17 +85,15 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
         Collect.CollectPaymentParams memory paymentParams = abi.decode(collectParams_.collectData, (Collect.CollectPaymentParams));
 
         // Process the payment.
-        _processPayment(collectParams_.franchiseId, collectParams_.ipAssetId, collectParams_.collector, paymentParams);
+        _processPayment(collectParams_.ipAssetId, collectParams_.collector, paymentParams);
     }
 
     /// @dev Processes the payment for a given IP asset collect action.
-    /// @param franchiseId_ Id of the franchise of the IP asset being processed.
     /// @param ipAssetId_ Id of the IP asset being processed.
     /// @param collector_ Address of collector, who is responsible for payment.
     /// @param paymentParams_ Collect params configuring the IP asset payment.
     /// TODO: Allow delegation of payments to other addresses by the collector.
     function _processPayment(
-        uint256 franchiseId_,
         uint256 ipAssetId_,
         address collector_,
         Collect.CollectPaymentParams memory paymentParams_
@@ -103,7 +101,7 @@ abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPayment
 
         // Get the current payment info settings for the IP asset.
         CollectPaymentModuleStorage storage $ = _getCollectPaymentModuleStorage();
-        Collect.CollectPaymentInfo memory paymentInfo = $.paymentInfo[franchiseId_][ipAssetId_];
+        Collect.CollectPaymentInfo memory paymentInfo = $.paymentInfo[ipAssetId_];
 
         // Validate the passed in payment parameters.
         // TODO: Optimize struct re-use to be more memory efficient.
