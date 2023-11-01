@@ -6,7 +6,6 @@ import { IPAsset } from "contracts/lib/IPAsset.sol";
 /// @title Errors
 /// @notice Library for all contract errors, including a set of global errors.
 library Errors {
-
     ////////////////////////////////////////////////////////////////////////////
     //                                  Globals                               //
     ////////////////////////////////////////////////////////////////////////////
@@ -34,6 +33,24 @@ library Errors {
 
     /// @notice The amount specified may not be zero.
     error ZeroAmount();
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                            BaseModule                                  //
+    ////////////////////////////////////////////////////////////////////////////
+
+    error BaseModule_HooksParamsLengthMismatch(uint8 hookType);
+    error BaseModule_ZeroIpaRegistry();
+    error BaseModule_ZeroModuleRegistry();
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                            HookRegistry                                //
+    ////////////////////////////////////////////////////////////////////////////
+
+    /// @notice The hook is already registered.
+    error HookRegistry_RegisteringDuplicatedHook();
+    error HookRegistry_RegisteringZeroAddressHook();
+    error HookRegistry_CallerNotAdmin();
+    error HookRegistry_MaxHooksExceeded();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            BaseRelationshipProcessor                   //
@@ -67,7 +84,7 @@ library Errors {
     ////////////////////////////////////////////////////////////////////////////
     //                           CollectPaymentModule                         //
     ////////////////////////////////////////////////////////////////////////////
-//
+
     /// @notice The configured collect module payment amount is invalid.
     error CollectPaymentModule_AmountInvalid();
 
@@ -279,7 +296,10 @@ library Errors {
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice Mismatch between parity of accounts and their respective allocations.
-    error RoyaltyNFT_AccountsAndAllocationsMismatch(uint256 accountsLength, uint256 allocationsLength);
+    error RoyaltyNFT_AccountsAndAllocationsMismatch(
+        uint256 accountsLength,
+        uint256 allocationsLength
+    );
 
     /// @notice Invalid summation for royalty NFT allocations.
     error RoyaltyNFT_InvalidAllocationsSum(uint32 allocationsSum);
