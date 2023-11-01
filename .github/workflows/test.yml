@@ -54,15 +54,15 @@ jobs:
           make test
         id: forge-test
 
-      - name: Gas Difference
-        run:
-          forge snapshot --gas-report --diff --desc
-        id: forge-gas-snapshot-diff
+      # - name: Gas Difference
+      #   run:
+      #     forge snapshot --gas-report --diff --desc
+      #   id: forge-gas-snapshot-diff
 
-      - name: Code Coverage
-        run:
-          forge coverage --report lcov --report summary
-        id: forge-code-coverage
+      # - name: Code Coverage
+      #   run:
+      #     forge coverage --report lcov --report summary
+      #   id: forge-code-coverage
 
   hardhat-test:
     strategy:
