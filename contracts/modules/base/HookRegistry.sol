@@ -75,7 +75,7 @@ abstract contract HookRegistry {
 
     function _hooksForType(
         HookType hType_
-    ) private view returns (address[] storage) {
+    ) internal view returns (address[] storage) {
         if (hType_ == HookType.PreAction) {
             return _preActionHooks;
         } else {

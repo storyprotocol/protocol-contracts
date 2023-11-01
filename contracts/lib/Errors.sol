@@ -38,8 +38,9 @@ library Errors {
     //                            BaseModule                                  //
     ////////////////////////////////////////////////////////////////////////////
 
-    /// @notice The caller to base module is not the module registry.
-    error BaseModule_CallerNotModuleRegistry();
+    error BaseModule_HooksParamsLengthMismatch(uint8 hookType);
+    error BaseModule_ZeroIpaRegistry();
+    error BaseModule_ZeroModuleRegistry();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            HookRegistry                                //

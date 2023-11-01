@@ -8,6 +8,7 @@ interface IModule {
     event RequestPending(address indexed sender);
     event RequestCompleted(address indexed sender);
 
-    function execute(bytes calldata selfParams, bytes[] calldata preHooksParams, bytes[] calldata postHooksParams) external;
+    function execute(address caller, bytes calldata selfParams, bytes[] calldata preHooksParams, bytes[] calldata postHooksParams) external;
+    function configure(address caller_, bytes calldata params_) external;
 
 }
