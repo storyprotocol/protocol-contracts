@@ -1,6 +1,6 @@
 name: UnitTest
 
-on: [pull_request_target]
+on: [pull_request]
 
 env:
   FOUNDRY_PROFILE: ci
