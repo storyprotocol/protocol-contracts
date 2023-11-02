@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import 'test/foundry/utils/BaseTest.sol';
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
-import "contracts/ip-assets/IPAssetOrg.sol";
+import "contracts/ip-org/IPOrg.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { Relationship } from "contracts/lib/modules/Relationship.sol";
 
@@ -18,15 +18,15 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
         super.setUp();
 
         vm.startPrank(ipAssetOrgOwner);
-        IPAsset.RegisterIPAssetOrgParams memory params = IPAsset.RegisterIPAssetOrgParams(
+        IPAsset.RegisterIPOrgParams memory params = IPAsset.RegisterIPOrgParams(
             address(registry),
             "name",
             "symbol",
             "description",
             "tokenURI"
         );
-        address ipAssets = ipAssetOrgFactory.registerIPAssetOrg(params);
-        ipAssetOrg = IPAssetOrg(ipAssets);
+        address ipAssets = ipAssetOrgFactory.registerIPOrg(params);
+        ipAssetOrg = IPOrg(ipAssets);
         vm.stopPrank();
         relationshipModule = ProtocolRelationshipModule(
             _deployUUPSProxy(
@@ -52,7 +52,7 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
             allowedExternalSource: false,
             destIpAssets: destIpAssets,
             allowedExternalDest: true,
-            onlySameIPAssetOrg: true,
+            onlySameIPOrg: true,
             processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: Relationship.TimeConfig({
@@ -67,7 +67,7 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
         Relationship.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relId);
         assertEq(config.sourceIpAssetTypeMask, 1 << (uint256(IPAsset.IPAssetType.STORY) & 0xff));
         assertEq(config.destIpAssetTypeMask, 1 << (uint256(IPAsset.IPAssetType.CHARACTER) & 0xff) | 1 << (uint256(IPAsset.IPAssetType.ART) & 0xff) | (uint256(IPAsset.EXTERNAL_ASSET) << 248));
-        assertTrue(config.onlySameIPAssetOrg);
+        assertTrue(config.onlySameIPOrg);
         // TODO: test for event
 
     }
@@ -84,7 +84,7 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
             allowedExternalSource: false,
             destIpAssets: destIpAssets,
             allowedExternalDest: true,
-            onlySameIPAssetOrg: true,
+            onlySameIPOrg: true,
             processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: Relationship.TimeConfig({
@@ -128,7 +128,7 @@ contract ProtocolRelationshipModuleUnsetRelationshipsTest is BaseTest {
             allowedExternalSource: false,
             destIpAssets: destIpAssets,
             allowedExternalDest: true,
-            onlySameIPAssetOrg: true,
+            onlySameIPOrg: true,
             processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: Relationship.TimeConfig({
@@ -149,7 +149,7 @@ contract ProtocolRelationshipModuleUnsetRelationshipsTest is BaseTest {
         Relationship.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relId);
         assertEq(config.sourceIpAssetTypeMask, 0);
         assertEq(config.destIpAssetTypeMask, 0);
-        assertFalse(config.onlySameIPAssetOrg);
+        assertFalse(config.onlySameIPOrg);
         // TODO: test for event
     }
 

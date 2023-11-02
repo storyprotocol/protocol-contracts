@@ -5,7 +5,7 @@ import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC
 import { LibDuration } from "../timing/LibDuration.sol";
 import { IERC5218 } from "contracts/interfaces/modules/licensing/IERC5218.sol";
 import { ILicenseRegistry } from "contracts/interfaces/modules/licensing/ILicenseRegistry.sol";
-import { IIPAssetOrg } from "contracts/interfaces/ip-assets/IIPAssetOrg.sol";
+import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
@@ -18,7 +18,7 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 /// Allows us to grant 2 type of licenses:
 /// 1. Rights: Licenses tied to a tokenId (IPAsset id), in which the license holder is always the owner of the tokenId. Each tokenId can have commercial or non commercial license tied to it defining it.
 /// 2. Tradeable Licenses): The license holder is the owner of the correspondent LicenseRegistry NFT. They are either:
-/// 2.1 IPAssetOrg root license: LicenseRegistry enabled license minted by a IPAssetOrg owner to govern commercial or non commercial rights for all the IPAssetRegistries.
+/// 2.1 IPOrg root license: LicenseRegistry enabled license minted by a IPOrg owner to govern commercial or non commercial rights for all the IPAssetRegistries.
 /// 2.2 Sublicense: a license coming from Rights or other Licenses, minted by the parent license owner. These would be the future "movie adaptation" type licenses that can be sold.
 /// Allows license holders to execute terms to activate the license to activate them.
 /// Tracks active licenses along the license trees.
@@ -44,7 +44,7 @@ abstract contract RightsManager is
     uint256 public constant ROOT_LICENSE_ID = type(uint256).max;
 
     // TODO(ramarti): Separate IP Asset Org from the Rights Manager so that they are decoupled.
-    IIPAssetOrg public IP_ASSET_ORG;
+    IIPOrg public IP_ASSET_ORG;
 
     /// @dev Initialize the Rights Manager contract.
     /// TODO(ramarti): Ensure the rights manager depends on the IP Asset Registry instead of an IP Asset Org.
@@ -56,7 +56,7 @@ abstract contract RightsManager is
         if (ipAssetOrg_ == address(0)) {
             revert Errors.ZeroAddress();
         }
-        IP_ASSET_ORG = IIPAssetOrg(ipAssetOrg_);
+        IP_ASSET_ORG = IIPOrg(ipAssetOrg_);
         __ERC721_init(name_, symbol_);
     }
 
@@ -80,7 +80,7 @@ abstract contract RightsManager is
     
     /// @notice Creates a tradeable sublicense.
     /// @dev Throws if trying to create a franchise level or root license.
-    /// @param tokenId_ The tokenId of the specific IPAssetOrg to create the sublicense for.
+    /// @param tokenId_ The tokenId of the specific IPOrg to create the sublicense for.
     /// @param parentLicenseId_  The parent license to create the sublicense from.
     /// @param licenseHolder_ The address of the sublicense holder, will own the ILicenseRegistry NFT.
     /// @param uri_ License terms URI.
@@ -101,7 +101,7 @@ abstract contract RightsManager is
         Licensing.TermsProcessorConfig memory terms_
     ) external override returns (uint256) {
         if (tokenId_ == ROOT_LICENSE_ID || parentLicenseId_ == _UNSET_LICENSE_ID) {
-            revert Errors.RightsManager_UseCreateIPAssetOrgRootLicenseInstead();
+            revert Errors.RightsManager_UseCreateIPOrgRootLicenseInstead();
         }
         if (msg.sender != getLicenseHolder(parentLicenseId_)) revert Errors.Unauthorized();
         return _createLicense(
@@ -118,8 +118,8 @@ abstract contract RightsManager is
     }
 
     
-    /// Creates the root licenses that all other licenses of a IPAssetOrg may be based on.
-    /// @dev Throws if caller not owner of the IPAssetOrgFactory NFt.
+    /// Creates the root licenses that all other licenses of a IPOrg may be based on.
+    /// @dev Throws if caller not owner of the IPOrgFactory NFt.
     /// @param licenseHolder_ The address of the sublicense holder, will own the ILicenseRegistry NFT.
     /// @param uri_ License terms URI.
     /// @param revoker_ address that can revoke the license.
@@ -127,7 +127,7 @@ abstract contract RightsManager is
     /// @param canSublicense_ if the license can be parentLicense of another one
     /// @param terms_ the on chain terms of the license, via executor and data
     /// @return licenseId
-    function createIPAssetOrgRootLicense(
+    function createIPOrgRootLicense(
         address licenseHolder_,
         string memory uri_,
         address revoker_,
@@ -163,9 +163,9 @@ abstract contract RightsManager is
         // TODO: should revoker come from allowed revoker list?
         if (revoker_ == address(0)) revert Errors.RightsManager_ZeroRevokerAddress();
         RightsManagerStorage storage $ = _getRightsManagerStorage();
-        // Only licenses minted to the IPAssetOrgFactory Owner as a root license should
+        // Only licenses minted to the IPOrgFactory Owner as a root license should
         // have tokenId = ROOT_LICENSE_ID, otherwise the tokenId should be a minted NFT (IPAsset.IPAssetType)
-        // Checks for the IPAssetOrgFactory Owner should be done in the calling function
+        // Checks for the IPOrgFactory Owner should be done in the calling function
         if (tokenId_ != ROOT_LICENSE_ID) {
             if (!_exists(tokenId_)) {
                 revert Errors.NonExistentID(tokenId_);

@@ -25,7 +25,7 @@
 //             description: "description",
 //             mediaUrl: "mediaUrl",
 //             to: licenseHolder,
-//             parentIpAssetOrgId: 0,
+//             parentIpOrgId: 0,
 //             collectData: ""
 //         }));
 //         parentLicenseId = ipAssetOrg.getLicenseIdByTokenId(ipAssetId, false);

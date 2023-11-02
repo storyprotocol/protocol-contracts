@@ -25,7 +25,7 @@ contract IPAssetRegistry is IIPAssetRegistry {
     /// @notice Registers a new IP Asset.
     /// @param owner_ The address of the IP Asset.
     /// @param ipAssetOrg_ The address of the IP Asset Org.
-    // TO-DO(@leeren): Add registration authorization (likely based around IPAssetOrg enrollment).
+    // TO-DO(@leeren): Add registration authorization (likely based around IPOrg enrollment).
     // TO_DO(ramarti): Add module registration via resolver / registry.
     function register(address owner_, address ipAssetOrg_) public returns (uint256) {
         uint256 ipAssetId = numIPAssets++;
@@ -43,7 +43,7 @@ contract IPAssetRegistry is IIPAssetRegistry {
         emit OwnerTransferred(ipAssetId_, owner_);
     }
 
-    function setIpAssetOrg(uint256 ipAssetId_, address ipAssetOrg_) public {
+    function setIpOrg(uint256 ipAssetId_, address ipAssetOrg_) public {
         ipAssets[ipAssetId_].ipAssetOrg = ipAssetOrg_;
         emit OrgTransferred(ipAssetId_, ipAssetOrg_);
     }

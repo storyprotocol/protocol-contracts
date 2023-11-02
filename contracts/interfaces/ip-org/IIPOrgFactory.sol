@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import { IVersioned } from "./utils/IVersioned.sol";
+import { IVersioned } from "../utils/IVersioned.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 
 interface IIPOrgFactory is IVersioned {

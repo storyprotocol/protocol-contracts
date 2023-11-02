@@ -8,7 +8,8 @@ import "test/foundry/mocks/MockLicensingModule.sol";
 import "contracts/lib/IPAsset.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "contracts/ip-assets/IPAssetOrg.sol";
+import "contracts/ip-org/IPOrg.sol";
+
 import { Errors } from "contracts/lib/Errors.sol";
 import { Relationship } from "contracts/lib/modules/Relationship.sol";
 
@@ -44,7 +45,7 @@ contract RelationshipModuleRelationshipTest is BaseTest {
             allowedExternalSource: false,
             destIpAssets: destIpAssets,
             allowedExternalDest: true,
-            onlySameIPAssetOrg: true,
+            onlySameIPOrg: true,
             processor: address(relationshipProcessor),
             disputer: address(this),
             timeConfig: Relationship.TimeConfig(0, 0, false)
@@ -60,7 +61,7 @@ contract RelationshipModuleRelationshipTest is BaseTest {
             description: "description",
             mediaUrl: "mediaUrl",
             to: ipAssetOwner,
-            parentIpAssetOrgId: 0,
+            parentIpOrgId: 0,
             collectData: ""
         }));
         ipAssetIds[uint8(IPAsset.IPAssetType.STORY)] = orgId;
@@ -71,7 +72,7 @@ contract RelationshipModuleRelationshipTest is BaseTest {
             description: "description",
             mediaUrl: "mediaUrl",
             to: ipAssetOwner,
-            parentIpAssetOrgId: 0,
+            parentIpOrgId: 0,
             collectData: ""
         }));
         ipAssetIds[uint8(IPAsset.IPAssetType.CHARACTER)] = orgId;
@@ -82,7 +83,7 @@ contract RelationshipModuleRelationshipTest is BaseTest {
             description: "description",
             mediaUrl: "mediaUrl",
             to: ipAssetOwner,
-            parentIpAssetOrgId: 0,
+            parentIpOrgId: 0,
             collectData: ""
         }));
 
@@ -168,13 +169,13 @@ contract RelationshipModuleRelationshipTest is BaseTest {
     }
 
     // TODO(ramarti): Fix this test
-    // function test_revert_relationshipsNotSameIPAssetOrg() public {
+    // function test_revert_relationshipsNotSameIPOrg() public {
     //     vm.startPrank(ipAssetOrgOwner);
-    //     IPAsset.RegisterIPAssetOrgParams memory params = IPAsset.RegisterIPAssetOrgParams(address(registry), "name2", "symbol2", "description2", "tokenURI2", address(licensingModule), address(collectModule)); 
-    //     address otherIpAssets = ipAssetOrgFactory.registerIPAssetOrg(params);
-    //     licensingModule.configureIpAssetOrgLicensing(otherIpAssets, LibMockIPAssetOrgConfig.getMockIPAssetOrgConfig());
+    //     IPAsset.RegisterIPOrgParams memory params = IPAsset.RegisterIPOrgParams(address(registry), "name2", "symbol2", "description2", "tokenURI2", address(licensingModule), address(collectModule)); 
+    //     address otherIpAssets = ipAssetOrgFactory.registerIPOrg(params);
+    //     licensingModule.configureIpOrgLicensing(otherIpAssets, LibMockIPOrgConfig.getMockIPOrgConfig());
     //     vm.stopPrank();
-    //     IPAssetOrg otherIpAssetOrg = IPAssetOrg(otherIpAssets);
+    //     IPOrg otherIpOrg = IPOrg(otherIpAssets);
     //     vm.prank(address(ipAssetOrgOwner));
     //     (, uint256 otherId) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
     //         ipAssetType: IPAsset.IPAssetType.CHARACTER,
@@ -182,10 +183,10 @@ contract RelationshipModuleRelationshipTest is BaseTest {
     //         description: "description",
     //         mediaUrl: "mediaUrl",
     //         to: ipAssetOwner,
-    //         parentIpAssetOrgId: 0,
+    //         parentIpOrgId: 0,
     //         collectData: ""
     //     }));
-    //     vm.expectRevert(Errors.RelationshipModule_CannotRelateToOtherIPAssetOrg.selector);
+    //     vm.expectRevert(Errors.RelationshipModule_CannotRelateToOtherIPOrg.selector);
     //     relationshipModule.relate(
     //         Relationship.RelationshipParams(
     //             address(ipAssetOrg), ipAssetIds[uint8(IPAsset.IPAssetType.STORY)], otherIpAssets, otherId, relationshipId, 0
@@ -202,7 +203,7 @@ contract RelationshipModuleRelationshipTest is BaseTest {
             description: "description",
             mediaUrl: "mediaUrl",
             to: ipAssetOwner,
-            parentIpAssetOrgId: 0,
+            parentIpOrgId: 0,
             collectData: ""
         }));
         vm.expectRevert(Errors.RelationshipModule_UnsupportedRelationshipSrc.selector);
@@ -222,7 +223,7 @@ contract RelationshipModuleRelationshipTest is BaseTest {
             description: "description",
             mediaUrl: "mediaUrl",
             to: ipAssetOwner,
-            parentIpAssetOrgId: 0,
+            parentIpOrgId: 0,
             collectData: ""
         }));
         vm.expectRevert(Errors.RelationshipModule_UnsupportedRelationshipDst.selector);

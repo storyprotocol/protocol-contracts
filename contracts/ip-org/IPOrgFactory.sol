@@ -2,18 +2,19 @@
 pragma solidity ^0.8.13;
 
 import { Clones } from '@openzeppelin/contracts/proxy/Clones.sol';
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
-import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { Errors } from "contracts/lib/Errors.sol";
-import { AccessControlledUpgradeable } from "./access-control/AccessControlledUpgradeable.sol";
 import { LicenseRegistry } from "contracts/modules/licensing/LicenseRegistry.sol";
-import { IIPOrgFactory } from "contracts/interfaces/IIPOrgFactory.sol";
-import { IPOrg } from "contracts/ip-assets/IPOrg.sol";
+import { IIPOrgFactory } from "contracts/interfaces/ip-org/IIPOrgFactory.sol";
+import { IPOrg } from "contracts/ip-org/IPOrg.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
 
 /// @notice IP Organization Factory Contract
 /// TODO(ramarti): Extend the base hooks contract utilized by SP modules.
 contract IPOrgFactory is
-    AccessControlled,
+    AccessControlledUpgradeable,
     IIPOrgFactory
 {
 
@@ -57,13 +58,12 @@ contract IPOrgFactory is
     function registerIPOrg(
         IPAsset.RegisterIPOrgParams calldata params_
     ) public returns (address) {
-        address ipAssetOrg = Clones.clone(IP_ASSET_ORG_IMPL);
+        address ipAssetOrg = Clones.clone(IP_ORG_IMPL);
         IPOrg(ipAssetOrg).initialize(IPAsset.InitIPOrgParams({
             registry: params_.registry,
             owner: msg.sender,
             name: params_.name,
-            symbol: params_.symbol,
-            description: params_.description
+            symbol: params_.symbol
         }));
 
         // Set the registration status of the IP Asset Org to be true.
