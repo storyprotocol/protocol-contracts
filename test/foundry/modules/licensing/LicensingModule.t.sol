@@ -19,25 +19,25 @@
 //         assertEq(licensingModule.getNonCommercialLicenseURI(), NON_COMMERCIAL_LICENSE_URI);
 //     }
 
-//     function test_configIPAssetOrg() public {
+//     function test_configIPOrg() public {
 //         vm.startPrank(ipAssetOrgOwner);
 //         Licensing.TermsProcessorConfig memory termsConfig = Licensing.TermsProcessorConfig({
 //             processor: commercialTermsProcessor,
 //             data: abi.encode("root")
 //         });
 
-//         uint256 rootLicenseId = ipAssetOrg.createIPAssetOrgRootLicense(ipAssetOrgOwner, "commercial_uri_root", revoker, true, true, termsConfig);
+//         uint256 rootLicenseId = ipAssetOrg.createIPOrgRootLicense(ipAssetOrgOwner, "commercial_uri_root", revoker, true, true, termsConfig);
 //         assertEq(licenseRegistry.ownerOf(rootLicenseId), ipAssetOrgOwner);
 //         assertEq(rootLicenseId, 1);
 
-//         Licensing.IPAssetOrgConfig memory config = _getLicensingConfig();
+//         Licensing.IPOrgConfig memory config = _getLicensingConfig();
 //         config.revoker = address(0x5656565);
 //         config.commercialConfig.ipAssetOrgRootLicenseId = rootLicenseId;
 //         config.commercialTerms.data = abi.encode("bye");
 //         config.nonCommercialTerms.data = abi.encode("hi");
         
-//         licensingModule.configureIpAssetOrgLicensing(address(ipAssetOrg), config);
-//         Licensing.IPAssetOrgConfig memory configResult = licensingModule.getIpAssetOrgConfig(address(ipAssetOrg));
+//         licensingModule.configureIpOrgLicensing(address(ipAssetOrg), config);
+//         Licensing.IPOrgConfig memory configResult = licensingModule.getIpOrgConfig(address(ipAssetOrg));
 //         assertEq(configResult.nonCommercialConfig.canSublicense, true);
 //         assertEq(configResult.nonCommercialConfig.ipAssetOrgRootLicenseId, 0);
 //         assertEq(address(configResult.nonCommercialTerms.processor), address(nonCommercialTermsProcessor));
@@ -53,21 +53,21 @@
 
 //     function test_revert_nonAuthorizedConfigSetter() public {
 //         vm.expectRevert(Errors.Unauthorized.selector);
-//         licensingModule.configureIpAssetOrgLicensing(address(ipAssetOrg), LibMockIPAssetOrgConfig.getMockIPAssetOrgConfig());
+//         licensingModule.configureIpOrgLicensing(address(ipAssetOrg), LibMockIPOrgConfig.getMockIPOrgConfig());
 //     }
 
-//     function test_revert_nonExistingIPAssetOrg() public {
+//     function test_revert_nonExistingIPOrg() public {
 //         // TODO: Changing licensing module to check if address exists.
 //         vm.expectRevert();
-//         licensingModule.configureIpAssetOrgLicensing(address(0x6954321), LibMockIPAssetOrgConfig.getMockIPAssetOrgConfig());
+//         licensingModule.configureIpOrgLicensing(address(0x6954321), LibMockIPOrgConfig.getMockIPOrgConfig());
 //     }
 
 //     function test_revert_zeroRevokerAddress() public {
 //         vm.startPrank(ipAssetOrgOwner);
-//         Licensing.IPAssetOrgConfig memory config = LibMockIPAssetOrgConfig.getMockIPAssetOrgConfig();
+//         Licensing.IPOrgConfig memory config = LibMockIPOrgConfig.getMockIPOrgConfig();
 //         config.revoker = address(0);
 //         vm.expectRevert(Errors.LicensingModule_ZeroRevokerAddress.selector);
-//         licensingModule.configureIpAssetOrgLicensing(address(ipAssetOrg), config);
+//         licensingModule.configureIpOrgLicensing(address(ipAssetOrg), config);
 //         vm.stopPrank();
 //     }
 
@@ -79,15 +79,15 @@
 //         });
 
 //         vm.prank(ipAssetOrgOwner);
-//         uint256 rootLicenseId = ipAssetOrg.createIPAssetOrgRootLicense(ipAssetOrgOwner, "commercial_uri_root", revoker, true, true, termsConfig);
+//         uint256 rootLicenseId = ipAssetOrg.createIPOrgRootLicense(ipAssetOrgOwner, "commercial_uri_root", revoker, true, true, termsConfig);
         
 //         commercialTermsProcessor.setSuccess(false);
         
-//         Licensing.IPAssetOrgConfig memory config = _getLicensingConfig();
+//         Licensing.IPOrgConfig memory config = _getLicensingConfig();
 //         config.commercialConfig.ipAssetOrgRootLicenseId = rootLicenseId;
 //         vm.startPrank(ipAssetOrgOwner);
 //         vm.expectRevert(abi.encodeWithSignature("LicensingModule_RootLicenseNotActive(uint256)", 1));
-//         licensingModule.configureIpAssetOrgLicensing(address(ipAssetOrg), config);
+//         licensingModule.configureIpOrgLicensing(address(ipAssetOrg), config);
 //         vm.stopPrank();
         
 //     }

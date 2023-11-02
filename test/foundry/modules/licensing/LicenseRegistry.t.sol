@@ -26,11 +26,11 @@
 //             description: "description",
 //             mediaUrl: "mediaUrl",
 //             to: licenseHolder,
-//             parentIpAssetOrgId: 0,
+//             parentIpOrgId: 0,
 //             collectData: ""
 //         }));
 //         uint256 parentLicenseId = ipAssetOrg.getLicenseIdByTokenId(ipAssetId, false);
-//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         vm.prank(licenseHolder);
 //         licenseId = ipAssetOrg.createLicense(
 //             ipAssetId,
@@ -47,7 +47,7 @@
 
 //     function test_setUp() public {
 //         assertEq(licenseRegistry.ownerOf(licenseId), licenseHolder);
-//         assertEq(licenseRegistry.name(), "Licenses for IPAssetOrgName");
+//         assertEq(licenseRegistry.name(), "Licenses for IPOrgName");
 //         assertEq(licenseRegistry.symbol(), "slFRN");
 //         assertEq(address(licenseRegistry.getRightsManager()), address(ipAssetOrg));
 //         assertEq(licenseRegistry.exists(licenseId), true);

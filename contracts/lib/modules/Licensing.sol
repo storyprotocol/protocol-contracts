@@ -21,8 +21,8 @@ library Licensing {
         // TODO: limit who you can sublicense to?
     }
 
-    /// @notice IPAssetOrg configuration for IP licensing.
-    struct IPAssetOrgConfig {
+    /// @notice IPOrg configuration for IP licensing.
+    struct IPOrgConfig {
         IpAssetConfig nonCommercialConfig;
         TermsProcessorConfig nonCommercialTerms;
         IpAssetConfig commercialConfig;
@@ -41,7 +41,7 @@ library Licensing {
         uint256 parentLicenseId;
         uint256 tokenId;
         address revoker;
-        string uri; // NOTE: should we merge this with IPAssetOrg tokenURI for Licenses who are rights?
+        string uri; // NOTE: should we merge this with IPOrg tokenURI for Licenses who are rights?
         ITermsProcessor termsProcessor;
         bytes termsData;
     }

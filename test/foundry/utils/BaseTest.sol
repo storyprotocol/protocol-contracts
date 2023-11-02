@@ -6,10 +6,10 @@ import 'test/foundry/utils/BaseTestUtils.sol';
 import "test/foundry/mocks/RelationshipModuleHarness.sol";
 import "test/foundry/mocks/MockCollectNFT.sol";
 import "test/foundry/mocks/MockCollectModule.sol";
-import "contracts/IPAssetOrgFactory.sol";
+import "contracts/ip-org/IPOrgFactory.sol";
+import "contracts/ip-org/IPOrg.sol";
 import "contracts/IPAssetRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/ip-assets/IPAssetOrg.sol";
 import "contracts/lib/IPAsset.sol";
 import "contracts/errors/General.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
@@ -32,9 +32,9 @@ import { AccessControl } from "contracts/lib/AccessControl.sol";
 // Run tests from make lint, which will not run collect and license
 contract BaseTest is BaseTestUtils, ProxyHelper {
 
-    IPAssetOrg public ipAssetOrg;
+    IPOrg public ipAssetOrg;
     address ipAssetOrgImpl;
-    IPAssetOrgFactory public ipAssetOrgFactory;
+    IPOrgFactory public ipAssetOrgFactory;
     RelationshipModuleBase public relationshipModule;
     AccessControlSingleton accessControl;
     PermissionlessRelationshipProcessor public relationshipProcessor;
@@ -81,8 +81,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         // Create IPAssetRegistry 
         registry = new IPAssetRegistry();
 
-        // Create IPAssetOrg Factory
-        ipAssetOrgFactory = new IPAssetOrgFactory();
+        // Create IPOrg Factory
+        ipAssetOrgFactory = new IPOrgFactory();
         
         // Create Licensing Module
         // address licensingImplementation = address(new LicensingModule(address(ipAssetOrgFactory)));
@@ -99,9 +99,9 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         defaultCollectNftImpl = _deployCollectNFTImpl();
         collectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));
 
-        IPAsset.RegisterIPAssetOrgParams memory ipAssetOrgParams = IPAsset.RegisterIPAssetOrgParams(
+        IPAsset.RegisterIPOrgParams memory ipAssetOrgParams = IPAsset.RegisterIPOrgParams(
             address(registry),
-            "IPAssetOrgName",
+            "IPOrgName",
             "FRN",
             "description",
             "tokenURI"
@@ -109,14 +109,14 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
 
         vm.startPrank(ipAssetOrgOwner);
         address ipAssets;
-        ipAssets = ipAssetOrgFactory.registerIPAssetOrg(ipAssetOrgParams);
-        ipAssetOrg = IPAssetOrg(ipAssets);
+        ipAssets = ipAssetOrgFactory.registerIPOrg(ipAssetOrgParams);
+        ipAssetOrg = IPOrg(ipAssets);
         // licenseRegistry = ILicenseRegistry(ipAssetOrg.getLicenseRegistry());
 
-        // Configure Licensing for IPAssetOrg
+        // Configure Licensing for IPOrg
         // nonCommercialTermsProcessor = new MockTermsProcessor();
         // commercialTermsProcessor = new MockTermsProcessor();
-        // licensingModule.configureIpAssetOrgLicensing(address(ipAssetOrg), _getLicensingConfig());
+        // licensingModule.configureIpOrgLicensing(address(ipAssetOrg), _getLicensingConfig());
 
         vm.stopPrank();
 
@@ -137,8 +137,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         }
     }
 
-    // function _getLicensingConfig() view internal returns (Licensing.IPAssetOrgConfig memory) {
-    //     return Licensing.IPAssetOrgConfig({
+    // function _getLicensingConfig() view internal returns (Licensing.IPOrgConfig memory) {
+    //     return Licensing.IPOrgConfig({
     //         nonCommercialConfig: Licensing.IpAssetConfig({
     //             canSublicense: true,
     //             ipAssetOrgRootLicenseId: 0
@@ -173,27 +173,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
                     bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
                 )
         );
-    }
-
-    /// @dev Helper function for creating an IP asset for an owner and IP type.
-    ///      TO-DO: Replace this with a simpler set of default owners that get
-    ///      tested against. The reason this is currently added is that during
-    ///      fuzz testing, foundry may plug existing contracts as potential
-    ///      owners for IP asset creation.
-    function _createIpAsset(address ipAssetOwner, uint8 ipAssetType, bytes memory collectData) internal isValidReceiver(ipAssetOwner) returns (uint256) {
-        vm.assume(ipAssetType > uint8(type(IPAsset.IPAssetType).min));
-        vm.assume(ipAssetType < uint8(type(IPAsset.IPAssetType).max));
-        vm.prank(address(ipAssetOrg));
-        (uint256 id, ) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
-            ipAssetType: IPAsset.IPAssetType(ipAssetType),
-            name: "name",
-            description: "description",
-            mediaUrl: "mediaUrl",
-            to: ipAssetOwner,
-            parentIpAssetOrgId: 0,
-            collectData: collectData
-        }));
-        return id;
     }
 
 }

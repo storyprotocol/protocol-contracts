@@ -35,7 +35,7 @@ interface IRelationshipModule {
         bytes32 indexed relationshipId,
         uint256 sourceIpAssetTypeMask,
         uint256 destIpAssetTypeMask,
-        bool onlySameIPAssetOrg,
+        bool onlySameIPOrg,
         address processor,
         uint256 maxTtl,
         uint256 minTtl,

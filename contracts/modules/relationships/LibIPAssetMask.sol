@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
-import { IIPAssetOrg } from "contracts/interfaces/ip-assets/IIPAssetOrg.sol";
+import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 
 /// @title LibIPAssetMask

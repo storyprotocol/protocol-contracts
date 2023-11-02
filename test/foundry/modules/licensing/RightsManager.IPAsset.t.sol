@@ -21,12 +21,12 @@
 //     }
 
 //     function test_setUp() public {
-//         assertEq(licenseRegistry.name(), "Licenses for IPAssetOrgName");
+//         assertEq(licenseRegistry.name(), "Licenses for IPOrgName");
 //         assertEq(licenseRegistry.symbol(), "slFRN");
 //         assertEq(address(licenseRegistry.getRightsManager()), address(ipAssetOrg));
 
 //         // Default licensing is root non-commercial with sublicense on, no commercial rights
-//         Licensing.IPAssetOrgConfig memory configResult = licensingModule.getIpAssetOrgConfig(address(ipAssetOrg));
+//         Licensing.IPOrgConfig memory configResult = licensingModule.getIpOrgConfig(address(ipAssetOrg));
 //         assertEq(configResult.nonCommercialConfig.canSublicense, true, "nonCommercialConfig.canSublicense");
 //         assertEq(configResult.nonCommercialConfig.ipAssetOrgRootLicenseId, 0, "nonCommercialConfig.ipAssetOrgRootLicenseId");
 //         assertEq(address(configResult.nonCommercialTerms.processor), address(nonCommercialTermsProcessor), "nonCommercialTerms.processor");
@@ -47,7 +47,7 @@
 //             description: "description",
 //             mediaUrl: "mediaUrl",
 //             to: ipAssetCreator,
-//             parentIpAssetOrgId: 0,
+//             parentIpOrgId: 0,
 //             collectData: ""
 //         }));
 //         bool commercial = false;
@@ -74,14 +74,14 @@
 //     }
 
 //     function test_create_ip_asset_noncommercial_and_commercial() public {
-//         _configIPAssetOrg(true, true, true);
+//         _configIPOrg(true, true, true);
 //         (, uint256 ipAssetId) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
 //             ipAssetType: IPAsset.IPAssetType(1),
 //             name: "name",
 //             description: "description",
 //             mediaUrl: "mediaUrl",
 //             to: ipAssetCreator,
-//             parentIpAssetOrgId: 0,
+//             parentIpOrgId: 0,
 //             collectData: ""
 //         }));
 //         bool commercial = false;
@@ -130,7 +130,7 @@
 //             description: "description",
 //             mediaUrl: "mediaUrl",
 //             to: ipAssetCreator,
-//             parentIpAssetOrgId: 0,
+//             parentIpOrgId: 0,
 //             collectData: ""
 //         }));
 //         (, uint256 ipAssetId) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
@@ -139,7 +139,7 @@
 //             description: "description deriv",
 //             mediaUrl: "mediaUrl deriv",
 //             to: ipAssetCreator,
-//             parentIpAssetOrgId: rootIpAsset,
+//             parentIpOrgId: rootIpAsset,
 //             collectData: ""
 //         }));
         
@@ -168,14 +168,14 @@
 //     }
 
 //     function test_create_derivative_ip_asset_from_commercial() public {
-//         _configIPAssetOrg(true, true, true);
+//         _configIPOrg(true, true, true);
 //         (, uint256 rootIpAsset) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
 //             ipAssetType: IPAsset.IPAssetType(1),
 //             name: "name",
 //             description: "description",
 //             mediaUrl: "mediaUrl",
 //             to: ipAssetCreator,
-//             parentIpAssetOrgId: 0,
+//             parentIpOrgId: 0,
 //             collectData: ""
 //         }));
 //         (, uint256 ipAssetId) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
@@ -184,7 +184,7 @@
 //             description: "description deriv",
 //             mediaUrl: "mediaUrl deriv",
 //             to: ipAssetCreator,
-//             parentIpAssetOrgId: rootIpAsset,
+//             parentIpOrgId: rootIpAsset,
 //             collectData: ""
 //         }));
         
@@ -221,7 +221,7 @@
 //             description: "description",
 //             mediaUrl: "mediaUrl",
 //             to: licenseHolder,
-//             parentIpAssetOrgId: 0,
+//             parentIpOrgId: 0,
 //             collectData: ""
 //         }));
 //         uint256 parentLicenseId = ipAssetOrg.getLicenseIdByTokenId(ipAssetId, false);
@@ -262,11 +262,11 @@
 //             description: "description",
 //             mediaUrl: "mediaUrl",
 //             to: ipAssetCreator,
-//             parentIpAssetOrgId: 0,
+//             parentIpOrgId: 0,
 //             collectData: ""
 //         }));
 //         uint256 parentLicenseId = 1;
-//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         vm.expectRevert(Errors.Unauthorized.selector);
 //         ipAssetOrg.createLicense(
 //             ipAssetId,
@@ -283,9 +283,9 @@
 //     function test_revert_create_license_franchise_owned_tokenId() public {
 //         uint256 tokenId = ipAssetOrg.ROOT_LICENSE_ID();
 //         uint256 parentLicenseId = 1;
-//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         vm.startPrank(ipAssetOrgOwner);
-//         vm.expectRevert(Errors.RightsManager_UseCreateIPAssetOrgRootLicenseInstead.selector);
+//         vm.expectRevert(Errors.RightsManager_UseCreateIPOrgRootLicenseInstead.selector);
 //         ipAssetOrg.createLicense(
 //             tokenId,
 //             parentLicenseId,
@@ -302,9 +302,9 @@
 //     function test_revert_create_license_unset_parent() public {
 //         uint256 tokenId = 1;
 //         uint256 parentLicenseId = 0;
-//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         vm.startPrank(ipAssetOrgOwner);
-//         vm.expectRevert(Errors.RightsManager_UseCreateIPAssetOrgRootLicenseInstead.selector);
+//         vm.expectRevert(Errors.RightsManager_UseCreateIPOrgRootLicenseInstead.selector);
 //         ipAssetOrg.createLicense(
 //             tokenId,
 //             parentLicenseId,
@@ -325,7 +325,7 @@
 //             description: "description",
 //             mediaUrl: "mediaUrl",
 //             to: ipAssetCreator,
-//             parentIpAssetOrgId: 0,
+//             parentIpOrgId: 0,
 //             collectData: ""
 //         }));
 
@@ -350,9 +350,9 @@
 
 //     // This one we can just call the internal method
 //     function test_create_root_license() public {
-//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         vm.prank(ipAssetOrgOwner);
-//         uint256 licenseId = ipAssetOrg.createIPAssetOrgRootLicense(
+//         uint256 licenseId = ipAssetOrg.createIPOrgRootLicense(
 //             ipAssetOrgOwner,
 //             "licenseUri",
 //             revoker,
@@ -374,9 +374,9 @@
 //     }
 
 //     function test_revert_create_root_license_unauthorized() public {
-//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         vm.expectRevert(Errors.Unauthorized.selector);
-//         ipAssetOrg.createIPAssetOrgRootLicense(
+//         ipAssetOrg.createIPOrgRootLicense(
 //             ipAssetOrgOwner,
 //             "licenseUri",
 //             revoker,
@@ -407,8 +407,8 @@
 //         return licenseId;
 //     }
 
-//     function _configIPAssetOrg(bool sublicenseCommercial, bool sublicenseNonCommercial, bool rootIpAssetHasCommercialRights) private {
-//         Licensing.IPAssetOrgConfig memory config = Licensing.IPAssetOrgConfig({
+//     function _configIPOrg(bool sublicenseCommercial, bool sublicenseNonCommercial, bool rootIpAssetHasCommercialRights) private {
+//         Licensing.IPOrgConfig memory config = Licensing.IPOrgConfig({
 //             nonCommercialConfig: Licensing.IpAssetConfig({
 //                 canSublicense: sublicenseNonCommercial,
 //                 ipAssetOrgRootLicenseId: 0
@@ -430,7 +430,7 @@
 //             commercialLicenseUri: "https://commercial.license"
 //         });
 //         vm.prank(ipAssetOrgOwner);
-//         licensingModule.configureIpAssetOrgLicensing(address(ipAssetOrg), config);
+//         licensingModule.configureIpOrgLicensing(address(ipAssetOrg), config);
 //     }
 
 // }

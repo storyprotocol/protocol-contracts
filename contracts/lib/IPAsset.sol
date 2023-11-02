@@ -38,11 +38,11 @@ library IPAsset {
         string description;
         string mediaUrl;
         address to;
-        uint256 parentIpAssetOrgId;
+        uint256 parentIpOrgId;
         bytes collectData;
     }
 
-    struct RegisterIPAssetOrgParams {
+    struct RegisterIPOrgParams {
         address registry;
         string name;
         string symbol;
@@ -50,12 +50,11 @@ library IPAsset {
         string tokenURI;
     }
 
-    struct InitIPAssetOrgParams {
+    struct InitIPOrgParams {
         address registry;
         address owner;
         string name;
         string symbol;
-        string description;
     }
 
     function _zeroId(IPAssetType ipAsset_) internal pure returns (uint256) {

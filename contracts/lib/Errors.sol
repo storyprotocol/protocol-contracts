@@ -79,7 +79,7 @@ library Errors {
     error CollectModule_IPAssetNonExistent();
 
     /// @notice Collect module provided IP asset registry does not exist.
-    error CollectModule_IPAssetOrgNonExistent();
+    error CollectModule_IPOrgNonExistent();
 
     ////////////////////////////////////////////////////////////////////////////
     //                           CollectPaymentModule                         //
@@ -181,14 +181,14 @@ library Errors {
     error IPAsset_InvalidType(IPAsset.IPAssetType ipAsset);
 
     ////////////////////////////////////////////////////////////////////////////
-    //                              IPAssetOrg                           //
+    //                              IPOrg                           //
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice IP identifier is over bounds.
-    error IPAssetOrg_IdOverBounds();
+    error IPOrg_IdOverBounds();
 
     /// @notice Licensing is not configured.
-    error IPAssetOrg_LicensingNotConfigured();
+    error IPOrg_LicensingNotConfigured();
 
     ////////////////////////////////////////////////////////////////////////////
     //                                LibDuration                             //
@@ -211,7 +211,7 @@ library Errors {
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice The franchise does not exist.
-    error LicensingModule_NonExistentIPAssetOrg();
+    error LicensingModule_NonExistentIPOrg();
 
     /// @notice The root license is not active
     error LicensingModule_RootLicenseNotActive(uint256 rootLicenseId);
@@ -254,7 +254,7 @@ library Errors {
     error RightsManager_SenderNotRevoker();
 
     /// @notice A create franchise root license must be used.
-    error RightsManager_UseCreateIPAssetOrgRootLicenseInstead();
+    error RightsManager_UseCreateIPOrgRootLicenseInstead();
 
     /// @notice The revoker may not be the zero address.
     error RightsManager_ZeroRevokerAddress();
@@ -271,7 +271,7 @@ library Errors {
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice Unable to relate to another franchise.
-    error RelationshipModule_CannotRelateToOtherIPAssetOrg();
+    error RelationshipModule_CannotRelateToOtherIPOrg();
 
     /// @notice The intent has already been registered.
     error RelationshipModule_IntentAlreadyRegistered();
