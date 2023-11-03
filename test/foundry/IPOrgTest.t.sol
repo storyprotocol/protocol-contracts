@@ -5,7 +5,7 @@ import { Errors } from "contracts/lib/Errors.sol";
 import { IPOrg } from "contracts/ip-org/IPOrg.sol";
 import { IPOrgFactory } from "contracts/ip-org/IPOrgFactory.sol";
 import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
-import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { AccessControlRoles } from "contracts/lib/AccessControlRoles.sol";
 import { AccessControlSingleton } from "contracts/access-control/AccessControlSingleton.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { AccessControlHelper } from "./utils/AccessControlHelper.sol";
@@ -33,7 +33,7 @@ contract IPOrgTest is Test, ProxyHelper, AccessControlHelper {
 
     function setUp() public {
         _setupAccessControl();
-        _grantRole(vm, AccessControl.IPORG_CREATOR_ROLE, ipOrgOwner);
+        _grantRole(vm, AccessControlRoles.IPORG_CREATOR_ROLE, ipOrgOwner);
         registry = new IPAssetRegistry();
 
         address implementation = address(new IPOrgFactory());
