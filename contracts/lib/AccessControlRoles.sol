@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-/// @title Access Control Library
+/// @title Access Control Roles Library
 /// @notice Library for access control helpers and protocol role definitions.
 ///         These roles are used by the AccessControlSingleton, accessed by AccessControlled contracts.
-library AccessControl {
+library AccessControlRoles {
 
     // Default admin role as per OZ AccessControl system. All other roles stem from this.
     bytes32 constant PROTOCOL_ADMIN_ROLE = bytes32(0);
@@ -20,5 +20,8 @@ library AccessControl {
 
     // Role that can call createIPOrg in the IPOrg Factory
     bytes32 constant IPORG_CREATOR_ROLE = keccak256("IPORG_CREATOR_ROLE");
+
+    // Role that can add new modules to the Module Registry
+    bytes32 constant MODULE_REGISTRAR_ROLE = keccak256("MODULE_REGISTRAR_ROLE");
 
 }

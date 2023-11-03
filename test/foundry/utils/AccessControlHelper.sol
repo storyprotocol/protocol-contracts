@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import 'test/foundry/utils/ProxyHelper.sol';
-import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { AccessControlRoles } from "contracts/lib/AccessControlRoles.sol";
 import { AccessControlSingleton } from "contracts/access-control/AccessControlSingleton.sol";
 import { Vm } from "forge-std/Test.sol";
 
