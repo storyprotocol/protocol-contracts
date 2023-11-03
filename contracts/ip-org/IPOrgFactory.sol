@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import { Clones } from '@openzeppelin/contracts/proxy/Clones.sol';
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
-import { IPAsset } from "contracts/lib/IPAsset.sol";
+import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { LicenseRegistry } from "contracts/modules/licensing/LicenseRegistry.sol";
 import { IIPOrgFactory } from "contracts/interfaces/ip-org/IIPOrgFactory.sol";
@@ -13,6 +13,7 @@ import { AccessControl } from "contracts/lib/AccessControl.sol";
 
 /// @notice IP Organization Factory Contract
 /// TODO(ramarti): Extend the base hooks contract utilized by SP modules.
+/// TODO: Converge on upgradeability and IPOrg template setting
 contract IPOrgFactory is
     AccessControlledUpgradeable,
     IIPOrgFactory
@@ -49,17 +50,16 @@ contract IPOrgFactory is
         return _VERSION;
     }
 
-
     /// @notice Registers a new ipAssetOrg for IP asset collection management.
     /// @param params_ Parameters required for ipAssetOrg creation.
     /// TODO: Converge on core primitives utilized for ipAssetOrg management.
     /// TODO: Add ipAssetOrg-wide module configurations to the registration process.
-    // TODO: Remove registry
-    function registerIPOrg(
-        IPAsset.RegisterIPOrgParams calldata params_
-    ) public returns (address) {
+    /// TODO: Converge on access control for this method
+    function registerIpOrg(
+        IPOrgParams.registerIpOrgParams calldata params_
+    ) public onlyRole(AccessControl.IPORG_CREATOR_ROLE) returns (address) {
         address ipAssetOrg = Clones.clone(IP_ORG_IMPL);
-        IPOrg(ipAssetOrg).initialize(IPAsset.InitIPOrgParams({
+        IPOrg(ipAssetOrg).initialize(IPOrgParams.InitIPOrgParams({
             registry: params_.registry,
             owner: msg.sender,
             name: params_.name,
@@ -75,7 +75,7 @@ contract IPOrgFactory is
             ipAssetOrg,
             params_.name,
             params_.symbol,
-            params_.tokenURI
+            params_.metadataUrl
         );
         return ipAssetOrg;
 

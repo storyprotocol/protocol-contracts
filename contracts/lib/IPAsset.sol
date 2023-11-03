@@ -32,21 +32,6 @@ library IPAsset {
         bytes collectData;
     }
 
-    struct RegisterIPOrgParams {
-        address registry;
-        string name;
-        string symbol;
-        string description;
-        string tokenURI;
-    }
-
-    struct InitIPOrgParams {
-        address registry;
-        address owner;
-        string name;
-        string symbol;
-    }
-
     function _zeroId(IPAssetType ipAsset_) internal pure returns (uint256) {
         if (ipAsset_ == IPAssetType.UNDEFINED) revert Errors.IPAsset_InvalidType(ipAsset_);
         return _ID_RANGE * (uint256(ipAsset_) - 1);
