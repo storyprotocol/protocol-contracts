@@ -22,6 +22,17 @@ library IPAsset {
         ITEM
     }
 
+    /// @notice Struct for packing parameters related to IP asset registration.
+    struct RegisterIpAssetParams {
+        string name;
+        uint64 ipAssetType;
+        address owner;
+        address ipOrg;
+        bytes32 hash;
+        string url;
+        bytes data;
+    }
+
     struct CreateIpAssetParams {
         IPAsset.IPAssetType ipAssetType;
         string name;
