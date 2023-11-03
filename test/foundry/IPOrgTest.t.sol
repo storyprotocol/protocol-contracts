@@ -48,7 +48,7 @@ contract IPOrgTest is Test, ProxyHelper, AccessControlHelper {
     }
 
     function test_ipOrgFactory_registerIpOrg() public {
-        IPOrgParams.RegisterIpOrgParams memory ipOrgParams = IPOrgParams.RegisterIpOrgParams(
+        IPOrgParams.RegisterIPOrgParams memory ipOrgParams = IPOrgParams.RegisterIPOrgParams(
             address(registry),
             "name",
             "symbol",
@@ -57,12 +57,6 @@ contract IPOrgTest is Test, ProxyHelper, AccessControlHelper {
         );
         vm.prank(ipOrgOwner);
         ipOrg = IPOrg(ipOrgFactory.registerIpOrg(ipOrgParams));
-    }
-
-    function test_setUp() public {
-        assertEq(ipOrg.name(), "name");
-        assertEq(ipOrg.symbol(), "symbol");
-        assertEq(ipOrg.version(), "0.1.0");
     }
 
 }

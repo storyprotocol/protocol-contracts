@@ -18,7 +18,7 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
         super.setUp();
 
         vm.startPrank(ipAssetOrgOwner);
-        IPOrgParams.RegisterIpOrgParams memory params = IPOrgParams.RegisterIpOrgParams(
+        IPOrgParams.RegisterIPOrgParams memory params = IPOrgParams.RegisterIPOrgParams(
             address(registry),
             "name",
             "symbol",
