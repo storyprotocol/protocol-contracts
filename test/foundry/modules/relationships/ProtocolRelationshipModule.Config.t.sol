@@ -18,14 +18,14 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
         super.setUp();
 
         vm.startPrank(ipAssetOrgOwner);
-        IPAsset.RegisterIPOrgParams memory params = IPAsset.RegisterIPOrgParams(
+        IPOrgParams.RegisterIpOrgParams memory params = IPOrgParams.RegisterIpOrgParams(
             address(registry),
             "name",
             "symbol",
             "description",
             "tokenURI"
         );
-        address ipAssets = ipAssetOrgFactory.registerIPOrg(params);
+        address ipAssets = ipAssetOrgFactory.registerIpOrg(params);
         ipAssetOrg = IPOrg(ipAssets);
         vm.stopPrank();
         relationshipModule = ProtocolRelationshipModule(

@@ -18,4 +18,7 @@ library AccessControl {
     // Role that can perform admin tasks on the Licensing Module contracts (setNonCommercialLicenseURI)
     bytes32 constant LICENSING_MANAGER_ROLE = keccak256("LICENSING_MANAGER_ROLE");
 
+    // Role that can call createIPOrg in the IPOrg Factory
+    bytes32 constant IPORG_CREATOR_ROLE = keccak256("IPORG_CREATOR_ROLE");
+
 }

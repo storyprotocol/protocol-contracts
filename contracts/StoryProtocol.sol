@@ -2,7 +2,9 @@
 pragma solidity ^0.8.19;
 
 import { IIPOrgFactory } from "contracts/interfaces/ip-org/IIPOrgFactory.sol";
+import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 import { Errors } from "contracts/lib/Errors.sol";
+import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 
 contract StoryProtocol {
     // TODO: should this be immutable, or should the protocol be able to change factory
@@ -13,6 +15,10 @@ contract StoryProtocol {
             revert Errors.ZeroAddress();
         }
         FACTORY = ipOrgFactory_;
+    }
+
+    function registerIpOrg(IPOrgParams.RegisterIpOrgParams calldata params) external returns (address) {
+        return FACTORY.registerIpOrg(params);
     }
 
 }

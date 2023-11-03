@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
-import { IPAsset } from "contracts/lib/IPAsset.sol";
+import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { MulticallUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
@@ -20,7 +20,7 @@ contract IPOrg is
     /// @custom:storage-location erc7201:story-protocol.ip-asset-org.storage
     // TODO: Refactor IP asset types to be specified through the IP Asset Registry or one of its modules.
     struct IPOrgStorage {
-
+        uint256 placeholder;
     }
 
     IPAssetRegistry public REGISTRY;
@@ -37,7 +37,7 @@ contract IPOrg is
         return _VERSION;
     }
 
-    function initialize(IPAsset.InitIPOrgParams memory params_) public initializer {
+    function initialize(IPOrgParams.InitIPOrgParams memory params_) public initializer {
 
         // TODO(ramarti) Decouple IPOrg from the RightsManager and make sure to move `__ERC721_init` here.
         __ERC721_init(params_.name, params_.symbol);

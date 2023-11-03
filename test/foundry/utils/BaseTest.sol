@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import 'test/foundry/utils/ProxyHelper.sol';
 import 'test/foundry/utils/BaseTestUtils.sol';
+import 'test/foundry/utils/AccessControlHelper.sol';
 import "test/foundry/mocks/RelationshipModuleHarness.sol";
 import "test/foundry/mocks/MockCollectNFT.sol";
 import "test/foundry/mocks/MockCollectModule.sol";
@@ -10,7 +11,7 @@ import "contracts/ip-org/IPOrgFactory.sol";
 import "contracts/ip-org/IPOrg.sol";
 import "contracts/IPAssetRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/lib/IPAsset.sol";
+import "contracts/lib/IPOrgParams.sol";
 import "contracts/errors/General.sol";
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "contracts/modules/relationships/processors/DstOwnerRelationshipProcessor.sol";
@@ -30,13 +31,12 @@ import { AccessControl } from "contracts/lib/AccessControl.sol";
 
 // TODO: Commented out contracts in active refactor. 
 // Run tests from make lint, which will not run collect and license
-contract BaseTest is BaseTestUtils, ProxyHelper {
+contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
 
     IPOrg public ipAssetOrg;
     address ipAssetOrgImpl;
     IPOrgFactory public ipAssetOrgFactory;
     RelationshipModuleBase public relationshipModule;
-    AccessControlSingleton accessControl;
     PermissionlessRelationshipProcessor public relationshipProcessor;
     DstOwnerRelationshipProcessor public dstOwnerRelationshipProcessor;
     // LicensingModule public licensingModule;
@@ -49,11 +49,9 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
 
     address public defaultCollectNftImpl;
     address public collectModuleImpl;
-    address public accessControlSingletonImpl;
 
     bool public deployProcessors = false;
 
-    address constant admin = address(123);
     address constant upgrader = address(6969);
     address constant ipAssetOrgOwner = address(456);
     address constant revoker = address(789);
@@ -66,17 +64,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         super.setUp();
 
         // Create Access Control
-        accessControlSingletonImpl = address(new AccessControlSingleton());
-        accessControl = AccessControlSingleton(
-            _deployUUPSProxy(
-                accessControlSingletonImpl,
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), admin
-                )
-            )
-        );
-        vm.prank(admin);
-        accessControl.grantRole(AccessControl.UPGRADER_ROLE, upgrader);
+        _setupAccessControl();
+        _grantRole(vm, AccessControl.UPGRADER_ROLE, upgrader);
         
         // Create IPAssetRegistry 
         registry = new IPAssetRegistry();
@@ -99,7 +88,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
         defaultCollectNftImpl = _deployCollectNFTImpl();
         collectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));
 
-        IPAsset.RegisterIPOrgParams memory ipAssetOrgParams = IPAsset.RegisterIPOrgParams(
+        IPOrgParams.RegisterIpOrgParams memory ipAssetOrgParams = IPOrgParams.RegisterIpOrgParams(
             address(registry),
             "IPOrgName",
             "FRN",
@@ -109,7 +98,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
 
         vm.startPrank(ipAssetOrgOwner);
         address ipAssets;
-        ipAssets = ipAssetOrgFactory.registerIPOrg(ipAssetOrgParams);
+        ipAssets = ipAssetOrgFactory.registerIpOrg(ipAssetOrgParams);
         ipAssetOrg = IPOrg(ipAssets);
         // licenseRegistry = ILicenseRegistry(ipAssetOrg.getLicenseRegistry());
 
@@ -173,6 +162,29 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
                     bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
                 )
         );
+    }
+
+    /// @dev Helper function for creating an IP asset for an owner and IP type.
+    ///      TO-DO: Replace this with a simpler set of default owners that get
+    ///      tested against. The reason this is currently added is that during
+    ///      fuzz testing, foundry may plug existing contracts as potential
+    ///      owners for IP asset creation.
+    function _createIpAsset(address ipAssetOwner, uint8 ipAssetType, bytes memory collectData) internal isValidReceiver(ipAssetOwner) returns (uint256) {
+        vm.assume(ipAssetType > uint8(type(IPAsset.IPAssetType).min));
+        vm.assume(ipAssetType < uint8(type(IPAsset.IPAssetType).max));
+        vm.prank(address(ipAssetOrg));
+        // TODO: This was commented for compilation
+        // (uint256 id, ) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+        //     ipAssetType: IPAsset.IPAssetType(ipAssetType),
+        //     name: "name",
+        //     description: "description",
+        //     mediaUrl: "mediaUrl",
+        //     to: ipAssetOwner,
+        //     parentIpAssetOrgId: 0,
+        //     collectData: collectData
+        // }));
+        // return id;
+        return 1;
     }
 
 }

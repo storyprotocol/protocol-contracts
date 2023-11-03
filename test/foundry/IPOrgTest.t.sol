@@ -4,15 +4,19 @@ pragma solidity ^0.8.13;
 import { Errors } from "contracts/lib/Errors.sol";
 import { IPOrg } from "contracts/ip-org/IPOrg.sol";
 import { IPOrgFactory } from "contracts/ip-org/IPOrgFactory.sol";
-import { IPAsset } from "contracts/lib/IPAsset.sol";
+import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { AccessControlSingleton } from "contracts/access-control/AccessControlSingleton.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
+import { AccessControlHelper } from "./utils/AccessControlHelper.sol";
 import { MockCollectNFT } from "./mocks/MockCollectNFT.sol";
 import { MockCollectModule } from "./mocks/MockCollectModule.sol";
 import { MockLicensingModule } from "./mocks/MockLicensingModule.sol";
 import { MockIPOrgFactory } from "./mocks/MockIPOrgFactory.sol";
+import 'test/foundry/utils/ProxyHelper.sol';
 import "forge-std/Test.sol";
 
-contract IPOrgTest is Test {
+contract IPOrgTest is Test, ProxyHelper, AccessControlHelper {
     using stdStorage for StdStorage;
 
     event CollectionCreated(address indexed collection, string name, string indexed symbol);
@@ -20,24 +24,31 @@ contract IPOrgTest is Test {
     event BeaconUpgraded(address indexed beacon);
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
 
-    error IdOverBounds();
-    error InvalidBlockType();
-
     IPAssetRegistry public registry;
     IPOrgFactory public ipOrgFactory;
     IPOrg public ipOrg;
-    address owner = address(this);
-    address mintee = address(1);
-    address mintee2 = address(2);
 
     uint256 internal ipOrgOwnerPk = 0xa11ce;
     address payable internal ipOrgOwner = payable(vm.addr(ipOrgOwnerPk));
 
     function setUp() public {
+        _setupAccessControl();
+        _grantRole(vm, AccessControl.IPORG_CREATOR_ROLE, ipOrgOwner);
         registry = new IPAssetRegistry();
-        ipOrgFactory = new IPOrgFactory();
 
-        IPAsset.RegisterIPOrgParams memory ipOrgParams = IPAsset.RegisterIPOrgParams(
+        address implementation = address(new IPOrgFactory());
+        ipOrgFactory = IPOrgFactory(
+            _deployUUPSProxy(
+                implementation,
+                abi.encodeWithSelector(
+                    bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
+                )
+            )
+        );
+    }
+
+    function test_ipOrgFactory_registerIpOrg() public {
+        IPOrgParams.RegisterIpOrgParams memory ipOrgParams = IPOrgParams.RegisterIpOrgParams(
             address(registry),
             "name",
             "symbol",
@@ -45,9 +56,7 @@ contract IPOrgTest is Test {
             "uri"
         );
         vm.prank(ipOrgOwner);
-        address ipOrgAddr;
-        ipOrgAddr = ipOrgFactory.registerIPOrg(ipOrgParams);
-        ipOrg = IPOrg(ipOrgAddr);
+        ipOrg = IPOrg(ipOrgFactory.registerIpOrg(ipOrgParams));
     }
 
     function test_setUp() public {
