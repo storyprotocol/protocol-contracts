@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 /// @title Access Control Roles Library
 /// @notice Library for access control helpers and protocol role definitions.
 ///         These roles are used by the AccessControlSingleton, accessed by AccessControlled contracts.
-library AccessControlRoles {
+library AccessControl {
 
     // Default admin role as per OZ AccessControl system. All other roles stem from this.
     bytes32 constant PROTOCOL_ADMIN_ROLE = bytes32(0);

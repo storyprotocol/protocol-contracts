@@ -56,7 +56,7 @@ contract IPOrgFactory is
     /// TODO: Add ipAssetOrg-wide module configurations to the registration process.
     /// TODO: Converge on access control for this method
     function registerIpOrg(
-        IPOrgParams.registerIpOrgParams calldata params_
+        IPOrgParams.RegisterIPOrgParams calldata params_
     ) public onlyRole(AccessControl.IPORG_CREATOR_ROLE) returns (address) {
         address ipAssetOrg = Clones.clone(IP_ORG_IMPL);
         IPOrg(ipAssetOrg).initialize(IPOrgParams.InitIPOrgParams({

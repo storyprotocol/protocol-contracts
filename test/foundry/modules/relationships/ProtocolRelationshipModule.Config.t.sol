@@ -6,7 +6,7 @@ import 'test/foundry/utils/BaseTest.sol';
 import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
 import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/ip-org/IPOrg.sol";
-import { AccessControlRoles } from "contracts/lib/AccessControlRoles.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { Relationship } from "contracts/lib/modules/Relationship.sol";
 
 contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
@@ -18,7 +18,7 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
         super.setUp();
 
         vm.startPrank(ipAssetOrgOwner);
-        IPOrgParams.RegisterIpOrgParams memory params = IPOrgParams.RegisterIpOrgParams(
+        IPOrgParams.RegisterIPOrgParams memory params = IPOrgParams.RegisterIPOrgParams(
             address(registry),
             "name",
             "symbol",
@@ -37,7 +37,7 @@ contract ProtocolRelationshipModuleSetupRelationshipsTest is BaseTest {
             )
         );
         vm.prank(admin);
-        accessControl.grantRole(AccessControlRoles.RELATIONSHIP_MANAGER_ROLE, relationshipManager);
+        accessControl.grantRole(AccessControl.RELATIONSHIP_MANAGER_ROLE, relationshipManager);
     }
 
     function test_setProtocolLevelRelationship() public {
@@ -117,7 +117,7 @@ contract ProtocolRelationshipModuleUnsetRelationshipsTest is BaseTest {
             )
         );
         vm.prank(admin);
-        accessControl.grantRole(AccessControlRoles.RELATIONSHIP_MANAGER_ROLE, relationshipManager);
+        accessControl.grantRole(AccessControl.RELATIONSHIP_MANAGER_ROLE, relationshipManager);
 
         IPAsset.IPAssetType[] memory sourceIpAssets = new IPAsset.IPAssetType[](1);
         sourceIpAssets[0] = IPAsset.IPAssetType.STORY;

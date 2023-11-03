@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import 'test/foundry/utils/ProxyHelper.sol';
-import { AccessControlRoles } from "contracts/lib/AccessControlRoles.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { AccessControlSingleton } from "contracts/access-control/AccessControlSingleton.sol";
 import { Vm } from "forge-std/Test.sol";
 
@@ -12,7 +12,7 @@ contract AccessControlHelper is ProxyHelper {
 
     AccessControlSingleton accessControl;
     address public accessControlSingletonImpl;
-    address constant admin = address(123);
+    address admin = address(123);
 
     constructor() {}
 

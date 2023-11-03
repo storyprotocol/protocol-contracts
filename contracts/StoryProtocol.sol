@@ -17,7 +17,7 @@ contract StoryProtocol {
         FACTORY = ipOrgFactory_;
     }
 
-    function registerIpOrg(IPOrgParams.RegisterIpOrgParams calldata params) external returns (address) {
+    function registerIpOrg(IPOrgParams.RegisterIPOrgParams calldata params) external returns (address) {
         return FACTORY.registerIpOrg(params);
     }
 

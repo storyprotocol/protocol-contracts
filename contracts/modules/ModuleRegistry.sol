@@ -2,33 +2,44 @@
 pragma solidity ^0.8.19;
 
 import { AccessControlled } from "contracts/access-control/AccessControlled.sol";
-import { AccessControlRoles } from "contracts/lib/AccessControlRoles.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { Errors } from "contracts/lib/Errors.sol";
+import { BaseModule } from "./base/BaseModule.sol";
 
 contract ModuleRegistry is AccessControlled {
 
-    event ProtocolModuleAdded(bytes32 indexed moduleKey, string moduleKeyName, address moduleAddress);
-    event ProtocolModuleRemoved(bytes32 indexed moduleKey, address moduleAddress);
+    event ProtocolModuleAdded(string indexed moduleKey, BaseModule module);
+    event ProtocolModuleRemoved(string indexed moduleKey, BaseModule module);
 
-    event IpOrgModuleAdded(bytes32 indexed moduleKey, string moduleName, address moduleAddress);
-
-
-    mapping(bytes32 => address) private _protocolModules;
+    mapping(string => BaseModule) private _protocolModules;
 
     constructor(address accessControl_) AccessControlled(accessControl_) { }
 
     function registerProtocolModule(
-        string moduleKeyName,
-        address moduleAddress
-    ) external onlyRole(AccessControlRoles.MODULE_REGISTRAR_ROLE) {
-        bytes32 moduleKey = moduleKeyFromKeyName(moduleKeyName);
+        string calldata moduleKey,
+        BaseModule moduleAddress
+    ) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
+        // TODO: inteface check in the module
+        if (address(moduleAddress) == address(0)) {
+            revert Errors.ZeroAddress();
+        }
         _protocolModules[moduleKey] = moduleAddress;
-        emit ProtocolModuleAdded(moduleKey, moduleKeyName, moduleAddress);
+        emit ProtocolModuleAdded(moduleKey, moduleAddress);
     }
 
-    function moduleKeyFromKeyName(string memory moduleKeyName) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(moduleKeyName));
+    function removeProtocolModule(
+        string calldata moduleKey
+    ) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
+        if (address(_protocolModules[moduleKey]) == address(0)) {
+            revert Errors.ModuleRegistry_ModuleNotRegistered(moduleKey);
+        }
+        BaseModule moduleAddress = _protocolModules[moduleKey];
+        delete _protocolModules[moduleKey];
+        emit ProtocolModuleRemoved(moduleKey, moduleAddress);
+    }
+
+    function moduleForKey(string calldata moduleKey) external view returns (BaseModule) {
+        return _protocolModules[moduleKey];
     }
  
-
-
 }
