@@ -20,7 +20,7 @@ import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/IPAssetRegistry.sol";
 import "contracts/interfaces/modules/collect/ICollectModule.sol";
 
-import { AccessControlRoles } from "contracts/lib/AccessControlRoles.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
 
 // On active refactor
 // import "contracts/modules/licensing/LicensingModule.sol";
@@ -65,7 +65,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
 
         // Create Access Control
         _setupAccessControl();
-        _grantRole(vm, AccessControlRoles.UPGRADER_ROLE, upgrader);
+        _grantRole(vm, AccessControl.UPGRADER_ROLE, upgrader);
         
         // Create IPAssetRegistry 
         registry = new IPAssetRegistry();
@@ -88,7 +88,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         defaultCollectNftImpl = _deployCollectNFTImpl();
         collectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));
 
-        IPOrgParams.RegisterIpOrgParams memory ipAssetOrgParams = IPOrgParams.RegisterIpOrgParams(
+        IPOrgParams.RegisterIPOrgParams memory ipAssetOrgParams = IPOrgParams.RegisterIPOrgParams(
             address(registry),
             "IPOrgName",
             "FRN",
