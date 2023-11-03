@@ -14,7 +14,7 @@ interface IIPOrgFactory is IVersioned {
         string tokenURI_
     );
 
-    function registerIpOrg(IPOrgParams.registerIpOrgParams calldata params_) external returns(address);
+    function registerIpOrg(IPOrgParams.RegisterIPOrgParams calldata params_) external returns(address);
 
     function isIpOrg(address ipAssetOrg_) external view returns (bool);
 }

@@ -88,7 +88,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         defaultCollectNftImpl = _deployCollectNFTImpl();
         collectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));
 
-        IPOrgParams.RegisterIpOrgParams memory ipAssetOrgParams = IPOrgParams.RegisterIpOrgParams(
+        IPOrgParams.RegisterIPOrgParams memory ipAssetOrgParams = IPOrgParams.RegisterIPOrgParams(
             address(registry),
             "IPOrgName",
             "FRN",

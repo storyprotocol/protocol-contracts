@@ -171,7 +171,7 @@
 //     // TODO(ramarti): Fix this test
 //     // function test_revert_relationshipsNotSameIPOrg() public {
 //     //     vm.startPrank(ipAssetOrgOwner);
-//     //     IPAsset.RegisterIpOrgParams memory params = IPAsset.RegisterIpOrgParams(address(registry), "name2", "symbol2", "description2", "tokenURI2", address(licensingModule), address(collectModule)); 
+//     //     IPAsset.RegisterIPOrgParams memory params = IPAsset.RegisterIPOrgParams(address(registry), "name2", "symbol2", "description2", "tokenURI2", address(licensingModule), address(collectModule)); 
 //     //     address otherIpAssets = ipAssetOrgFactory.registerIpOrg(params);
 //     //     licensingModule.configureIpOrgLicensing(otherIpAssets, LibMockIPOrgConfig.getMockIPOrgConfig());
 //     //     vm.stopPrank();
