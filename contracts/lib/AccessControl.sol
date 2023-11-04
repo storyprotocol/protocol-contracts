@@ -24,4 +24,7 @@ library AccessControl {
     // Role that can add new modules to the Module Registry
     bytes32 constant MODULE_REGISTRAR_ROLE = keccak256("MODULE_REGISTRAR_ROLE");
 
+    // Role that can execute modules
+    bytes32 constant MODULE_EXECUTOR_ROLE = keccak256("MODULE_EXECUTOR_ROLE");
+
 }

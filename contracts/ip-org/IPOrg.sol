@@ -12,6 +12,7 @@ import { Errors } from "contracts/lib/Errors.sol";
 
 /// @notice IP Asset Organization
 contract IPOrg is
+    IIPOrg,
     ERC721Upgradeable,
     MulticallUpgradeable,
     OwnableUpgradeable
@@ -59,6 +60,10 @@ contract IPOrg is
     ) public view override returns (string memory) {
         // TODO: should this reference the license too?
         return "TODO";
+    }
+
+    function owner() public view override(IIPOrg, OwnableUpgradeable) returns (address) {
+        return super.owner();
     }
 
     /// @dev Gets the storage associated with the IPOrg contract.

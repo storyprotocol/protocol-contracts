@@ -2,6 +2,7 @@
 pragma solidity ^0.8.18;
 
 import { BaseModule } from "contracts/modules/base/BaseModule.sol";
+import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 
 /// @title Mock BaseModule
 /// @notice This mock contract is used for testing the base module flow
@@ -9,6 +10,7 @@ contract MockBaseModule is BaseModule {
     address private _admin;
 
     struct BaseModuleCall {
+        address ipOrg;
         address caller;
         bytes params;
     }
@@ -22,11 +24,9 @@ contract MockBaseModule is BaseModule {
         _admin = admin_;
     }
 
-    function callStackAt(uint256 index_)
-        external
-        view
-        returns (BaseModuleCall memory)
-    {
+    function callStackAt(
+        uint256 index_
+    ) external view returns (BaseModuleCall memory) {
         return _callStack[index_];
     }
 
@@ -41,25 +41,26 @@ contract MockBaseModule is BaseModule {
     }
 
     function _configure(
+        IIPOrg ipOrg_,
         address caller_,
         bytes calldata params_
     ) internal virtual override {
-        _callStack.push(BaseModuleCall(caller_, params_));
+        _callStack.push(BaseModuleCall(address(ipOrg_), caller_, params_));
     }
 
     function _verifyExecution(
+        IIPOrg ipOrg_,
         address caller_,
         bytes calldata params_
     ) internal virtual override {
-        _callStack.push(BaseModuleCall(caller_, params_));
+        _callStack.push(BaseModuleCall(address(ipOrg_), caller_, params_));
     }
 
     function _performAction(
+        IIPOrg ipOrg_,
         address caller_,
         bytes calldata params_
     ) internal virtual override {
-        _callStack.push(BaseModuleCall(caller_, params_));
+        _callStack.push(BaseModuleCall(address(ipOrg_), caller_, params_));
     }
-
-
 }
