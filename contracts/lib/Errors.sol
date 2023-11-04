@@ -64,6 +64,7 @@ library Errors {
     ////////////////////////////////////////////////////////////////////////////
 
     error ModuleRegistry_ModuleNotRegistered(string moduleName);
+    error ModuleRegistry_CallerNotOrgOwner();
 
     ////////////////////////////////////////////////////////////////////////////
     //                                 CollectModule                          //

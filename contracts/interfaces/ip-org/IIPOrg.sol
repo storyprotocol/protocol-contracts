@@ -11,6 +11,6 @@ interface IIPOrg is
     IERC165Upgradeable
 {
 
-    function owner() external returns (address);
+    function owner() external view returns (address);
 
 }
