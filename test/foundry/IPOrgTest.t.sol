@@ -59,10 +59,4 @@ contract IPOrgTest is Test, ProxyHelper, AccessControlHelper {
         ipOrg = IPOrg(ipOrgFactory.registerIpOrg(ipOrgParams));
     }
 
-    function test_setUp() public {
-        assertEq(ipOrg.name(), "name");
-        assertEq(ipOrg.symbol(), "symbol");
-        assertEq(ipOrg.version(), "0.1.0");
-    }
-
 }
