@@ -42,6 +42,7 @@ library Errors {
     error BaseModule_ZeroIpaRegistry();
     error BaseModule_ZeroModuleRegistry();
     error BaseModule_ZeroLicenseRegistry();
+    error BaseModule_OnlyModuleRegistry();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            HookRegistry                                //

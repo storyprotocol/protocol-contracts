@@ -44,16 +44,25 @@ contract BaseModuleTest is Test {
 
     function test_baseModule_passesConfigParams() public {
         bytes memory params = abi.encode(uint256(123));
+        vm.prank(address(moduleRegistry));
         module.configure(ipOrg, address(123), params);
         assertEq(module.callStackAt(0).caller, address(123));
         assertEq(module.callStackAt(0).params, params);
     }
 
+    function test_baseModule_revert_configureNotModuleRegistry() public {
+        bytes memory params = abi.encode(uint256(123));
+        vm.expectRevert(Errors.BaseModule_OnlyModuleRegistry.selector);
+        module.configure(ipOrg, address(123), params);
+    }
+
     function test_baseModule_correctExecutionOrderAndParams() public {
+        vm.startPrank(address(moduleRegistry));
         bytes memory params = abi.encode(uint256(123));
         vm.expectEmit(true, true, true, true);
         emit RequestCompleted(address(123));
         module.execute(ipOrg, address(123), params, new bytes[](0), new bytes[](0));
+        vm.stopPrank();
         assertEq(module.callStackAt(0).caller, address(123));
         assertEq(module.callStackAt(0).params, params);
         assertEq(module.callStackAt(0).ipOrg, address(ipOrg));
@@ -62,7 +71,14 @@ contract BaseModuleTest is Test {
         assertEq(module.callStackAt(1).ipOrg, address(ipOrg));
     }
 
+    function test_baseModule_revert_executeNotModuleRegistry() public {
+        bytes memory params = abi.encode(uint256(123));
+        vm.expectRevert(Errors.BaseModule_OnlyModuleRegistry.selector);
+        module.execute(ipOrg, address(123), params, new bytes[](0), new bytes[](0));
+    }
+
     function test_baseModule_revertPreHookWrongParamsLength() public {
+        vm.startPrank(address(moduleRegistry));
         bytes memory params = abi.encode(uint256(123));
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -71,9 +87,11 @@ contract BaseModuleTest is Test {
             )
         );
         module.execute(ipOrg, address(123), params, new bytes[](1), new bytes[](0));
+        vm.stopPrank();
     }
 
     function test_baseModule_revertPostHookWrongParamsLength() public {
+        vm.startPrank(address(moduleRegistry));
         bytes memory params = abi.encode(uint256(123));
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -82,6 +100,7 @@ contract BaseModuleTest is Test {
             )
         );
         module.execute(ipOrg, address(123), params, new bytes[](0), new bytes[](1));
+        vm.stopPrank();
     }
 
     // TODO: hook execution tests, waiting for base hook

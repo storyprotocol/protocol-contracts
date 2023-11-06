@@ -8,6 +8,10 @@ import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { BaseModule } from "./base/BaseModule.sol";
 import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 
+/// @title ModuleRegistry
+/// @notice This contract is the source of truth for all modules that are registered in the protocol.
+/// It's also the entrypoint for execution and configuration of modules, either directly by users
+/// or by MODULE_EXECUTOR_ROLE holders.
 contract ModuleRegistry is AccessControlled, Multicall {
 
     event ProtocolModuleAdded(string indexed moduleKey, BaseModule module);
@@ -31,6 +35,10 @@ contract ModuleRegistry is AccessControlled, Multicall {
 
     constructor(address accessControl_) AccessControlled(accessControl_) { }
 
+    /// Add a module to the protocol, that will be available for all IPOrgs.
+    /// This is only callable by MODULE_REGISTRAR_ROLE holders.
+    /// @param moduleKey short module descriptor
+    /// @param moduleAddress address of the module
     function registerProtocolModule(
         string calldata moduleKey,
         BaseModule moduleAddress
@@ -43,6 +51,9 @@ contract ModuleRegistry is AccessControlled, Multicall {
         emit ProtocolModuleAdded(moduleKey, moduleAddress);
     }
 
+    /// Remove a module from the protocol (all IPOrgs)
+    /// This is only callable by MODULE_REGISTRAR_ROLE holders.
+    /// @param moduleKey short module descriptor
     function removeProtocolModule(
         string calldata moduleKey
     ) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
@@ -54,20 +65,36 @@ contract ModuleRegistry is AccessControlled, Multicall {
         emit ProtocolModuleRemoved(moduleKey, moduleAddress);
     }
 
+    /// Get a module from the protocol, by its key.
     function moduleForKey(string calldata moduleKey) external view returns (BaseModule) {
         return _protocolModules[moduleKey];
     }
 
+    /// Execution entrypoint, callable by any address on its own behalf.
+    /// @param ipOrg_ address of the IPOrg, or address(0) for protocol-level stuff
+    /// @param moduleKey_ short module descriptor
+    /// @param selfParams_ encoded params for module action
+    /// @param preHookParams_ encoded params for pre action hooks
+    /// @param postHookParams_ encoded params for post action hooks
+    /// @return encoded result of the module execution
     function execute(
         IIPOrg ipOrg_,
         string calldata moduleKey_,
         bytes calldata selfParams_,
         bytes[] calldata preHookParams_,
         bytes[] calldata postHookParams_
-    ) external {
-        _execute(ipOrg_, msg.sender, moduleKey_, selfParams_, preHookParams_, postHookParams_);
+    ) external returns (bytes memory) {
+        return _execute(ipOrg_, msg.sender, moduleKey_, selfParams_, preHookParams_, postHookParams_);
     }
 
+    /// Execution entrypoint, callable by any MODULE_EXECUTOR_ROLE holder on behalf of any address.
+    /// @param ipOrg_ address of the IPOrg, or address(0) for protocol-level stuff
+    /// @param caller_ address requesting the execution
+    /// @param moduleKey_ short module descriptor
+    /// @param selfParams_ encoded params for module action
+    /// @param preHookParams_ encoded params for pre action hooks
+    /// @param postHookParams_ encoded params for post action hooks
+    /// @return encoded result of the module execution
     function execute(
         IIPOrg ipOrg_,
         address caller_,
@@ -79,6 +106,10 @@ contract ModuleRegistry is AccessControlled, Multicall {
         return _execute(ipOrg_, caller_, moduleKey_, selfParams_, preHookParams_, postHookParams_);
     }
 
+    /// Configuration entrypoint, callable by any address on its own behalf.
+    /// @param ipOrg_ address of the IPOrg, or address(0) for protocol-level stuff
+    /// @param moduleKey_ short module descriptor
+    /// @param params_ encoded params for module configuration
     function configure(
         IIPOrg ipOrg_,
         string calldata moduleKey_,
@@ -87,6 +118,11 @@ contract ModuleRegistry is AccessControlled, Multicall {
         _configure(ipOrg_, msg.sender, moduleKey_, params_);
     }
 
+    /// Configuration entrypoint, callable by any MODULE_EXECUTOR_ROLE holder on behalf of any address.
+    /// @param ipOrg_ address of the IPOrg, or address(0) for protocol-level stuff
+    /// @param caller_ address requesting the execution
+    /// @param moduleKey_ short module descriptor
+    /// @param params_ encoded params for module configuration
     function configure(
         IIPOrg ipOrg_,
         address caller_,

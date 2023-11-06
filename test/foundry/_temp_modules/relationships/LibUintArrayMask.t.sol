@@ -57,8 +57,6 @@ contract LibUintArrayMaskHarnessTest is Test {
     
 }
 
-
-
 contract LibIPAssetMaskChecksTest is Test {
 
     LibUintArrayMaskHarness public checker;
