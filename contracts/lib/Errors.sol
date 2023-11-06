@@ -321,4 +321,14 @@ library Errors {
 
     /// @notice Invalid summation for royalty NFT allocations.
     error RoyaltyNFT_InvalidAllocationsSum(uint32 allocationsSum);
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                                  Hook                                  //
+    ////////////////////////////////////////////////////////////////////////////
+
+    /// @notice The sync operation is not supported in Async hooks.
+    error Hook_UnsupportedSyncOperation();
+
+    /// @notice The async operation is not supported in Sync hooks.
+    error Hook_UnsupportedAsyncOperation();
 }
