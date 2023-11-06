@@ -7,12 +7,11 @@ import { LibUintArrayMask } from "./LibUintArrayMask.sol";
 import { IRelationshipModule } from "contracts/interfaces/modules/relationships/IRelationshipModule.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
 contract RelationshipModule is BaseModule, IRelationshipModule {
 
     using Address for address;
-
-    address public constant NO_ADDRESS_RESTRICTIONS = 0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF;
 
     mapping(string => LibRelationship.RelationshipType) private _protocolRelTypes;
     mapping(bytes32 => LibRelationship.RelationshipType) private _ipOrgRelTypes;
@@ -25,19 +24,33 @@ contract RelationshipModule is BaseModule, IRelationshipModule {
         BaseModule.ModuleConstruction memory params_
     ) BaseModule(params_) {}
 
-    function addressConfigFor(LibRelationship.Relatables relatables, address ipOrg, uint8[] calldata allowedTypes) public view returns (address, uint256) {
+    function addressConfigFor(LibRelationship.Relatables relatables, address ipOrg, uint8[] memory allowedTypes) public view returns (address, uint256) {
         if (relatables == LibRelationship.Relatables.IPA) {
             return (address(IPA_REGISTRY), LibUintArrayMask._convertToMask(allowedTypes));
         } else if (relatables == LibRelationship.Relatables.IPORG_ENTRY) {
+            if (ipOrg == LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP) {
+                revert();
+            }
             return (address(ipOrg), 0);
         } else if (relatables == LibRelationship.Relatables.LICENSE) {
             return (LICENSE_REGISTRY, 0);
         } else if (relatables == LibRelationship.Relatables.ADDRESS) {
-            return (NO_ADDRESS_RESTRICTIONS, 0);
+            return (LibRelationship.NO_ADDRESS_RESTRICTIONS, 0);
         } else if (relatables == LibRelationship.Relatables.EXTERNAL_NFT) {
-            return (NO_ADDRESS_RESTRICTIONS, 0);
+            return (LibRelationship.NO_ADDRESS_RESTRICTIONS, 0);
         }
         revert();
+    }
+
+    function getProtocolRelationshipType(string memory relType_) virtual override external view returns (LibRelationship.RelationshipType memory) {
+        return _protocolRelTypes[relType_];
+    }
+
+    function getIpOrgRelationshipType(address ipOrg_, string memory relType_) virtual override external view returns (LibRelationship.RelationshipType memory) {
+        if (ipOrg_ == LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP) {
+            return _protocolRelTypes[relType_];
+        }
+        return _ipOrgRelTypes[keccak256(abi.encode(ipOrg_, relType_))];
     }
 
     function _hookRegistryAdmin()
@@ -56,7 +69,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule {
         if (configType == LibRelationship.ADD_REL_TYPE_CONFIG) {
             _addRelationshipType(abi.decode(configData, (LibRelationship.AddRelationshipTypeParams)));
         } else if (configType == LibRelationship.REMOVE_REL_TYPE_CONFIG) {
-            string memory relType = abi.decode(configData, string);
+            string memory relType = abi.decode(configData, (string));
             _removeRelationshipType(address(ipOrg), relType);
         } else {
             revert Errors.RelationshipModule_InvalidConfigOperation();
@@ -64,7 +77,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule {
     }
     
     // Internal method don't have selectors
-    function _addRelationshipType(LibRelationship.AddRelationshipTypeParams calldata params_) public {
+    function _addRelationshipType(LibRelationship.AddRelationshipTypeParams memory params_) private {
         (address src, uint256 srcSubtypesMask) = addressConfigFor(params_.allowedElements.src, params_.ipOrg, params_.allowedSrcs);
         (address dst, uint256 dstSubtypesMask) = addressConfigFor(params_.allowedElements.dst, params_.ipOrg, params_.allowedDsts);
         LibRelationship.RelationshipType memory relDef = LibRelationship.RelationshipType({
@@ -90,7 +103,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule {
         );
     }
 
-    function _removeRelationshipType(address ipOrg_, string calldata relType_) internal {
+    function _removeRelationshipType(address ipOrg_, string memory relType_) private {
         if (ipOrg_ == address(0)) {
             delete _protocolRelTypes[relType_];
         } else {

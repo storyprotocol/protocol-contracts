@@ -20,5 +20,8 @@ interface IRelationshipModule {
         string indexed relType,
         address ipOrg
     );
+
+    function getProtocolRelationshipType(string memory relType_) external view returns (LibRelationship.RelationshipType memory);
+    function getIpOrgRelationshipType(address ipOrg_, string memory relType_) external view returns (LibRelationship.RelationshipType memory);
     
 }

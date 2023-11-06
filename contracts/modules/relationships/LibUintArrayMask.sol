@@ -16,7 +16,7 @@ library LibUintArrayMask {
     /// to the uint8 equivalent of the IPAsset types to 1.
     /// @param assetTypes_ The array of subType
     /// @return mask The mask representing the IPAsset types and the allows external flag
-    function _convertToMask(uint8[] calldata assetTypes_) internal pure returns (uint256) {
+    function _convertToMask(uint8[] memory assetTypes_) internal pure returns (uint256) {
         if (assetTypes_.length == 0) revert Errors.LibUintArrayMask_EmptyArray();
         uint256 mask = 0;
         for (uint256 i = 0; i < assetTypes_.length;) {

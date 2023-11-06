@@ -41,7 +41,8 @@ library LibRelationship {
     }
 
     address public constant PROTOCOL_LEVEL_RELATIONSHIP = address(0);
-
+    address public constant NO_ADDRESS_RESTRICTIONS = 0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF;
+    
     bytes32 public constant ADD_REL_TYPE_CONFIG = keccak256("ADD_REL_TYPE");
     bytes32 public constant REMOVE_REL_TYPE_CONFIG = keccak256("REMOVE_REL_TYPE");
 
