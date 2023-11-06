@@ -41,6 +41,7 @@ library Errors {
     error BaseModule_HooksParamsLengthMismatch(uint8 hookType);
     error BaseModule_ZeroIpaRegistry();
     error BaseModule_ZeroModuleRegistry();
+    error BaseModule_ZeroLicenseRegistry();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            HookRegistry                                //
@@ -178,14 +179,13 @@ library Errors {
     error IPAccountRegistry_InitializationFailed();
 
     ////////////////////////////////////////////////////////////////////////////
-    //                                  IPAsset                               //
+    //                         LibUintArrayMask                               //
     ////////////////////////////////////////////////////////////////////////////
 
-    /// @notice IP asset array is invalid.
-    error IPAsset_InvalidIPAssetArray();
-
+    error LibUintArrayMask_EmptyArray();
+    error LibUintArrayMask_UndefinedArrayElement();
     /// @notice IP asset is invalid.
-    error IPAsset_InvalidType(IPAsset.IPAssetType ipAsset);
+    error LibUintArrayMask_InvalidType(IPAsset.IPAssetType ipAsset);
 
     ////////////////////////////////////////////////////////////////////////////
     //                              IPOrg                           //

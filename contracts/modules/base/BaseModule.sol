@@ -5,26 +5,34 @@ import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 import { HookRegistry } from "./HookRegistry.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
+import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
+import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 
 abstract contract BaseModule is IModule, HookRegistry {
 
     struct ModuleConstruction {
-        address ipaRegistry;
-        address moduleRegistry;
+        IPAssetRegistry ipaRegistry;
+        ModuleRegistry moduleRegistry;
+        address licenseRegistry;
     }
 
-    address public immutable IPA_REGISTRY;
-    address public immutable MODULE_REGISTRY;
+    IPAssetRegistry public immutable IPA_REGISTRY;
+    ModuleRegistry public immutable MODULE_REGISTRY;
+    address public immutable LICENSE_REGISTRY;
 
     constructor(ModuleConstruction memory params_) {
-        if (params_.ipaRegistry == address(0)) {
+        if (address(params_.ipaRegistry) == address(0)) {
             revert Errors.BaseModule_ZeroIpaRegistry();
         }
         IPA_REGISTRY = params_.ipaRegistry;
-        if (params_.moduleRegistry == address(0)) {
+        if (address(params_.moduleRegistry) == address(0)) {
             revert Errors.BaseModule_ZeroModuleRegistry();
         }
         MODULE_REGISTRY = params_.moduleRegistry;
+        if (params_.licenseRegistry == address(0)) {
+            revert Errors.BaseModule_ZeroLicenseRegistry();
+        }
+        LICENSE_REGISTRY = params_.licenseRegistry;
     }
 
     // TODO access control on sender

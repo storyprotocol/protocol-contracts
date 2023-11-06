@@ -4,23 +4,22 @@ pragma solidity ^0.8.19;
 import 'test/foundry/utils/ProxyHelper.sol';
 import 'test/foundry/utils/BaseTestUtils.sol';
 import 'test/foundry/utils/AccessControlHelper.sol';
-import "test/foundry/mocks/RelationshipModuleHarness.sol";
 import "test/foundry/mocks/MockCollectNFT.sol";
 import "test/foundry/mocks/MockCollectModule.sol";
+import "contracts/StoryProtocol.sol";
 import "contracts/ip-org/IPOrgFactory.sol";
 import "contracts/ip-org/IPOrg.sol";
+import "contracts/lib/IPOrgParams.sol";
+
 import "contracts/IPAssetRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/lib/IPOrgParams.sol";
 import "contracts/errors/General.sol";
-import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
-import "contracts/modules/relationships/processors/DstOwnerRelationshipProcessor.sol";
-import "contracts/modules/relationships/RelationshipModuleBase.sol";
-import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
+import "contracts/modules/relationships/RelationshipModule.sol";
 import "contracts/IPAssetRegistry.sol";
 import "contracts/interfaces/modules/collect/ICollectModule.sol";
 
 import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 
 // On active refactor
 // import "contracts/modules/licensing/LicensingModule.sol";
@@ -33,24 +32,21 @@ import { AccessControl } from "contracts/lib/AccessControl.sol";
 // Run tests from make lint, which will not run collect and license
 contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
 
-    IPOrg public ipAssetOrg;
+    IPOrg public ipOrg;
     address ipAssetOrgImpl;
-    IPOrgFactory public ipAssetOrgFactory;
-    RelationshipModuleBase public relationshipModule;
-    PermissionlessRelationshipProcessor public relationshipProcessor;
-    DstOwnerRelationshipProcessor public dstOwnerRelationshipProcessor;
+    IPOrgFactory public ipOrgFactory;
+    ModuleRegistry public moduleRegistry;
     // LicensingModule public licensingModule;
     // ILicenseRegistry public licenseRegistry;
     // MockTermsProcessor public nonCommercialTermsProcessor;
     // MockTermsProcessor public commercialTermsProcessor;
     ICollectModule public collectModule;
-    RelationshipModuleHarness public relationshipModuleHarness;
+    RelationshipModule public relationshipModule;
     IPAssetRegistry public registry;
+    StoryProtocol public spg;
 
     address public defaultCollectNftImpl;
     address public collectModuleImpl;
-
-    bool public deployProcessors = false;
 
     address constant upgrader = address(6969);
     address constant ipAssetOrgOwner = address(456);
@@ -71,7 +67,33 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         registry = new IPAssetRegistry();
 
         // Create IPOrg Factory
-        ipAssetOrgFactory = new IPOrgFactory();
+        ipOrgFactory = new IPOrgFactory();
+        address ipOrgFactoryImpl = address(new IPOrgFactory());
+        ipOrgFactory = IPOrgFactory(
+            _deployUUPSProxy(
+                ipOrgFactoryImpl,
+                abi.encodeWithSelector(
+                    bytes4(keccak256(bytes("initialize(address)"))),
+                    address(accessControl)
+                )
+            )
+        );
+
+        moduleRegistry = new ModuleRegistry(address(accessControl));
+        spg = new StoryProtocol(ipOrgFactory, moduleRegistry);
+        _grantRole(vm, AccessControl.IPORG_CREATOR_ROLE, address(spg));
+        _grantRole(vm, AccessControl.MODULE_EXECUTOR_ROLE, address(spg));
+        _grantRole(vm, AccessControl.MODULE_REGISTRAR_ROLE, address(this));
+
+        // Create Relationship Module
+        relationshipModule = new RelationshipModule(
+            BaseModule.ModuleConstruction({
+                ipaRegistry: registry,
+                moduleRegistry: moduleRegistry,
+                licenseRegistry: address(123)
+            })
+        );
+        moduleRegistry.registerProtocolModule(ModuleRegistryKeys.RELATIONSHIP_MODULE, relationshipModule);
         
         // Create Licensing Module
         // address licensingImplementation = address(new LicensingModule(address(ipAssetOrgFactory)));
@@ -97,33 +119,17 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         );
 
         vm.startPrank(ipAssetOrgOwner);
-        address ipAssets;
-        ipAssets = ipAssetOrgFactory.registerIpOrg(ipAssetOrgParams);
-        ipAssetOrg = IPOrg(ipAssets);
-        // licenseRegistry = ILicenseRegistry(ipAssetOrg.getLicenseRegistry());
+        ipOrg = IPOrg(spg.registerIpOrg(ipAssetOrgParams));
+
+        // licenseRegistry = ILicenseRegistry(ipOrg.getLicenseRegistry());
 
         // Configure Licensing for IPOrg
         // nonCommercialTermsProcessor = new MockTermsProcessor();
         // commercialTermsProcessor = new MockTermsProcessor();
-        // licensingModule.configureIpOrgLicensing(address(ipAssetOrg), _getLicensingConfig());
+        // licensingModule.configureIpOrgLicensing(address(ipOrg), _getLicensingConfig());
 
         vm.stopPrank();
 
-        // Create Relationship Module
-        relationshipModuleHarness = new RelationshipModuleHarness(address(ipAssetOrgFactory));
-        relationshipModule = RelationshipModuleBase(
-            _deployUUPSProxy(
-                address(relationshipModuleHarness),
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
-                )
-            )
-        );
-
-        if (deployProcessors) {
-            relationshipProcessor = new PermissionlessRelationshipProcessor(address(relationshipModule));
-            dstOwnerRelationshipProcessor = new DstOwnerRelationshipProcessor(address(relationshipModule));
-        }
     }
 
     // function _getLicensingConfig() view internal returns (Licensing.IPOrgConfig memory) {
@@ -170,11 +176,11 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     ///      fuzz testing, foundry may plug existing contracts as potential
     ///      owners for IP asset creation.
     function _createIpAsset(address ipAssetOwner, uint8 ipAssetType, bytes memory collectData) internal isValidReceiver(ipAssetOwner) returns (uint256) {
-        vm.assume(ipAssetType > uint8(type(IPAsset.IPAssetType).min));
-        vm.assume(ipAssetType < uint8(type(IPAsset.IPAssetType).max));
-        vm.prank(address(ipAssetOrg));
+        // vm.assume(ipAssetType > uint8(type(IPAsset.IPAssetType).min));
+        // vm.assume(ipAssetType < uint8(type(IPAsset.IPAssetType).max));
+        vm.prank(address(ipOrg));
         // TODO: This was commented for compilation
-        // (uint256 id, ) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
+        // (uint256 id, ) = ipOrg.createIpAsset(IPAsset.CreateIpAssetParams({
         //     ipAssetType: IPAsset.IPAssetType(ipAssetType),
         //     name: "name",
         //     description: "description",

@@ -42,29 +42,4 @@ library IPAsset {
         bytes collectData;
     }
 
-    function _zeroId(IPAssetType ipAsset_) internal pure returns (uint256) {
-        if (ipAsset_ == IPAssetType.UNDEFINED) {
-            revert Errors.IPAsset_InvalidType(ipAsset_);
-        }
-        return _ID_RANGE * (uint256(ipAsset_) - 1);
-    }
-
-    function _lastId(IPAssetType ipAsset_) internal pure returns (uint256) {
-        if (ipAsset_ == IPAssetType.UNDEFINED) {
-            revert Errors.IPAsset_InvalidType(ipAsset_);
-        }
-        return (_ID_RANGE * uint256(ipAsset_)) - 1;
-    }
-
-    function _ipAssetTypeFor(uint256 id_) internal pure returns (IPAssetType) {
-        // End of _ID_RANGE is zero (undefined) for each IPAsset
-        // Also, we don't support ids higher than the last IPAsset enum item
-        if (
-            id_ % _ID_RANGE == 0 ||
-            id_ > _ID_RANGE * (uint256(IPAssetType.ITEM))
-        ) {
-            return IPAssetType.UNDEFINED;
-        }
-        return IPAsset.IPAssetType((id_ / _ID_RANGE) + 1);
-    }
 }

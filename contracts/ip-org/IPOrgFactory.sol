@@ -15,6 +15,7 @@ import { AccessControl } from "contracts/lib/AccessControl.sol";
 /// TODO(ramarti): Extend the base hooks contract utilized by SP modules.
 /// TODO: Converge on upgradeability and IPOrg template setting
 contract IPOrgFactory is
+    UUPSUpgradeable,
     AccessControlledUpgradeable,
     IIPOrgFactory
 {

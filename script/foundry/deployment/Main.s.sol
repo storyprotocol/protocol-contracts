@@ -9,7 +9,6 @@ import "script/foundry/utils/JsonDeploymentHandler.s.sol";
 import "contracts/ip-org/IPOrg.sol";
 import "contracts/ip-org/IPOrgFactory.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
 import "test/foundry/mocks/MockCollectNFT.sol";
 import "test/foundry/mocks/MockCollectModule.sol";

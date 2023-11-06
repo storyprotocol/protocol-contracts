@@ -23,14 +23,24 @@ contract ModuleRegistryTest is Test, AccessControlHelper {
     }
 
     function test_moduleRegistry_addProtocolModule() public {
-        MockBaseModule module = new MockBaseModule(admin, BaseModule.ModuleConstruction(address(0x123), address(0x983)));
+        BaseModule.ModuleConstruction memory moduleConstruction = BaseModule.ModuleConstruction(
+            IPAssetRegistry(address(0x123)),
+            ModuleRegistry(address(0x983)),
+            address(0x123)
+        );
+        MockBaseModule module = new MockBaseModule(admin, moduleConstruction);
         vm.prank(admin);
         registry.registerProtocolModule("test", module);
         assertEq(address(registry.moduleForKey("test")), address(module));
     }
     
     function test_moduleRegistry_removeProtocolModule() public {
-        MockBaseModule module = new MockBaseModule(admin, BaseModule.ModuleConstruction(address(0x123), address(0x983)));
+        BaseModule.ModuleConstruction memory moduleConstruction = BaseModule.ModuleConstruction(
+            IPAssetRegistry(address(0x123)),
+            ModuleRegistry(address(0x983)),
+            address(0x123)
+        );
+        MockBaseModule module = new MockBaseModule(admin, moduleConstruction);
         vm.startPrank(admin);
         registry.registerProtocolModule("test", module);
         assertEq(address(registry.moduleForKey("test")), address(module));
@@ -38,6 +48,4 @@ contract ModuleRegistryTest is Test, AccessControlHelper {
         assertEq(address(registry.moduleForKey("test")), address(0));
         vm.stopPrank();
     }
-
-
 }

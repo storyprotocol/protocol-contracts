@@ -33,7 +33,7 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest {
         vm.prank(address(collectModule));
         collectNft.initialize(Collect.InitCollectNFTParams({
             registry: address(registry),
-            ipAssetOrg: address(ipAssetOrg),
+            ipAssetOrg: address(ipOrg),
             ipAssetId: ipAssetId,
             data: ""
         }));
@@ -64,7 +64,7 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest {
         vm.expectRevert(Errors.CollectNFT_IPAssetNonExistent.selector);
         collectNft.initialize(Collect.InitCollectNFTParams({
             registry: address(registry),
-            ipAssetOrg: address(ipAssetOrg),
+            ipAssetOrg: address(ipOrg),
             ipAssetId: 99,
             data: ""
         }));
@@ -76,7 +76,7 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest {
         vm.expectRevert(Errors.CollectNFT_AlreadyInitialized.selector);
         collectNft.initialize(Collect.InitCollectNFTParams({
             registry: address(registry),
-            ipAssetOrg: address(ipAssetOrg),
+            ipAssetOrg: address(ipOrg),
             ipAssetId: ipAssetId,
             data: ""
         }));
@@ -93,7 +93,7 @@ contract CollectNFTBaseTest is BaseERC721Test, BaseTest {
         vm.expectRevert(Errors.CollectNFT_AlreadyInitialized.selector);
         collectNft.initialize(Collect.InitCollectNFTParams({
             registry: address(registry),
-            ipAssetOrg: address(ipAssetOrg),
+            ipAssetOrg: address(ipOrg),
             ipAssetId: ipAssetId,
             data: ""
         }));

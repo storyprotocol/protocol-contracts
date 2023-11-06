@@ -5,20 +5,20 @@ import 'test/foundry/utils/ProxyHelper.sol';
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { AccessControlSingleton } from "contracts/access-control/AccessControlSingleton.sol";
 import { Vm } from "forge-std/Test.sol";
+import "forge-std/console.sol";
 
 /// @title AccessControlHelper
 /// @notice Helper contract to setup AccessControlSingleton and grant roles
 contract AccessControlHelper is ProxyHelper {
 
     AccessControlSingleton accessControl;
-    address public accessControlSingletonImpl;
     address admin = address(123);
 
     constructor() {}
 
     function _setupAccessControl() internal {
         // Create Access Control
-        accessControlSingletonImpl = address(new AccessControlSingleton());
+        address accessControlSingletonImpl = address(new AccessControlSingleton());
         accessControl = AccessControlSingleton(
             _deployUUPSProxy(
                 accessControlSingletonImpl,

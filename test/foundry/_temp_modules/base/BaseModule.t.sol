@@ -12,8 +12,8 @@ import "contracts/lib/Errors.sol";
 contract BaseModuleTest is Test {
     MockBaseModule module;
     address admin = address(123);
-    address ipaRegistry = address(456);
-    address moduleRegistry = address(789);
+    IPAssetRegistry ipaRegistry = IPAssetRegistry(address(456));
+    ModuleRegistry moduleRegistry = ModuleRegistry(address(789));
     MockIPOrg ipOrg;
 
     event RequestPending(address indexed sender);
@@ -22,24 +22,24 @@ contract BaseModuleTest is Test {
     function setUp() public {
         ipOrg = new MockIPOrg(admin);
         vm.prank(admin);
-        module = new MockBaseModule(admin, BaseModule.ModuleConstruction(ipaRegistry, moduleRegistry));
+        module = new MockBaseModule(admin, BaseModule.ModuleConstruction(ipaRegistry, moduleRegistry, address(888)));
     }
 
     function test_baseModule_revert_constructorIpaRegistryIsZero() public {
         vm.prank(admin);
         vm.expectRevert(Errors.BaseModule_ZeroIpaRegistry.selector);
-        new MockBaseModule(admin, BaseModule.ModuleConstruction(address(0), moduleRegistry));
+        new MockBaseModule(admin, BaseModule.ModuleConstruction(IPAssetRegistry(address(0)), moduleRegistry, address(888)));
     }
 
     function test_baseModule_revert_constructorModuleRegistryIsZero() public {
         vm.prank(admin);
         vm.expectRevert(Errors.BaseModule_ZeroModuleRegistry.selector);
-        new MockBaseModule(admin, BaseModule.ModuleConstruction(ipaRegistry, address(0)));
+        module = new MockBaseModule(admin, BaseModule.ModuleConstruction(ipaRegistry, ModuleRegistry(address(0)), address(888)));
     }
 
     function test_baseModule_setup() public {
-        assertEq(module.IPA_REGISTRY(), ipaRegistry);
-        assertEq(module.MODULE_REGISTRY(), moduleRegistry);
+        assertEq(address(module.IPA_REGISTRY()), address(ipaRegistry));
+        assertEq(address(module.MODULE_REGISTRY()), address(moduleRegistry));
     }
 
     function test_baseModule_passesConfigParams() public {
