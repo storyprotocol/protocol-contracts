@@ -42,15 +42,16 @@ abstract contract BaseModule is IModule, HookRegistry {
         bytes calldata selfParams_,
         bytes[] calldata preHookParams_,
         bytes[] calldata postHookParams_
-    ) external {
+    ) external returns (bytes memory result) {
         _verifyExecution(ipOrg_, caller_, selfParams_);
         if (!_executeHooks(preHookParams_, HookType.PreAction)) {
             emit RequestPending(caller_);
-            return;
+            return "";
         }
-        _performAction(ipOrg_, caller_, selfParams_);
+        result = _performAction(ipOrg_, caller_, selfParams_);
         _executeHooks(postHookParams_, HookType.PostAction);
         emit RequestCompleted(caller_);
+        return result;
     }
 
     // TODO access control on sender
@@ -73,6 +74,6 @@ abstract contract BaseModule is IModule, HookRegistry {
     function _hookRegistryAdmin() virtual override internal view returns (address);
     function _configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal;
     function _verifyExecution(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal {}
-    function _performAction(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal {}
+    function _performAction(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory result) {}
 
 }

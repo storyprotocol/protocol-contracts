@@ -75,8 +75,8 @@ contract ModuleRegistry is AccessControlled, Multicall {
         bytes calldata selfParams_,
         bytes[] calldata preHookParams_,
         bytes[] calldata postHookParams_
-    ) external onlyRole(AccessControl.MODULE_EXECUTOR_ROLE) {
-        _execute(ipOrg_, caller_, moduleKey_, selfParams_, preHookParams_, postHookParams_);
+    ) external onlyRole(AccessControl.MODULE_EXECUTOR_ROLE) returns (bytes memory) {
+        return _execute(ipOrg_, caller_, moduleKey_, selfParams_, preHookParams_, postHookParams_);
     }
 
     function configure(
@@ -103,13 +103,14 @@ contract ModuleRegistry is AccessControlled, Multicall {
         bytes calldata selfParams_,
         bytes[] calldata preHookParams_,
         bytes[] calldata postHookParams_
-    ) private {
+    ) private returns (bytes memory result) {
         BaseModule module = _protocolModules[moduleKey_];
         if (address(module) == address(0)) {
             revert Errors.ModuleRegistry_ModuleNotRegistered(moduleKey_);
         }
-        module.execute(ipOrg_, caller_, selfParams_, preHookParams_, postHookParams_);
+        result = module.execute(ipOrg_, caller_, selfParams_, preHookParams_, postHookParams_);
         emit ExecutedModule(address(ipOrg_), moduleKey_, caller_, selfParams_, preHookParams_, postHookParams_);
+        return result;
     }
 
     function _configure(

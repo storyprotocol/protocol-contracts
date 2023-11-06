@@ -21,7 +21,19 @@ interface IRelationshipModule {
         address ipOrg
     );
 
-    function getProtocolRelationshipType(string memory relType_) external view returns (LibRelationship.RelationshipType memory);
-    function getIpOrgRelationshipType(address ipOrg_, string memory relType_) external view returns (LibRelationship.RelationshipType memory);
+    event RelationshipCreated(
+        uint256 indexed relationshipId,
+        string indexed relType,
+        address srcAddress,
+        uint256 srcId,
+        address dstAddress,
+        uint256 dstId
+    );
+
+    function getRelationshipType(address ipOrg_, string memory relType_) external view returns (LibRelationship.RelationshipType memory);
+    function getRelationship(uint256 relationshipId_) external view returns (LibRelationship.Relationship memory);
+    function getRelationshipId(LibRelationship.Relationship calldata rel_) external view returns (uint256);
+    function relationshipExists(LibRelationship.Relationship calldata rel_) external view returns (bool);
+
     
 }

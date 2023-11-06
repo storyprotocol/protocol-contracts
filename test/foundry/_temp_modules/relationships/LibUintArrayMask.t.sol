@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 
 import { Errors } from "contracts/lib/Errors.sol";
-import { LibUintArrayMask } from "contracts/modules/relationships/LibUintArrayMask.sol";
+import { LibUintArrayMask } from "contracts/lib/LibUintArrayMask.sol";
 import { IPOrgFactory } from "contracts/ip-org/IPOrgFactory.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { MockERC721 } from "test/foundry/mocks/MockERC721.sol";
@@ -38,7 +38,6 @@ contract LibUintArrayMaskHarnessTest is Test {
                 resultMask |= 1 << (uint256(j) & 0xff);
             }
             uint256 mask = checker.convertToMask(assetTypes);
-            console.log(mask);
             assertEq(mask, resultMask);
         }
     }

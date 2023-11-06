@@ -9,8 +9,11 @@ import { AccessControl } from "contracts/lib/AccessControl.sol";
 
 contract RelationshipModuleConfigTest is BaseTest {
 
+    address relCreator = address(4444444);
+
     function setUp() override public {
         super.setUp();
+        _grantRole(vm, AccessControl.RELATIONSHIP_MANAGER_ROLE, relCreator);
     }
 
     function test_RelationshipModule_addProtocolRelationshipType() public {
@@ -27,9 +30,13 @@ contract RelationshipModuleConfigTest is BaseTest {
             allowedSrcs: allowedSrcs,
             allowedDsts: allowedDsts
         });
+        vm.prank(relCreator);
         // Todo test event
         spg.addRelationshipType(params);
-        LibRelationship.RelationshipType memory relType = relationshipModule.getProtocolRelationshipType("TEST_RELATIONSHIP");
+        LibRelationship.RelationshipType memory relType = relationshipModule.getRelationshipType(
+            LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
+            "TEST_RELATIONSHIP"
+        );
         assertEq(relType.src, LibRelationship.NO_ADDRESS_RESTRICTIONS);
         assertEq(relType.srcSubtypesMask, 0);
         assertEq(relType.dst, LibRelationship.NO_ADDRESS_RESTRICTIONS);
@@ -50,14 +57,16 @@ contract RelationshipModuleConfigTest is BaseTest {
             allowedSrcs: allowedSrcs,
             allowedDsts: allowedDsts
         });
+        vm.startPrank(relCreator);
         // Todo test event
         spg.addRelationshipType(params);
         spg.removeRelationshipType(LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP, "TEST_RELATIONSHIP");
-        LibRelationship.RelationshipType memory relType = relationshipModule.getProtocolRelationshipType("TEST_RELATIONSHIP");
-        assertEq(relType.src, address(0));
-        assertEq(relType.srcSubtypesMask, 0);
-        assertEq(relType.dst, address(0));
-        assertEq(relType.dstSubtypesMask, 0);
+        vm.stopPrank();
+        vm.expectRevert(abi.encodeWithSignature("RelationshipModule_RelTypeNotSet(string)", "TEST_RELATIONSHIP"));
+        LibRelationship.RelationshipType memory relType = relationshipModule.getRelationshipType(
+            LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
+            "TEST_RELATIONSHIP"
+        );        assertEq(relType.src, address(0));
     }
 
 

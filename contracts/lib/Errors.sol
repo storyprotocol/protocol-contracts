@@ -274,19 +274,6 @@ library Errors {
     error MultiTermsProcessor_TooManyTermsProcessors();
 
     ////////////////////////////////////////////////////////////////////////////
-    //                            RelationshipRegistry                        //
-    ////////////////////////////////////////////////////////////////////////////
-
-    error RelationshipRegistry_ModuleRegistryZeroAddress();
-    error RelationshipRegistry_RelationshipHaveZeroAddress();
-    error RelationshipRegistry_RelatingSameAsset();
-    error RelationshipRegistry_UnsupportedRelatedElements();
-    error RelationshipRegistry_CallerNotModuleRegistry();
-    error RelationshipRegistry_RelationshipAlreadyExists();
-    error RelationshipRegistry_RelationshipDoesNotExist();
-    error RelationshipRegistry_UndefinedElements();
-
-    ////////////////////////////////////////////////////////////////////////////
     //                            RelationshipModule                          //
     ////////////////////////////////////////////////////////////////////////////
 
@@ -312,6 +299,14 @@ library Errors {
     error RelationshipModule_UnsupportedRelationshipDst();
 
     error RelationshipModule_InvalidConfigOperation();
+
+    error RelationshipModule_CallerNotIpOrgOwner();
+    error RelationshipModule_InvalidRelatable();
+    error RelationshipModule_RelTypeNotSet(string relType);
+    error RelationshipModule_InvalidSrcAddress();
+    error RelationshipModule_InvalidDstAddress();
+    error RelationshipModule_InvalidSrcId();
+    error RelationshipModule_InvalidDstId();
 
     ////////////////////////////////////////////////////////////////////////////
     //                                RoyaltyNFT                              //

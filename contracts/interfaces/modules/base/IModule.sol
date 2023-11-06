@@ -15,7 +15,7 @@ interface IModule {
         bytes calldata selfParams_,
         bytes[] calldata preHookParams_,
         bytes[] calldata postHookParams_
-    ) external;
+    ) external returns (bytes memory result);
 
     function configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) external;
 

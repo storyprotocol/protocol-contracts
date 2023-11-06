@@ -16,18 +16,29 @@ contract StoryProtocol {
     ModuleRegistry public immutable MODULE_REGISTRY;
 
     constructor(IIPOrgFactory ipOrgFactory_, ModuleRegistry moduleRegistry_) {
-        if (address(ipOrgFactory_) == address(0) || address(moduleRegistry_) == address(0)) {
+        if (
+            address(ipOrgFactory_) == address(0) ||
+            address(moduleRegistry_) == address(0)
+        ) {
             revert Errors.ZeroAddress();
         }
         FACTORY = ipOrgFactory_;
         MODULE_REGISTRY = moduleRegistry_;
     }
 
-    function registerIpOrg(IPOrgParams.RegisterIPOrgParams calldata params_) external returns (address) {
+    function registerIpOrg(
+        IPOrgParams.RegisterIPOrgParams calldata params_
+    ) external returns (address) {
         return FACTORY.registerIpOrg(params_);
     }
 
-    function addRelationshipType(LibRelationship.AddRelationshipTypeParams calldata params_) external {
+    ////////////////////////////////////////////////////////////////////////////
+    //                            Relationships                               //
+    ////////////////////////////////////////////////////////////////////////////
+
+    function addRelationshipType(
+        LibRelationship.AddRelationshipTypeParams calldata params_
+    ) external {
         MODULE_REGISTRY.configure(
             IIPOrg(params_.ipOrg),
             msg.sender,
@@ -36,12 +47,35 @@ contract StoryProtocol {
         );
     }
 
-    function removeRelationshipType(address ipOrg_, string calldata relType) external {
+    function removeRelationshipType(
+        address ipOrg_,
+        string calldata relType
+    ) external {
         MODULE_REGISTRY.configure(
             IIPOrg(ipOrg_),
             msg.sender,
             ModuleRegistryKeys.RELATIONSHIP_MODULE,
-            abi.encode(LibRelationship.REMOVE_REL_TYPE_CONFIG, abi.encode(relType))
+            abi.encode(
+                LibRelationship.REMOVE_REL_TYPE_CONFIG,
+                abi.encode(relType)
+            )
         );
+    }
+
+    function createRelationship(
+        address ipOrg_,
+        LibRelationship.CreateRelationshipParams calldata params_,
+        bytes[] calldata preHooksData_,
+        bytes[] calldata postHooksData_
+    ) external returns(uint256 relId) {
+        bytes memory result = MODULE_REGISTRY.execute(
+            IIPOrg(ipOrg_),
+            msg.sender,
+            ModuleRegistryKeys.RELATIONSHIP_MODULE,
+            abi.encode(params_),
+            preHooksData_,
+            postHooksData_
+        );
+        return abi.decode(result, (uint256));
     }
 }

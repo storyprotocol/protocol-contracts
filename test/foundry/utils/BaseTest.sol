@@ -91,7 +91,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
                 ipaRegistry: registry,
                 moduleRegistry: moduleRegistry,
                 licenseRegistry: address(123)
-            })
+            }),
+            address(accessControl)
         );
         moduleRegistry.registerProtocolModule(ModuleRegistryKeys.RELATIONSHIP_MODULE, relationshipModule);
         
