@@ -311,6 +311,8 @@ library Errors {
     /// @notice The relationship destination IP type is not supported.
     error RelationshipModule_UnsupportedRelationshipDst();
 
+    error RelationshipModule_InvalidConfigOperation();
+
     ////////////////////////////////////////////////////////////////////////////
     //                                RoyaltyNFT                              //
     ////////////////////////////////////////////////////////////////////////////

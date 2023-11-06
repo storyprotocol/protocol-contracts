@@ -32,10 +32,7 @@ contract StoryProtocol {
             IIPOrg(params_.ipOrg),
             msg.sender,
             ModuleRegistryKeys.RELATIONSHIP_MODULE,
-            abi.encodeWithSelector(
-                LibRelationship.ADD_REL_TYPE_SELECTOR,
-                params_
-            )
+            abi.encode(LibRelationship.ADD_REL_TYPE_CONFIG, abi.encode(params_))
         );
     }
 
@@ -44,10 +41,7 @@ contract StoryProtocol {
             IIPOrg(ipOrg_),
             msg.sender,
             ModuleRegistryKeys.RELATIONSHIP_MODULE,
-            abi.encodeWithSelector(
-                LibRelationship.REMOVE_REL_TYPE_SELECTOR,
-                relType
-            )
+            abi.encode(LibRelationship.REMOVE_REL_TYPE_CONFIG, abi.encode(relType))
         );
     }
 }

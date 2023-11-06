@@ -42,13 +42,7 @@ library LibRelationship {
 
     address public constant PROTOCOL_LEVEL_RELATIONSHIP = address(0);
 
-    bytes4 public constant ADD_REL_TYPE_SELECTOR =
-        bytes4(
-            keccak256(
-                "_addRelationshipType((string,address,(uint8,uint8),uint8[],uint8[]))"
-            )
-        );
-    bytes4 public constant REMOVE_REL_TYPE_SELECTOR =
-        bytes4(keccak256("_removeRelationshipType(address,string)"));
-    bytes4 public constant LOL = bytes4(keccak256("_lol(address)"));
+    bytes32 public constant ADD_REL_TYPE_CONFIG = keccak256("ADD_REL_TYPE");
+    bytes32 public constant REMOVE_REL_TYPE_CONFIG = keccak256("REMOVE_REL_TYPE");
+
 }

@@ -50,8 +50,17 @@ contract RelationshipModule is BaseModule, IRelationshipModule {
         return address(0); // TODO
     }
 
-    function _configure(IIPOrg, address caller_, bytes calldata params_) virtual override internal {        
-        Address.functionCall(address(this), params_, "");
+    function _configure(IIPOrg ipOrg, address caller_, bytes calldata params_) virtual override internal {     
+        // TODO: check if caller is ipOrg owner or admin   
+        (bytes32 configType, bytes memory configData) = abi.decode(params_, (bytes32, bytes));
+        if (configType == LibRelationship.ADD_REL_TYPE_CONFIG) {
+            _addRelationshipType(abi.decode(configData, (LibRelationship.AddRelationshipTypeParams)));
+        } else if (configType == LibRelationship.REMOVE_REL_TYPE_CONFIG) {
+            string memory relType = abi.decode(configData, string);
+            _removeRelationshipType(address(ipOrg), relType);
+        } else {
+            revert Errors.RelationshipModule_InvalidConfigOperation();
+        }
     }
     
     // Internal method don't have selectors
