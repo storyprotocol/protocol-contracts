@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-/// @title Access Control Roles Library
+/// @title Access Control Library
 /// @notice Library for access control helpers and protocol role definitions.
 ///         These roles are used by the AccessControlSingleton, accessed by AccessControlled contracts.
 library AccessControl {
@@ -26,5 +26,8 @@ library AccessControl {
 
     // Role that can execute modules
     bytes32 constant MODULE_EXECUTOR_ROLE = keccak256("MODULE_EXECUTOR_ROLE");
+
+    // Role that can execute Hooks
+    bytes32 constant HOOK_CALLER_ROLE = keccak256("HOOK_CALLER_ROLE");
 
 }

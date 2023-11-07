@@ -331,4 +331,10 @@ library Errors {
 
     /// @notice The async operation is not supported in Sync hooks.
     error Hook_UnsupportedAsyncOperation();
+
+    /// @notice The callback function can only called by designated callback caller.
+    error Hook_OnlyCallbackCallerCanCallback(address current, address expected);
+
+    /// @notice Invalid async request ID.
+    error Hook_InvalidAsyncRequestId(bytes32 invalidRequestId);
 }
