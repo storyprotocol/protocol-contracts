@@ -20,7 +20,7 @@ forge-build:; forge build
 build :; npx hardhat compile
 
 # TODO: remove --no-match-path after refactor
-test :; forge test -vvv --no-match-path 'test/foundry/modules/*' 
+test :; forge test -vvv --no-match-path 'test/foundry/_old_modules/*' 
 
 snapshot :; forge snapshot
 
