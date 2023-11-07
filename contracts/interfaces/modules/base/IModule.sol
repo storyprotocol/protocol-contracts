@@ -19,14 +19,14 @@ interface IModule {
     /// It's up to the module to decode and encode params appropriately.
     /// @param ipOrg_ address of the IPOrg or zero address
     /// @param caller_ address requesting the execution
-    /// @param selfParams_ encoded params for module action
+    /// @param moduleParams_ encoded params for module action
     /// @param preHookParams_ encoded params for pre action hooks
     /// @param postHookParams_ encoded params for post action hooks
     /// @return result of the module action
     function execute(
         IIPOrg ipOrg_,
         address caller_,
-        bytes calldata selfParams_,
+        bytes calldata moduleParams_,
         bytes[] calldata preHookParams_,
         bytes[] calldata postHookParams_
     ) external returns (bytes memory result);

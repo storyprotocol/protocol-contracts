@@ -75,25 +75,25 @@ contract ModuleRegistry is AccessControlled, Multicall {
     /// Execution entrypoint, callable by any address on its own behalf.
     /// @param ipOrg_ address of the IPOrg, or address(0) for protocol-level stuff
     /// @param moduleKey_ short module descriptor
-    /// @param selfParams_ encoded params for module action
+    /// @param moduleParams_ encoded params for module action
     /// @param preHookParams_ encoded params for pre action hooks
     /// @param postHookParams_ encoded params for post action hooks
     /// @return encoded result of the module execution
     function execute(
         IIPOrg ipOrg_,
         string calldata moduleKey_,
-        bytes calldata selfParams_,
+        bytes calldata moduleParams_,
         bytes[] calldata preHookParams_,
         bytes[] calldata postHookParams_
     ) external returns (bytes memory) {
-        return _execute(ipOrg_, msg.sender, moduleKey_, selfParams_, preHookParams_, postHookParams_);
+        return _execute(ipOrg_, msg.sender, moduleKey_, moduleParams_, preHookParams_, postHookParams_);
     }
 
     /// Execution entrypoint, callable by any MODULE_EXECUTOR_ROLE holder on behalf of any address.
     /// @param ipOrg_ address of the IPOrg, or address(0) for protocol-level stuff
     /// @param caller_ address requesting the execution
     /// @param moduleKey_ short module descriptor
-    /// @param selfParams_ encoded params for module action
+    /// @param moduleParams_ encoded params for module action
     /// @param preHookParams_ encoded params for pre action hooks
     /// @param postHookParams_ encoded params for post action hooks
     /// @return encoded result of the module execution
@@ -101,11 +101,11 @@ contract ModuleRegistry is AccessControlled, Multicall {
         IIPOrg ipOrg_,
         address caller_,
         string calldata moduleKey_,
-        bytes calldata selfParams_,
+        bytes calldata moduleParams_,
         bytes[] calldata preHookParams_,
         bytes[] calldata postHookParams_
     ) external onlyRole(AccessControl.MODULE_EXECUTOR_ROLE) returns (bytes memory) {
-        return _execute(ipOrg_, caller_, moduleKey_, selfParams_, preHookParams_, postHookParams_);
+        return _execute(ipOrg_, caller_, moduleKey_, moduleParams_, preHookParams_, postHookParams_);
     }
 
     /// Configuration entrypoint, callable by any address on its own behalf.
@@ -138,7 +138,7 @@ contract ModuleRegistry is AccessControlled, Multicall {
         IIPOrg ipOrg_,
         address caller_,
         string calldata moduleKey_,
-        bytes calldata selfParams_,
+        bytes calldata moduleParams_,
         bytes[] calldata preHookParams_,
         bytes[] calldata postHookParams_
     ) private returns (bytes memory result) {
@@ -146,8 +146,8 @@ contract ModuleRegistry is AccessControlled, Multicall {
         if (address(module) == address(0)) {
             revert Errors.ModuleRegistry_ModuleNotRegistered(moduleKey_);
         }
-        result = module.execute(ipOrg_, caller_, selfParams_, preHookParams_, postHookParams_);
-        emit ModuleExecuted(address(ipOrg_), moduleKey_, caller_, selfParams_, preHookParams_, postHookParams_);
+        result = module.execute(ipOrg_, caller_, moduleParams_, preHookParams_, postHookParams_);
+        emit ModuleExecuted(address(ipOrg_), moduleKey_, caller_, moduleParams_, preHookParams_, postHookParams_);
         return result;
     }
 
