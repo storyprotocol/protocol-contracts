@@ -25,7 +25,8 @@ interface IIPAssetRegistry {
     /// @notice Emits when an IP asset has its status changed.
     event IPAssetStatusChanged(
         uint256 indexed ipAssetId_,
-        uint8 status_
+        uint8 oldStatus_,
+        uint8 newStatus_
     );
 
 }

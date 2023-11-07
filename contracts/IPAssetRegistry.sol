@@ -31,6 +31,7 @@ contract IPAssetRegistry is IIPAssetRegistry {
     uint256 numIPAssets = 0;
 
     /// @notice Restricts calls to only being from the owner or IPOrg of an IP asset.
+    /// TODO(leeren): Add more cohesive authorization once the core alpha refactor is completed.
     modifier onlyAuthorized(uint256 id) {
         address ipOrg = ipAssets[id].ipOrg;
         address owner = ipAssets[id].owner;
@@ -85,8 +86,9 @@ contract IPAssetRegistry is IIPAssetRegistry {
     /// @param status_ The new status of the IP asset.
     /// TODO(ramarti) Finalize authorization logic around the disputer.
     function setIPAssetStatus(uint256 ipAssetId_, uint8 status_) public onlyDisputer(ipAssetId_) {
+        uint8 oldStatus = ipAssets[ipAssetId_].status;
         ipAssets[ipAssetId_].status = status_;
-        emit IPAssetStatusChanged(ipAssetId_, status_);
+        emit IPAssetStatusChanged(ipAssetId_, oldStatus, status_);
     }
 
     /// @notice Transfers ownership of an IP asset to a new owner.
