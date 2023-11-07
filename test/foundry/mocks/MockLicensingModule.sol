@@ -5,14 +5,14 @@ import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/IT
 import { MockTermsProcessor } from "./MockTermsProcessor.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
-library LibMockIPAssetOrgConfig {
-    function getMockIPAssetOrgConfig()
+library LibMockIPOrgConfig {
+    function getMockIPOrgConfig()
         internal
         pure
-        returns (Licensing.IPAssetOrgConfig memory)
+        returns (Licensing.IPOrgConfig memory)
     {
         return
-            Licensing.IPAssetOrgConfig({
+            Licensing.IPOrgConfig({
                 nonCommercialConfig: Licensing.IpAssetConfig({
                     canSublicense: false,
                     ipAssetOrgRootLicenseId: 0
@@ -45,17 +45,17 @@ library LibMockIPAssetOrgConfig {
 }
 
 contract MockLicensingModule is ILicensingModule {
-    function configureIpAssetOrgLicensing(
+    function configureIpOrgLicensing(
         address ipAssetOrg,
-        Licensing.IPAssetOrgConfig memory config
+        Licensing.IPOrgConfig memory config
     ) external override {
         // No-op
     }
 
-    function getIpAssetOrgConfig(
+    function getIpOrgConfig(
         address
-    ) external pure override returns (Licensing.IPAssetOrgConfig memory) {
-        return LibMockIPAssetOrgConfig.getMockIPAssetOrgConfig();
+    ) external pure override returns (Licensing.IPOrgConfig memory) {
+        return LibMockIPOrgConfig.getMockIPOrgConfig();
     }
 
     function getNonCommercialLicenseURI()

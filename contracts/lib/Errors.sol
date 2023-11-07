@@ -41,6 +41,8 @@ library Errors {
     error BaseModule_HooksParamsLengthMismatch(uint8 hookType);
     error BaseModule_ZeroIpaRegistry();
     error BaseModule_ZeroModuleRegistry();
+    error BaseModule_ZeroLicenseRegistry();
+    error BaseModule_OnlyModuleRegistry();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            HookRegistry                                //
@@ -58,6 +60,13 @@ library Errors {
 
     /// @notice Call may only be processed by the relationship module.
     error BaseRelationshipProcessor_OnlyRelationshipModule();
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                           ModuleRegistry                               //
+    ////////////////////////////////////////////////////////////////////////////
+
+    error ModuleRegistry_ModuleNotRegistered(string moduleName);
+    error ModuleRegistry_CallerNotOrgOwner();
 
     ////////////////////////////////////////////////////////////////////////////
     //                                 CollectModule                          //
@@ -79,7 +88,7 @@ library Errors {
     error CollectModule_IPAssetNonExistent();
 
     /// @notice Collect module provided IP asset registry does not exist.
-    error CollectModule_IPAssetOrgNonExistent();
+    error CollectModule_IPOrgNonExistent();
 
     ////////////////////////////////////////////////////////////////////////////
     //                           CollectPaymentModule                         //
@@ -171,24 +180,23 @@ library Errors {
     error IPAccountRegistry_InitializationFailed();
 
     ////////////////////////////////////////////////////////////////////////////
-    //                                  IPAsset                               //
+    //                         LibUintArrayMask                               //
     ////////////////////////////////////////////////////////////////////////////
 
-    /// @notice IP asset array is invalid.
-    error IPAsset_InvalidIPAssetArray();
-
+    error LibUintArrayMask_EmptyArray();
+    error LibUintArrayMask_UndefinedArrayElement();
     /// @notice IP asset is invalid.
-    error IPAsset_InvalidType(IPAsset.IPAssetType ipAsset);
+    error LibUintArrayMask_InvalidType(IPAsset.IPAssetType ipAsset);
 
     ////////////////////////////////////////////////////////////////////////////
-    //                              IPAssetOrg                           //
+    //                              IPOrg                           //
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice IP identifier is over bounds.
-    error IPAssetOrg_IdOverBounds();
+    error IPOrg_IdOverBounds();
 
     /// @notice Licensing is not configured.
-    error IPAssetOrg_LicensingNotConfigured();
+    error IPOrg_LicensingNotConfigured();
 
     ////////////////////////////////////////////////////////////////////////////
     //                                LibDuration                             //
@@ -211,7 +219,7 @@ library Errors {
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice The franchise does not exist.
-    error LicensingModule_NonExistentIPAssetOrg();
+    error LicensingModule_NonExistentIPOrg();
 
     /// @notice The root license is not active
     error LicensingModule_RootLicenseNotActive(uint256 rootLicenseId);
@@ -254,7 +262,7 @@ library Errors {
     error RightsManager_SenderNotRevoker();
 
     /// @notice A create franchise root license must be used.
-    error RightsManager_UseCreateIPAssetOrgRootLicenseInstead();
+    error RightsManager_UseCreateIPOrgRootLicenseInstead();
 
     /// @notice The revoker may not be the zero address.
     error RightsManager_ZeroRevokerAddress();
@@ -271,7 +279,7 @@ library Errors {
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice Unable to relate to another franchise.
-    error RelationshipModule_CannotRelateToOtherIPAssetOrg();
+    error RelationshipModule_CannotRelateToOtherIPOrg();
 
     /// @notice The intent has already been registered.
     error RelationshipModule_IntentAlreadyRegistered();
@@ -290,6 +298,16 @@ library Errors {
 
     /// @notice The relationship destination IP type is not supported.
     error RelationshipModule_UnsupportedRelationshipDst();
+
+    error RelationshipModule_InvalidConfigOperation();
+
+    error RelationshipModule_CallerNotIpOrgOwner();
+    error RelationshipModule_InvalidRelatable();
+    error RelationshipModule_RelTypeNotSet(string relType);
+    error RelationshipModule_InvalidSrcAddress();
+    error RelationshipModule_InvalidDstAddress();
+    error RelationshipModule_InvalidSrcId();
+    error RelationshipModule_InvalidDstId();
 
     ////////////////////////////////////////////////////////////////////////////
     //                                RoyaltyNFT                              //

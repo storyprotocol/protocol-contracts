@@ -14,7 +14,7 @@
 // contract RightsManagerInternalTest is Test, ProxyHelper {
 
 //     IPAssetRegistry registry;
-//     MockERC721 mockIPAssetOrgFactory;
+//     MockERC721 mockIPOrgFactory;
 //     RightsManagerHarness rightsManager;
 //     address constant mockEventEmitter = address(0x1234567);
 //     address constant mockLicensingModule = address(0x23445);
@@ -25,14 +25,14 @@
 //     function setUp() public {
         
 //         registry = new IPAssetRegistry();
-//         mockIPAssetOrgFactory = new MockERC721();
+//         mockIPOrgFactory = new MockERC721();
 //         RightsManagerHarness impl = new RightsManagerHarness();
 //         rightsManager = RightsManagerHarness(
 //             _deployUUPSProxy(
 //                 address(impl),
 //                 abi.encodeWithSelector(
 //                     bytes4(keccak256(bytes("initialize((address,address,string,string,string,address,address))"))),
-//                     IPAsset.InitIPAssetOrgParams({
+//                     IPAsset.InitIPOrgParams({
 //                         registry: address(registry),
 //                         owner: address(this),
 //                         name: "name",
@@ -64,7 +64,7 @@
 //         uint256 tokenId = 1;
 //         rightsManager.mockMint(licenseHolder, tokenId);
 //         uint256 parentLicenseId = 0;
-//         (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         // TODO test events
 //         uint256 licenseId = rightsManager.createLicense_exposed(
 //             tokenId,
@@ -89,7 +89,7 @@
 //         uint256 tokenId = 1;
 //         rightsManager.mockMint(licenseHolder, tokenId);
 //         uint256 parentLicenseId = 0;
-//         (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         // TODO test events
 //         uint256 licenseId = rightsManager.createLicense_exposed(
 //             tokenId,
@@ -112,7 +112,7 @@
 //     function test_internal_create_license_nonRootLicense_notmockMinting() public {
 //         uint256 tokenId = 1;
 //         rightsManager.mockMint(licenseHolder, tokenId);
-//         (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         // mockMint root
 //         uint256 parentLicenseId = rightsManager.createLicense_exposed(
 //             tokenId,
@@ -151,7 +151,7 @@
 //     function test_internal_create_license_nonRootLicense_mockMinting() public {
 //         uint256 tokenId = 1;
 //         rightsManager.mockMint(licenseHolder, tokenId);
-//         (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms, MockTermsProcessor termsProcessor) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         // mockMint root
 //         uint256 parentLicenseId = rightsManager.createLicense_exposed(
 //             tokenId,
@@ -185,7 +185,7 @@
 //         uint256 tokenId = 1;
 //         rightsManager.mockMint(licenseHolder, tokenId);
 //         uint256 parentLicenseId = 0;
-//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         vm.expectRevert(Errors.RightsManager_ZeroRevokerAddress.selector);
 //         rightsManager.createLicense_exposed(
 //             tokenId,
@@ -203,7 +203,7 @@
 //     function test_revert_internal_createLicense_nonExistentId() public {
 //         uint256 tokenId = 1;
 //         uint256 parentLicenseId = 0;
-//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         vm.expectRevert(abi.encodeWithSignature("NonExistentID(uint256)", 1));
 //         rightsManager.createLicense_exposed(
 //             tokenId,
@@ -222,7 +222,7 @@
 //         uint256 tokenId = 1;
 //         rightsManager.mockMint(licenseHolder, tokenId);
 //         uint256 parentLicenseId = 0;
-//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         // mockMint root
 //         rightsManager.createLicense_exposed(
 //             tokenId,
@@ -254,7 +254,7 @@
 //         uint256 tokenId = 1;
 //         rightsManager.mockMint(licenseHolder, tokenId);
 //         uint256 parentLicenseId = 1;
-//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         // mockMint root
 //         rightsManager.createLicense_exposed(
 //             tokenId,
@@ -286,7 +286,7 @@
 //         uint256 tokenId = 1;
 //         rightsManager.mockMint(licenseHolder, tokenId);
 //         uint256 parentLicenseId = 1;
-//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         // mockMint root
 //         rightsManager.createLicense_exposed(
 //             tokenId,
@@ -322,7 +322,7 @@
 //         uint256 tokenId = 1;
 //         rightsManager.mockMint(licenseHolder, tokenId);
 //         uint256 parentLicenseId = 1;
-//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         // mockMint root
 //         rightsManager.createLicense_exposed(
 //             tokenId,
@@ -354,7 +354,7 @@
 //         uint256 tokenId = 1;
 //         rightsManager.mockMint(licenseHolder, tokenId);
 //         uint256 parentLicenseId = 1;
-//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         // mockMint root
 //         rightsManager.createLicense_exposed(
 //             tokenId,
@@ -386,7 +386,7 @@
 //         uint256 tokenId = 1;
 //         rightsManager.mockMint(licenseHolder, tokenId);
 //         uint256 parentLicenseId = 1;
-//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPAssetOrgConfig.getTermsProcessorConfig();
+//         (Licensing.TermsProcessorConfig memory terms,) = LibMockIPOrgConfig.getTermsProcessorConfig();
 //         // mockMint root
 //         rightsManager.createLicense_exposed(
 //             tokenId,

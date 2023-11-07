@@ -122,7 +122,7 @@ contract BaseCollectModuleTest is BaseTest {
     }
 
     /// @notice Tests collect module reverts on unauthorized calls.
-    function test_CollectModuleInitCollectInvalidCallerReverts(uint256 nonExistentIPAssetOrgId, uint8 ipAssetType) public createIpAsset(collector, ipAssetType)  {
+    function test_CollectModuleInitCollectInvalidCallerReverts(uint256 nonExistentIPOrgId, uint8 ipAssetType) public createIpAsset(collector, ipAssetType)  {
         vm.expectRevert(Errors.CollectModule_CallerUnauthorized.selector);
         vm.prank(address(this));
         collectModule.initCollect(Collect.InitCollectParams({
@@ -135,7 +135,7 @@ contract BaseCollectModuleTest is BaseTest {
     /// @notice Tests collect module reverts on duplicate initialization.
     function test_CollectModuleDuplicateInitReverts(uint8 ipAssetType) createIpAsset(collector, ipAssetType) public {
         vm.expectRevert(Errors.CollectModule_IPAssetAlreadyInitialized.selector);
-        vm.prank(address(ipAssetOrg));
+        vm.prank(address(ipOrg));
         _initCollectModule(defaultCollectNftImpl);
     }
 
@@ -152,7 +152,7 @@ contract BaseCollectModuleTest is BaseTest {
     /// @dev Helper function that performs collect module collection.
     /// @param ipAssetId_ The id of the IP asset being collected.
     function _collect(uint256 ipAssetId_) internal virtual returns (address, uint256) {
-        vm.prank(address(ipAssetOrg));
+        vm.prank(address(ipOrg));
         return collectModule.collect(Collect.CollectParams({
             ipAssetId: ipAssetId_,
             collector: collector,

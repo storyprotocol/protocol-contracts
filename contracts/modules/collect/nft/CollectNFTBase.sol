@@ -3,7 +3,7 @@ pragma solidity ^0.8.18;
 
 import { ICollectModule } from "contracts/interfaces/modules/collect/ICollectModule.sol";
 import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.sol";
-import { IIPAssetOrg } from "contracts/interfaces/ip-assets/IIPAssetOrg.sol";
+import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { Collect } from "contracts/lib/modules/Collect.sol";
@@ -21,7 +21,7 @@ abstract contract CollectNFTBase is ERC721, ICollectNFT {
     ICollectModule public collectModule;
 
     // The franchise registry that the IP asset is registered under.
-    IIPAssetOrg public ipAssetOrg;
+    IIPOrg public ipAssetOrg;
     
     // The registry of the IP Assets.
     IPAssetRegistry public registry;
@@ -59,7 +59,7 @@ abstract contract CollectNFTBase is ERC721, ICollectNFT {
 
         _initialized = true;
         collectModule = ICollectModule(msg.sender);
-        ipAssetOrg = IIPAssetOrg(initParams_.ipAssetOrg);
+        ipAssetOrg = IIPOrg(initParams_.ipAssetOrg);
         ipAssetId = initParams_.ipAssetId;
         registry = IPAssetRegistry(initParams_.registry);
 

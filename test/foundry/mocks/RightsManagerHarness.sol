@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-import { IPAssetOrg } from "contracts/ip-assets/IPAssetOrg.sol";
+import { IPOrg } from "contracts/ip-org/IPOrg.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { ILicensingModule } from "contracts/interfaces/modules/licensing/ILicensingModule.sol";
 import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 
-contract RightsManagerHarness is IPAssetOrg {
+contract RightsManagerHarness is IPOrg {
 
     function mockMint(address to, uint256 tokenId) external {
         _mint(to, tokenId);
