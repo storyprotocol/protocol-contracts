@@ -2,62 +2,121 @@
 pragma solidity ^0.8.19;
 
 import { IIPAssetRegistry } from "contracts/interfaces/IIPAssetRegistry.sol";
+import { Errors } from "contracts/lib/Errors.sol";
+import { IPAsset } from "contracts/lib/IPAsset.sol";
 
-/// @title IP Asset Registry
+/// @title Global IP Asset Registry
 /// @notice The source of truth for IP on Story Protocol.
-// TO-DO(@leeren): Add authorization around IP Asset registration and ownership transferring.
-// TO-DO(ramarti): Add authorization around IP Asset Org transfer of IP Assets.
+// TO-DO(@leeren): Migrate from consecutive ids to a global namehashing scheme.
 contract IPAssetRegistry is IIPAssetRegistry {
 
     /// @notice Core attributes that make up an IP Asset.
-    // TO-DO: Add other core IP Asset primitives (namely module linking).
-    struct IPAsset {
-        address owner; // TO-DO: Consider removing this in the future.
-        address ipAssetOrg;
+    struct IPA {
+        string name;                 // Human-readable identifier for the IP asset.
+        uint64 ipAssetType;          // Numerical code corresponding to IP type (e.g. patent, copyright, etc.)
+        uint8 status;                // Current status of the IP asset (e.g. active, expired, etc.)
+        address owner;               // Address of the current owner of the IP asset.
+        address initialRegistrant;   // Address of the initial registrant of the IP asset.
+        address ipOrg;               // Address of the governing entity of the IP asset.
+        bytes32 hash;                // A unique content hash of the IP asset for preserving integrity.
+        string url;                  // URL linked to additional metadata for the IP asset.
+        uint64 registrationDate;     // Timestamp for which the IP asset was first registered.
+        bytes data;                  // Any additional data to be tied to the IP asset.
     }
 
     /// @notice Mapping from IP asset ids to registry records.
-    mapping(uint256 => IPAsset) ipAssets;
+    mapping(uint256 => IPA) public ipAssets;
 
     /// @notice Tracks the total number of IP Assets in existence.
     uint256 numIPAssets = 0;
 
+    /// @notice Restricts calls to only being from the owner or IPOrg of an IP asset.
+    /// TODO(leeren): Add more cohesive authorization once the core alpha refactor is completed.
+    modifier onlyAuthorized(uint256 id) {
+        address ipOrg = ipAssets[id].ipOrg;
+        address owner = ipAssets[id].owner;
+        if (msg.sender != owner || msg.sender != ipOrg) {
+            revert Errors.Unauthorized();
+        }
+        _;
+    }
+
+    /// @notice Restricts calls to only being from the disputer of an IP asset.
+    /// TODO(ramarti): Add authorization for calls that manage dispute lifecycle changes.
+    modifier onlyDisputer(uint256 id) {
+        _;
+    }
+
     /// @notice Registers a new IP Asset.
-    /// @param owner_ The address of the IP Asset.
-    /// @param ipAssetOrg_ The address of the IP Asset Org.
-    // TO-DO(@leeren): Add registration authorization (likely based around IPOrg enrollment).
-    // TO_DO(ramarti): Add module registration via resolver / registry.
-    function register(address owner_, address ipAssetOrg_) public returns (uint256) {
+    /// @param params_ The IP asset registration parameters.
+    // TODO(ramarti): Add registration authorization via registration module.
+    // TODO(ramarti): Include module parameters and interfacing to registration.
+    function register(IPAsset.RegisterIpAssetParams calldata params_) public returns (uint256) {
         uint256 ipAssetId = numIPAssets++;
-        ipAssets[ipAssetId] = IPAsset({
-            owner: owner_,
-            ipAssetOrg: ipAssetOrg_
+        uint64 registrationDate = uint64(block.timestamp);
+
+        ipAssets[ipAssetId] = IPA({
+            name: params_.name,
+            ipAssetType: params_.ipAssetType,
+            status: 0, // TODO(ramarti): Define status types.
+            owner: params_.owner,
+            initialRegistrant: params_.owner,
+            ipOrg: params_.ipOrg,
+            hash: params_.hash,
+            url: params_.url,
+            registrationDate: registrationDate,
+            data: params_.data
         });
 
-        emit IPAssetRegistered(ipAssetId, owner_, ipAssetOrg_);
+        emit IPAssetRegistered(
+            ipAssetId,
+            params_.ipAssetType,
+            params_.owner,
+            params_.ipOrg,
+            params_.hash
+        );
+
+        emit IPAssetTransferred(ipAssetId, address(0), params_.owner);
+
         return ipAssetId;
     }
 
-    function setOwner(uint256 ipAssetId_, address owner_) public {
+    /// @notice Changes the status of an IP asset..
+    /// @param ipAssetId_ The identifier of the IP asset being transferred.
+    /// @param status_ The new status of the IP asset.
+    /// TODO(ramarti) Finalize authorization logic around the disputer.
+    function setIPAssetStatus(uint256 ipAssetId_, uint8 status_) public onlyDisputer(ipAssetId_) {
+        uint8 oldStatus = ipAssets[ipAssetId_].status;
+        ipAssets[ipAssetId_].status = status_;
+        emit IPAssetStatusChanged(ipAssetId_, oldStatus, status_);
+    }
+
+    /// @notice Transfers ownership of an IP asset to a new owner.
+    /// @param ipAssetId_ The identifier of the IP asset being transferred.
+    /// @param owner_ The new owner of the IP asset.
+    /// TODO(leeren) Add authorization around IPOrg transferring rights.
+    function setIPAssetOwner(uint256 ipAssetId_, address owner_) public onlyAuthorized(ipAssetId_) {
+        address prevOwner = ipAssets[ipAssetId_].owner;
         ipAssets[ipAssetId_].owner = owner_;
-        emit OwnerTransferred(ipAssetId_, owner_);
-    }
-
-    function setIpOrg(uint256 ipAssetId_, address ipAssetOrg_) public {
-        ipAssets[ipAssetId_].ipAssetOrg = ipAssetOrg_;
-        emit OrgTransferred(ipAssetId_, ipAssetOrg_);
-    }
-
-    /// @notice Gets the IP Asset Org that administers a specific IP Asset.
-    /// @param ipAssetId_ The id of the IP Asset being queried.
-    function ipAssetOrg(uint256 ipAssetId_) public returns (address) {
-        return ipAssets[ipAssetId_].ipAssetOrg;
+        emit IPAssetTransferred(ipAssetId_, prevOwner, owner_);
     }
 
     /// @notice Gets the owner of a specific IP Asset.
     /// @param ipAssetId_ The id of the IP Asset being queried.
     function ipAssetOwner(uint256 ipAssetId_) public returns (address) {
         return ipAssets[ipAssetId_].owner;
+    }
+
+    /// @notice Gets the status for a specific IP Asset.
+    /// @param ipAssetId_ The id of the IP Asset being queried.
+    function ipAssetStatus(uint256 ipAssetId_) public returns (uint8) {
+        return ipAssets[ipAssetId_].status;
+    }
+
+    /// @notice Gets the IP Asset Org that administers a specific IP Asset.
+    /// @param ipAssetId_ The id of the IP Asset being queried.
+    function ipAssetOrg(uint256 ipAssetId_) public returns (address) {
+        return ipAssets[ipAssetId_].ipOrg;
     }
 
 }
