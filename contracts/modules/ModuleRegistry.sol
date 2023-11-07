@@ -14,9 +14,9 @@ import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 /// or by MODULE_EXECUTOR_ROLE holders.
 contract ModuleRegistry is AccessControlled, Multicall {
 
-    event ProtocolModuleAdded(string indexed moduleKey, BaseModule module);
-    event ProtocolModuleRemoved(string indexed moduleKey, BaseModule module);
-    event ExecutedModule(
+    event ModuleAdded(address indexed ipOrg, string indexed moduleKey, BaseModule module);
+    event ModuleRemoved(address indexed ipOrg, string indexed moduleKey, BaseModule module);
+    event ModuleExecuted (
         address indexed ipOrg,
         string indexed moduleKey,
         address indexed caller,
@@ -33,6 +33,8 @@ contract ModuleRegistry is AccessControlled, Multicall {
 
     mapping(string => BaseModule) private _protocolModules;
 
+    address public constant PROTOCOL_LEVEL = address(0);
+
     constructor(address accessControl_) AccessControlled(accessControl_) { }
 
     /// Add a module to the protocol, that will be available for all IPOrgs.
@@ -48,7 +50,7 @@ contract ModuleRegistry is AccessControlled, Multicall {
             revert Errors.ZeroAddress();
         }
         _protocolModules[moduleKey] = moduleAddress;
-        emit ProtocolModuleAdded(moduleKey, moduleAddress);
+        emit ModuleAdded(PROTOCOL_LEVEL, moduleKey, moduleAddress);
     }
 
     /// Remove a module from the protocol (all IPOrgs)
@@ -62,7 +64,7 @@ contract ModuleRegistry is AccessControlled, Multicall {
         }
         BaseModule moduleAddress = _protocolModules[moduleKey];
         delete _protocolModules[moduleKey];
-        emit ProtocolModuleRemoved(moduleKey, moduleAddress);
+        emit ModuleRemoved(PROTOCOL_LEVEL, moduleKey, moduleAddress);
     }
 
     /// Get a module from the protocol, by its key.
@@ -145,7 +147,7 @@ contract ModuleRegistry is AccessControlled, Multicall {
             revert Errors.ModuleRegistry_ModuleNotRegistered(moduleKey_);
         }
         result = module.execute(ipOrg_, caller_, selfParams_, preHookParams_, postHookParams_);
-        emit ExecutedModule(address(ipOrg_), moduleKey_, caller_, selfParams_, preHookParams_, postHookParams_);
+        emit ModuleExecuted(address(ipOrg_), moduleKey_, caller_, selfParams_, preHookParams_, postHookParams_);
         return result;
     }
 
