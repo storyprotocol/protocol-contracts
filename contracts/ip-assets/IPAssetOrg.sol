@@ -44,6 +44,7 @@ contract IPAssetOrg is
     ) public initializer {
         __Multicall_init();
         __Ownable_init();
+        __ERC721_init(params_.name, params_.symbol);
         // TODO: Weird bug does not allow OZ to specify owner in init...
         _transferOwnership(params_.owner);
 
