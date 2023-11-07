@@ -103,19 +103,19 @@ contract IPAssetRegistry is IIPAssetRegistry {
 
     /// @notice Gets the owner of a specific IP Asset.
     /// @param ipAssetId_ The id of the IP Asset being queried.
-    function ipAssetOwner(uint256 ipAssetId_) public returns (address) {
+    function ipAssetOwner(uint256 ipAssetId_) public view returns (address) {
         return ipAssets[ipAssetId_].owner;
     }
 
     /// @notice Gets the status for a specific IP Asset.
     /// @param ipAssetId_ The id of the IP Asset being queried.
-    function ipAssetStatus(uint256 ipAssetId_) public returns (uint8) {
+    function ipAssetStatus(uint256 ipAssetId_) public view returns (uint8) {
         return ipAssets[ipAssetId_].status;
     }
 
     /// @notice Gets the IP Asset Org that administers a specific IP Asset.
     /// @param ipAssetId_ The id of the IP Asset being queried.
-    function ipAssetOrg(uint256 ipAssetId_) public returns (address) {
+    function ipAssetOrg(uint256 ipAssetId_) public view returns (address) {
         return ipAssets[ipAssetId_].ipOrg;
     }
 
