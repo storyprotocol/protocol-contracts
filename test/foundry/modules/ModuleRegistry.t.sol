@@ -26,7 +26,7 @@ contract ModuleRegistryTest is Test, AccessControlHelper {
         BaseModule.ModuleConstruction memory moduleConstruction = BaseModule.ModuleConstruction(
             IPAssetRegistry(address(0x123)),
             ModuleRegistry(address(0x983)),
-            address(0x123)
+            LicenseRegistry(address(0x123))
         );
         MockBaseModule module = new MockBaseModule(admin, moduleConstruction);
         vm.prank(admin);
@@ -38,7 +38,7 @@ contract ModuleRegistryTest is Test, AccessControlHelper {
         BaseModule.ModuleConstruction memory moduleConstruction = BaseModule.ModuleConstruction(
             IPAssetRegistry(address(0x123)),
             ModuleRegistry(address(0x983)),
-            address(0x123)
+            LicenseRegistry(address(0x123))
         );
         MockBaseModule module = new MockBaseModule(admin, moduleConstruction);
         vm.startPrank(admin);

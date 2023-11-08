@@ -83,7 +83,11 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
     }
 
     /// Relationship module supports configuration to add or remove relationship types
-    function _configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual override internal {
+    function _configure(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes calldata params_
+    ) virtual override internal returns (bytes memory) {
         _verifyConfigCaller(ipOrg_, caller_);    
         (bytes32 configType, bytes memory configData) = abi.decode(params_, (bytes32, bytes));
         if (configType == LibRelationship.ADD_REL_TYPE_CONFIG) {
@@ -94,6 +98,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         } else {
             revert Errors.RelationshipModule_InvalidConfigOperation();
         }
+        return "";
     }
 
     /// Auth check for caller, if wanting to configure a protocol level relationship type,
@@ -129,7 +134,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         } else if (relatable_ == LibRelationship.Relatables.IPORG_ENTRY) {
             return (address(ipOrg_), LibUintArrayMask._convertToMask(allowedTypes_));
         } else if (relatable_ == LibRelationship.Relatables.LICENSE) {
-            return (LICENSE_REGISTRY, 0);
+            return (address(LICENSE_REGISTRY), 0);
         } else if (relatable_ == LibRelationship.Relatables.ADDRESS) {
             return (LibRelationship.NO_ADDRESS_RESTRICTIONS, 0);
         } else if (relatable_ == LibRelationship.Relatables.EXTERNAL_NFT) {

@@ -81,10 +81,10 @@ contract ModuleRegistry is AccessControlled, Multicall {
     /// @return encoded result of the module execution
     function execute(
         IIPOrg ipOrg_,
-        string calldata moduleKey_,
-        bytes calldata moduleParams_,
-        bytes[] calldata preHookParams_,
-        bytes[] calldata postHookParams_
+        string memory moduleKey_,
+        bytes memory moduleParams_,
+        bytes[] memory preHookParams_,
+        bytes[] memory postHookParams_
     ) external returns (bytes memory) {
         return _execute(ipOrg_, msg.sender, moduleKey_, moduleParams_, preHookParams_, postHookParams_);
     }
@@ -137,10 +137,10 @@ contract ModuleRegistry is AccessControlled, Multicall {
     function _execute(
         IIPOrg ipOrg_,
         address caller_,
-        string calldata moduleKey_,
-        bytes calldata moduleParams_,
-        bytes[] calldata preHookParams_,
-        bytes[] calldata postHookParams_
+        string memory moduleKey_,
+        bytes memory moduleParams_,
+        bytes[] memory preHookParams_,
+        bytes[] memory postHookParams_
     ) private returns (bytes memory result) {
         BaseModule module = _protocolModules[moduleKey_];
         if (address(module) == address(0)) {

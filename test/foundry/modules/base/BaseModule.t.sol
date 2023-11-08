@@ -22,19 +22,40 @@ contract BaseModuleTest is Test {
     function setUp() public {
         ipOrg = new MockIPOrg(admin);
         vm.prank(admin);
-        module = new MockBaseModule(admin, BaseModule.ModuleConstruction(ipaRegistry, moduleRegistry, address(888)));
+        module = new MockBaseModule(
+            admin,
+            BaseModule.ModuleConstruction(
+                ipaRegistry,
+                moduleRegistry,
+                LicenseRegistry(address(888))
+            )
+        );
     }
 
     function test_baseModule_revert_constructorIpaRegistryIsZero() public {
         vm.prank(admin);
         vm.expectRevert(Errors.BaseModule_ZeroIpaRegistry.selector);
-        new MockBaseModule(admin, BaseModule.ModuleConstruction(IPAssetRegistry(address(0)), moduleRegistry, address(888)));
+        new MockBaseModule(
+            admin,
+            BaseModule.ModuleConstruction(
+                IPAssetRegistry(address(0)),
+                moduleRegistry,
+                LicenseRegistry(address(888))
+            )
+        );
     }
 
     function test_baseModule_revert_constructorModuleRegistryIsZero() public {
         vm.prank(admin);
         vm.expectRevert(Errors.BaseModule_ZeroModuleRegistry.selector);
-        module = new MockBaseModule(admin, BaseModule.ModuleConstruction(ipaRegistry, ModuleRegistry(address(0)), address(888)));
+        module = new MockBaseModule(
+            admin,
+            BaseModule.ModuleConstruction(
+                ipaRegistry,
+                ModuleRegistry(address(0)),
+                LicenseRegistry(address(888))
+            )
+        );
     }
 
     function test_baseModule_setup() public {

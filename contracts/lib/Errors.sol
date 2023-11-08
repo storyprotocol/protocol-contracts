@@ -227,6 +227,9 @@ library Errors {
     /// @notice The revoker may not be a zero address.
     error LicensingModule_ZeroRevokerAddress();
 
+    error LicensingModule_CallerNotIPOrgOwner();
+    error LicensingModule_InvalidConfigType();
+
     ////////////////////////////////////////////////////////////////////////////
     //                              RightsManager                             //
     ////////////////////////////////////////////////////////////////////////////

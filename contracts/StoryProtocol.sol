@@ -9,6 +9,7 @@ import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
 import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
+import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 contract StoryProtocol {
     // TODO: should this be immutable, or should the protocol be able to change factory
@@ -77,5 +78,25 @@ contract StoryProtocol {
             postHooksData_
         );
         return abi.decode(result, (uint256));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                            Licensing                                   //
+    ////////////////////////////////////////////////////////////////////////////
+
+    function configureIpOrgLicensing(
+        address ipOrg_,
+        address caller_,
+        Licensing.License memory license_
+    ) external returns (uint256 licenseId, uint256 relId) {
+        bytes memory result = MODULE_REGISTRY.execute(
+            IIPOrg(ipOrg_),
+            caller_,
+            ModuleRegistryKeys.LICENSING_MODULE,
+            abi.encode(Licensing.IPORG_TERMS_CONFIG, license_),
+            new bytes[](0),
+            new bytes[](0)
+        );
+        return abi.decode(result, (uint256, uint256));
     }
 }

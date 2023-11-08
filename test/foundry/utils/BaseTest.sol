@@ -90,7 +90,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             BaseModule.ModuleConstruction({
                 ipaRegistry: registry,
                 moduleRegistry: moduleRegistry,
-                licenseRegistry: address(123)
+                licenseRegistry: LicenseRegistry(address(123))
             }),
             address(accessControl)
         );

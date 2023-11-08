@@ -1,106 +1,83 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.13;
-import { Errors } from "contracts/lib/Errors.sol";
-import { IPOrgFactory } from "contracts/ip-org/IPOrgFactory.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
-import { AccessControl } from "contracts/lib/AccessControl.sol";
-import { ITermsProcessor } from "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
-import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
-import { IERC5218 } from "contracts/interfaces/modules/licensing/IERC5218.sol";
-import { ILicensingModule } from "contracts/interfaces/modules/licensing/ILicensingModule.sol";
+pragma solidity ^0.8.19;
+
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
+import { Errors } from "contracts/lib/Errors.sol";
+import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
+import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
+import { ProtocolRelationships } from "contracts/lib/modules/ProtocolRelationships.sol";
+import { BaseModule } from "contracts/modules/base/BaseModule.sol";
+import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
+import { RelationshipModule } from "../relationships/RelationshipModule.sol";
 
+contract LicensingModule is BaseModule {
 
-/// @title LicensingModule
-/// @author Raul Martinez
-/// @notice Contract for configuring and managing licensing for a IPOrg.
-/// A licensing framework may be definbed through a IPOrgConfig, which is set by the IPOrg owner.
-/// The non commercial license URI is set by a protocol admin key, since it will be common for all Story Protocol
-contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
+    RelationshipModule public immutable RELATIONSHIP_MODULE;
 
-    struct LicensingModuleStorage {
-        /// ipAssetOrgId => IPOrgConfig
-        mapping(address => Licensing.IPOrgConfig) ipAssetOrgConfigs;
-        string nonCommercialLicenseURI;
+    constructor(ModuleConstruction memory params_) BaseModule(params_) {
+        RELATIONSHIP_MODULE = RelationshipModule(
+            address(
+                MODULE_REGISTRY.moduleForKey(
+                    ModuleRegistryKeys.RELATIONSHIP_MODULE
+                )
+            )
+        );
     }
 
-    // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.licensing-module.storage")) - 1)))
-    bytes32 private constant _STORAGE_LOCATION = 0x80b4ea8c21e869c68acfd93c8ef2c0d867835b92e2fded15a1d74d7e7ff3312d;
+    function _hookRegistryAdmin()
+        internal
+        view
+        virtual
+        override
+        returns (address)
+    {
+        return address(0);
+    }
 
-    IPOrgFactory public immutable IP_ASSET_ORG_FACTORY;
-
-    constructor(address franchise_) {
-        if (franchise_ == address(0)) {
-            revert Errors.ZeroAddress();
+    function _configure(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes calldata params_
+    ) virtual override internal returns (bytes memory) {
+        (bytes32 configType, bytes memory configData) = abi.decode(params_, (bytes32, bytes));
+        if (configType == Licensing.IPORG_TERMS_CONFIG) {
+            return _setIpOrgLicensingTerms(ipOrg_, caller_, configData);
+        } else {
+            // TODO: check if caller is License holder and can modify something from his license?
         }
-        IP_ASSET_ORG_FACTORY = IPOrgFactory(franchise_);
-        _disableInitializers();
+        revert Errors.LicensingModule_InvalidConfigType();
     }
 
-    function initialize(address accessControl_, string calldata nonCommercialLicenseUri_) public initializer {
-        __AccessControlledUpgradeable_init(accessControl_);
-        _getLicensingModuleStorage().nonCommercialLicenseURI = nonCommercialLicenseUri_;
-    }
-
-    function _getLicensingModuleStorage() internal pure returns (LicensingModuleStorage storage $) {
-        bytes32 position = _STORAGE_LOCATION;
-        assembly {
-            $.slot := position
+    function _setIpOrgLicensingTerms(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes memory params_
+    ) virtual internal returns (bytes memory) {
+        if (ipOrg_.owner() != caller_) {
+            revert Errors.LicensingModule_CallerNotIPOrgOwner();
         }
+        Licensing.License memory license = abi.decode(params_, (Licensing.License));
+        uint256 licenseId = LICENSE_REGISTRY.addLicense(license);
+        LibRelationship.CreateRelationshipParams memory addRelParams = LibRelationship.CreateRelationshipParams({
+            relType: ProtocolRelationships.IPORG_TERMS_REL_TYPE,
+            srcAddress: address(ipOrg_),
+            srcId: 0,
+            srcType: 0,
+            dstAddress: address(LICENSE_REGISTRY),
+            dstId: licenseId,
+            dstType: 0
+        });
+        uint256 relId = abi.decode(
+            MODULE_REGISTRY.execute(
+                ipOrg_,
+                ModuleRegistryKeys.RELATIONSHIP_MODULE,
+                abi.encode(addRelParams),
+                new bytes[](0),
+                new bytes[](0)
+            ),
+            (uint256)
+        );
+        return abi.encode(licenseId, relId);
     }
 
-    function getNonCommercialLicenseURI() public view returns (string memory) {
-        return _getLicensingModuleStorage().nonCommercialLicenseURI;
-    }
-
-    
-    /// Set the URI for non-commercial licenses across Story Protocol. Setting this does NOT affect existing licenses, only new ones.
-    /// @param nonCommercialLicenseURI_ The URI to set for non-commercial licenses
-    function setNonCommercialLicenseURI(string calldata nonCommercialLicenseURI_) external onlyRole(AccessControl.LICENSING_MANAGER_ROLE) {
-        _getLicensingModuleStorage().nonCommercialLicenseURI = nonCommercialLicenseURI_;
-        emit NonCommercialLicenseUriSet(nonCommercialLicenseURI_);
-    }
-
-    
-    /// Set the IPOrgConfig for a IPOrg, configuring its licensing framework.
-    /// @dev if setting root licenses, they should be active. A revoker address must be set, and it will be
-    /// common for all licenses in the IPOrg.
-    /// @param ipAssetOrg_ The address of the IPOrg to set the config for
-    /// @param config_ The IPOrgConfig to set
-    function configureIpOrgLicensing(address ipAssetOrg_, Licensing.IPOrgConfig memory config_) external {
-        if (msg.sender != IIPOrg(ipAssetOrg_).owner()) {
-            revert Errors.Unauthorized();
-        }
-        _verifyRootLicense(ipAssetOrg_, config_.nonCommercialConfig.ipAssetOrgRootLicenseId);
-        _verifyRootLicense(ipAssetOrg_, config_.commercialConfig.ipAssetOrgRootLicenseId);
-        if (config_.revoker == address(0)) {
-            revert Errors.LicensingModule_ZeroRevokerAddress();
-        }
-        LicensingModuleStorage storage $ = _getLicensingModuleStorage();
-        $.ipAssetOrgConfigs[ipAssetOrg_] = config_;
-        emit IPOrgConfigSet(ipAssetOrg_, config_);
-    }
-
-    function _verifyRootLicense(address ipAssetOrg_, uint256 rootLicenseId_) internal view {
-        if (rootLicenseId_ != 0) {
-            IERC5218 rightsManager = IERC5218(ipAssetOrg_);
-            if (address(rightsManager) == address(0)) {
-                // IP_ASSET_ORG_FACTORY.ownerOf(ipAssetOrgId) should take care of this,
-                // but leaving it in case IPAssetRegistration creation fails somewhow.
-                revert Errors.LicensingModule_NonExistentIPOrg();
-            }
-            if (!rightsManager.isLicenseActive(rootLicenseId_)) {
-                revert Errors.LicensingModule_RootLicenseNotActive(rootLicenseId_);
-            }
-        }
-    }
-
-    function getIpOrgConfig(address ipAssetOrg_) public view returns (Licensing.IPOrgConfig memory) {
-        return _getLicensingModuleStorage().ipAssetOrgConfigs[ipAssetOrg_];
-    }
-
-    function _authorizeUpgrade(
-        address newImplementation_
-    ) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
 }
