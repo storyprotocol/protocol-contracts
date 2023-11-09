@@ -337,4 +337,7 @@ library Errors {
 
     /// @notice Invalid async request ID.
     error Hook_InvalidAsyncRequestId(bytes32 invalidRequestId);
+
+    /// @notice The address is not the owner of the token.
+    error TokenGatedHook_NotTokenOwner(address tokenAddress, address ownerAddress);
 }
