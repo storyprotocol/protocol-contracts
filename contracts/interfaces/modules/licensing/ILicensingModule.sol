@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 import { ZeroAddress, Unauthorized } from "contracts/errors/General.sol";
-import { IPOrgFactory } from "contracts/ip-org/IPOrgFactory.sol";
+import { IPOrgController } from "contracts/ip-org/IPOrgController.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { ITermsProcessor } from "./terms/ITermsProcessor.sol";

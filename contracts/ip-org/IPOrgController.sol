@@ -1,0 +1,211 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.19;
+
+import { Clones } from '@openzeppelin/contracts/proxy/Clones.sol';
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
+import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
+import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
+import { Errors } from "contracts/lib/Errors.sol";
+import { IIPOrgController } from "contracts/interfaces/ip-org/IIPOrgController.sol";
+import { IPOrg } from "contracts/ip-org/IPOrg.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
+
+/// @title IPOrg Factory Contract
+/// @custom:version 0.1.0
+/// TODO(leeren): Deprecate upgradeability once IPOrg contracts are finalized.
+contract IPOrgController is
+    UUPSUpgradeable,
+    AccessControlledUpgradeable,
+    IIPOrgController
+{
+
+    /// @notice Tracks ownership and registration of IPOrgs.
+    /// TODO(leeren): Add tracking for allowlisted callers of each ipOrg.
+    /// TODO(leeren): Add deterministic identifiers for ipOrgs using CREATE2.
+    struct IPOrgRecord {
+        address owner;
+        address pendingOwner;
+    }
+
+    /// @custom:storage-location erc7201:story-protocol.ip-org-factory.storage
+    struct IPOrgControllerStorage {
+        /// @dev Tracks registered IP Orgs through records of ownership.
+        mapping(address => IPOrgRecords) ipOrgs;
+        /// @dev Tracks owner of the IP Org Controller.
+        address owner;
+    }
+
+    /// @notice Implementation address used for all IP Orgs.
+    /// TODO(leeren): Make this immutable and assigned via constructor.
+    address public IP_ORG_IMPL;
+
+    bytes32 private constant _STORAGE_LOCATION = bytes32(uint256(keccak256("story-protocol.ip-org-factory.storage")) - 1);
+
+    /// @notice Initializes the IP Org Controller
+    /// @param accessControl_ Address of the contract responsible for access control.
+    /// TODO(leeren): Deprecate this function in favor of an immutable factory.
+    function initialize(address ipOrgImpl_, address accessControl_) public initializer {
+        IP_ORG_IMPL = ipOrgImpl;
+        __UUPSUpgradeable_init();
+        __AccessControlledUpgradeable_init(accessControl_);
+    }
+
+    /// @notice Retrieves the current owner of an IP Org.
+    /// @param ipOrg_ The address of the IP Org being queried.
+    function ownerOf(address ipOrg_) external view returns (address) {
+        IPOrgRecord record = _ipOrgRecord(ipOrg_);
+        return record.owner;
+    }
+
+    /// @notice Returns whether an IP Org has been officially registered.
+    /// @param ipOrg_ The address of the IP Org being queried.
+    function isIPOrg(address ipOrg_) external view returns (address) {
+        IPOrgControllerStorage storage $ = _getIpOrgFactoryStorage();
+        return $.ipOrgs[ipOrg_] != address(0);
+    }
+
+    /// @notice Retrieves the pending owner of an IP Org.
+    /// @dev A zero return address implies no ownership transfer is in process.
+    /// @param ipOrg_ The address of the IP Org being queried.
+    function pendingOwnerOf(address ipOrg_) external view returns (address pendingOwner) {
+        IPOrgRecord record = _ipOrgRecord(ipOrg_);
+        return record.pendingOwner;
+    }
+
+    /// @notice Initiates transfer of ownership for an IP Org.
+    /// @param ipOrg_ The address of the IP Org transferring ownership.
+    /// @param newOwner_ The address of the new IP Org owner.
+    function transferOwner(address ipOrg_, address newOwner_) external {
+        IPOrgRecord record = _ipOrgRecord(ipOrg_);
+
+        // Ensure the current IP Org owner is initiating the transfer.
+        if (record.owner != msg.sender) {
+            revert Errors.IPOrgController_InvalidIPOrgOwner();
+        }
+
+        // Ensure the proposed new owner is not the zero address.
+        if (newOwner_ == address(0)) {
+            revert Errors.IPOrgController_InvalidNewIPOrgOwner();
+        }
+
+        record.pendingOwner = newOwner_;
+        emit PendingOwnerSet(newOwner_);
+    }
+
+    /// @notice Cancels the transferring of ownership of an IP Org.
+    /// @param ipOrg_ The address of the IP Org transferring ownership.
+    function cancelOwnerTransfer(address ipOrg_) external {
+        IPOrgRecord record = _ipOrgRecord(ipOrg_);
+
+        // Ensure the current IP Org owner is canceling the transfer.
+        if (record.owner != msg.sender) {
+            revert Errors.IPOrgController_InvalidIPOrgOwner();
+        }
+
+        // Ensure an ongoing ownership transfer has actually initiated.
+        if (record.pendingOwner == address(0)) {
+            revert Errors.IPOrgController_OwnerTransferUninitialized();
+        }
+
+        delete record.pendingOwner;
+        emit PendingOwnerSet(address(0));
+    }
+
+    /// @notice Accepts the transferring of ownership of an IP Org.
+    /// @param ipOrg_ The address of the IP Org being transferred.
+    function acceptOwnerTransfer(address ipOrg_) external {
+        IPOrgRecord record = _ipOrgRecord(ipOrg_);
+
+        // Ensure the pending IP Org owner is accepting the ownership transfer.
+        if (record.pendingOwner != msg.sender)  {
+            revert Errors.IPOrgController_InvalidIPOrgOwner();
+        }
+
+        // Set the owner of the IP Org contract itself.
+        IIPOrg(ipOrg_).setOwner(msg.sender);
+
+        // Reset the pending owner.
+        emit PendingOwnerSet(address(0));
+        delete record.pendingOwner;
+
+        record.owner = msg.sender;
+        emit OwnerTransferred(ipOrg_, record.owner, msg.sender);
+    }
+
+    /// @notice Registers a new IP Org.
+    /// @param params_ Parameters required for ipAssetOrg creation.
+    /// TODO: Converge on core primitives utilized for ipAssetOrg management.
+    /// TODO: Add module configurations to the IP Org registration process.
+    function registerIpOrg(
+        address owner_,
+        string name_,
+        string symbol_,
+        IIPOrgMetadataRenderer renderer_,
+        bytes memory rendererInitData__
+    ) public returns (address ipOrg) {
+        // Check that the owner is a non-zero address.
+        if (owner == address(0)) {
+            revert Errors.ZeroAddress();
+        }
+
+        ipOrg = Clones.clone(IP_ORG_IMPL);
+        IIPOrg(ipOrg).initialize(
+            name_,
+            symbol_,
+            renderer_,
+            rendererInitData_
+        );
+
+        // Set the registration status of the IP Asset Org to be true.
+        IPOrgControllerStorage storage $ = _getIpOrgFactoryStorage();
+
+        emit IPOrgRegistered(
+            msg.sender,
+            ipAssetOrg,
+            params_.name,
+            params_.symbol,
+            params_.metadataUrl
+        );
+        return ipAssetOrg;
+
+    }
+
+    /// @dev Gets the ownership record of an IP Org.
+    /// @param ipOrg_ The address of the IP Org being queried.
+    function _ipOrgRecord(address ipOrg_) internal returns (IPOrgRecord storage record) {
+        IPOrgControllerStorage storage $ = _getIpOrgFactoryStorage();
+        record = $.ipOrgs[ipOrg_];
+        if (record.owner == address(0)) {
+            revert Errors.IPOrgController_IPOrgNonExistent();
+        }
+    }
+
+    /// @dev Checks whether an IP Org exists, throwing if not.
+    /// @param ipOrg_ The address of the IP Org being queried.
+    function _assertIPOrgExists(address ipOrg_) internal {
+        IPOrgControllerStorage storage $ = _getIpOrgFactoryStorage();
+        if ($.ipOrgs[ipOrg_] == address(0)) {
+            revert Errors.IPOrgController_IPOrgNonExistent();
+        }
+    }
+
+    /// @dev Authorizes upgrade to a new contract address via UUPS.
+    function _authorizeUpgrade(address) 
+        internal 
+        virtual 
+        override 
+        onlyRole(AccessControl.UPGRADER_ROLE) {}
+
+
+    /// @dev Retrieves the ERC-1967 storage slot for the IP Org Controller.
+    function _getIpOrgControllerStorage()
+        private
+        pure
+        returns (IPOrgControllerStorage storage $)
+    {
+        assembly {
+            $.slot := _STORAGE_LOCATION
+        }
+    }
+}

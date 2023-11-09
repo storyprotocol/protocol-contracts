@@ -7,7 +7,6 @@ import { IPAsset } from "contracts/lib/IPAsset.sol";
 
 /// @title Global IP Asset Registry
 /// @notice The source of truth for IP on Story Protocol.
-// TO-DO(@leeren): Migrate from consecutive ids to a global namehashing scheme.
 contract IPAssetRegistry is IIPAssetRegistry {
 
     /// @notice Core attributes that make up an IP Asset.
@@ -24,18 +23,25 @@ contract IPAssetRegistry is IIPAssetRegistry {
         bytes data;                  // Any additional data to be tied to the IP asset.
     }
 
+    uint256 public immutable IP_ORG_CONTROLLER;
+
     /// @notice Mapping from IP asset ids to registry records.
     mapping(uint256 => IPA) public ipAssets;
 
     /// @notice Tracks the total number of IP Assets in existence.
     uint256 numIPAssets = 0;
 
-    /// @notice Restricts calls to only being from the owner or IPOrg of an IP asset.
-    /// TODO(leeren): Add more cohesive authorization once the core alpha refactor is completed.
-    modifier onlyAuthorized(uint256 id) {
+    /// @notice Restricts calls to only authorized IP Orgs of the IP Asset.
+    /// TODO(leeren): Add authorization around IP owner once IP Orgs are done.
+    modifier onlyIPOrg(uint256 id) {
+        // Ensure the caller is an enrolled IPOrg.
+        if (!IP_ORG_CONTROLLER.isIPOrg(msg.sender)) {
+            revert Errors.Unauthorized();
+        }
+
+        // If the IP is already enrolled, ensure the caller is its IP Org.
         address ipOrg = ipAssets[id].ipOrg;
-        address owner = ipAssets[id].owner;
-        if (msg.sender != owner || msg.sender != ipOrg) {
+        if (ipOrg != address(0) && ipOrg != msg.sender) {
             revert Errors.Unauthorized();
         }
         _;
@@ -47,6 +53,12 @@ contract IPAssetRegistry is IIPAssetRegistry {
         _;
     }
 
+    /// @notice Initializes the Global IP Asset Registry.
+    /// @param ipOrgController Address of the IP Org Controller contract.
+    constructor(address ipOrgController_) {
+        IP_ORG_CONTROLLER = ipOrgController_;
+    }
+    
     /// @notice Registers a new IP Asset.
     /// @param params_ The IP asset registration parameters.
     // TODO(ramarti): Add registration authorization via registration module.

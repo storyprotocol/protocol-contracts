@@ -236,13 +236,4 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         );
         return abi.encode(relationshipId);
     }
-
-    function _hookRegistryKey(
-        IIPOrg ipOrg_,
-        address,
-        bytes calldata params_
-    ) internal view virtual override returns(bytes32) {
-        LibRelationship.CreateRelationshipParams memory createParams = abi.decode(params_, (LibRelationship.CreateRelationshipParams));
-        return keccak256(abi.encode(address(ipOrg_), createParams.relType));
-    }
 }

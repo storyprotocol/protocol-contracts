@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 import { Errors } from "contracts/lib/Errors.sol";
-import { IPOrgFactory } from "contracts/ip-org/IPOrgFactory.sol";
+import { IPOrgController } from "contracts/ip-org/IPOrgController.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
@@ -28,13 +28,13 @@ contract LicensingModule is ILicensingModule, AccessControlledUpgradeable {
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.licensing-module.storage")) - 1)))
     bytes32 private constant _STORAGE_LOCATION = 0x80b4ea8c21e869c68acfd93c8ef2c0d867835b92e2fded15a1d74d7e7ff3312d;
 
-    IPOrgFactory public immutable IP_ASSET_ORG_FACTORY;
+    IPOrgController public immutable IP_ASSET_ORG_FACTORY;
 
     constructor(address franchise_) {
         if (franchise_ == address(0)) {
             revert Errors.ZeroAddress();
         }
-        IP_ASSET_ORG_FACTORY = IPOrgFactory(franchise_);
+        IP_ASSET_ORG_FACTORY = IPOrgController(franchise_);
         _disableInitializers();
     }
 

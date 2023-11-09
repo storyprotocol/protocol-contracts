@@ -33,13 +33,12 @@ library IPAsset {
     }
 
     struct CreateIpAssetParams {
-        IPAsset.IPAssetType ipAssetType;
+        IPAsset.IPAssetType ipOrgAssetType;
+        uint64 ipAssetType;
         string name;
-        string description;
+        bytes32 hash;
         string mediaUrl;
-        address to;
-        uint256 parentIpOrgId;
-        bytes collectData;
+        bytes ipData;
     }
 
 }

@@ -128,12 +128,5 @@ abstract contract BaseModule is IModule, HookRegistry {
     function _configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal;
     function _verifyExecution(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal {}
     function _performAction(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory result) {}
-    
-    /// @dev Generates a registry key based on module execution parameters.
-    /// This function should be overridden in derived contracts to provide the actual logic for generating the registry key.
-    /// @param ipOrg_ The address of the IPOrg.
-    /// @param caller_ The address requesting the execution.
-    /// @param params_ The encoded parameters for module action.
-    /// @return The generated registry key.
-    function _hookRegistryKey(IIPOrg ipOrg_, address caller_, bytes calldata params_) internal view virtual returns(bytes32);
+
 }

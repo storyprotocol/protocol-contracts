@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import { IIPOrgFactory } from "contracts/interfaces/ip-org/IIPOrgFactory.sol";
+import { IIPOrgController } from "contracts/interfaces/ip-org/IIPOrgController.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 import { Errors } from "contracts/lib/Errors.sol";
@@ -12,17 +12,17 @@ import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol
 
 contract StoryProtocol {
     // TODO: should this be immutable, or should the protocol be able to change factory
-    IIPOrgFactory public immutable FACTORY;
+    IIPOrgController public immutable FACTORY;
     ModuleRegistry public immutable MODULE_REGISTRY;
 
-    constructor(IIPOrgFactory ipOrgFactory_, ModuleRegistry moduleRegistry_) {
+    constructor(IIPOrgController ipOrgController_, ModuleRegistry moduleRegistry_) {
         if (
-            address(ipOrgFactory_) == address(0) ||
+            address(ipOrgController_) == address(0) ||
             address(moduleRegistry_) == address(0)
         ) {
             revert Errors.ZeroAddress();
         }
-        FACTORY = ipOrgFactory_;
+        FACTORY = ipOrgController_;
         MODULE_REGISTRY = moduleRegistry_;
     }
 

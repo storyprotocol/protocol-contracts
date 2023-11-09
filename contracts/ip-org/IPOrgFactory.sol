@@ -1,39 +1,46 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.19;
 
-import { Clones } from '@openzeppelin/contracts/proxy/Clones.sol';
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 import { Errors } from "contracts/lib/Errors.sol";
-import { LicenseRegistry } from "contracts/modules/licensing/LicenseRegistry.sol";
-import { IIPOrgFactory } from "contracts/interfaces/ip-org/IIPOrgFactory.sol";
+import { IIPOrgController } from "contracts/interfaces/ip-org/IIPOrgController.sol";
 import { IPOrg } from "contracts/ip-org/IPOrg.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 
-/// @notice IP Organization Factory Contract
-/// TODO(ramarti): Extend the base hooks contract utilized by SP modules.
-/// TODO: Converge on upgradeability and IPOrg template setting
-contract IPOrgFactory is
+/// @title IPOrg Factory Contract
+/// @custom:version 0.1.0
+/// TODO(leeren): Deprecate upgradeability once IPOrg contracts are finalized.
+contract IPOrgController is
     UUPSUpgradeable,
     AccessControlledUpgradeable,
-    IIPOrgFactory
+    IIPOrgController
 {
 
-    /// @notice Base template implementation contract used for new IP Asset Org creation.
-    address public immutable IP_ORG_IMPL = address(new IPOrg());
+    /// @notice Tracks ownership and registration of IPOrgs.
+    /// TODO(leeren): Add tracking for allowlisted callers of each ipOrg.
+    /// TODO(leeren): Add deterministic identifiers for ipOrgs using CREATE2.
+    struct IPOrgRecord {
+        address owner;
+        address pendingOwner;
+    }
 
-    string private constant _VERSION = "0.1.0";
-    
-    // TODO(@leeren): Fix storage hash
-    // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.ip-asset-org-factory.storage")) - 1)))
-    bytes32 private constant _STORAGE_LOCATION = 0x1b0b8fa444ff575656111a4368b8e6a743b70cbf31ffb9ee2c7afe1983f0e378;
-
-    /// @custom:storage-location erc7201:story-protocol.ip-asset-org-factory.storage
-    // TODO: Extend IP asset org storage to support other relevant configurations
-    struct IPOrgFactoryStorage {
+    /// @custom:storage-location erc7201:story-protocol.ip-org-factory.storage
+    struct IPOrgControllerStorage {
         /// @dev Tracks mappings from ipAssetOrg to whether they were registered.
         mapping(address => bool) registered;
+    }
+
+    bytes32 private constant _STORAGE_LOCATION = bytes32(uint256(keccak256("story-protocol.ip-org-factory.storage")) - 1);
+
+    /// @notice Initializes the IPOrgController contract.
+    /// @param accessControl_ Address of the contract responsible for access control.
+    /// TODO(leeren): Deprecate this function in favor of an immutable factory.
+    function initialize(address accessControl_) public initializer {
+        __UUPSUpgradeable_init();
+        __AccessControlledUpgradeable_init(accessControl_);
     }
 
     /// @notice Checks if an address is a valid IP Asset Organization.
@@ -42,13 +49,8 @@ contract IPOrgFactory is
     function isIpOrg(
         address ipAssetOrg_
     ) external view returns (bool) {
-        IPOrgFactoryStorage storage $ = _getIpOrgFactoryStorage();
+        IPOrgControllerStorage storage $ = _getIpOrgFactoryStorage();
         return $.registered[ipAssetOrg_];
-    }
-
-    /// @notice Returns the current version of the factory contract.
-    function version() external pure override returns (string memory) {
-        return _VERSION;
     }
 
     /// @notice Registers a new ipAssetOrg for IP asset collection management.
@@ -57,18 +59,18 @@ contract IPOrgFactory is
     /// TODO: Add ipAssetOrg-wide module configurations to the registration process.
     /// TODO: Converge on access control for this method
     function registerIpOrg(
+        address owner,
         IPOrgParams.RegisterIPOrgParams calldata params_
-    ) public onlyRole(AccessControl.IPORG_CREATOR_ROLE) returns (address) {
-        address ipAssetOrg = Clones.clone(IP_ORG_IMPL);
-        IPOrg(ipAssetOrg).initialize(IPOrgParams.InitIPOrgParams({
-            registry: params_.registry,
-            owner: msg.sender,
-            name: params_.name,
-            symbol: params_.symbol
-        }));
+    ) public onlyRole(AccessControl.IPORG_CREATOR_ROLE) returns (address ipOrg) {
+        // Check that the owner is a non-zero address.
+        if (owner == address(0)) {
+            revert Errors.ZeroAddress();
+        }
+
+        ipOrg = new IPOrg(params_);
 
         // Set the registration status of the IP Asset Org to be true.
-        IPOrgFactoryStorage storage $ = _getIpOrgFactoryStorage();
+        IPOrgControllerStorage storage $ = _getIpOrgFactoryStorage();
         $.registered[ipAssetOrg] = true;
 
         emit IPOrgRegistered(
@@ -82,13 +84,6 @@ contract IPOrgFactory is
 
     }
 
-    /// @notice Initializes the IPOrgFactory contract.
-    /// @param accessControl_ Address of the contract responsible for access control.
-    function initialize(address accessControl_) public initializer {
-        __UUPSUpgradeable_init();
-        __AccessControlledUpgradeable_init(accessControl_);
-    }
-
     function _authorizeUpgrade(
         address newImplementation_
     ) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
@@ -96,7 +91,7 @@ contract IPOrgFactory is
     function _getIpOrgFactoryStorage()
         private
         pure
-        returns (IPOrgFactoryStorage storage $)
+        returns (IPOrgControllerStorage storage $)
     {
         assembly {
             $.slot := _STORAGE_LOCATION

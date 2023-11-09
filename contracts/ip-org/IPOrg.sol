@@ -11,47 +11,73 @@ import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 
 /// @notice IP Asset Organization
+/// TODO(leeren): Deprecate upgradeability once the IPOrg contracts is finalized.
 contract IPOrg is
     IIPOrg,
     ERC721Upgradeable,
-    MulticallUpgradeable,
-    OwnableUpgradeable
+    MulticallUpgradeable
 {
 
+    struct IPOrgAsset {
+        uint256 ipAssetId;
+        string name;
+        string description;
+    }
+    
     /// @custom:storage-location erc7201:story-protocol.ip-asset-org.storage
     // TODO: Refactor IP asset types to be specified through the IP Asset Registry or one of its modules.
     struct IPOrgStorage {
-        uint256 placeholder;
     }
 
-    IPAssetRegistry public REGISTRY;
+    // Address of the IP Org Controller.
+    address private immutable controller;
+    // Address of the Global IP Asset Registry
+    address private immutable registry;
 
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.ip-org-registry.storage")) - 1)))
-    bytes32 private constant _STORAGE_LOCATION = 0x1a0b8fa444ff575656111a4368b8e6a743b70cbf31ffb9ee2c7afe1983f0e378;
-    string private constant _VERSION = "0.1.0";
+    bytes32 private constant _STORAGE_LOCATION = bytes32(uint256(keccak256("story-protocol.ip-org.storage")) - 1);
 
-    // TODO(ramarti): Refactor to configure IP Asset types via registry modules.
-    uint256 private constant _ROOT_IP_ASSET = 0;
-
-    /// @notice Returns the current version of the IP asset org contract.
-    function version() external pure virtual returns (string memory) {
-        return _VERSION;
+    /// @notice Creates the IP Org implementation contract.
+    /// @param ipAssetRegistry_ Address of the Global IP Asset Registry.
+    constructor(
+        address ipAssetRegistry_
+    ) initializer {
+        controller = msg.sender;
+        registry = ipAssetRegistry;
     }
 
-    function initialize(IPOrgParams.InitIPOrgParams memory params_) public initializer {
+    /// @notice Initializes an IP Org.
+    /// @param name_ Name to assign to the IP Org.
+    /// @param symbol_ Symbol to assign to the IP Org.
+    /// @param renderer_ Renderer used for IPOrg-localized metadata of IP.
+    /// @param rendererInitData_ Initialization data to pass to the renderer.
+    function initialize(
+        string name_,
+        string symbol_,
+        IIPOrgMetadataRenderer renderer_,
+        bytes memory rendererInitData_
+    ) public initializer {
 
-        // TODO(ramarti) Decouple IPOrg from the RightsManager and make sure to move `__ERC721_init` here.
+        if (msg.sender != controller) {
+            revert Errors.Unauthorized();
+        }
+
         __ERC721_init(params_.name, params_.symbol);
 
         __Multicall_init();
         __Ownable_init();
-        // TODO: Weird bug does not allow OZ to specify owner in init...
-        _transferOwnership(params_.owner);
-
-        if (params_.registry == address(0)) revert Errors.ZeroAddress();
-        REGISTRY = IPAssetRegistry(params_.registry);
     }
 
+    function createIpAsset(IPAsset.CreateIpAssetParams calldata params_) public returns (uint256, uint256) {
+        if (params_.ipAssetType == IPAsset.IPAssetType.UNDEFINED) revert Errors.IPAsset_InvalidType(IPAsset.IPAssetType.UNDEFINED);
+        // TODO: Add module and other relevant configuration for registration.
+        uint256 ipAssetId = REGISTRY.register(msg.sender, address(this));
+        uint256 ipAssetOrgId = _mintBlock(params_.to, params_.ipAssetType);
+        _writeIPAsset(ipAssetId, ipAssetOrgId, params_.name, params_.description, params_.mediaUrl);
+        IPAssetOrgStorage storage $ = _getIPAssetOrgStorage();
+
+        return (ipAssetId, ipAssetOrgId);
+    }
 
     /// @notice Retrieves the token URI for an IP Asset within the IP Asset Org.
     /// @param tokenId_ The id of the IP Asset within the IP Asset Org.
@@ -62,8 +88,9 @@ contract IPOrg is
         return "TODO";
     }
 
-    function owner() public view override(IIPOrg, OwnableUpgradeable) returns (address) {
-        return super.owner();
+    /// @notice Retrieves the current owner of the IP Org.
+    function owner() external {
+        return IP_ASSET_CONTROLLER.ownerOf(msg.sender);
     }
 
     /// @dev Gets the storage associated with the IPOrg contract.

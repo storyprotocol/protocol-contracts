@@ -7,7 +7,7 @@ import "script/foundry/utils/StringUtil.sol";
 import "script/foundry/utils/BroadcastManager.s.sol";
 import "script/foundry/utils/JsonDeploymentHandler.s.sol";
 import "contracts/ip-org/IPOrg.sol";
-import "contracts/ip-org/IPOrgFactory.sol";
+import "contracts/ip-org/IPOrgController.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
 import "test/foundry/mocks/MockCollectNFT.sol";
@@ -65,14 +65,14 @@ import { AccessControl } from "contracts/lib/AccessControl.sol";
 //         accessControl = newAddress;
 
 //         /// IP_ORG_FACTORY REGISTRY
-//         contractKey = "IPOrgFactory-Impl";
+//         contractKey = "IPOrgController-Impl";
 
 //         console.log(string.concat("Deploying ", contractKey, "..."));
-//         newAddress = address(new IPOrgFactory());
+//         newAddress = address(new IPOrgController());
 //         _writeAddress(contractKey, newAddress);
 //         console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-//         contractKey = "IPOrgFactory-Proxy";
+//         contractKey = "IPOrgController-Proxy";
 
 //         console.log(string.concat("Deploying ", contractKey, "..."));
 //         newAddress = _deployUUPSProxy(

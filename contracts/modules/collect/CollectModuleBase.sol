@@ -11,7 +11,7 @@ import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.so
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { Collect } from "contracts/lib/modules/Collect.sol";
 import { Errors } from "contracts/lib/Errors.sol";
-import { IPOrgFactory } from "contracts/ip-org/IPOrgFactory.sol";
+import { IPOrgController } from "contracts/ip-org/IPOrgController.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 

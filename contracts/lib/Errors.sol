@@ -196,7 +196,7 @@ library Errors {
     error LibUintArrayMask_InvalidType(IPAsset.IPAssetType ipAsset);
 
     ////////////////////////////////////////////////////////////////////////////
-    //                              IPOrg                           //
+    //                                  IPOrg                                 //
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice IP identifier is over bounds.
@@ -204,6 +204,25 @@ library Errors {
 
     /// @notice Licensing is not configured.
     error IPOrg_LicensingNotConfigured();
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                             IPOrgController                            //
+    ////////////////////////////////////////////////////////////////////////////
+
+    /// @notice The caller is not the owner of the IP Org Controller.
+    error IPOrgController_InvalidOwner();
+
+    /// @notice IP Org does not exist.
+    error IPOrgController_IPOrgNonExistent();
+
+    /// @notice The caller is not the authorized IP Org owner.
+    error IPOrgController_InvalidIPOrgOwner();
+
+    /// @notice The new owner for an IP Org may not be the zero address.
+    error IPOrgController_InvalidNewIPOrgOwner();
+
+    /// @notice The owner transfer has not yet been initialized.
+    error IPOrgController_OwnerTransferUninitialized();
 
     ////////////////////////////////////////////////////////////////////////////
     //                                LibDuration                             //
