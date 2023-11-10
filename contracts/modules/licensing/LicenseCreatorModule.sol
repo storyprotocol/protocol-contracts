@@ -10,13 +10,12 @@ import { BaseModule } from "contracts/modules/base/BaseModule.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { RelationshipModule } from "../relationships/RelationshipModule.sol";
 import { TermsRepository } from "./TermsRepository.sol";
-import { TermsEncoder } from "./TermsEncoder.sol";
 import { ProtocolTermsHelper } from "./ProtocolTermsHelper.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
 import "forge-std/console.sol";
 
-contract LicenseCreatorModule is BaseModule, TermsRepository, TermsEncoder, ProtocolTermsHelper {
+contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelper {
     using ShortStrings for *;
 
     event LicensingFrameworkSet(address ipOrg_, Licensing.FrameworkConfig framework_);

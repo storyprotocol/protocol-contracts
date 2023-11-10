@@ -12,17 +12,14 @@ abstract contract ProtocolTermsHelper {
 
     function getExcludedCategoriesTerm(
         Licensing.CommercialStatus comStatus_,
-        address decoder_,
-        string[] calldata excluded_
+        address hook
     ) public pure returns (Licensing.LicensingTerm memory) {
         return Licensing.LicensingTerm({
             comStatus: comStatus_,
             text: OffChain.Content({
                 url: "https://excluded.com"
             }),
-            decoder: decoder_,
-            selector: getSelector("decodeStringArray(string[])"),
-            data: abi.encode(excluded_)
+            hook: hook
         });
     }
 }

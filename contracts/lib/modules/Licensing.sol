@@ -24,9 +24,7 @@ library Licensing {
     struct LicensingTerm {
         CommercialStatus comStatus;
         OffChain.Content text;
-        address decoder;
-        bytes4 selector;
-        bytes data;
+        address hook;
     }
 
     struct FrameworkConfig {
@@ -42,11 +40,7 @@ library Licensing {
     // Share alike == sublicensing on/off
     // 
     // Attribution should point to a relationship Type
-
-    
     bytes32 constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");
-
-
 }
 
 library TermCategories {

@@ -60,8 +60,7 @@ contract LicensingModuleTest is BaseTest {
                 text: OffChain.Content({
                     url: "https://example.com"
                 }),
-                encoder: address(0),
-                selector: bytes4(0)
+                hook: address(0)
             }
         ));
         string[] memory termIds = new string[](1);
@@ -90,8 +89,7 @@ contract LicensingModuleTest is BaseTest {
                 text: OffChain.Content({
                     url: "https://example.com"
                 }),
-                encoder: address(0),
-                selector: bytes4(0)
+                hook: address(0)
             }
         ));
         string[] memory termIds = new string[](1);
