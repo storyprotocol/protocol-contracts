@@ -84,19 +84,17 @@ contract StoryProtocol {
     //                            Licensing                                   //
     ////////////////////////////////////////////////////////////////////////////
 
+
     function configureIpOrgLicensing(
         address ipOrg_,
-        address caller_,
-        Licensing.License memory license_
-    ) external returns (uint256 licenseId, uint256 relId) {
-        bytes memory result = MODULE_REGISTRY.execute(
+        Licensing.FrameworkConfig calldata framework_
+    ) external {
+        MODULE_REGISTRY.configure(
             IIPOrg(ipOrg_),
-            caller_,
+            msg.sender,
             ModuleRegistryKeys.LICENSING_MODULE,
-            abi.encode(Licensing.IPORG_TERMS_CONFIG, license_),
-            new bytes[](0),
-            new bytes[](0)
+            abi.encode(Licensing.LICENSING_FRAMEWORK_CONFIG, abi.encode(framework_))
         );
-        return abi.decode(result, (uint256, uint256));
     }
+
 }

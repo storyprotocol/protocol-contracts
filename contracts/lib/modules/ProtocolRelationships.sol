@@ -40,4 +40,22 @@ library ProtocolRelationships {
     }
 
 
+    string constant public SUBLICENSE_REL_TYPE = "SUBLICENSE";
+
+    function _getSublicenseAddRelParams()
+        internal pure 
+        returns (LibRelationship.AddRelationshipTypeParams memory) {
+        return LibRelationship.AddRelationshipTypeParams({
+            relType: SUBLICENSE_REL_TYPE,
+            ipOrg: LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
+            allowedElements: LibRelationship.RelatedElements({
+                src: LibRelationship.Relatables.LICENSE,
+                dst: LibRelationship.Relatables.LICENSE
+            }),
+            allowedSrcs: new uint8[](0),
+            allowedDsts: new uint8[](0)
+        });
+    }
+
+
 }

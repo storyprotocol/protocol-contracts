@@ -130,8 +130,8 @@ contract ModuleRegistry is AccessControlled, Multicall {
         address caller_,
         string calldata moduleKey_,
         bytes calldata params_
-    ) external onlyRole(AccessControl.MODULE_EXECUTOR_ROLE) {
-        _configure(ipOrg_, caller_, moduleKey_, params_);
+    ) external onlyRole(AccessControl.MODULE_EXECUTOR_ROLE) returns (bytes memory) {
+        return _configure(ipOrg_, caller_, moduleKey_, params_);
     }
 
     function _execute(
@@ -156,7 +156,7 @@ contract ModuleRegistry is AccessControlled, Multicall {
         address caller_,
         string calldata moduleKey_,
         bytes calldata params_
-    ) private {
+    ) private returns (bytes memory result) {
         // if (IIPOrg(ipOrg_).owner() != msg.sender) {
         //     revert Errors.ModuleRegistry_CallerNotOrgOwner();
         //}
@@ -164,7 +164,8 @@ contract ModuleRegistry is AccessControlled, Multicall {
         if (address(module) == address(0)) {
             revert Errors.ModuleRegistry_ModuleNotRegistered(moduleKey_);
         }
-        module.configure(ipOrg_, caller_, params_);
+        result = module.configure(ipOrg_, caller_, params_);
         emit ModuleConfigured(address(ipOrg_), moduleKey_, caller_, params_);
+        return result;
     }
 }

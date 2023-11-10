@@ -8,7 +8,6 @@ import "test/foundry/mocks/MockBaseModule.sol";
 import "test/foundry/mocks/MockIPOrg.sol";
 import "contracts/lib/Errors.sol";
 
-
 contract BaseModuleTest is Test {
     MockBaseModule module;
     address admin = address(123);

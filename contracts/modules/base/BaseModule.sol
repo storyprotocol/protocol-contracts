@@ -96,7 +96,7 @@ abstract contract BaseModule is IModule, HookRegistry {
 
     function _hookRegistryAdmin() virtual override internal view returns (address);
     function _configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory result);
-    function _verifyExecution(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal {}
-    function _performAction(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory result) {}
+    function _verifyExecution(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal;
+    function _performAction(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory result);
 
 }

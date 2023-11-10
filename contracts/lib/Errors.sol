@@ -213,7 +213,16 @@ library Errors {
 
     /// @notice A zero TTL may not be used for configuration.
     error LibDuration_ZeroTTL();
-    
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                            TermsRegistry                               //
+    ////////////////////////////////////////////////////////////////////////////
+
+    error TermsRegistry_UnsupportedTermCategory();
+    error TermsRegistry_UnsupportedTerm();
+    error TermsRegistry_TermAlreadyExists();
+    error TermsRegistry_CommercialStatusUnset();
+
     ////////////////////////////////////////////////////////////////////////////
     //                             LicensingModule                            //
     ////////////////////////////////////////////////////////////////////////////
@@ -227,8 +236,12 @@ library Errors {
     /// @notice The revoker may not be a zero address.
     error LicensingModule_ZeroRevokerAddress();
 
-    error LicensingModule_CallerNotIPOrgOwner();
+    error LicensingModule_CallerNotIpOrgOwner();
     error LicensingModule_InvalidConfigType();
+
+    error LicensingModule_TermIdsAndConfigsLengthMismatch();
+    error LicensingModule_ZeroTermId();
+    error LicensingModule_CommercialTermNotAllowed();
 
     ////////////////////////////////////////////////////////////////////////////
     //                              RightsManager                             //

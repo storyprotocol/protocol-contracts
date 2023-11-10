@@ -241,4 +241,5 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         );
         return abi.encode(relationshipId);
     }
+
 }
