@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import { OffChain } from "contracts/lib/OffChain.sol";
 import { ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
+import { TermsDecoder } from "contracts/modules/licensing/TermsDecoder.sol";
 
 library Licensing {
     
@@ -23,12 +24,15 @@ library Licensing {
     struct LicensingTerm {
         CommercialStatus comStatus;
         OffChain.Content text;
-        address encoder;
+        address decoder;
+        bytes4 selector;
+        bytes data;
     }
 
     struct FrameworkConfig {
         bool isCommercialAllowed;
-        ShortString[] termIds;
+        string[] ipCategories;
+        string[] termIds;
         bytes[] termConfigs;
     }
 
@@ -42,4 +46,13 @@ library Licensing {
     
     bytes32 constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");
 
+
+}
+
+library TermCategories {
+    string constant FORMAT_CATEGORIES = "FORMAT_CATEGORIES";
+}
+
+library TermIds {
+    string constant asdasd = "EXCLUDED_CATEGORIES";
 }

@@ -240,7 +240,7 @@ library Errors {
     error LicensingModule_InvalidConfigType();
 
     error LicensingModule_TermIdsAndConfigsLengthMismatch();
-    error LicensingModule_ZeroTermId();
+    error LicensingModule_EmptyTermId();
     error LicensingModule_CommercialTermNotAllowed();
 
     ////////////////////////////////////////////////////////////////////////////

@@ -10,13 +10,14 @@ import { BaseModule } from "contracts/modules/base/BaseModule.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { RelationshipModule } from "../relationships/RelationshipModule.sol";
 import { TermsRepository } from "./TermsRepository.sol";
-// import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
-// using ShortStrings for *;
+import { TermsEncoder } from "./TermsEncoder.sol";
+import { ProtocolTermsHelper } from "./ProtocolTermsHelper.sol";
+import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
 import "forge-std/console.sol";
 
-contract LicenseCreatorModule is BaseModule, TermsRepository {
-    // using ShortStrings for *;
+contract LicenseCreatorModule is BaseModule, TermsRepository, TermsEncoder, ProtocolTermsHelper {
+    using ShortStrings for *;
 
     event LicensingFrameworkSet(address ipOrg_, Licensing.FrameworkConfig framework_);
 
@@ -164,8 +165,8 @@ contract LicenseCreatorModule is BaseModule, TermsRepository {
             revert Errors.LicensingModule_TermIdsAndConfigsLengthMismatch();
         }
         for (uint256 i = 0; i < length; i++) {
-            if (framework_.termIds[i] == 0) {
-                revert Errors.LicensingModule_ZeroTermId();
+            if (keccak256(bytes(framework_.termIds[i])) == keccak256(bytes(""))) {
+                revert Errors.LicensingModule_EmptyTermId();
             }
             Licensing.LicensingTerm memory term = getTerm(framework_.termIds[i]);
             if (

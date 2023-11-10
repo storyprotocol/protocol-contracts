@@ -83,7 +83,7 @@ contract TermsRepository {
     }
 
     function getTerm(
-        string calldata termId_
+        string memory termId_
     ) public view returns (Licensing.LicensingTerm memory) {
         ShortString termId = termId_.toShortString();
         if (_terms[termId].comStatus == Licensing.CommercialStatus.Unset) {
