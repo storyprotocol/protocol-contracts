@@ -17,6 +17,7 @@ import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 /// @dev This contract should NOT have state in storage, in order to have upgradeable or non-upgradeable
 /// modules.
 abstract contract BaseModule is IModule, HookRegistry {
+
     struct ModuleConstruction {
         IPAssetRegistry ipaRegistry;
         ModuleRegistry moduleRegistry;

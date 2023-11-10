@@ -26,10 +26,7 @@ library IPAsset {
         string name;
         uint64 ipAssetType;
         address owner;
-        address ipOrg;
         bytes32 hash;
-        string url;
-        bytes data;
     }
 
     struct CreateIpAssetParams {

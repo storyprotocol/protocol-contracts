@@ -31,7 +31,7 @@ contract ModuleRegistry is AccessControlled, Multicall {
         bytes params
     );
 
-    mapping(string => BaseModule) private _protocolModules;
+    mapping(string => BaseModule) public protocolModules;
 
     address public constant PROTOCOL_LEVEL = address(0);
 
@@ -49,7 +49,7 @@ contract ModuleRegistry is AccessControlled, Multicall {
         if (address(moduleAddress) == address(0)) {
             revert Errors.ZeroAddress();
         }
-        _protocolModules[moduleKey] = moduleAddress;
+        protocolModules[moduleKey] = moduleAddress;
         emit ModuleAdded(PROTOCOL_LEVEL, moduleKey, moduleAddress);
     }
 
@@ -59,17 +59,17 @@ contract ModuleRegistry is AccessControlled, Multicall {
     function removeProtocolModule(
         string calldata moduleKey
     ) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
-        if (address(_protocolModules[moduleKey]) == address(0)) {
+        if (address(protocolModules[moduleKey]) == address(0)) {
             revert Errors.ModuleRegistry_ModuleNotRegistered(moduleKey);
         }
-        BaseModule moduleAddress = _protocolModules[moduleKey];
-        delete _protocolModules[moduleKey];
+        BaseModule moduleAddress = protocolModules[moduleKey];
+        delete protocolModules[moduleKey];
         emit ModuleRemoved(PROTOCOL_LEVEL, moduleKey, moduleAddress);
     }
 
     /// Get a module from the protocol, by its key.
     function moduleForKey(string calldata moduleKey) external view returns (BaseModule) {
-        return _protocolModules[moduleKey];
+        return protocolModules[moduleKey];
     }
 
     /// Execution entrypoint, callable by any address on its own behalf.
@@ -142,7 +142,7 @@ contract ModuleRegistry is AccessControlled, Multicall {
         bytes[] calldata preHookParams_,
         bytes[] calldata postHookParams_
     ) private returns (bytes memory result) {
-        BaseModule module = _protocolModules[moduleKey_];
+        BaseModule module = protocolModules[moduleKey_];
         if (address(module) == address(0)) {
             revert Errors.ModuleRegistry_ModuleNotRegistered(moduleKey_);
         }
@@ -160,7 +160,7 @@ contract ModuleRegistry is AccessControlled, Multicall {
         // if (IIPOrg(ipOrg_).owner() != msg.sender) {
         //     revert Errors.ModuleRegistry_CallerNotOrgOwner();
         //}
-        BaseModule module = _protocolModules[moduleKey_];
+        BaseModule module = protocolModules[moduleKey_];
         if (address(module) == address(0)) {
             revert Errors.ModuleRegistry_ModuleNotRegistered(moduleKey_);
         }

@@ -18,9 +18,7 @@ contract IPAssetRegistry is IIPAssetRegistry {
         address initialRegistrant;   // Address of the initial registrant of the IP asset.
         address ipOrg;               // Address of the governing entity of the IP asset.
         bytes32 hash;                // A unique content hash of the IP asset for preserving integrity.
-        string url;                  // URL linked to additional metadata for the IP asset.
         uint64 registrationDate;     // Timestamp for which the IP asset was first registered.
-        bytes data;                  // Any additional data to be tied to the IP asset.
     }
 
     uint256 public immutable IP_ORG_CONTROLLER;
@@ -63,21 +61,24 @@ contract IPAssetRegistry is IIPAssetRegistry {
     /// @param params_ The IP asset registration parameters.
     // TODO(ramarti): Add registration authorization via registration module.
     // TODO(ramarti): Include module parameters and interfacing to registration.
-    function register(IPAsset.RegisterIpAssetParams calldata params_) public returns (uint256) {
+    function register(
+        address owner_,
+        string name_,
+        uint64 ipAssetType_,
+        bytes32 hash_
+    ) public returns (uint256) {
         uint256 ipAssetId = numIPAssets++;
         uint64 registrationDate = uint64(block.timestamp);
 
         ipAssets[ipAssetId] = IPA({
-            name: params_.name,
-            ipAssetType: params_.ipAssetType,
+            name: name_,
+            ipAssetType: ipAssetType_,
             status: 0, // TODO(ramarti): Define status types.
-            owner: params_.owner,
-            initialRegistrant: params_.owner,
-            ipOrg: params_.ipOrg,
-            hash: params_.hash,
-            url: params_.url,
+            owner: owner_,
+            initialRegistrant: owner_,
+            ipOrg: msg.sender,
+            hash: hash_,
             registrationDate: registrationDate,
-            data: params_.data
         });
 
         emit IPAssetRegistered(
@@ -97,7 +98,7 @@ contract IPAssetRegistry is IIPAssetRegistry {
     /// @param ipAssetId_ The identifier of the IP asset being transferred.
     /// @param status_ The new status of the IP asset.
     /// TODO(ramarti) Finalize authorization logic around the disputer.
-    function setIPAssetStatus(uint256 ipAssetId_, uint8 status_) public onlyDisputer(ipAssetId_) {
+    function setStatus(uint256 ipAssetId_, uint8 status_) public onlyDisputer(ipAssetId_) {
         uint8 oldStatus = ipAssets[ipAssetId_].status;
         ipAssets[ipAssetId_].status = status_;
         emit IPAssetStatusChanged(ipAssetId_, oldStatus, status_);
@@ -107,7 +108,7 @@ contract IPAssetRegistry is IIPAssetRegistry {
     /// @param ipAssetId_ The identifier of the IP asset being transferred.
     /// @param owner_ The new owner of the IP asset.
     /// TODO(leeren) Add authorization around IPOrg transferring rights.
-    function setIPAssetOwner(uint256 ipAssetId_, address owner_) public onlyAuthorized(ipAssetId_) {
+    function setOwner(uint256 ipAssetId_, address owner_) public onlyAuthorized(ipAssetId_) {
         address prevOwner = ipAssets[ipAssetId_].owner;
         ipAssets[ipAssetId_].owner = owner_;
         emit IPAssetTransferred(ipAssetId_, prevOwner, owner_);
@@ -115,19 +116,19 @@ contract IPAssetRegistry is IIPAssetRegistry {
 
     /// @notice Gets the owner of a specific IP Asset.
     /// @param ipAssetId_ The id of the IP Asset being queried.
-    function ipAssetOwner(uint256 ipAssetId_) public view returns (address) {
+    function getOwner(uint256 ipAssetId_) public view returns (address) {
         return ipAssets[ipAssetId_].owner;
     }
 
     /// @notice Gets the status for a specific IP Asset.
     /// @param ipAssetId_ The id of the IP Asset being queried.
-    function ipAssetStatus(uint256 ipAssetId_) public view returns (uint8) {
+    function getStatus(uint256 ipAssetId_) public view returns (uint8) {
         return ipAssets[ipAssetId_].status;
     }
 
     /// @notice Gets the IP Asset Org that administers a specific IP Asset.
     /// @param ipAssetId_ The id of the IP Asset being queried.
-    function ipAssetOrg(uint256 ipAssetId_) public view returns (address) {
+    function getIPOrg(uint256 ipAssetId_) public view returns (address) {
         return ipAssets[ipAssetId_].ipOrg;
     }
 
