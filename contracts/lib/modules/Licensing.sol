@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import { OffChain } from "contracts/lib/OffChain.sol";
 import { ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { TermsDecoder } from "contracts/modules/licensing/TermsDecoder.sol";
+import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 
 library Licensing {
     
@@ -24,14 +25,17 @@ library Licensing {
     struct LicensingTerm {
         CommercialStatus comStatus;
         OffChain.Content text;
-        address hook;
+        IHook hook;
+    }
+
+    struct TermsConfig {
+        ShortString termsId;
+        bytes data;
     }
 
     struct FrameworkConfig {
         bool isCommercialAllowed;
-        string[] ipCategories;
-        string[] termIds;
-        bytes[] termConfigs;
+        TermsConfig[] termsConfig;
     }
 
     // Available categories -> IPORg wide
@@ -47,6 +51,8 @@ library TermCategories {
     string constant FORMAT_CATEGORIES = "FORMAT_CATEGORIES";
 }
 
+/// @dev must be < 32 bytes long, or they will blow up at some point
+/// see https://docs.openzeppelin.com/contracts/4.x/api/utils#ShortStrings
 library TermIds {
-    string constant asdasd = "EXCLUDED_CATEGORIES";
+    string constant SHARE_ALIKE = "SHARE_ALIKE";
 }

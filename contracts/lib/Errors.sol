@@ -189,7 +189,7 @@ library Errors {
     error LibUintArrayMask_InvalidType(IPAsset.IPAssetType ipAsset);
 
     ////////////////////////////////////////////////////////////////////////////
-    //                              IPOrg                           //
+    //                              IPOrg                                     //
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice IP identifier is over bounds.
@@ -224,6 +224,12 @@ library Errors {
     error TermsRegistry_CommercialStatusUnset();
 
     ////////////////////////////////////////////////////////////////////////////
+    //                            TermsHook                                   //
+    ////////////////////////////////////////////////////////////////////////////
+
+    error TermsHook_UnsupportedTermsId();
+
+    ////////////////////////////////////////////////////////////////////////////
     //                             LicensingModule                            //
     ////////////////////////////////////////////////////////////////////////////
 
@@ -239,9 +245,10 @@ library Errors {
     error LicensingModule_CallerNotIpOrgOwner();
     error LicensingModule_InvalidConfigType();
 
-    error LicensingModule_TermIdsAndConfigsLengthMismatch();
-    error LicensingModule_EmptyTermId();
     error LicensingModule_CommercialTermNotAllowed();
+
+    error LicensingModule_IpOrgFrameworkAlreadySet();
+    error LicensingModule_DuplicateTermId();
 
     ////////////////////////////////////////////////////////////////////////////
     //                              RightsManager                             //
@@ -283,12 +290,6 @@ library Errors {
     /// @notice The revoker may not be the zero address.
     error RightsManager_ZeroRevokerAddress();
 
-    ////////////////////////////////////////////////////////////////////////////
-    //                             MultiTermsProcessor                        //
-    ////////////////////////////////////////////////////////////////////////////
-
-    /// @notice Too many terms were selected.
-    error MultiTermsProcessor_TooManyTermsProcessors();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            RelationshipModule                          //
