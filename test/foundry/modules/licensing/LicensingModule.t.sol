@@ -8,10 +8,9 @@ import 'contracts/lib/modules/LibRelationship.sol';
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { Licensing, TermCategories, TermIds } from "contracts/lib/modules/Licensing.sol";
 import { OffChain } from "contracts/lib/OffChain.sol";
-import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
+import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 
 contract LicensingModuleTest is BaseTest {
-
     using ShortStrings for *;
 
     function setUp() override public {
@@ -26,12 +25,10 @@ contract LicensingModuleTest is BaseTest {
             address(ipOrg),
             Licensing.FrameworkConfig({
                 isCommercialAllowed: true,
-                termIds: new string[](0),
-                termConfigs: new bytes[](0),
-                ipCategories: new string[](0)
+                termsConfig: new Licensing.TermsConfig[](0)
             })
         );
-        assertTrue(licensingModule.getFramework(address(ipOrg)).isCommercialAllowed);
+        assertTrue(licensingModule.isIpOrgCommercial(address(ipOrg)));
     }
 
     function test_LicensingModule_configIpOrg_revertIfNotIpOrgOwner() public {
@@ -40,9 +37,7 @@ contract LicensingModuleTest is BaseTest {
             address(ipOrg),
             Licensing.FrameworkConfig({
                 isCommercialAllowed: true,
-                termIds: new string[](0),
-                termConfigs: new bytes[](0),
-                ipCategories: new string[](0)
+                termsConfig: new Licensing.TermsConfig[](0)
             })
         );
     }
@@ -60,24 +55,26 @@ contract LicensingModuleTest is BaseTest {
                 text: OffChain.Content({
                     url: "https://example.com"
                 }),
-                hook: address(0)
+                hook: IHook(address(0))
             }
         ));
-        string[] memory termIds = new string[](1);
-        termIds[0] = "term_id";
-        bytes[] memory termConfigs = new bytes[](1);
+        ShortString termId = "term_id".toShortString();
+        Licensing.TermsConfig[] memory termsConfig = new Licensing.TermsConfig[](1);
+        termsConfig[0] = Licensing.TermsConfig({
+            termsId: termId,
+            data: ""
+        });
         vm.prank(ipOrg.owner());
         spg.configureIpOrgLicensing(
             address(ipOrg),
             Licensing.FrameworkConfig({
                 isCommercialAllowed: true,
-                termIds: termIds,
-                termConfigs: termConfigs,
-                ipCategories: new string[](0)
+                termsConfig: termsConfig
             })
         );
-        Licensing.FrameworkConfig memory framework = licensingModule.getFramework(address(ipOrg));
-        assertEq(framework.termIds[0], "term_id");
+        vm.stopPrank();
+        (bytes32[] memory termIds, bytes[] memory termsData) = licensingModule.getIpOrgTerms(address(ipOrg));
+        assertTrue(ShortStringOps._equal(termIds[0], termId));
     }
 
     function test_LicensingModule_configIpOrg_revertIfWrongTermCommercialStatus() public {
@@ -85,25 +82,26 @@ contract LicensingModuleTest is BaseTest {
             "test_category",
             "term_id",
             Licensing.LicensingTerm({
-                comStatus: Licensing.CommercialStatus.NonCommercial,
+                comStatus: Licensing.CommercialStatus.Commercial,
                 text: OffChain.Content({
                     url: "https://example.com"
                 }),
-                hook: address(0)
+                hook: IHook(address(0))
             }
         ));
-        string[] memory termIds = new string[](1);
-        termIds[0] = "term_id";
-        bytes[] memory termConfigs = new bytes[](1);
+        ShortString termId = "term_id".toShortString();
+        Licensing.TermsConfig[] memory termsConfig = new Licensing.TermsConfig[](1);
+        termsConfig[0] = Licensing.TermsConfig({
+            termsId: termId,
+            data: ""
+        });
         vm.startPrank(ipOrg.owner());
         vm.expectRevert(Errors.LicensingModule_CommercialTermNotAllowed.selector);
         spg.configureIpOrgLicensing(
             address(ipOrg),
             Licensing.FrameworkConfig({
                 isCommercialAllowed: false,
-                termIds: termIds,
-                termConfigs: termConfigs,
-                ipCategories: new string[](0)
+                termsConfig: termsConfig
             })
         );
         vm.stopPrank();
@@ -111,25 +109,7 @@ contract LicensingModuleTest is BaseTest {
     
 
     function test_LicensingModule_configIpOrg_availableCategoriesCanBeSet() public {
-        
-        string[] memory categories = new string[](2);
-        categories[0] = "movies";
-        categories[1] = "music";
-        
-        vm.prank(ipOrg.owner());
-        spg.configureIpOrgLicensing(
-            address(ipOrg),
-            Licensing.FrameworkConfig({
-                isCommercialAllowed: true,
-                termIds: new string[](0),
-                termConfigs: new bytes[](0),
-                ipCategories: categories
-            })
-        );
-        Licensing.FrameworkConfig memory framework = licensingModule.getFramework(address(ipOrg));
-        assertEq(framework.ipCategories[0], "movies");
-        assertEq(framework.ipCategories[1], "music");
-        assertEq(framework.ipCategories.length, 2);
+
     }
 
     function test_LicensingModule_licensing_revert_categoryExcluded() public {

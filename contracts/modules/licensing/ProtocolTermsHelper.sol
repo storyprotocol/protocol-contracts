@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { OffChain } from "contracts/lib/OffChain.sol";
+import { TermsHook } from "contracts/hooks/licensing/TermsHook.sol";
 
 abstract contract ProtocolTermsHelper {
 
@@ -12,7 +13,7 @@ abstract contract ProtocolTermsHelper {
 
     function getExcludedCategoriesTerm(
         Licensing.CommercialStatus comStatus_,
-        address hook
+        TermsHook hook
     ) public pure returns (Licensing.LicensingTerm memory) {
         return Licensing.LicensingTerm({
             comStatus: comStatus_,

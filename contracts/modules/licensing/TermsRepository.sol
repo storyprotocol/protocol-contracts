@@ -4,9 +4,10 @@ pragma solidity ^0.8.19;
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
+import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 
-contract TermsRepository {
+contract TermsRepository is Multicall {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using ShortStrings for *;
 
@@ -80,6 +81,15 @@ contract TermsRepository {
         string calldata termId_
     ) public view returns (string memory) {
         return _termCategoryByTermId[termId_.toShortString()].toString();
+    }
+
+    function getTerm(
+        ShortString termId_
+    ) public view returns (Licensing.LicensingTerm memory) {
+        if (_terms[termId_].comStatus == Licensing.CommercialStatus.Unset) {
+            revert Errors.TermsRegistry_UnsupportedTerm();
+        }
+        return _terms[termId_];
     }
 
     function getTerm(

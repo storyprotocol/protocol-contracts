@@ -12,16 +12,20 @@ import { RelationshipModule } from "../relationships/RelationshipModule.sol";
 import { TermsRepository } from "./TermsRepository.sol";
 import { ProtocolTermsHelper } from "./ProtocolTermsHelper.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import "forge-std/console.sol";
 
 contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelper {
     using ShortStrings for *;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    event LicensingFrameworkSet(address ipOrg_, Licensing.FrameworkConfig framework_);
+    event LicensingFrameworkSet(address ipOrg_, bytes32[] termIds, bytes[] termData);
 
     RelationshipModule public immutable RELATIONSHIP_MODULE;
-    mapping(address => Licensing.FrameworkConfig) private _frameworks;    
+    mapping(address => bool) private _ipOrgAllowsCommercial;
+    mapping(address => EnumerableSet.Bytes32Set) private _ipOrgTermIds;
+    mapping(address => bytes[]) private _ipOrgTermData;
 
     constructor(ModuleConstruction memory params_) BaseModule(params_) {
         RELATIONSHIP_MODULE = RelationshipModule(
@@ -33,8 +37,15 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
         );
     }
 
-    function getFramework(address ipOrg_) external view returns (Licensing.FrameworkConfig memory) {
-        return _frameworks[ipOrg_];
+    function isIpOrgCommercial(address ipOrg_) public view returns (bool) {
+        return _ipOrgAllowsCommercial[ipOrg_];
+    }
+
+    function getIpOrgTerms(address ipOrg_) public view returns (bytes32[] memory, bytes[] memory) {
+        return (
+            _ipOrgTermIds[ipOrg_].values(),
+            _ipOrgTermData[ipOrg_]
+        );
     }
 
     function _hookRegistryAdmin()
@@ -52,10 +63,7 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
         address caller_,
         bytes calldata params_
     ) virtual internal override {
-        (uint256 parentLicenseId) = abi.decode(params_, (uint256));
-        //if (isIpOrgLicense(parentLicenseId)) {
-            
-        //}
+        
     }
 
     function _performAction(
@@ -141,6 +149,10 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
         revert Errors.LicensingModule_InvalidConfigType();
     }
 
+    ////////////////////////////////////////////////////////////////////////////
+    //                              ipOrgConfig                               //
+    ////////////////////////////////////////////////////////////////////////////
+
     function _setIpOrgFramework(
         IIPOrg ipOrg_,
         address caller_,
@@ -151,31 +163,51 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
         }
         Licensing.FrameworkConfig memory framework = abi.decode(params_, (Licensing.FrameworkConfig));
         _verifyFrameworkConfig(framework);
-        _frameworks[address(ipOrg_)] = framework;
-        emit LicensingFrameworkSet(address(ipOrg_), framework);
+        // Solidity doesn't allow to store arrays of structs (TermsConfig[]) from memory to storage,
+        // so we store them separately.
+        // On the bright side, we can use EnumerableSet to check for duplicates
+        EnumerableSet.Bytes32Set storage termIds = _ipOrgTermIds[address(ipOrg_)];
+        if (termIds.length() > 0) {
+            revert Errors.LicensingModule_IpOrgFrameworkAlreadySet();
+        }
+
+        _ipOrgAllowsCommercial[address(ipOrg_)] = framework.isCommercialAllowed;
+        uint256 termsLength = framework.termsConfig.length;
+        bytes[] storage termData = _ipOrgTermData[address(ipOrg_)];
+        for (uint256 i = 0; i < termsLength; i++) {
+            Licensing.TermsConfig memory config = framework.termsConfig[i];
+            bytes32 termsId = ShortString.unwrap(config.termsId);
+            if (termIds.contains(termsId)) {
+                revert Errors.LicensingModule_DuplicateTermId();
+            }
+            termIds.add(termsId);
+            termData.push(config.data);
+        }
+        emit LicensingFrameworkSet(address(ipOrg_), termIds.values(), termData);
         return "";
     }
 
     function _verifyFrameworkConfig(
         Licensing.FrameworkConfig memory framework_
     ) private view {
-        uint256 length = framework_.termIds.length;
-        if (length != framework_.termConfigs.length) {
-            revert Errors.LicensingModule_TermIdsAndConfigsLengthMismatch();
-        }
+        uint256 length = framework_.termsConfig.length;
         for (uint256 i = 0; i < length; i++) {
-            if (keccak256(bytes(framework_.termIds[i])) == keccak256(bytes(""))) {
-                revert Errors.LicensingModule_EmptyTermId();
-            }
-            Licensing.LicensingTerm memory term = getTerm(framework_.termIds[i]);
+            Licensing.TermsConfig memory config = framework_.termsConfig[i];
+            Licensing.LicensingTerm memory term = getTerm(config.termsId);
             if (
                 !framework_.isCommercialAllowed &&
                 term.comStatus == Licensing.CommercialStatus.Commercial
             ) {
                 revert Errors.LicensingModule_CommercialTermNotAllowed();
             }
+            // Reverts if decoding fails
+            term.hook.validateConfig(abi.encode(config));
         }
     }
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                              Relationships                             //
+    ////////////////////////////////////////////////////////////////////////////
 
     function _createRelationship(
         LibRelationship.CreateRelationshipParams memory newRelParams

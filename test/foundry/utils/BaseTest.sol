@@ -18,7 +18,8 @@ import "contracts/interfaces/modules/collect/ICollectModule.sol";
 import "contracts/modules/relationships/RelationshipModule.sol";
 import "contracts/modules/licensing/LicenseRegistry.sol";
 import "contracts/modules/licensing/LicenseCreatorModule.sol";
-
+import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
+import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 
@@ -29,6 +30,7 @@ import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol
 // TODO: Commented out contracts in active refactor. 
 // Run tests from make lint, which will not run collect and license
 contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
+    using ShortStrings for *;
 
     IPOrg public ipOrg;
     address ipAssetOrgImpl;
