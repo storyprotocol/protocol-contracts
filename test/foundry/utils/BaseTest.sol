@@ -12,7 +12,6 @@ import "contracts/ip-org/IPOrg.sol";
 import "contracts/lib/IPOrgParams.sol";
 import "contracts/IPAssetRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/errors/General.sol";
 import "contracts/IPAssetRegistry.sol";
 import "contracts/interfaces/modules/collect/ICollectModule.sol";
 import "contracts/modules/relationships/RelationshipModule.sol";

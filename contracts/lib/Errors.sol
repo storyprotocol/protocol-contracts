@@ -55,7 +55,7 @@ library Errors {
     error HookRegistry_MaxHooksExceeded();
 
     ////////////////////////////////////////////////////////////////////////////
-    //                            BaseRelationshipProcessor                   //
+    //                      BaseRelationshipProcessor                         //
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice Call may only be processed by the relationship module.
@@ -230,66 +230,16 @@ library Errors {
     error TermsHook_UnsupportedTermsId();
 
     ////////////////////////////////////////////////////////////////////////////
-    //                             LicensingModule                            //
+    //                        LicenseCreatorModule                            //
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice The franchise does not exist.
     error LicensingModule_NonExistentIPOrg();
-
-    /// @notice The root license is not active
-    error LicensingModule_RootLicenseNotActive(uint256 rootLicenseId);
-
-    /// @notice The revoker may not be a zero address.
-    error LicensingModule_ZeroRevokerAddress();
-
     error LicensingModule_CallerNotIpOrgOwner();
     error LicensingModule_InvalidConfigType();
-
     error LicensingModule_CommercialTermNotAllowed();
-
     error LicensingModule_IpOrgFrameworkAlreadySet();
     error LicensingModule_DuplicateTermId();
-
-    ////////////////////////////////////////////////////////////////////////////
-    //                              RightsManager                             //
-    ////////////////////////////////////////////////////////////////////////////
-
-    /// @notice Root license is already configured.
-    error RightsManager_AlreadyHasRootLicense();
-
-    /// @notice License cannot be sublicensed.
-    error RightsManager_CannotSublicense();
-
-    /// @notice Commercial terms do not match.
-    error RightsManager_CommercialTermsMismatch();
-
-    /// @notice License is inactive.
-    error RightsManager_InactiveLicense();
-
-    /// @notice Parent license is inactive.
-    error RightsManager_InactiveParentLicense();
-
-    /// @notice The license registry is not configured.
-    error RightsManager_LicenseRegistryNotConfigured();
-
-    /// @notice NFT is not associated with a license.
-    error RightsManager_NFTHasNoAssociatedLicense();
-
-    /// @notice Caller is not owner of parent license.
-    error RightsManager_NotOwnerOfParentLicense();
-
-    /// @notice The targeted license is not a sublicense.
-    error RightsManager_NotSublicense();
-
-    /// @notice Sender is not the license revoker.
-    error RightsManager_SenderNotRevoker();
-
-    /// @notice A create franchise root license must be used.
-    error RightsManager_UseCreateIPOrgRootLicenseInstead();
-
-    /// @notice The revoker may not be the zero address.
-    error RightsManager_ZeroRevokerAddress();
-
 
     ////////////////////////////////////////////////////////////////////////////
     //                            RelationshipModule                          //

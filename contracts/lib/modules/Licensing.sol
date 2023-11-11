@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import { OffChain } from "contracts/lib/OffChain.sol";
 import { ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
-import { TermsDecoder } from "contracts/modules/licensing/TermsDecoder.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 
 library Licensing {
