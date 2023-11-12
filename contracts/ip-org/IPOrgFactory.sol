@@ -6,7 +6,6 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
 import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 import { Errors } from "contracts/lib/Errors.sol";
-import { LicenseRegistry } from "contracts/modules/licensing/LicenseRegistry.sol";
 import { IIPOrgFactory } from "contracts/interfaces/ip-org/IIPOrgFactory.sol";
 import { IPOrg } from "contracts/ip-org/IPOrg.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
