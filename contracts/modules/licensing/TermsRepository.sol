@@ -6,6 +6,7 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { Errors } from "contracts/lib/Errors.sol";
+import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 
 contract TermsRepository is Multicall {
     using EnumerableSet for EnumerableSet.Bytes32Set;
@@ -23,6 +24,21 @@ contract TermsRepository is Multicall {
     mapping(ShortString => EnumerableSet.Bytes32Set) private _termIdsByCategory;
     // TermId -> CategoryId
     mapping(ShortString => ShortString) private _termCategoryByTermId;
+
+    modifier onlyValidTerm(ShortString termId_) {
+        if (_terms[termId_].comStatus == Licensing.CommercialStatus.Unset) {
+            revert Errors.TermsRegistry_UnsupportedTerm();
+        }
+        _;
+    }
+
+    modifier onlyValidTermString(string memory termId_) {
+        ShortString termId = termId_.toShortString();
+        if (_terms[termId].comStatus == Licensing.CommercialStatus.Unset) {
+            revert Errors.TermsRegistry_UnsupportedTerm();
+        }
+        _;
+    }
 
     function addTermCategory(string calldata category_) public {
         _termCategories.add(ShortString.unwrap(category_.toShortString()));
@@ -85,20 +101,21 @@ contract TermsRepository is Multicall {
 
     function getTerm(
         ShortString termId_
-    ) public view returns (Licensing.LicensingTerm memory) {
-        if (_terms[termId_].comStatus == Licensing.CommercialStatus.Unset) {
-            revert Errors.TermsRegistry_UnsupportedTerm();
-        }
+    ) public view onlyValidTerm(termId_) returns (Licensing.LicensingTerm memory) {
+        
         return _terms[termId_];
+    }
+
+    function getTermHook(
+        ShortString termId_
+    ) public view onlyValidTerm(termId_) returns (IHook) {
+        return getTerm(termId_).hook;
     }
 
     function getTerm(
         string memory termId_
-    ) public view returns (Licensing.LicensingTerm memory) {
+    ) public view onlyValidTermString(termId_) returns (Licensing.LicensingTerm memory) {
         ShortString termId = termId_.toShortString();
-        if (_terms[termId].comStatus == Licensing.CommercialStatus.Unset) {
-            revert Errors.TermsRegistry_UnsupportedTerm();
-        }
         return _terms[termId];
     }
 

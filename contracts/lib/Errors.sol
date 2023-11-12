@@ -237,9 +237,14 @@ library Errors {
     error LicensingModule_NonExistentIPOrg();
     error LicensingModule_CallerNotIpOrgOwner();
     error LicensingModule_InvalidConfigType();
-    error LicensingModule_CommercialTermNotAllowed();
+    error LicensingModule_InvalidTermCommercialStatus();
     error LicensingModule_IpOrgFrameworkAlreadySet();
     error LicensingModule_DuplicateTermId();
+    error LicensingModule_InvalidIntent();
+    error LicensingModule_IPANotActive();
+    error LicensingModule_CommercialLicenseNotAllowed();
+    error LicensingModule_NonCommercialTermsRequired();
+    error LicensingModule_IpOrgNotConfigured();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            RelationshipModule                          //

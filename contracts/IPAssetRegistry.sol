@@ -38,13 +38,13 @@ contract IPAssetRegistry is IIPAssetRegistry {
     // TODO(ramarti): Add registration authorization via registration module.
     // TODO(ramarti): Include module parameters and interfacing to registration.
     function register(IPAsset.RegisterIpAssetParams calldata params_) public returns (uint256) {
-        uint256 ipAssetId = numIPAssets++;
+        uint256 ipAssetId = ++numIPAssets;
         uint64 registrationDate = uint64(block.timestamp);
 
         ipAssets[ipAssetId] = IPAsset.IPA({
             name: params_.name,
             ipAssetType: params_.ipAssetType,
-            status: 0, // TODO(ramarti): Define status types.
+            status: 1, // TODO(ramarti): Define status types.
             owner: params_.owner,
             initialRegistrant: params_.owner,
             ipOrg: params_.ipOrg,
@@ -103,6 +103,10 @@ contract IPAssetRegistry is IIPAssetRegistry {
     /// @param ipAssetId_ The id of the IP Asset being queried.
     function ipAssetOrg(uint256 ipAssetId_) public view returns (address) {
         return ipAssets[ipAssetId_].ipOrg;
+    }
+
+    function getIpAsset(uint256 ipAssetId_) external view returns (IPAsset.IPA memory) {
+        return ipAssets[ipAssetId_];
     }
 
 }

@@ -60,6 +60,10 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
     /// Gets relationship definition for a given relationship id
     function getRelationship(uint256 relationshipId_) external view returns (LibRelationship.Relationship memory) {
         return _relationships[relationshipId_];
+        // TODO: store hash(src) -> hash(dst),
+        // easier to check if a relation exist
+        // we can traverse the graph
+        // if we delete one end, it's easier to propagate
     }
 
     /// Gets relationship id for a given relationship

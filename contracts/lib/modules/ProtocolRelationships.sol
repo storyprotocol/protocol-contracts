@@ -5,30 +5,13 @@ import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
 
 library ProtocolRelationships {
 
-    string constant public IPORG_TERMS_REL_TYPE = "IPORG_TERMS";
-
-    function _getIpOrgTermsAddRelParams()
-        internal pure 
-        returns (LibRelationship.AddRelationshipTypeParams memory) {
-        return LibRelationship.AddRelationshipTypeParams({
-            relType: IPORG_TERMS_REL_TYPE,
-            ipOrg: LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
-            allowedElements: LibRelationship.RelatedElements({
-                src: LibRelationship.Relatables.ADDRESS,
-                dst: LibRelationship.Relatables.LICENSE
-            }),
-            allowedSrcs: new uint8[](0),
-            allowedDsts: new uint8[](0)
-        });
-    }
-
-    string constant public IPA_LICENSE_REL_TYPE = "IPA_LICENSE";
+    string constant public IPA_LICENSE = "IPA_LICENSE";
 
     function _getIpLicenseAddRelPArams()
         internal pure 
         returns (LibRelationship.AddRelationshipTypeParams memory) {
         return LibRelationship.AddRelationshipTypeParams({
-            relType: IPA_LICENSE_REL_TYPE,
+            relType: IPA_LICENSE,
             ipOrg: LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
             allowedElements: LibRelationship.RelatedElements({
                 src: LibRelationship.Relatables.IPA,
@@ -40,13 +23,13 @@ library ProtocolRelationships {
     }
 
 
-    string constant public SUBLICENSE_REL_TYPE = "SUBLICENSE";
+    string constant public SUBLICENSE_OF = "SUBLICENSE_OF";
 
     function _getSublicenseAddRelParams()
         internal pure 
         returns (LibRelationship.AddRelationshipTypeParams memory) {
         return LibRelationship.AddRelationshipTypeParams({
-            relType: SUBLICENSE_REL_TYPE,
+            relType: SUBLICENSE_OF,
             ipOrg: LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
             allowedElements: LibRelationship.RelatedElements({
                 src: LibRelationship.Relatables.LICENSE,

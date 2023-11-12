@@ -20,7 +20,7 @@ contract TermsHook is SyncBaseHook {
         // abi.decode still cannot be try/catched, so we cannot return meaningful errors.
         // If config is correct, this will not revert
         // See https://github.com/ethereum/solidity/issues/13869
-        if (ShortStringOps._equal(TermIds.SHARE_ALIKE, config.termsId)) {
+        if (ShortStringOps._equal(TermIds.SHARE_ALIKE, config.termId)) {
             abi.decode(config.data, (TermsHooks.ShareAlike));
         }
         revert Errors.TermsHook_UnsupportedTermsId();
@@ -31,7 +31,7 @@ contract TermsHook is SyncBaseHook {
         bytes memory hookParams_
     ) internal virtual override returns (bytes memory) {
         Licensing.TermsConfig memory config = abi.decode(hookConfig_, (Licensing.TermsConfig));
-        if (ShortStringOps._equal(TermIds.SHARE_ALIKE, config.termsId)) {
+        if (ShortStringOps._equal(TermIds.SHARE_ALIKE, config.termId)) {
             abi.decode(config.data, (TermsHooks.ShareAlike));
         }
         return "";

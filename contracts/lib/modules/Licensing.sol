@@ -9,9 +9,24 @@ library Licensing {
     
     struct License {
         bool isCommercial;
-        bytes[] terms;
-        address[] activationHooks;
-        bytes[] activationHookParams;
+        address licensor;
+        address revoker;
+        TermsConfig[] termsConfig;
+        // 
+        
+    }
+
+    struct LicenseCreationParams {
+        uint256 parentLicenseId;
+        bool isCommercial;
+        uint256 ipaId;
+        // Intent intent;
+    }
+
+    enum Intent {
+        RootIpa, // No parent license
+        DerivativeIpa,// Parent license id needed, will become untradeable after completion
+        OffchainDerivative // Parent license id needed, need to log back
     }
 
     enum CommercialStatus {
@@ -28,21 +43,16 @@ library Licensing {
     }
 
     struct TermsConfig {
-        ShortString termsId;
+        ShortString termId;
         bytes data;
     }
 
     struct FrameworkConfig {
-        bool isCommercialAllowed;
-        TermsConfig[] termsConfig;
+        TermsConfig[] comTermsConfig;
+        TermsConfig[] nonComTermsConfig;
     }
 
-    // Available categories -> IPORg wide
-    // Excluded categories (IPORg wide? IPA wide?)
-    // Pure text terms
-    // Share alike == sublicensing on/off
-    // 
-    // Attribution should point to a relationship Type
+    
     bytes32 constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");
 }
 
