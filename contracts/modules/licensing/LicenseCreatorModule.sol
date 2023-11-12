@@ -12,21 +12,23 @@ import { RelationshipModule } from "../relationships/RelationshipModule.sol";
 import { TermsRepository } from "./TermsRepository.sol";
 import { ProtocolTermsHelper } from "./ProtocolTermsHelper.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
-import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 
 import "forge-std/console.sol";
 
 contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelper {
     using ShortStrings for *;
-    using EnumerableSet for EnumerableSet.Bytes32Set;
+    using FixedSet for FixedSet.ShortStringSet;
 
-    event IpOrgTermsSet(address indexed ipOrg, bool commercial, bytes32[] termIds, bytes[] termData);
+    // NOTE: emitting this event can be very expensive, check if terms can be indexed some
+    // other way
+    event IpOrgTermsSet(address indexed ipOrg, bool commercial, ShortString[] termIds, bytes[] termData);
 
     RelationshipModule public immutable RELATIONSHIP_MODULE;
-    mapping(address => EnumerableSet.Bytes32Set) private _comIpOrgTermIds;
+    mapping(address => FixedSet.ShortStringSet) private _comIpOrgTermIds;
     mapping(address => bytes[]) private _comIpOrgTermData;
-    mapping(address => EnumerableSet.Bytes32Set) private _nonComIpOrgTermIds;
+    mapping(address => FixedSet.ShortStringSet) private _nonComIpOrgTermIds;
     mapping(address => bytes[]) private _nonComIpOrgTermData;
 
     constructor(ModuleConstruction memory params_) BaseModule(params_) {
@@ -43,7 +45,8 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
         return _comIpOrgTermIds[ipOrg_].length() > 0;
     }
 
-    function getIpOrgTerms(bool commercial, address ipOrg_) public view returns (bytes32[] memory, bytes[] memory) {
+    // NOTE: this will copy all terms to memory, it can be expensive
+    function getIpOrgTerms(bool commercial, address ipOrg_) public view returns (ShortString[] memory, bytes[] memory) {
         if (commercial) {
             return (
                 _comIpOrgTermIds[ipOrg_].values(),
@@ -57,6 +60,23 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
         }
     }
 
+    function getTotalIpOrgTerms(bool commercial, address ipOrg_) public view returns (uint256) {
+        if (commercial) {
+            return _comIpOrgTermIds[ipOrg_].length();
+        } else {
+            return _nonComIpOrgTermIds[ipOrg_].length();
+        }
+    }
+
+    function ipOrgTermsAt(bool commercial, address ipOrg_, uint index_) public view returns (ShortString termId, bytes memory data) {
+        if (commercial) {
+            return (_comIpOrgTermIds[ipOrg_].at(index_), _comIpOrgTermData[ipOrg_][index_]);
+        } else {
+            return (_nonComIpOrgTermIds[ipOrg_].at(index_), _nonComIpOrgTermData[ipOrg_][index_]);
+        }
+    }
+
+
     function _hookRegistryAdmin()
         internal
         view
@@ -66,6 +86,10 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
     {
         return address(0);
     }
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                          Create License                                //
+    ////////////////////////////////////////////////////////////////////////////
 
     function _verifyExecution(
         IIPOrg ipOrg_,
@@ -82,7 +106,7 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
                 revert Errors.LicensingModule_CallerNotIpOrgOwner();
             }
         } else {
-            // TODO: Check if license is active
+            // TODO: Check if parent license is active
             
         }
         if (_comIpOrgTermIds[address(ipOrg_)].length() == 0) {
@@ -112,17 +136,18 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
         );
         IPAsset.IPA memory ipa = IPA_REGISTRY.getIpAsset(lParams.ipaId);
         
-        Licensing.License memory license = Licensing.License({
-            isCommercial: lParams.isCommercial,
-            licensor: _getLicensor(
-                ipOrg_.owner(),
-                ipa.owner,
-                LICENSE_REGISTRY.getLicenseOwner(lParams.parentLicenseId)
-            ),
-            revoker: _getRevoker(address(ipOrg_)),
-            termsConfig: new Licensing.TermsConfig[](0)
-        });
-        return abi.encode(1);
+        // Licensing.License memory license = Licensing.License({
+        //     isCommercial: lParams.isCommercial,
+        //     licensor: _getLicensor(
+        //         ipOrg_.owner(),
+        //         ipa.owner,
+        //         LICENSE_REGISTRY.getLicenseOwner(lParams.parentLicenseId)
+        //     ),
+        //     revoker: _getRevoker(ipOrg_),
+        //     termsConfig: 
+        // });
+        // return LICENSE_REGISTRY.createLicense(license);
+        return "";
     }
 
     function _getLicensor(
@@ -137,9 +162,10 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
         return ipaOwner;
     }
 
-    function _getRevoker(address ipOrg) private view returns (address) {
-        // TODO: Check Revoker term in terms registry.
-        return address(0);
+    function _getRevoker(IIPOrg ipOrg) private view returns (address) {
+        // TODO: Check Revoker term in terms registry to chose disputer
+        // For now, ipOrgOwner
+        return ipOrg.owner();
     }
 
     /*
@@ -190,6 +216,10 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
         );
     */
 
+    ////////////////////////////////////////////////////////////////////////////
+    //                              Config                                    //
+    ////////////////////////////////////////////////////////////////////////////
+
 
     function _configure(
         IIPOrg ipOrg_,
@@ -218,30 +248,30 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
     ) virtual internal returns (bytes memory) {
         if (ipOrg_.owner() != caller_) {
             revert Errors.LicensingModule_CallerNotIpOrgOwner();
-        }
-        console.log("Setting ipOrg framework");
+        }        
+        address ipOrgAddress = address(ipOrg_);
+
         Licensing.FrameworkConfig memory framework = abi.decode(params_, (Licensing.FrameworkConfig));
-        console.log("got config");
-        if (framework.nonComTermsConfig.length == 0) {
+
+        // Set non-commercial terms
+        Licensing.TermsConfig memory nonComTermsConfig = framework.nonComTermsConfig;
+        if (nonComTermsConfig.termIds.length == 0) {
             revert Errors.LicensingModule_NonCommercialTermsRequired();
         }
-        address ipOrgAddress = address(ipOrg_);
-        console.log("setting commercial");
-        // Set non-commercial terms
         bytes[] storage nonComTermData = _nonComIpOrgTermData[ipOrgAddress];
-        EnumerableSet.Bytes32Set storage nonComTermIds = _nonComIpOrgTermIds[ipOrgAddress];
+        FixedSet.ShortStringSet storage nonComTermIds = _nonComIpOrgTermIds[ipOrgAddress];
         if (nonComTermIds.length() > 0) {
             // We assume ipOrg config is immutable, licensing changes in an ipOrg imply a fork
             revert Errors.LicensingModule_IpOrgFrameworkAlreadySet();
         }
-        console.log("bla");
-        _setTerms(false, framework.nonComTermsConfig, nonComTermIds, nonComTermData);
-        emit IpOrgTermsSet(ipOrgAddress, true, nonComTermIds.values(), nonComTermData);
-        console.log("setting non commercial");
+        _setTerms(false, nonComTermsConfig, nonComTermIds, nonComTermData);
+        emit IpOrgTermsSet(ipOrgAddress, false, nonComTermIds.values(), nonComTermData);
+        
+        Licensing.TermsConfig memory comTermsConfig = framework.comTermsConfig;
         // Set commercial terms
         bytes[] storage comTermData = _comIpOrgTermData[ipOrgAddress];
-        EnumerableSet.Bytes32Set storage comTermIds = _comIpOrgTermIds[ipOrgAddress];
-        _setTerms(true, framework.comTermsConfig, comTermIds, comTermData);
+        FixedSet.ShortStringSet storage comTermIds = _comIpOrgTermIds[ipOrgAddress];
+        _setTerms(true, comTermsConfig, comTermIds, comTermData);
         emit IpOrgTermsSet(ipOrgAddress, true, comTermIds.values(), comTermData);
         
         return "";
@@ -249,36 +279,30 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
 
     function _setTerms(
         bool commercial,
-        Licensing.TermsConfig[] memory termsConfig_,
-        EnumerableSet.Bytes32Set storage termIds_,
+        Licensing.TermsConfig memory termsConfig_,
+        FixedSet.ShortStringSet storage termIds_,
         bytes[] storage ipOrgTermData_
     ) internal {
-        // Solidity doesn't allow to store arrays of structs (TermsConfig[]) from memory to storage,
-        // so we store them separately.
-        // On the bright side, we can use EnumerableSet to check for termId duplicates
-        uint256 termsLength = termsConfig_.length;
-        console.log(termsLength);
+        uint256 termsLength = termsConfig_.termIds.length;
         for (uint256 i = 0; i < termsLength; i++) {
-            Licensing.TermsConfig memory config = termsConfig_[i];
-            bytes32 termId = ShortString.unwrap(config.termId);
-            console.log("termId");
-            console.logBytes32(termId);
+            ShortString termId = termsConfig_.termIds[i];
             if (termIds_.contains(termId)) {
                 revert Errors.LicensingModule_DuplicateTermId();
             }
-            Licensing.LicensingTerm memory term = getTerm(config.termId);
-            console.log(address(term.hook));
+            Licensing.LicensingTerm memory term = getTerm(termId);
+            
             if (commercial && term.comStatus == Licensing.CommercialStatus.NonCommercial) {
                 // We assume that CommercialStatus.Unset is not possible, since 
                 // TermsRepository checks for that
                 revert Errors.LicensingModule_InvalidTermCommercialStatus();
             }
+            bytes memory data = termsConfig_.termData[i];
             if (address(term.hook) != address(0)) {
                 // Reverts if decoding fails
-                term.hook.validateConfig(abi.encode(config));
+                term.hook.validateConfig(abi.encode(termId, data));
             }
             termIds_.add(termId);
-            ipOrgTermData_.push(config.data);
+            ipOrgTermData_.push(data);
         }
     }
 

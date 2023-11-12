@@ -8,8 +8,9 @@ contract LicenseRegistry {
     mapping(uint256 => Licensing.License) private _licenses;
     uint256 private _licenseCount = 0;
 
-
+    
     function addLicense(Licensing.License calldata license_) external returns (uint256) {
+        // TOOD: Add authorization
         _licenseCount++;
         _licenses[_licenseCount] = license_;
         return _licenseCount;

@@ -10,40 +10,23 @@ import { Licensing, TermCategories, TermIds } from "contracts/lib/modules/Licens
 import { OffChain } from "contracts/lib/OffChain.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
+import { BaseLicensingTest } from "./BaseLicensingTest.sol";
 
-contract LicensingCreatorModuleConfigTest is BaseTest {
+contract LicensingCreatorModuleConfigTest is BaseLicensingTest {
     using ShortStrings for *;
 
-    ShortString public textTermId = "text_term_id".toShortString();
     address ipaOwner = address(0x13333);
 
     function setUp() override public {
         super.setUp();
-        licensingModule.addTermCategory("test_category");
-        licensingModule.addTerm(
-            "test_category",
-            "text_term_id",
-            Licensing.LicensingTerm({
-                comStatus: Licensing.CommercialStatus.Both,
-                text: OffChain.Content({
-                    url: "https://example.com"
-                }),
-                hook: IHook(address(0))
-            }
-        ));
-        Licensing.TermsConfig[] memory nonComTerms = new Licensing.TermsConfig[](1);
-        nonComTerms[0] = Licensing.TermsConfig({
-            termId: textTermId,
-            data: ""
-        });
-        Licensing.TermsConfig[] memory comTerms = nonComTerms;
+
         vm.prank(ipOrg.owner());
         spg.configureIpOrgLicensing(
             address(ipOrg),
-            Licensing.FrameworkConfig({
-                comTermsConfig: comTerms,
-                nonComTermsConfig: nonComTerms
-            })
+            getCommLicensingFramework(
+                textTermId,
+                bytes("")
+            )
         );
         registry.register(IPAsset.RegisterIpAssetParams({
             name: "test",
@@ -57,14 +40,6 @@ contract LicensingCreatorModuleConfigTest is BaseTest {
 
     }
 
-    function getTerms(uint256 length) view private returns (Licensing.TermsConfig[] memory ) {
-        Licensing.TermsConfig[] memory terms = new Licensing.TermsConfig[](length);
-        terms[0] = Licensing.TermsConfig({
-            termId: textTermId,
-            data: ""
-        });
-        return terms;
-    }
 
     function test_LicensingModule_configIpOrg_commercialLicenseActivationHooksCanBeSet() public {
         // TODO
@@ -95,8 +70,9 @@ contract LicensingCreatorModuleConfigTest is BaseTest {
         );
         // Non Commercial
         Licensing.License memory license = licenseRegistry.getLicense(lId);
-        assertTrue(license.isCommercial);
-
+        assertFalse(license.isCommercial);
+        assertEq(license.revoker, ipOrg.owner());
+        assertEq(license.licensor, ipOrg.owner());
         
         assertTrue(
             relationshipModule.relationshipExists(
@@ -111,9 +87,6 @@ contract LicensingCreatorModuleConfigTest is BaseTest {
         );
         //Licensing.License memory license = licenseReg
         // Commercial
-        
-
-
         
     }
 

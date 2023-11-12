@@ -4,16 +4,15 @@ pragma solidity ^0.8.19;
 import { OffChain } from "contracts/lib/OffChain.sol";
 import { ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
+import { FixedSet } from "contracts/utils/FixedSet.sol";
 
 library Licensing {
-    
     struct License {
         bool isCommercial;
         address licensor;
         address revoker;
-        TermsConfig[] termsConfig;
-        // 
-        
+        ShortString[] termIds;
+        bytes[] termsData;
     }
 
     struct LicenseCreationParams {
@@ -43,15 +42,14 @@ library Licensing {
     }
 
     struct TermsConfig {
-        ShortString termId;
-        bytes data;
+        ShortString[] termIds;
+        bytes[] termData;
     }
 
     struct FrameworkConfig {
-        TermsConfig[] comTermsConfig;
-        TermsConfig[] nonComTermsConfig;
+        TermsConfig comTermsConfig;
+        TermsConfig nonComTermsConfig;
     }
-
     
     bytes32 constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");
 }
