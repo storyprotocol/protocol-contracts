@@ -60,13 +60,3 @@ library Licensing {
     
     bytes32 constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");
 }
-
-library TermCategories {
-    string constant FORMAT_CATEGORIES = "FORMAT_CATEGORIES";
-}
-
-/// @dev must be < 32 bytes long, or they will blow up at some point
-/// see https://docs.openzeppelin.com/contracts/4.x/api/utils#ShortStrings
-library TermIds {
-    string constant SHARE_ALIKE = "SHARE_ALIKE";
-}
