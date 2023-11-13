@@ -17,8 +17,11 @@ contract IPOrg is
     ERC721Upgradeable
 {
 
-    /// @notice Tracks the total number of IP Assets owned by the org.
-    uint256 numIPAssets = 0;
+    /// @notice Tracks the last index of the IP asset wrapper.
+    uint256 lastIndex = 0;
+
+    /// @notice Tracks the total number of IP Assets owned by the IP org.
+    uint256 totalSupply = 0;
 
     // Address of the module regisry.
     address private immutable _moduleRegistry;
@@ -57,7 +60,19 @@ contract IPOrg is
         uint256 tokenId_
     ) public view override returns (string memory) {
         address registrationModule = IModuleRegistry(_moduleRegistry).protocolModules(ModuleRegistryKeys.REGISTRATION_MODULE);
-        return IRegistrationModule(registrationModule).renderMetadata(msg.sender, tokenId_);
+        return IRegistrationModule(registrationModule).renderMetadata(address(this), tokenId_);
+    }
+
+    /// @notice Retrieves the contract URI for the IP Org collection.
+    function contractURI() public view override returns (string memory) {
+        address registrationModule = IModuleRegistry(_moduleRegistry).protocolModules(ModuleRegistryKeys.REGISTRATION_MODULE);
+        return IRegistrationModule(registrationModule).contractURI(address(this));
+    }
+
+    /// @notice Gets the global IP asset id associated with this IP Org asset.
+    function ipAssetId(uint256 id) {
+        address registrationModule = IModuleRegistry(_moduleRegistry).protocolModules(ModuleRegistryKeys.REGISTRATION_MODULE);
+        return IRegistrationModule(registrationModule).ipAssetIds(address(this), id);
     }
 
     /// @notice Initializes an IP Org.
@@ -77,31 +92,26 @@ contract IPOrg is
         }
 
         __ERC721_init(params_.name, params_.symbol);
-
-        __Ownable_init();
     }
 
-    /// @notice Registers a new IP Asset for the IP Org.
-    /// TODO(leeren) Change ownership attribution to track the GIPR directly.
-    /// This will be changed once ownership attribution of GIPR and IPOrg Assets are better defined.
-    function register(
-        address owner_,
-        string name_,
-        uint64 ipAssetType_,
-        bytes32 hash_
-    ) onlyRegistrationModule returns (uint256 registryId, uint256 id) {
-        registryId = IPAssetRegistry(_registry).register(
-            owner_,
-            name_,
-            ipAssetType_,
-            hash_,
-        );
-        id = numIPAssets++;
+    /// @notice Registers a new IP Asset wrapper for the IP Org.
+    function mint() onlyRegistrationModule returns (uint256 id) {
+        totalSupply++;
+        id = lastIndex++;
         _mint(owner, id);
-        registryIds[id] = registryId;
     }
 
-    /// @notice Transfers ownership of an IP Asset to the new owner.
+    /// @notice Burns an IP Asset wrapper of the IP Org.
+    /// @param id The identifier of the IP asset wrapper being burned.
+    function burn(uint256 id) onlyRegistrationModule {
+        totalSupply--;
+        _burn(id);
+    }
+
+    /// @notice Transfers ownership of an IP Asset within an Org to a new owner.
+    /// @param from_ The original owner of the IP asset in the IP Org.
+    /// @param to_ The new owner of the IP asset in the IP Org.
+    /// @param id_ The identifier of the IP asset within the IP Org.
     function transferFrom(
         address from,
         address to,

@@ -14,23 +14,6 @@ import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 /// or by MODULE_EXECUTOR_ROLE holders.
 contract ModuleRegistry is AccessControlled, Multicall {
 
-    event ModuleAdded(address indexed ipOrg, string indexed moduleKey, BaseModule module);
-    event ModuleRemoved(address indexed ipOrg, string indexed moduleKey, BaseModule module);
-    event ModuleExecuted (
-        address indexed ipOrg,
-        string indexed moduleKey,
-        address indexed caller,
-        bytes selfParams,
-        bytes[] preHookParams,
-        bytes[] postHookParams
-    );
-    event ModuleConfigured(
-        address indexed ipOrg,
-        string indexed moduleKey,
-        address indexed caller,
-        bytes params
-    );
-
     mapping(string => BaseModule) public protocolModules;
 
     address public constant PROTOCOL_LEVEL = address(0);

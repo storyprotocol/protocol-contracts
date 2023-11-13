@@ -4,6 +4,12 @@ pragma solidity ^0.8.19;
 /// @title Relationship Module Library
 library Registration {
 
+    /// @notice IPOrg configuration settings.
+    struct IPOrgConfig {
+        string baseURI;
+        string contractURI;
+    }
+
     struct RegisterIPAParams {
         address owner;
         string name;
@@ -11,6 +17,4 @@ library Registration {
         bytes32 hash;
     }
 
-    bytes32 public constant ADD_METADATA_RENDERER_TYPE_CONFIG = keccak256("ADD_REL_TYPE");
-    bytes32 public constant REMOVE_REL_TYPE_CONFIG = keccak256("REMOVE_REL_TYPE");
 }
