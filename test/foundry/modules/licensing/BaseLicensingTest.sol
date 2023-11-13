@@ -15,17 +15,19 @@ contract BaseLicensingTest is BaseTest {
     ShortString public nonCommTextTermId = "non_comm_text_term_id".toShortString();
     ShortString public commTextTermId = "comm_text_term_id".toShortString();
 
-    uint256 commRootLicenseId;
-    uint256 nonCommRootLicenseId;
+    uint256 public commRootLicenseId;
+    uint256 public nonCommRootLicenseId;
+
+    ShortString[] public nonCommTermIds;
+    bytes[] public nonCommTermData;
+    ShortString[] public commTermIds;
+    bytes[] public commTermData;
 
     modifier withNonCommFramework() {
         vm.prank(ipOrg.owner());
         spg.configureIpOrgLicensing(
             address(ipOrg),
-            getNonCommFramework(
-                nonCommTextTermId,
-                bytes("")
-            )
+            getNonCommFramework()
         );
         _;
     }
@@ -34,12 +36,7 @@ contract BaseLicensingTest is BaseTest {
         vm.prank(ipOrg.owner());
         spg.configureIpOrgLicensing(
             address(ipOrg),
-            getCommFramework(
-                commTextTermId,
-                bytes(""),
-                nonCommTextTermId,
-                bytes("")
-            )
+            getCommFramework()
         );
         _;
     }
@@ -100,6 +97,22 @@ contract BaseLicensingTest is BaseTest {
                 hook: IHook(address(0))
             }
         ));
+        nonCommTermIds = [
+            textTermId,
+            nonCommTextTermId
+        ];
+        nonCommTermData = [
+            bytes(""),
+            bytes("")
+        ];
+        commTermIds = [
+            // textTermId,
+            commTextTermId
+        ];
+        commTermData = [
+            // bytes(""),
+            bytes("")
+        ];
     }
 
     function getEmptyFramework() public pure returns (Licensing.FrameworkConfig memory) {
@@ -116,14 +129,21 @@ contract BaseLicensingTest is BaseTest {
             });
     }
 
-    function getNonCommFramework(
-        ShortString termId,
-        bytes memory data
-    ) public pure returns (Licensing.FrameworkConfig memory) {
-        ShortString[] memory termIds = new ShortString[](1);
-        termIds[0] = termId;
-        bytes[] memory termData = new bytes[](1);
-        termData[0] = data;
+    function getCommFramework() public view returns (Licensing.FrameworkConfig memory) {
+        return
+            Licensing.FrameworkConfig({
+                comTermsConfig: Licensing.TermsConfig({
+                    termIds: commTermIds,
+                    termData: commTermData
+                }),
+                nonComTermsConfig: Licensing.TermsConfig({
+                    termIds: nonCommTermIds,
+                    termData: nonCommTermData
+                })
+            });
+    }
+
+    function getNonCommFramework() public view returns (Licensing.FrameworkConfig memory) {
         return
             Licensing.FrameworkConfig({
                 comTermsConfig: Licensing.TermsConfig({
@@ -131,39 +151,37 @@ contract BaseLicensingTest is BaseTest {
                     termData: new bytes[](0)
                 }),
                 nonComTermsConfig: Licensing.TermsConfig({
-                    termIds: termIds,
-                    termData: termData
+                    termIds: nonCommTermIds,
+                    termData: nonCommTermData
                 })
             });
     }
 
-    function getCommFramework(
-        ShortString cId,
-        bytes memory cData,
-        ShortString ncId,
-        bytes memory ncData
-    ) public pure returns (Licensing.FrameworkConfig memory) {
-        ShortString[] memory comTermsId = new ShortString[](1);
-        comTermsId[0] = cId;
-        bytes[] memory comTermsData = new bytes[](1);
-        comTermsData[0] = cData;
-        ShortString[] memory nonComTermsId = new ShortString[](1);
-        nonComTermsId[0] = ncId;
-        bytes[] memory nonComTermsData = new bytes[](1);
-        nonComTermsData[0] = ncData;
-        return
-            Licensing.FrameworkConfig({
-                comTermsConfig: Licensing.TermsConfig({
-                    termIds: comTermsId,
-                    termData: comTermsData
-                }),
-                nonComTermsConfig: Licensing.TermsConfig({
-                    termIds: nonComTermsId,
-                    termData: nonComTermsData
-                })
-            });
+    function getNonCommFrameworkAndPush(
+        ShortString termId,
+        bytes memory data
+    ) public returns (Licensing.FrameworkConfig memory) {
+        nonCommTermIds.push(termId);
+        nonCommTermData.push(data);
+        return getNonCommFramework();
     }
 
+    function getCommFrameworkAndPush(
+        ShortString ncTermId,
+        bytes memory ncData,
+        ShortString cTermId,
+        bytes memory cData
+    ) public returns (Licensing.FrameworkConfig memory) {
+        if (!ShortStringOps._equal(ncTermId, "".toShortString())) {
+            commTermIds.push(ncTermId);
+            commTermData.push(ncData);
+        }
+        if (!ShortStringOps._equal(cTermId, "".toShortString())) {
+            commTermIds.push(cTermId);
+            commTermData.push(cData);
+        }
+        return getCommFramework();
+    }
 
     function assertTerms(Licensing.License memory license) public {
         (ShortString[] memory ipOrgTermsId, bytes[] memory ipOrgTermsData) = licensingModule.getIpOrgTerms(
@@ -186,6 +204,20 @@ contract BaseLicensingTest is BaseTest {
                     term.comStatus == Licensing.CommercialStatus.Both
                 );
             }
+        }
+    }
+
+    function assertTermsSetInIpOrg(bool commercial) public {
+        (ShortString[] memory ipOrgTermsId, bytes[] memory ipOrgTermsData) = licensingModule.getIpOrgTerms(
+            commercial, address(ipOrg)
+        );
+        ShortString[] memory termIds = commercial ? commTermIds : nonCommTermIds;
+        bytes[] memory termData = commercial ? commTermData : nonCommTermData;
+        assertEq(termIds.length, ipOrgTermsId.length);
+        assertEq(termData.length, ipOrgTermsData.length);
+        for (uint256 i = 0; i < termIds.length; i++) {
+            assertTrue(ShortStringOps._equal(termIds[i], ipOrgTermsId[i]));
+            assertTrue(keccak256(termData[i]) == keccak256(ipOrgTermsData[i]));
         }
     }
 

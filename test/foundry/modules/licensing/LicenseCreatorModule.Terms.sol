@@ -29,29 +29,15 @@ contract LicensingCreatorModuleConfigTest is BaseLicensingTest {
             url: "https://example.com",
             data: ""
         }));
-
-    }
-
-    function test_LicensingModule_configIpOrg_commercialLicenseActivationHooksCanBeSet() public {
-        // TODO
-    }
-
-    function test_LicensingModule_configIpOrg_nonCommercialLicenseActivationHooksCanBeSet() public {
-        // TODO
-    }
-
-    function test_LicensingModule_licensing_createsCommercialLicense() public {
-    }
     
-    function test_LicensingModule_licensing_createsNonCommercialLicense() public {   
     }
 
-    function test_LicensingModule_licensing_createsCommerciaSublLicense() public {
+    function test_LicensingModule_terms_shareAlikeAllowsSublicensing() withCommFramework public {
 
     }
 
-    function test_LicensingModule_licensing_createsNonCommercialSubLicense() public {
-        
+    function test_LicensingModule_terms_revert_shareAlikeOffNoSublicense() public {
+
     }
 
 }

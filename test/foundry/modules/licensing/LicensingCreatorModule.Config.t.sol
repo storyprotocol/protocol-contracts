@@ -22,42 +22,30 @@ contract LicensingCreatorModuleConfigTest is BaseLicensingTest {
         vm.expectRevert(Errors.LicensingModule_CallerNotIpOrgOwner.selector);
         spg.configureIpOrgLicensing(
             address(ipOrg),
-            getNonCommFramework(textTermId, bytes(""))
+            getNonCommFramework()
         );
     }
 
-    function test_LicensingModule_configIpOrg_ipOrgWithNoCommercialTermsIsNonCommercial()
+    function test_LicensingModule_configIpOrg_ipOrgWithoutCommercialTermsIsNonCommercial()
         public
         withNonCommFramework
     {
-        assertFalse(licensingModule.ipOrgAllowsCommercial(address(ipOrg)));
+        assertFalse(licensingModule.ipOrgAllowsCommercial(address(ipOrg)), "should be non commercial");
         (
-            ShortString[] memory nonComTermIds,
-            bytes[] memory nonComTermData
-        ) = licensingModule.getIpOrgTerms(false, address(ipOrg));
-        assertTrue(ShortStringOps._equal(nonComTermIds[0], nonCommTextTermId));
-        (
-            ShortString[] memory termIds,
-            bytes[] memory termsData
+            ShortString[] memory comTermIds,
+            bytes[] memory comTermData
         ) = licensingModule.getIpOrgTerms(true, address(ipOrg));
-        assertTrue(termIds.length == 0);
+        assertTrue(comTermIds.length == 0, "commercial terms should be empty");
+        assertTermsSetInIpOrg(false); // non commercial terms
     }
 
     function test_LicensingModule_configIpOrg_ipOrgWithCommercialTermsIsCommercial()
         public
         withCommFramework
     {
-        assertTrue(licensingModule.ipOrgAllowsCommercial(address(ipOrg)));
-        (
-            ShortString[] memory nonComTermIds,
-            bytes[] memory nonComTermData
-        ) = licensingModule.getIpOrgTerms(false, address(ipOrg));
-        assertTrue(ShortStringOps._equal(nonComTermIds[0], nonCommTextTermId));
-        (
-            ShortString[] memory termIds,
-            bytes[] memory termsData
-        ) = licensingModule.getIpOrgTerms(true, address(ipOrg));
-        assertTrue(ShortStringOps._equal(termIds[0], commTextTermId));
+        assertTrue(licensingModule.ipOrgAllowsCommercial(address(ipOrg)), "not commercial");
+        assertTermsSetInIpOrg(true); // commercial terms
+        assertTermsSetInIpOrg(false); // non commercial terms too
     }
 
     function test_LicensingModule_configIpOrg_revert_noEmptyNonCommercialTerms()
@@ -80,10 +68,8 @@ contract LicensingCreatorModuleConfigTest is BaseLicensingTest {
         );
         spg.configureIpOrgLicensing(
             address(ipOrg),
-            getCommFramework(
-                nonCommTextTermId,
-                bytes(""),
-                nonCommTextTermId,
+            getNonCommFrameworkAndPush(
+                commTextTermId,
                 bytes("")
             )
         );

@@ -297,8 +297,11 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
                 revert Errors.LicensingModule_DuplicateTermId();
             }
             Licensing.LicensingTerm memory term = getTerm(termId);
-            
-            if (commercial && term.comStatus == Licensing.CommercialStatus.NonCommercial) {
+            // Since there is CommercialStatus.Both, we need to be specific here
+            if (
+                commercial && term.comStatus == Licensing.CommercialStatus.NonCommercial ||
+                !commercial && term.comStatus == Licensing.CommercialStatus.Commercial
+            ) {
                 // We assume that CommercialStatus.Unset is not possible, since 
                 // TermsRepository checks for that
                 revert Errors.LicensingModule_InvalidTermCommercialStatus();
