@@ -101,6 +101,9 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
         );
         // If creating license for root IPA:
         if (lParams.parentLicenseId == 0) {
+            if (lParams.ipaId == 0) {
+                revert Errors.LicensingModule_IpaIdRequired();
+            }
             if (ipOrg_.owner() != caller_) {
                 revert Errors.LicensingModule_CallerNotIpOrgOwner();
             }
@@ -108,6 +111,7 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
             // TODO: Check if parent license is active
             
         }
+        
         // At least non commercial terms must be set
         if (_nonComIpOrgTermData[address(ipOrg_)].length == 0) {
             revert Errors.LicensingModule_IpOrgNotConfigured();
@@ -118,7 +122,7 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
         if (lParams.ipaId != 0) {
             // Todo: define status types
             if (IPA_REGISTRY.ipAssetStatus(lParams.ipaId) != 1) {
-                revert Errors.LicensingModule_IPANotActive();
+                revert Errors.LicensingModule_IpaNotActive();
             }
             //TODO Check if IPA has a license already
         }
@@ -143,18 +147,20 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
             lParams.isCommercial,
             address(ipOrg_)
         );
+
         Licensing.License memory license = Licensing.License({
             isCommercial: lParams.isCommercial,
+            licenseeType: _getLicenseeType(lParams.ipaId),
             licensor: _getLicensor(
                 ipOrg_.owner(),
                 ipa.owner,
-                LICENSE_REGISTRY.getLicenseOwner(lParams.parentLicenseId)
+                LICENSE_REGISTRY.getLicensee(lParams.parentLicenseId)
             ),
             revoker: _getRevoker(ipOrg_),
             termIds: termIds,
             termsData: termsData
         });
-        uint256 licenseId = LICENSE_REGISTRY.addLicense(license);
+        uint256 licenseId = LICENSE_REGISTRY.addLicense(license, caller_);
         if (lParams.ipaId != 0) {
             _relateToIpa(lParams.ipaId, licenseId);
         }
@@ -162,6 +168,13 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
             _relateToParentLicense(lParams.parentLicenseId, licenseId);
         }
         return abi.encode(licenseId);
+    }
+
+    function _getLicenseeType(uint256 ipaId) private pure returns (Licensing.LicenseeType) {
+        if (ipaId == 0) {
+            return Licensing.LicenseeType.LNFTHolder;
+        }
+        return Licensing.LicenseeType.BoundToIpa;
     }
 
     function _relateToIpa(uint256 ipaId, uint256 licenseId) private returns (uint256) {

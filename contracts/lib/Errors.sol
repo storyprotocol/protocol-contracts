@@ -241,10 +241,18 @@ library Errors {
     error LicensingModule_IpOrgFrameworkAlreadySet();
     error LicensingModule_DuplicateTermId();
     error LicensingModule_InvalidIntent();
-    error LicensingModule_IPANotActive();
+    error LicensingModule_IpaNotActive();
+    error LicensingModule_IpaIdRequired();
     error LicensingModule_CommercialLicenseNotAllowed();
     error LicensingModule_NonCommercialTermsRequired();
     error LicensingModule_IpOrgNotConfigured();
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                            LicenseRegistry                             //
+    ////////////////////////////////////////////////////////////////////////////
+
+    error LicenseRegistry_ZeroRelRegistryAddress();
+    error LicenseRegistry_LicenseNotBoundToLnft();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            RelationshipModule                          //

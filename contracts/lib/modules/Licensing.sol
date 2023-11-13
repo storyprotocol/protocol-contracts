@@ -9,6 +9,7 @@ import { FixedSet } from "contracts/utils/FixedSet.sol";
 library Licensing {
     struct License {
         bool isCommercial;
+        LicenseeType licenseeType;
         address licensor;
         address revoker;
         ShortString[] termIds;
@@ -20,6 +21,12 @@ library Licensing {
         bool isCommercial;
         uint256 ipaId;
         // Intent intent;
+    }
+
+    enum LicenseeType {
+        Unset,
+        BoundToIpa,
+        LNFTHolder
     }
 
     enum Intent {

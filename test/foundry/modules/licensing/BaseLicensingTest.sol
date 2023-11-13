@@ -15,6 +15,9 @@ contract BaseLicensingTest is BaseTest {
     ShortString public nonCommTextTermId = "non_comm_text_term_id".toShortString();
     ShortString public commTextTermId = "comm_text_term_id".toShortString();
 
+    uint256 commRootLicenseId;
+    uint256 nonCommRootLicenseId;
+
     modifier withNonCommFramework() {
         vm.prank(ipOrg.owner());
         spg.configureIpOrgLicensing(
@@ -38,6 +41,26 @@ contract BaseLicensingTest is BaseTest {
                 bytes("")
             )
         );
+        _;
+    }
+
+    modifier withRootLicense(bool commercial) {
+        vm.prank(ipOrg.owner());
+        uint256 lId = spg.createLicense(
+            address(ipOrg),
+            Licensing.LicenseCreationParams({
+                parentLicenseId: 0,
+                isCommercial: commercial,
+                ipaId: 1
+            }),
+            new bytes[](0),
+            new bytes[](0)
+        );
+        if (commercial) {
+            commRootLicenseId = lId;
+        } else {
+            nonCommRootLicenseId = lId;
+        }
         _;
     }
 
