@@ -21,6 +21,7 @@ import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortSt
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
+import { ProtocolRelationships } from "contracts/lib/modules/ProtocolRelationships.sol";
 
 // On active refactor
 
@@ -47,11 +48,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
 
     address constant upgrader = address(6969);
     address constant ipAssetOrgOwner = address(456);
-    address constant revoker = address(789);
-    // string constant NON_COMMERCIAL_LICENSE_URI = "https://noncommercial.license";
-    // string constant COMMERCIAL_LICENSE_URI = "https://commercial.license";
-
-    constructor() {}
+    address constant relManager = address(9999);
 
     function setUp() virtual override(BaseTestUtils) public {
         super.setUp();
@@ -104,17 +101,12 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         );
         moduleRegistry.registerProtocolModule(ModuleRegistryKeys.RELATIONSHIP_MODULE, relationshipModule);
         
-        // Create Licensing Module
-        // address licensingImplementation = address(new LicensingModule(address(ipAssetOrgFactory)));
-        // licensingModule = LicensingModule(
-        //     _deployUUPSProxy(
-        //         licensingImplementation,
-        //         abi.encodeWithSelector(
-        //             bytes4(keccak256(bytes("initialize(address,string)"))),
-        //             address(accessControl), NON_COMMERCIAL_LICENSE_URI
-        //         )
-        //     )
-        // );
+        // Set Protocol Relationships
+        _grantRole(vm, AccessControl.RELATIONSHIP_MANAGER_ROLE, relManager);
+        vm.startPrank(relManager);
+        spg.addRelationshipType(ProtocolRelationships._getIpLicenseAddRelPArams());
+        spg.addRelationshipType(ProtocolRelationships._getSublicenseAddRelParams());
+        vm.stopPrank();
 
         defaultCollectNftImpl = _deployCollectNFTImpl();
         collectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));

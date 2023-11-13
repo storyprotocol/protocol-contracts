@@ -15,6 +15,32 @@ contract BaseLicensingTest is BaseTest {
     ShortString public nonCommTextTermId = "non_comm_text_term_id".toShortString();
     ShortString public commTextTermId = "comm_text_term_id".toShortString();
 
+    modifier withNonCommFramework() {
+        vm.prank(ipOrg.owner());
+        spg.configureIpOrgLicensing(
+            address(ipOrg),
+            getNonCommFramework(
+                nonCommTextTermId,
+                bytes("")
+            )
+        );
+        _;
+    }
+
+    modifier withCommFramework() {
+        vm.prank(ipOrg.owner());
+        spg.configureIpOrgLicensing(
+            address(ipOrg),
+            getCommFramework(
+                commTextTermId,
+                bytes(""),
+                nonCommTextTermId,
+                bytes("")
+            )
+        );
+        _;
+    }
+
     function setUp() virtual override public {
         super.setUp();
         licensingModule.addTermCategory("test_category");
@@ -53,7 +79,7 @@ contract BaseLicensingTest is BaseTest {
         ));
     }
 
-    function getEmptyLicensingFramework() public pure returns (Licensing.FrameworkConfig memory) {
+    function getEmptyFramework() public pure returns (Licensing.FrameworkConfig memory) {
         return
             Licensing.FrameworkConfig({
                 comTermsConfig: Licensing.TermsConfig({
@@ -67,7 +93,7 @@ contract BaseLicensingTest is BaseTest {
             });
     }
 
-    function getNonCommLicensingFramework(
+    function getNonCommFramework(
         ShortString termId,
         bytes memory data
     ) public pure returns (Licensing.FrameworkConfig memory) {
@@ -88,24 +114,56 @@ contract BaseLicensingTest is BaseTest {
             });
     }
 
-    function getCommLicensingFramework(
-        ShortString termId,
-        bytes memory data
+    function getCommFramework(
+        ShortString cId,
+        bytes memory cData,
+        ShortString ncId,
+        bytes memory ncData
     ) public pure returns (Licensing.FrameworkConfig memory) {
-        ShortString[] memory termIds = new ShortString[](1);
-        termIds[0] = termId;
-        bytes[] memory termData = new bytes[](1);
-        termData[0] = data;
+        ShortString[] memory comTermsId = new ShortString[](1);
+        comTermsId[0] = cId;
+        bytes[] memory comTermsData = new bytes[](1);
+        comTermsData[0] = cData;
+        ShortString[] memory nonComTermsId = new ShortString[](1);
+        nonComTermsId[0] = ncId;
+        bytes[] memory nonComTermsData = new bytes[](1);
+        nonComTermsData[0] = ncData;
         return
             Licensing.FrameworkConfig({
                 comTermsConfig: Licensing.TermsConfig({
-                    termIds: termIds,
-                    termData: termData
+                    termIds: comTermsId,
+                    termData: comTermsData
                 }),
                 nonComTermsConfig: Licensing.TermsConfig({
-                    termIds: termIds,
-                    termData: termData
+                    termIds: nonComTermsId,
+                    termData: nonComTermsData
                 })
             });
     }
+
+
+    function assertTerms(Licensing.License memory license) public {
+        (ShortString[] memory ipOrgTermsId, bytes[] memory ipOrgTermsData) = licensingModule.getIpOrgTerms(
+            license.isCommercial, address(ipOrg)
+        );
+        assertEq(license.termIds.length, ipOrgTermsId.length);
+        assertEq(license.termsData.length, ipOrgTermsData.length);
+        for (uint256 i = 0; i < license.termIds.length; i++) {
+            assertTrue(ShortStringOps._equal(license.termIds[i], ipOrgTermsId[i]));
+            assertTrue(keccak256(license.termsData[i]) == keccak256(ipOrgTermsData[i]));
+            Licensing.LicensingTerm memory term = licensingModule.getTerm(ipOrgTermsId[i]);
+            if (license.isCommercial) {
+                assertTrue(
+                    term.comStatus == Licensing.CommercialStatus.Commercial ||
+                    term.comStatus == Licensing.CommercialStatus.Both
+                );
+            } else {
+                assertTrue(
+                    term.comStatus == Licensing.CommercialStatus.NonCommercial ||
+                    term.comStatus == Licensing.CommercialStatus.Both
+                );
+            }
+        }
+    }
+
 }

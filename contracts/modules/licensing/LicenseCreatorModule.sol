@@ -76,7 +76,6 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
         }
     }
 
-
     function _hookRegistryAdmin()
         internal
         view
@@ -109,10 +108,10 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
             // TODO: Check if parent license is active
             
         }
-        if (_comIpOrgTermIds[address(ipOrg_)].length() == 0) {
+        // At least non commercial terms must be set
+        if (_nonComIpOrgTermData[address(ipOrg_)].length == 0) {
             revert Errors.LicensingModule_IpOrgNotConfigured();
         }
-        
         if (!ipOrgAllowsCommercial(address(ipOrg_)) && lParams.isCommercial) {
             revert Errors.LicensingModule_CommercialLicenseNotAllowed();
         }
@@ -134,20 +133,63 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
             params_,
             (Licensing.LicenseCreationParams)
         );
+        // TODO: How do we distinguish which terms apply?
+        // Share alike and Remix IPA, posting the remixed IPA => copy parent license terms?
+        // License to make an remixed IPA in the future => ????
+        // License to commercialize IPA => ???
+        // Commerial license to use IPA in IPA => ???
         IPAsset.IPA memory ipa = IPA_REGISTRY.getIpAsset(lParams.ipaId);
-        
-        // Licensing.License memory license = Licensing.License({
-        //     isCommercial: lParams.isCommercial,
-        //     licensor: _getLicensor(
-        //         ipOrg_.owner(),
-        //         ipa.owner,
-        //         LICENSE_REGISTRY.getLicenseOwner(lParams.parentLicenseId)
-        //     ),
-        //     revoker: _getRevoker(ipOrg_),
-        //     termsConfig: 
-        // });
-        // return LICENSE_REGISTRY.createLicense(license);
-        return "";
+        (ShortString[] memory termIds, bytes[] memory termsData) = getIpOrgTerms(
+            lParams.isCommercial,
+            address(ipOrg_)
+        );
+        Licensing.License memory license = Licensing.License({
+            isCommercial: lParams.isCommercial,
+            licensor: _getLicensor(
+                ipOrg_.owner(),
+                ipa.owner,
+                LICENSE_REGISTRY.getLicenseOwner(lParams.parentLicenseId)
+            ),
+            revoker: _getRevoker(ipOrg_),
+            termIds: termIds,
+            termsData: termsData
+        });
+        uint256 licenseId = LICENSE_REGISTRY.addLicense(license);
+        if (lParams.ipaId != 0) {
+            _relateToIpa(lParams.ipaId, licenseId);
+        }
+        if (lParams.parentLicenseId != 0) {
+            _relateToParentLicense(lParams.parentLicenseId, licenseId);
+        }
+        return abi.encode(licenseId);
+    }
+
+    function _relateToIpa(uint256 ipaId, uint256 licenseId) private returns (uint256) {
+        return _createRelationship(
+            LibRelationship.CreateRelationshipParams({
+                relType: ProtocolRelationships.IPA_LICENSE,
+                srcAddress: address(LICENSE_REGISTRY),
+                srcId: licenseId,
+                srcType: 0,
+                dstAddress: address(IPA_REGISTRY),
+                dstId: ipaId,
+                dstType: 0
+            })
+        );
+    }
+
+    function _relateToParentLicense(uint256 parentLicenseId, uint256 licenseId) private returns (uint256) {
+        return _createRelationship(
+            LibRelationship.CreateRelationshipParams({
+                relType: ProtocolRelationships.SUBLICENSE_OF,
+                srcAddress: address(LICENSE_REGISTRY),
+                srcId: licenseId,
+                srcType: 0,
+                dstAddress: address(LICENSE_REGISTRY),
+                dstId: parentLicenseId,
+                dstType: 0
+            })
+        );
     }
 
     function _getLicensor(
@@ -167,54 +209,6 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
         // For now, ipOrgOwner
         return ipOrg.owner();
     }
-
-    /*
-            (
-            uint256 parentLicenseId,
-            bytes[] memory additionalTerms,
-            uint256 newIpaId
-        ) = abi.decode(params_, (uint256, bytes[], uint256));
-        
-        uint256 licenseId = LICENSE_REGISTRY.createLicenseFrom(parentLicenseId);
-        // If we have commercial terms (this is a commercial sublicense or remix)
-        if (additionalTerms.length > 0) {
-            LICENSE_REGISTRY.addTerms(licenseId, additionalTerms);
-        }
-
-        uint256 sublicenseRelId = _createRelationship(
-            LibRelationship.CreateRelationshipParams({
-                relType: ProtocolRelationships.SUBLICENSE_OF,
-                srcAddress: address(LICENSE_REGISTRY),
-                srcId: parentLicenseId,
-                srcType: 0,
-                dstAddress: address(LICENSE_REGISTRY),
-                dstId: licenseId,
-                dstType: 0
-            })
-        );
-
-        if (newIpaId > 0) {
-            uint256 ipaI = _createRelationship(
-                LibRelationship.CreateRelationshipParams({
-                    relType: ProtocolRelationships.IPA_LICENSE,
-                    srcAddress: address(ipOrg_),
-                    srcId: parentLicenseId,
-                    srcType: 0,
-                    dstAddress: address(LICENSE_REGISTRY),
-                    dstId: licenseId,
-                    dstType: 0
-                })
-            );
-        } else {
-            LICENSE_REGISTRY.makeTradeable(licenseId);
-        }
-
-        // If sublicense is to create work, we mint an IPA and relate it to the original IPA?
-        (LibRelationship.CreateRelationshipParams memory addRel) = abi.decode(
-            params_,
-            (LibRelationship.CreateRelationshipParams)
-        );
-    */
 
     ////////////////////////////////////////////////////////////////////////////
     //                              Config                                    //

@@ -14,8 +14,8 @@ library ProtocolRelationships {
             relType: IPA_LICENSE,
             ipOrg: LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
             allowedElements: LibRelationship.RelatedElements({
-                src: LibRelationship.Relatables.IPA,
-                dst: LibRelationship.Relatables.LICENSE
+                src: LibRelationship.Relatables.LICENSE,
+                dst: LibRelationship.Relatables.IPA
             }),
             allowedSrcs: new uint8[](0),
             allowedDsts: new uint8[](0)

@@ -84,7 +84,6 @@ contract StoryProtocol {
     //                            Licensing                                   //
     ////////////////////////////////////////////////////////////////////////////
 
-
     function configureIpOrgLicensing(
         address ipOrg_,
         Licensing.FrameworkConfig calldata framework_

@@ -12,22 +12,13 @@ import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { BaseLicensingTest } from "./BaseLicensingTest.sol";
 
-contract LicensingCreatorModuleConfigTest is BaseLicensingTest {
+contract LicensingCreatorLicensingTest is BaseLicensingTest {
     using ShortStrings for *;
 
     address ipaOwner = address(0x13333);
 
     function setUp() override public {
         super.setUp();
-
-        vm.prank(ipOrg.owner());
-        spg.configureIpOrgLicensing(
-            address(ipOrg),
-            getCommLicensingFramework(
-                textTermId,
-                bytes("")
-            )
-        );
         registry.register(IPAsset.RegisterIpAssetParams({
             name: "test",
             ipAssetType: 2,
@@ -37,9 +28,7 @@ contract LicensingCreatorModuleConfigTest is BaseLicensingTest {
             url: "https://example.com",
             data: ""
         }));
-
     }
-
 
     function test_LicensingModule_configIpOrg_commercialLicenseActivationHooksCanBeSet() public {
         // TODO
@@ -49,14 +38,7 @@ contract LicensingCreatorModuleConfigTest is BaseLicensingTest {
         // TODO
     }
 
-
-    function test_LicensingModule_licensing_createsCommercialLicense() public {
-    }
-    
-    function test_LicensingModule_licensing_createsNonCommercialLicense() public {   
-    }
-
-    function test_LicensingModule_licensing_createRootLicense() public {
+    function test_LicensingModule_licensing_createNonCommercialRootLicense() withNonCommFramework public {
         vm.prank(ipOrg.owner());
         uint256 lId = spg.createLicense(
             address(ipOrg),
@@ -72,23 +54,29 @@ contract LicensingCreatorModuleConfigTest is BaseLicensingTest {
         Licensing.License memory license = licenseRegistry.getLicense(lId);
         assertFalse(license.isCommercial);
         assertEq(license.revoker, ipOrg.owner());
-        assertEq(license.licensor, ipOrg.owner());
+        assertEq(license.licensor, ipaOwner, "licensor");
         
+        assertTerms(license);
         assertTrue(
             relationshipModule.relationshipExists(
                 LibRelationship.Relationship({
                     relType: ProtocolRelationships.IPA_LICENSE,
-                    srcAddress: address(registry),
-                    dstAddress: address(licenseRegistry),
+                    srcAddress: address(licenseRegistry),
                     srcId: 1,
+                    dstAddress: address(registry),
                     dstId: 1
                 })
             )
         );
-        //Licensing.License memory license = licenseReg
-        // Commercial
-        
     }
+
+    function test_LicensingModule_licensing_createsCommercialSubLicense() withCommFramework public {
+    }
+    
+    function test_LicensingModule_licensing_createsNonCommercialSubLicense() withNonCommFramework public {   
+    }
+
+    
 
 }
 

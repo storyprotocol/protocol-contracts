@@ -9,7 +9,7 @@ contract LicenseRegistry {
     uint256 private _licenseCount = 0;
 
     
-    function addLicense(Licensing.License calldata license_) external returns (uint256) {
+    function addLicense(Licensing.License memory license_) external returns (uint256) {
         // TOOD: Add authorization
         _licenseCount++;
         _licenses[_licenseCount] = license_;
@@ -21,7 +21,7 @@ contract LicenseRegistry {
     }
 
     function getLicenseOwner(uint256 id_) external view returns (address) {
-        return address(123);
+        return address(0);
     }
 
     function addTerms(uint256 licenseId, bytes[] memory terms) external {
