@@ -9,6 +9,12 @@ import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 contract MockBaseModule is BaseModule {
     address private _admin;
 
+    struct ModuleExecutionParams {
+        uint256 paramA;
+        uint256 paramC;
+        string someHookRegisteringRelatedInfo;
+    }
+
     struct BaseModuleCall {
         address ipOrg;
         address caller;
@@ -64,4 +70,40 @@ contract MockBaseModule is BaseModule {
         _callStack.push(BaseModuleCall(address(ipOrg_), caller_, params_));
         return "";
     }
+
+    function registerHooks(
+        HookType hType_,
+        IIPOrg ipOrg_,
+        string memory someHookRegisteringRelatedInfo_,
+        address[] calldata hooks_,
+        bytes[] calldata hooksConfig_
+    ) external onlyHookRegistryAdmin {
+        bytes32 registryKey = _generateRegistryKey(address(ipOrg_), someHookRegisteringRelatedInfo_);
+        registerHooks(hType_, registryKey, hooks_, hooksConfig_);
+    }
+
+    function hookRegistryKey(
+        address ipOrg_,
+        string calldata someHookRegisteringRelatedInfo_
+    ) external pure returns(bytes32) {
+        return _generateRegistryKey(ipOrg_, someHookRegisteringRelatedInfo_);
+    }
+
+    function _hookRegistryKey(
+        IIPOrg ipOrg_,
+        address,
+        bytes calldata params_
+    ) internal view virtual override returns(bytes32) {
+        ModuleExecutionParams memory moduleParams = abi.decode(params_, (ModuleExecutionParams));
+        return _generateRegistryKey(address(ipOrg_), moduleParams.someHookRegisteringRelatedInfo);
+    }
+
+    function _generateRegistryKey(
+        address ipOrg_,
+        string memory someHookRegisteringRelatedInfo_
+    ) private pure returns(bytes32) {
+        return keccak256(abi.encode(ipOrg_, someHookRegisteringRelatedInfo_));
+    }
+
+
 }

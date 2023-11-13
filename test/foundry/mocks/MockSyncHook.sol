@@ -6,12 +6,19 @@ import { SyncBaseHook } from "contracts/hooks/base/SyncBaseHook.sol";
 /// @notice This contract is a mock for testing the SyncBaseHook contract.
 /// @dev It extends the SyncBaseHook contract and overrides its _executeSyncCall function.
 contract MockSyncHook is SyncBaseHook {
+    bool public shouldExecuteSuccess;
     /// @notice Constructs the MockSyncHook contract.
     /// @param accessControl_ The address of the access control contract.
     /// @dev The constructor sets the access control address.
     constructor(
         address accessControl_
-    ) SyncBaseHook(accessControl_) {}
+    ) SyncBaseHook(accessControl_) {
+        shouldExecuteSuccess = true;
+    }
+
+    function setShouldExecuteSuccess(bool shouldExecuteSuccess_) public {
+        shouldExecuteSuccess = shouldExecuteSuccess_;
+    }
 
     /// @notice Executes a synchronous call.
     /// @dev This function is overridden for testing purposes.
@@ -28,6 +35,9 @@ contract MockSyncHook is SyncBaseHook {
         override
         returns (bytes memory)
     {
+        if (!shouldExecuteSuccess) {
+            revert("EXPECTED_FAILURE");
+        }
         // Simply return the input parameters
         return abi.encode(hookConfig_, hookParams_);
     }

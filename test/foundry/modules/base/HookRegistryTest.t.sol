@@ -3,174 +3,454 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 
-import "contracts/modules/base/HookRegistry.sol";
-import "test/foundry/mocks/MockHookRegistry.sol";
-import "contracts/lib/Errors.sol";
+import { BaseTest } from "test/foundry/utils/BaseTest.sol";
+import { HookRegistry } from "contracts/modules/base/HookRegistry.sol";
+import { MockHookRegistry } from "test/foundry/mocks/MockHookRegistry.sol";
+import { Errors } from "contracts/lib/Errors.sol";
+import { MockBaseHook } from "test/foundry/mocks/MockBaseHook.sol";
+import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 
-contract HookRegistryTest is Test {
-    MockHookRegistry registry;
-    address admin = address(123);
+contract HookRegistryTest is BaseTest {
+    MockHookRegistry hookRegistry;
 
-    event HooksRegistered(HookRegistry.HookType indexed hType, address[] indexed hook);
-    event HooksCleared(HookRegistry.HookType indexed hType);
+    event HooksRegistered(HookRegistry.HookType indexed hType, bytes32 indexed registryKey, address[] indexed hook);
+    event HooksCleared(HookRegistry.HookType indexed hType, bytes32 indexed registryKey);
 
-    function setUp() public {
+    function setUp() public override {
+        super.setUp();
+
         vm.prank(admin);
-        registry = new MockHookRegistry();
+        hookRegistry = new MockHookRegistry();
     }
 
     function test_hookRegistry_registerPreHooks() public {
         address[] memory hooks = new address[](2);
-        hooks[0] = address(123);
-        hooks[1] = address(456);
+        hooks[0] = address(new MockBaseHook(address(accessControl)));
+        hooks[1] = address(new MockBaseHook(address(accessControl)));
+        bytes[] memory hooksConfig = new bytes[](2);
+        hooksConfig[0] = abi.encode("Hook1Config");
+        hooksConfig[1] = abi.encode("Hook2Config");
+        address ipOrg = address(0x789);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
         vm.startPrank(admin);
         vm.expectEmit(true, false, false, true);
-        emit HooksRegistered(HookRegistry.HookType.PreAction, hooks);
-        registry.registerHooks(HookRegistry.HookType.PreAction, hooks);
+        emit HooksRegistered(HookRegistry.HookType.PreAction, registryKey, hooks);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKey, hooks, hooksConfig);
         vm.stopPrank();
-        assertEq(registry.hookAt(HookRegistry.HookType.PreAction, 0), hooks[0]);
-        assertEq(registry.hookAt(HookRegistry.HookType.PreAction, 1), hooks[1]);
-        assertEq(registry.totalHooks(HookRegistry.HookType.PreAction), hooks.length);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKey, 0), hooks[0]);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKey, 1), hooks[1]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKey, 0), hooksConfig[0]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKey, 1), hooksConfig[1]);
+        assertEq(hookRegistry.totalHooks(HookRegistry.HookType.PreAction, registryKey), hooks.length);
+        assertEq(hookRegistry.totalHooksConfig(HookRegistry.HookType.PreAction, registryKey), hooksConfig.length);
     }
 
     function test_hookRegistry_registerPreHooksClearsHooksIfNotEmpty() public {
         address[] memory hooks = new address[](2);
-        hooks[0] = address(123);
-        hooks[1] = address(456);
+        hooks[0] = address(new MockBaseHook(address(accessControl)));
+        hooks[1] = address(new MockBaseHook(address(accessControl)));
+        bytes[] memory hooksConfig = new bytes[](2);
+        hooksConfig[0] = abi.encode("Hook1Config");
+        hooksConfig[1] = abi.encode("Hook2Config");
+        address ipOrg = address(0x789);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
         vm.startPrank(admin);
-        registry.registerHooks(HookRegistry.HookType.PreAction, hooks);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKey, hooks, hooksConfig);
         vm.expectEmit(true, false, false, true);
-        emit HooksCleared(HookRegistry.HookType.PreAction);
-        registry.registerHooks(HookRegistry.HookType.PreAction, hooks);
+        emit HooksCleared(HookRegistry.HookType.PreAction, registryKey);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKey, hooks, hooksConfig);
         vm.stopPrank();
-        assertEq(registry.hookAt(HookRegistry.HookType.PreAction, 0), hooks[0]);
-        assertEq(registry.hookAt(HookRegistry.HookType.PreAction, 1), hooks[1]);
-        assertEq(registry.totalHooks(HookRegistry.HookType.PreAction), hooks.length);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKey, 0), hooks[0]);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKey, 1), hooks[1]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKey, 0), hooksConfig[0]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKey, 1), hooksConfig[1]);
+        assertEq(hookRegistry.totalHooks(HookRegistry.HookType.PreAction, registryKey), hooks.length);
+        assertEq(hookRegistry.totalHooksConfig(HookRegistry.HookType.PreAction, registryKey), hooksConfig.length);
     }
 
     function test_hookRegistry_registerPostHooks() public {
         address[] memory hooks = new address[](2);
-        hooks[0] = address(123);
-        hooks[1] = address(456);
+        hooks[0] = address(new MockBaseHook(address(accessControl)));
+        hooks[1] = address(new MockBaseHook(address(accessControl)));
+        bytes[] memory hooksConfig = new bytes[](2);
+        hooksConfig[0] = abi.encode("Hook1Config");
+        hooksConfig[1] = abi.encode("Hook2Config");
+        address ipOrg = address(0x789);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
         vm.startPrank(admin);
         vm.expectEmit(true, false, false, true);
-        emit HooksRegistered(HookRegistry.HookType.PostAction, hooks);
-        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);
+        emit HooksRegistered(HookRegistry.HookType.PostAction, registryKey, hooks);
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
         vm.stopPrank();
-        assertEq(registry.hookAt(HookRegistry.HookType.PostAction, 0), hooks[0]);
-        assertEq(registry.hookAt(HookRegistry.HookType.PostAction, 1), hooks[1]);
-        assertEq(registry.totalHooks(HookRegistry.HookType.PostAction), hooks.length);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PostAction, registryKey, 0), hooks[0]);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PostAction, registryKey, 1), hooks[1]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PostAction, registryKey, 0), hooksConfig[0]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PostAction, registryKey, 1), hooksConfig[1]);
+        assertEq(hookRegistry.totalHooks(HookRegistry.HookType.PostAction, registryKey), hooks.length);
+        assertEq(hookRegistry.totalHooksConfig(HookRegistry.HookType.PostAction, registryKey), hooksConfig.length);
     }
 
     function test_hookRegistry_registerPostHooksClearsHooksIfNotEmpty() public {
         address[] memory hooks = new address[](2);
-        hooks[0] = address(123);
-        hooks[1] = address(456);
+        hooks[0] = address(new MockBaseHook(address(accessControl)));
+        hooks[1] = address(new MockBaseHook(address(accessControl)));
+        bytes[] memory hooksConfig = new bytes[](2);
+        hooksConfig[0] = abi.encode("Hook1Config");
+        hooksConfig[1] = abi.encode("Hook2Config");
+        address ipOrg = address(0x789);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
         vm.startPrank(admin);
-        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
         vm.expectEmit(true, false, false, true);
-        emit HooksCleared(HookRegistry.HookType.PostAction);
-        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);
+        emit HooksCleared(HookRegistry.HookType.PostAction, registryKey);
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
         vm.stopPrank();
-        assertEq(registry.hookAt(HookRegistry.HookType.PostAction, 0), hooks[0]);
-        assertEq(registry.hookAt(HookRegistry.HookType.PostAction, 1), hooks[1]);
-        assertEq(registry.totalHooks(HookRegistry.HookType.PostAction), hooks.length);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PostAction, registryKey, 0), hooks[0]);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PostAction, registryKey, 1), hooks[1]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PostAction, registryKey, 0), hooksConfig[0]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PostAction, registryKey, 1), hooksConfig[1]);
+        assertEq(hookRegistry.totalHooks(HookRegistry.HookType.PostAction, registryKey), hooks.length);
+        assertEq(hookRegistry.totalHooksConfig(HookRegistry.HookType.PostAction, registryKey), hooksConfig.length);
     }
 
     function test_hookRegistry_revertRegisterHooksCallerNotAdmin() public {
         address[] memory hooks = new address[](2);
-        hooks[0] = address(123);
-        hooks[1] = address(456);
+        hooks[0] = address(new MockBaseHook(address(accessControl)));
+        hooks[1] = address(new MockBaseHook(address(accessControl)));
+        bytes[] memory hooksConfig = new bytes[](2);
+        hooksConfig[0] = abi.encode("Hook1Config");
+        hooksConfig[1] = abi.encode("Hook2Config");
+        address ipOrg = address(0x789);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
         vm.expectRevert(Errors.HookRegistry_CallerNotAdmin.selector);
-        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);        
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
     }
 
     function test_hookRegistry_revertRegisterMaxHooksExceeded() public {
-        address[] memory hooks = new address[](registry.MAX_HOOKS() + 1);
+        address[] memory hooks = new address[](hookRegistry.MAX_HOOKS() + 1);
+        bytes[] memory hooksConfig = new bytes[](hookRegistry.MAX_HOOKS() + 1);
+        address ipOrg = address(0x789);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
         vm.startPrank(admin);
-        for(uint256 i = 0; i <= registry.MAX_HOOKS(); i++) {
-            hooks[i] = vm.addr(i + 1);
+        for(uint256 i = 0; i <= hookRegistry.MAX_HOOKS(); i++) {
+            hooks[i] = address(new MockBaseHook(address(accessControl)));
+            hooksConfig[i] = abi.encode("HookConfig", i + 1);
         }
         vm.expectRevert(Errors.HookRegistry_MaxHooksExceeded.selector);
-        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
         vm.expectRevert(Errors.HookRegistry_MaxHooksExceeded.selector);
-        registry.registerHooks(HookRegistry.HookType.PreAction, hooks);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKey, hooks, hooksConfig);
         vm.stopPrank();
     }
 
     function test_hookRegistry_revertRegisterDuplicatedHook() public {
+        address hookAddr = address(new MockBaseHook(address(accessControl)));
         address[] memory hooks = new address[](2);
-        hooks[0] = address(123);
-        hooks[1] = address(123);
+        hooks[0] = hookAddr;
+        hooks[1] = hookAddr;
+        bytes[] memory hooksConfig = new bytes[](2);
+        hooksConfig[0] = abi.encode("Hook1Config");
+        hooksConfig[1] = abi.encode("Hook2Config");
+        address ipOrg = address(0x789);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
         vm.startPrank(admin);
         vm.expectRevert(Errors.HookRegistry_RegisteringDuplicatedHook.selector);
-        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
         vm.stopPrank();
     }
 
     function test_hookRegistry_getters() public {
         address[] memory hooks = new address[](2);
-        hooks[0] = address(123);
-        hooks[1] = address(456);
+        hooks[0] = address(new MockBaseHook(address(accessControl)));
+        hooks[1] = address(new MockBaseHook(address(accessControl)));
+        bytes[] memory hooksConfig = new bytes[](2);
+        hooksConfig[0] = abi.encode("Hook1Config");
+        hooksConfig[1] = abi.encode("Hook2Config");
+        address ipOrg = address(0x789);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
         vm.startPrank(admin);
 
-        registry.registerHooks(HookRegistry.HookType.PreAction, hooks);
-        assertEq(registry.hookAt(HookRegistry.HookType.PreAction, 0), hooks[0]);
-        assertEq(registry.hookAt(HookRegistry.HookType.PreAction, 1), hooks[1]);
-        assertEq(registry.hookIndex(HookRegistry.HookType.PreAction, hooks[0]), 0);
-        assertEq(registry.hookIndex(HookRegistry.HookType.PreAction, hooks[1]), 1);
-        assertEq(registry.totalHooks(HookRegistry.HookType.PreAction), hooks.length);
-        assertEq(registry.isRegistered(HookRegistry.HookType.PreAction, hooks[0]), true);
-        assertEq(registry.isRegistered(HookRegistry.HookType.PreAction, hooks[1]), true);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKey, hooks, hooksConfig);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKey, 0), hooks[0]);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKey, 1), hooks[1]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKey, 0), hooksConfig[0]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKey, 1), hooksConfig[1]);
+        assertEq(hookRegistry.hookIndex(HookRegistry.HookType.PreAction, registryKey, hooks[0]), 0);
+        assertEq(hookRegistry.hookIndex(HookRegistry.HookType.PreAction, registryKey, hooks[1]), 1);
+        assertEq(hookRegistry.totalHooks(HookRegistry.HookType.PreAction, registryKey), hooks.length);
+        assertEq(hookRegistry.totalHooksConfig(HookRegistry.HookType.PreAction, registryKey), hooksConfig.length);
+        assertEq(hookRegistry.isRegistered(HookRegistry.HookType.PreAction, registryKey, hooks[0]), true);
+        assertEq(hookRegistry.isRegistered(HookRegistry.HookType.PreAction, registryKey, hooks[1]), true);
 
-        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);
-        assertEq(registry.hookAt(HookRegistry.HookType.PostAction, 0), hooks[0]);
-        assertEq(registry.hookAt(HookRegistry.HookType.PostAction, 1), hooks[1]);
-        assertEq(registry.hookIndex(HookRegistry.HookType.PostAction, hooks[0]), 0);
-        assertEq(registry.hookIndex(HookRegistry.HookType.PostAction, hooks[1]), 1);
-        assertEq(registry.totalHooks(HookRegistry.HookType.PostAction), hooks.length);
-        assertEq(registry.isRegistered(HookRegistry.HookType.PostAction, hooks[0]), true);
-        assertEq(registry.isRegistered(HookRegistry.HookType.PostAction, hooks[1]), true);
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PostAction, registryKey, 0), hooks[0]);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PostAction, registryKey, 1), hooks[1]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PostAction, registryKey, 0), hooksConfig[0]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PostAction, registryKey, 1), hooksConfig[1]);
+        assertEq(hookRegistry.hookIndex(HookRegistry.HookType.PostAction, registryKey, hooks[0]), 0);
+        assertEq(hookRegistry.hookIndex(HookRegistry.HookType.PostAction, registryKey, hooks[1]), 1);
+        assertEq(hookRegistry.totalHooks(HookRegistry.HookType.PostAction, registryKey), hooks.length);
+        assertEq(hookRegistry.totalHooksConfig(HookRegistry.HookType.PostAction, registryKey), hooksConfig.length);
+        assertEq(hookRegistry.isRegistered(HookRegistry.HookType.PostAction, registryKey, hooks[0]), true);
+        assertEq(hookRegistry.isRegistered(HookRegistry.HookType.PostAction, registryKey, hooks[1]), true);
 
         vm.stopPrank();
     }
 
     function test_hookRegistry_clearPreHooks() public {
         address[] memory hooks = new address[](2);
-        hooks[0] = address(123);
-        hooks[1] = address(456);
+        hooks[0] = address(new MockBaseHook(address(accessControl)));
+        hooks[1] = address(new MockBaseHook(address(accessControl)));
+        bytes[] memory hooksConfig = new bytes[](2);
+        hooksConfig[0] = abi.encode("Hook1Config");
+        hooksConfig[1] = abi.encode("Hook2Config");
+        address ipOrg = address(0x789);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
         vm.startPrank(admin);
-        registry.registerHooks(HookRegistry.HookType.PreAction, hooks);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKey, hooks, hooksConfig);
         vm.expectEmit(true, true, false, true);
-        emit HooksCleared(HookRegistry.HookType.PreAction);
-        registry.clearHooks(HookRegistry.HookType.PreAction);
+        emit HooksCleared(HookRegistry.HookType.PreAction, registryKey);
+        hookRegistry.clearHooks(HookRegistry.HookType.PreAction, registryKey);
         vm.stopPrank();
-        assertEq(registry.hookIndex(HookRegistry.HookType.PreAction, hooks[0]), registry.INDEX_NOT_FOUND());
-        assertEq(registry.hookIndex(HookRegistry.HookType.PreAction, hooks[1]), registry.INDEX_NOT_FOUND());
-        assertEq(registry.totalHooks(HookRegistry.HookType.PreAction), 0);
+        assertEq(hookRegistry.hookIndex(HookRegistry.HookType.PreAction, registryKey, hooks[0]), hookRegistry.INDEX_NOT_FOUND());
+        assertEq(hookRegistry.hookIndex(HookRegistry.HookType.PreAction, registryKey, hooks[1]), hookRegistry.INDEX_NOT_FOUND());
+        assertEq(hookRegistry.totalHooksConfig(HookRegistry.HookType.PreAction, registryKey), 0);
+        assertEq(hookRegistry.totalHooks(HookRegistry.HookType.PreAction, registryKey), 0);
+        assertEq(hookRegistry.totalHooksConfig(HookRegistry.HookType.PreAction, registryKey), 0);
     }
 
     function test_hookRegistry_clearPostHooks() public {
         address[] memory hooks = new address[](2);
-        hooks[0] = address(123);
-        hooks[1] = address(456);
+        hooks[0] = address(new MockBaseHook(address(accessControl)));
+        hooks[1] = address(new MockBaseHook(address(accessControl)));
+        bytes[] memory hooksConfig = new bytes[](2);
+        hooksConfig[0] = abi.encode("Hook1Config");
+        hooksConfig[1] = abi.encode("Hook2Config");
+        address ipOrg = address(0x789);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
         vm.startPrank(admin);
-        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
         vm.expectEmit(true, true, false, true);
-        emit HooksCleared(HookRegistry.HookType.PostAction);
-        registry.clearHooks(HookRegistry.HookType.PostAction);
+        emit HooksCleared(HookRegistry.HookType.PostAction, registryKey);
+        hookRegistry.clearHooks(HookRegistry.HookType.PostAction, registryKey);
         vm.stopPrank();
-        assertEq(registry.hookIndex(HookRegistry.HookType.PostAction, hooks[0]), registry.INDEX_NOT_FOUND());
-        assertEq(registry.hookIndex(HookRegistry.HookType.PostAction, hooks[1]), registry.INDEX_NOT_FOUND());
-        assertEq(registry.totalHooks(HookRegistry.HookType.PostAction), 0);
+        assertEq(hookRegistry.hookIndex(HookRegistry.HookType.PostAction, registryKey, hooks[0]), hookRegistry.INDEX_NOT_FOUND());
+        assertEq(hookRegistry.hookIndex(HookRegistry.HookType.PostAction, registryKey, hooks[1]), hookRegistry.INDEX_NOT_FOUND());
+        assertEq(hookRegistry.totalHooksConfig(HookRegistry.HookType.PostAction, registryKey), 0);
+        assertEq(hookRegistry.totalHooks(HookRegistry.HookType.PostAction, registryKey), 0);
+        assertEq(hookRegistry.totalHooksConfig(HookRegistry.HookType.PostAction, registryKey), 0);
     }
 
     function test_hookRegistry_revertClearHooksCallerNotAdmin() public {
         address[] memory hooks = new address[](2);
-        hooks[0] = address(123);
-        hooks[1] = address(456);
+        hooks[0] = address(new MockBaseHook(address(accessControl)));
+        hooks[1] = address(new MockBaseHook(address(accessControl)));
+        bytes[] memory hooksConfig = new bytes[](2);
+        hooksConfig[0] = abi.encode("Hook1Config");
+        hooksConfig[1] = abi.encode("Hook2Config");
+        address ipOrg = address(0x789);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
         vm.expectRevert(Errors.HookRegistry_CallerNotAdmin.selector);
-        registry.registerHooks(HookRegistry.HookType.PostAction, hooks);        
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
     }
 
+    function test_hookRegistry_registerHooksWithMultipleRegistryKeys() public {
+        address hook1 = address(new MockBaseHook(address(accessControl)));
+        address hook2 = address(new MockBaseHook(address(accessControl)));
+        address hook3 = address(new MockBaseHook(address(accessControl)));
+        address hook5 = address(new MockBaseHook(address(accessControl)));
+
+        address[] memory hooksA = new address[](2);
+        hooksA[0] = hook1;
+        hooksA[1] = hook2;
+        bytes[] memory hooksConfigA = new bytes[](2);
+        hooksConfigA[0] = abi.encode("Hook1Config");
+        hooksConfigA[1] = abi.encode("Hook2Config");
+        address ipOrg1 = address(0x789);
+        bytes32 registryKeyA = hookRegistry.hookRegistryKey(ipOrg1, "RelationshipType_A");
+
+        // hooks B shares same ipOrg with hooks A
+        address[] memory hooksB = new address[](2);
+        hooksB[0] = hook3;
+        hooksB[1] = hook5;
+        bytes[] memory hooksConfigB = new bytes[](2);
+        hooksConfigB[0] = abi.encode("Hook3Config");
+        hooksConfigB[1] = abi.encode("Hook5Config");
+        bytes32 registryKeyB = hookRegistry.hookRegistryKey(ipOrg1, "RelationshipType_B");
+
+        address[] memory hooksC = new address[](2);
+        hooksC[0] = hook2;
+        hooksC[1] = hook3;
+        bytes[] memory hooksConfigC = new bytes[](2);
+        hooksConfigC[0] = abi.encode("Hook2Config");
+        hooksConfigC[1] = abi.encode("Hook3Config");
+        address ipOrg2 = address(0x999);
+        bytes32 registryKeyC = hookRegistry.hookRegistryKey(ipOrg2, "RelationshipType_C");
+
+        vm.startPrank(admin);
+        vm.expectEmit(true, false, false, true);
+        emit HooksRegistered(HookRegistry.HookType.PreAction, registryKeyA, hooksA);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyA, hooksA, hooksConfigA);
+        vm.expectEmit(true, false, false, true);
+        emit HooksRegistered(HookRegistry.HookType.PreAction, registryKeyB, hooksB);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyB, hooksB, hooksConfigB);
+        vm.expectEmit(true, false, false, true);
+        emit HooksRegistered(HookRegistry.HookType.PreAction, registryKeyC, hooksC);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyC, hooksC, hooksConfigC);
+
+        vm.stopPrank();
+
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKeyA, 0), hooksA[0]);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKeyA, 1), hooksA[1]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKeyA, 0), hooksConfigA[0]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKeyA, 1), hooksConfigA[1]);
+        assertEq(hookRegistry.totalHooks(HookRegistry.HookType.PreAction, registryKeyA), hooksA.length);
+        assertEq(hookRegistry.totalHooksConfig(HookRegistry.HookType.PreAction, registryKeyA), hooksConfigA.length);
+
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKeyB, 0), hooksB[0]);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKeyB, 1), hooksB[1]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKeyB, 0), hooksConfigB[0]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKeyB, 1), hooksConfigB[1]);
+        assertEq(hookRegistry.totalHooks(HookRegistry.HookType.PreAction, registryKeyB), hooksB.length);
+        assertEq(hookRegistry.totalHooksConfig(HookRegistry.HookType.PreAction, registryKeyB), hooksConfigB.length);
+
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKeyC, 0), hooksC[0]);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKeyC, 1), hooksC[1]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKeyC, 0), hooksConfigC[0]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKeyC, 1), hooksConfigC[1]);
+        assertEq(hookRegistry.totalHooks(HookRegistry.HookType.PreAction, registryKeyC), hooksC.length);
+        assertEq(hookRegistry.totalHooksConfig(HookRegistry.HookType.PreAction, registryKeyC), hooksConfigC.length);
+    }
+
+    function test_hookRegistry_onlyClearHooksForSpecificRegistryKey() public {
+        address hook1 = address(new MockBaseHook(address(accessControl)));
+        address hook2 = address(new MockBaseHook(address(accessControl)));
+        address hook3 = address(new MockBaseHook(address(accessControl)));
+        address hook5 = address(new MockBaseHook(address(accessControl)));
+        address hook6 = address(new MockBaseHook(address(accessControl)));
+        address hook7 = address(new MockBaseHook(address(accessControl)));
+        address hook8 = address(new MockBaseHook(address(accessControl)));
+
+        address[] memory hooksA = new address[](2);
+        hooksA[0] = hook1;
+        hooksA[1] = hook2;
+        bytes[] memory hooksConfigA = new bytes[](2);
+        hooksConfigA[0] = abi.encode("Hook1Config");
+        hooksConfigA[1] = abi.encode("Hook2Config");
+        address ipOrg1 = address(0x789);
+        bytes32 registryKeyA = hookRegistry.hookRegistryKey(ipOrg1, "RelationshipType_A");
+
+        // hooks B shares same ipOrg with hooks A
+        address[] memory hooksB = new address[](2);
+        hooksB[0] = hook3;
+        hooksB[1] = hook5;
+        bytes[] memory hooksConfigB = new bytes[](2);
+        hooksConfigB[0] = abi.encode("Hook3Config");
+        hooksConfigB[1] = abi.encode("Hook5Config");
+        bytes32 registryKeyB = hookRegistry.hookRegistryKey(ipOrg1, "RelationshipType_B");
+
+        address[] memory hooksC = new address[](3);
+        hooksC[0] = hook6;
+        hooksC[1] = hook7;
+        hooksC[2] = hook8;
+        bytes[] memory hooksConfigC = new bytes[](3);
+        hooksConfigC[0] = abi.encode("Hook6Config");
+        hooksConfigC[1] = abi.encode("Hook7Config");
+        hooksConfigC[2] = abi.encode("Hook8Config");
+
+        vm.startPrank(admin);
+        vm.expectEmit(true, false, false, true);
+        emit HooksRegistered(HookRegistry.HookType.PreAction, registryKeyA, hooksA);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyA, hooksA, hooksConfigA);
+        vm.expectEmit(true, false, false, true);
+        emit HooksRegistered(HookRegistry.HookType.PreAction, registryKeyB, hooksB);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyB, hooksB, hooksConfigB);
+
+        // Expecting both clear and register events should be emitted
+        vm.expectEmit(true, false, false, true);
+        emit HooksCleared(HookRegistry.HookType.PreAction, registryKeyA);
+        vm.expectEmit(true, false, false, true);
+        emit HooksRegistered(HookRegistry.HookType.PreAction, registryKeyA, hooksC);
+        // register new hooks with the same registryKeyA, expecting the existing hooks should be replaced
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyA, hooksC, hooksConfigC);
+
+        vm.stopPrank();
+
+        // registryKeyA should map to hooks C now
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKeyA, 0), hooksC[0]);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKeyA, 1), hooksC[1]);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKeyA, 2), hooksC[2]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKeyA, 0), hooksConfigC[0]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKeyA, 1), hooksConfigC[1]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKeyA, 2), hooksConfigC[2]);
+        assertEq(hookRegistry.totalHooks(HookRegistry.HookType.PreAction, registryKeyA), hooksC.length);
+        assertEq(hookRegistry.totalHooksConfig(HookRegistry.HookType.PreAction, registryKeyA), hooksConfigC.length);
+
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKeyB, 0), hooksB[0]);
+        assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKeyB, 1), hooksB[1]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKeyB, 0), hooksConfigB[0]);
+        assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKeyB, 1), hooksConfigB[1]);
+        assertEq(hookRegistry.totalHooks(HookRegistry.HookType.PreAction, registryKeyB), hooksB.length);
+        assertEq(hookRegistry.totalHooksConfig(HookRegistry.HookType.PreAction, registryKeyB), hooksConfigB.length);
+    }
+
+
+    function test_hookRegistry_revertHookAtNonExistRegistryKey() public {
+        address hook1 = address(new MockBaseHook(address(accessControl)));
+        address hook2 = address(new MockBaseHook(address(accessControl)));
+
+        address[] memory hooksA = new address[](2);
+        hooksA[0] = hook1;
+        hooksA[1] = hook2;
+        bytes[] memory hooksConfigA = new bytes[](2);
+        hooksConfigA[0] = abi.encode("Hook1Config");
+        hooksConfigA[1] = abi.encode("Hook2Config");
+        address ipOrg1 = address(0x789);
+        bytes32 registryKeyA = hookRegistry.hookRegistryKey(ipOrg1, "RelationshipType_A");
+        vm.startPrank(admin);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyA, hooksA, hooksConfigA);
+        vm.stopPrank();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Errors.HookRegistry_IndexOutOfBounds.selector,
+                0
+            )
+        );
+        hookRegistry.hookAt(HookRegistry.HookType.PreAction, keccak256(abi.encode("NonExistRegistryKey")), 0);
+    }
+
+    function test_hookRegistry_revertHooksConfigMismatch() public {
+        address hook1 = address(new MockBaseHook(address(accessControl)));
+        address hook2 = address(new MockBaseHook(address(accessControl)));
+
+        address[] memory hooksA = new address[](2);
+        hooksA[0] = hook1;
+        hooksA[1] = hook2;
+        bytes[] memory hooksConfigA = new bytes[](1);
+        hooksConfigA[0] = abi.encode("Hook1Config");
+        address ipOrg1 = address(0x789);
+        bytes32 registryKeyA = hookRegistry.hookRegistryKey(ipOrg1, "RelationshipType_A");
+        vm.startPrank(admin);
+        vm.expectRevert(Errors.HookRegistry_HooksConfigLengthMismatch.selector);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyA, hooksA, hooksConfigA);
+        vm.stopPrank();
+    }
+
+    function test_hookRegistry_revertRegisterZeroAddress() public {
+        address hook1 = address(new MockBaseHook(address(accessControl)));
+        address hook2 = address(0);
+
+        address[] memory hooksA = new address[](2);
+        hooksA[0] = hook1;
+        hooksA[1] = hook2;
+        bytes[] memory hooksConfigA = new bytes[](2);
+        hooksConfigA[0] = abi.encode("Hook1Config");
+        hooksConfigA[1] = abi.encode("Hook2Config");
+        address ipOrg1 = address(0x789);
+        bytes32 registryKeyA = hookRegistry.hookRegistryKey(ipOrg1, "RelationshipType_A");
+        vm.startPrank(admin);
+        vm.expectRevert(Errors.HookRegistry_RegisteringZeroAddressHook.selector);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyA, hooksA, hooksConfigA);
+        vm.stopPrank();
+    }
 }

@@ -53,6 +53,8 @@ library Errors {
     error HookRegistry_RegisteringZeroAddressHook();
     error HookRegistry_CallerNotAdmin();
     error HookRegistry_MaxHooksExceeded();
+    error HookRegistry_HooksConfigLengthMismatch();
+    error HookRegistry_IndexOutOfBounds(uint hooksIndex);
 
     ////////////////////////////////////////////////////////////////////////////
     //                            BaseRelationshipProcessor                   //
