@@ -6,7 +6,6 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { ShortStrings, ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import 'test/foundry/utils/BaseTest.sol';
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
-import { OffChain } from "contracts/lib/OffChain.sol";
 import { TermCategories, TermIds } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
 import { ProtocolTermsHelper } from "contracts/modules/licensing/ProtocolTermsHelper.sol";
 
@@ -274,9 +273,9 @@ contract BaseLicensingTest is BaseTest {
             "text_term_id",
             Licensing.LicensingTerm({
                 comStatus: Licensing.CommercialStatus.Both,
-                text: OffChain.Content({
-                    url: "https://example.com"
-                }),
+                url: "https://text_term_id.com",
+                hash: "qwertyu",
+                algorithm: "sha256",
                 hook: IHook(address(0))
             }
         ));
@@ -285,9 +284,9 @@ contract BaseLicensingTest is BaseTest {
             "non_comm_text_term_id",
             Licensing.LicensingTerm({
                 comStatus: Licensing.CommercialStatus.NonCommercial,
-                text: OffChain.Content({
-                    url: "https://example.com"
-                }),
+                url: "https://non_comm_text_term_id.com",
+                hash: "qwertyu",
+                algorithm: "sha256",
                 hook: IHook(address(0))
             }
         ));
@@ -296,9 +295,9 @@ contract BaseLicensingTest is BaseTest {
             "comm_text_term_id",
             Licensing.LicensingTerm({
                 comStatus: Licensing.CommercialStatus.Commercial,
-                text: OffChain.Content({
-                    url: "https://example.com"
-                }),
+                url: "https://comm_text_term_id.com",
+                hash: "qwertyu",
+                algorithm: "sha256",
                 hook: IHook(address(0))
             }
         ));

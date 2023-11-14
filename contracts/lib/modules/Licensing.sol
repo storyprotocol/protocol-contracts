@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import { OffChain } from "contracts/lib/OffChain.sol";
 import { ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
@@ -55,7 +54,9 @@ library Licensing {
 
     struct LicensingTerm {
         CommercialStatus comStatus;
-        OffChain.Content text;
+        string url;
+        string hash;
+        string algorithm;
         IHook hook;
         // ITermDecoder decoder; // TODO: some terms just need to decode bytes data, not
         // a full blown hook

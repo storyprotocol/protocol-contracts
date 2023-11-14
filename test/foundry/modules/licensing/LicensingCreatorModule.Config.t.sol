@@ -7,7 +7,6 @@ import "contracts/lib/modules/LibRelationship.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { TermCategories, TermIds } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
-import { OffChain } from "contracts/lib/OffChain.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { BaseLicensingTest } from "./BaseLicensingTest.sol";
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";

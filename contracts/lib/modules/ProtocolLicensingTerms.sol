@@ -16,7 +16,4 @@ library TermData {
     struct NftShareAlike {
         bool enabled;
     }
-
-
-
 }

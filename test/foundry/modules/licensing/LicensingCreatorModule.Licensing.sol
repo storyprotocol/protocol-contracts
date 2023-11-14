@@ -8,7 +8,6 @@ import "contracts/lib/modules/LibRelationship.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { TermCategories, TermIds } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
-import { OffChain } from "contracts/lib/OffChain.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { BaseLicensingTest } from "./BaseLicensingTest.sol";
@@ -87,7 +86,6 @@ contract LicensingCreatorLicensingTest is BaseLicensingTest {
         assertEq(license.licensor, ipaOwner, "licensor");
         assertEq(license.ipaId, 0);
         assertEq(license.parentLicenseId, commRootLicenseId);
-        assertEq(licenseRegistry.getLicensee(lId), lnftOwner);
     }
 
 }

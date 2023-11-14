@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
-import { OffChain } from "contracts/lib/OffChain.sol";
 import { TermsHook } from "contracts/hooks/licensing/TermsHook.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 
@@ -14,9 +13,9 @@ library ProtocolTermsHelper {
     ) internal pure returns (Licensing.LicensingTerm memory) {
         return Licensing.LicensingTerm({
             comStatus: comStatus_,
-            text: OffChain.Content({
-                url: "https://excluded.com"
-            }),
+            url: "https://excluded.com",
+            hash: "qwertyu",
+            algorithm: "sha256",
             hook: hook
         });
     }
@@ -26,9 +25,9 @@ library ProtocolTermsHelper {
     ) internal pure returns (Licensing.LicensingTerm memory) {
         return Licensing.LicensingTerm({
             comStatus: comStatus_,
-            text: OffChain.Content({
-                url: "https://sharealike.com"
-            }),
+            url: "https://sharealike.com",
+            hash: "qwertyu",
+            algorithm: "sha256",
             hook: IHook(address(0))
         });
     }

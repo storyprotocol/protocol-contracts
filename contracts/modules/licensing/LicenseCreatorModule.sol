@@ -14,7 +14,6 @@ import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { TermIds, TermData } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
 
-import "forge-std/console.sol";
 
 contract LicenseCreatorModule is BaseModule, TermsRepository {
     using ShortStrings for *;
