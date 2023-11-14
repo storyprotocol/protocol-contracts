@@ -6,7 +6,7 @@ import "contracts/modules/relationships/RelationshipModule.sol";
 import "contracts/lib/modules/LibRelationship.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
-import { TermCategories, TermIds } from "contracts/lib/modules/LicensingTerms.sol";
+import { TermCategories, TermIds } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
 import { OffChain } from "contracts/lib/OffChain.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { BaseLicensingTest } from "./BaseLicensingTest.sol";
@@ -22,13 +22,13 @@ contract LicensingCreatorModuleConfigTest is BaseLicensingTest {
         vm.expectRevert(Errors.LicensingModule_CallerNotIpOrgOwner.selector);
         spg.configureIpOrgLicensing(
             address(ipOrg),
-            getNonCommFramework()
+            getNonCommFramework(true)
         );
     }
 
     function test_LicensingModule_configIpOrg_ipOrgWithoutCommercialTermsIsNonCommercial()
         public
-        withNonCommFramework
+        withNonCommFrameworkShareAlike
     {
         assertFalse(licensingModule.ipOrgAllowsCommercial(address(ipOrg)), "should be non commercial");
         (
@@ -41,7 +41,7 @@ contract LicensingCreatorModuleConfigTest is BaseLicensingTest {
 
     function test_LicensingModule_configIpOrg_ipOrgWithCommercialTermsIsCommercial()
         public
-        withCommFramework
+        withCommFrameworkShareAlike
     {
         assertTrue(licensingModule.ipOrgAllowsCommercial(address(ipOrg)), "not commercial");
         assertTermsSetInIpOrg(true); // commercial terms
@@ -69,6 +69,7 @@ contract LicensingCreatorModuleConfigTest is BaseLicensingTest {
         spg.configureIpOrgLicensing(
             address(ipOrg),
             getNonCommFrameworkAndPush(
+                false,
                 commTextTermId,
                 bytes("")
             )

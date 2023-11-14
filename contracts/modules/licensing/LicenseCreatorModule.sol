@@ -10,14 +10,14 @@ import { BaseModule } from "contracts/modules/base/BaseModule.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { RelationshipModule } from "../relationships/RelationshipModule.sol";
 import { TermsRepository } from "./TermsRepository.sol";
-import { ProtocolTermsHelper } from "./ProtocolTermsHelper.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
+import { TermIds, TermData } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
 
 import "forge-std/console.sol";
 
-contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelper {
+contract LicenseCreatorModule is BaseModule, TermsRepository {
     using ShortStrings for *;
     using FixedSet for FixedSet.ShortStringSet;
 
@@ -60,16 +60,40 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
         }
     }
 
-    function getTotalIpOrgTerms(bool commercial, address ipOrg_) public view returns (uint256) {
-        if (commercial) {
+    function getTotalIpOrgTerms(bool commercial_, address ipOrg_) public view returns (uint256) {
+        if (commercial_) {
             return _comIpOrgTermIds[ipOrg_].length();
         } else {
             return _nonComIpOrgTermIds[ipOrg_].length();
         }
     }
 
-    function ipOrgTermsAt(bool commercial, address ipOrg_, uint index_) public view returns (ShortString termId, bytes memory data) {
-        if (commercial) {
+    function ipOrgTermsContains(bool commercial_, address ipOrg_, ShortString termId) public view returns (bool) {
+        if (commercial_) {
+            return _comIpOrgTermIds[ipOrg_].contains(termId);
+        } else {
+            return _nonComIpOrgTermIds[ipOrg_].contains(termId);
+        }
+    }
+
+    function ipOrgTermData(bool commercial_, address ipOrg_, ShortString termId) public view returns (bytes memory) {
+        if (commercial_) {
+            uint256 index = _comIpOrgTermIds[ipOrg_].indexOf(termId);
+            if (index == type(uint256).max) {
+                revert Errors.LicensingModule_ipOrgTermNotFound();
+            }
+            return _comIpOrgTermData[ipOrg_][index];
+        } else {
+            uint256 index = _nonComIpOrgTermIds[ipOrg_].indexOf(termId);
+            if (index == type(uint256).max) {
+                revert Errors.LicensingModule_ipOrgTermNotFound();
+            }
+            return _nonComIpOrgTermData[ipOrg_][index];
+        }
+    }
+
+    function ipOrgTermsAt(bool commercial_, address ipOrg_, uint index_) public view returns (ShortString termId, bytes memory data) {
+        if (commercial_) {
             return (_comIpOrgTermIds[ipOrg_].at(index_), _comIpOrgTermData[ipOrg_][index_]);
         } else {
             return (_nonComIpOrgTermIds[ipOrg_].at(index_), _nonComIpOrgTermData[ipOrg_][index_]);
@@ -99,7 +123,16 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
             params_,
             (Licensing.LicenseCreationParams)
         );
-        // If creating license for root IPA:
+        // ------ Commercial status checks ------
+        if (!ipOrgAllowsCommercial(address(ipOrg_)) && lParams.isCommercial) {
+            revert Errors.LicensingModule_CommercialLicenseNotAllowed();
+        }
+        // At least non commercial terms must be set
+        if (_nonComIpOrgTermData[address(ipOrg_)].length == 0) {
+            revert Errors.LicensingModule_IpOrgNotConfigured();
+        }
+
+        // ------ Root Ipa checks ------
         if (lParams.parentLicenseId == 0) {
             if (lParams.ipaId == 0) {
                 revert Errors.LicensingModule_IpaIdRequired();
@@ -108,17 +141,23 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
                 revert Errors.LicensingModule_CallerNotIpOrgOwner();
             }
         } else {
-            // TODO: Check if parent license is active
-            
+        // ------ Derivative license checks ------
+            FixedSet.ShortStringSet storage termIds = _getIpOrgTermIds(lParams.isCommercial, address(ipOrg_));
+            bytes[] storage termData = _getIpOrgTermData(lParams.isCommercial, address(ipOrg_));
+            uint256 nftShareAlikeIndex = termIds.indexOf(TermIds.NFT_SHARE_ALIKE.toShortString());
+            // If there is no NFT_SHARE_ALIKE term, or if it is false then we cannot have
+            // a derivative license unless caller owns the parent license
+            if (nftShareAlikeIndex == FixedSet.INDEX_NOT_FOUND ||
+                !abi.decode(termData[nftShareAlikeIndex], (bool))
+            ) {
+                // TODO: Is this licensor or licensee?
+                address parentLicensor = LICENSE_REGISTRY.getLicensor(lParams.parentLicenseId);
+                if (parentLicensor != caller_) {
+                    revert Errors.LicensingModule_ShareAlikeDisabled();
+                }
+            }
         }
-        
-        // At least non commercial terms must be set
-        if (_nonComIpOrgTermData[address(ipOrg_)].length == 0) {
-            revert Errors.LicensingModule_IpOrgNotConfigured();
-        }
-        if (!ipOrgAllowsCommercial(address(ipOrg_)) && lParams.isCommercial) {
-            revert Errors.LicensingModule_CommercialLicenseNotAllowed();
-        }
+        // ------ Categories status check ------
         if (lParams.ipaId != 0) {
             // Todo: define status types
             if (IPA_REGISTRY.ipAssetStatus(lParams.ipaId) != 1) {
@@ -137,12 +176,7 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
             params_,
             (Licensing.LicenseCreationParams)
         );
-        // TODO: How do we distinguish which terms apply?
-        // Share alike and Remix IPA, posting the remixed IPA => copy parent license terms?
-        // License to make an remixed IPA in the future => ????
-        // License to commercialize IPA => ???
-        // Commerial license to use IPA in IPA => ???
-        IPAsset.IPA memory ipa = IPA_REGISTRY.getIpAsset(lParams.ipaId);
+        
         (ShortString[] memory termIds, bytes[] memory termsData) = getIpOrgTerms(
             lParams.isCommercial,
             address(ipOrg_)
@@ -152,8 +186,7 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
             isCommercial: lParams.isCommercial,
             licenseeType: _getLicenseeType(lParams.ipaId),
             licensor: _getLicensor(
-                ipOrg_.owner(),
-                ipa.owner,
+                lParams.ipaId,
                 LICENSE_REGISTRY.getLicensee(lParams.parentLicenseId)
             ),
             revoker: _getRevoker(ipOrg_),
@@ -206,21 +239,36 @@ contract LicenseCreatorModule is BaseModule, TermsRepository, ProtocolTermsHelpe
     }
 
     function _getLicensor(
-        address ipOrgOwner,
-        address ipaOwner,
+        uint256 ipaId,
         address parentLicenseOwner
     ) private view returns (address) {
         // TODO: Check for Licensor term in terms registry.
-        if (parentLicenseOwner != address(0)) {
+        if (parentLicenseOwner != address(0) || ipaId == 0) {
             return parentLicenseOwner;
         }
-        return ipaOwner;
+        return IPA_REGISTRY.ipAssetOwner(ipaId);
     }
 
     function _getRevoker(IIPOrg ipOrg) private view returns (address) {
         // TODO: Check Revoker term in terms registry to chose disputer
         // For now, ipOrgOwner
         return ipOrg.owner();
+    }
+
+    function _getIpOrgTermIds(bool commercial, address ipOrg_) private view returns (FixedSet.ShortStringSet storage) {
+        if (commercial) {
+            return _comIpOrgTermIds[ipOrg_];
+        } else {
+            return _nonComIpOrgTermIds[ipOrg_];
+        }
+    }
+
+    function _getIpOrgTermData(bool commercial, address ipOrg_) private view returns (bytes[] storage) {
+        if (commercial) {
+            return _comIpOrgTermData[ipOrg_];
+        } else {
+            return _nonComIpOrgTermData[ipOrg_];
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////

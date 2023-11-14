@@ -2,9 +2,16 @@
 pragma solidity ^0.8.19;
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
-/// Based in OZ set, but with guaranteed ordering, no remove
+/// @title FixedSet
+/// @author Raul Martinez @ethicraul
+/// @notice Library for Set data structures, based in OpenZeppelin's, with the following changes:
+/// - Values cannot be removed from the set, so order is preserved
+/// - Index of a value can be obtained
+/// - Adds ShortString data type
 library FixedSet {
     using ShortStrings for *;
+
+    uint256 constant INDEX_NOT_FOUND = type(uint256).max;
 
     struct Set {
         // Storage of set values
@@ -44,6 +51,14 @@ library FixedSet {
      */
     function _length(Set storage set) private view returns (uint256) {
         return set._values.length;
+    }
+
+    /**
+     * @dev Returns the index of the value in the set, or INDEX_NOT_FOUND if not present. O(1).
+     */
+    function _indexOf(Set storage set, bytes32 value) private view returns (uint256) {
+        uint256 index = set._indexes[value];
+        return index == 0 ? INDEX_NOT_FOUND : index - 1;
     }
 
     /**
@@ -120,6 +135,13 @@ library FixedSet {
     }
 
     /**
+     * @dev Returns the index of the value in the set, or INDEX_NOT_FOUND if not present. O(1).
+     */
+    function indexOf(Bytes32Set storage set, bytes32 value) internal view returns (uint256) {
+        return _indexOf(set._inner, value);
+    }
+
+    /**
      * @dev Return the entire set in an array
      *
      * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
@@ -184,6 +206,13 @@ library FixedSet {
      */
     function at(ShortStringSet storage set, uint256 index) internal view returns (ShortString) {
         return ShortString.wrap(_at(set._inner, index));
+    }
+
+    /**
+     * @dev Returns the index of the value in the set, or INDEX_NOT_FOUND if not present. O(1).
+     */
+    function indexOf(ShortStringSet storage set, ShortString value) internal view returns (uint256) {
+        return _indexOf(set._inner, ShortString.unwrap(value));
     }
 
     /**
@@ -253,6 +282,13 @@ library FixedSet {
     }
 
     /**
+     * @dev Returns the index of the value in the set, or INDEX_NOT_FOUND if not present. O(1).
+     */
+    function indexOf(AddressSet storage set, address value) internal view returns (uint256) {
+        return _indexOf(set._inner, bytes32(uint256(uint160(value))));
+    }
+
+    /**
      * @dev Return the entire set in an array
      *
      * WARNING: This operation will copy the entire storage to memory, which can be quite expensive. This is designed
@@ -317,6 +353,14 @@ library FixedSet {
     function at(UintSet storage set, uint256 index) internal view returns (uint256) {
         return uint256(_at(set._inner, index));
     }
+
+    /**
+     * @dev Returns the index of the value in the set, or INDEX_NOT_FOUND if not present. O(1).
+     */
+    function indexOf(AddressSet storage set, uint256 value) internal view returns (uint256) {
+        return _indexOf(set._inner, bytes32(value));
+    }
+
 
     /**
      * @dev Return the entire set in an array

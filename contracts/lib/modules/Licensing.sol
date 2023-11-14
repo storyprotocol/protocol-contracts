@@ -46,6 +46,8 @@ library Licensing {
         CommercialStatus comStatus;
         OffChain.Content text;
         IHook hook;
+        // ITermDecoder decoder; // TODO: some terms just need to decode bytes data, not
+        // a full blown hook
     }
 
     struct TermsConfig {

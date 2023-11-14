@@ -51,6 +51,12 @@ contract LicenseRegistry is ERC721 {
         return _licenses[id_];
     }
 
+    function getLicensor(
+        uint256 id_
+    ) external view returns (address) {
+        return _licenses[id_].licensor;
+    }
+
     function getLicensee(
         uint256 id_
     ) external view returns (address) {

@@ -246,6 +246,8 @@ library Errors {
     error LicensingModule_CommercialLicenseNotAllowed();
     error LicensingModule_NonCommercialTermsRequired();
     error LicensingModule_IpOrgNotConfigured();
+    error LicensingModule_ipOrgTermNotFound();
+    error LicensingModule_ShareAlikeDisabled();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            LicenseRegistry                             //

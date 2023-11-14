@@ -22,7 +22,7 @@ import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { ProtocolRelationships } from "contracts/lib/modules/ProtocolRelationships.sol";
-
+import { TermsHook } from "contracts/hooks/licensing/TermsHook.sol";
 // On active refactor
 
 // import { Licensing } from "contracts/lib/modules/Licensing.sol";
@@ -42,6 +42,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     StoryProtocol public spg;
     LicenseCreatorModule public licensingModule;
     LicenseRegistry public licenseRegistry;
+    TermsHook public termsHook;
 
     address public defaultCollectNftImpl;
     address public collectModuleImpl;
@@ -89,6 +90,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             })
         );
         moduleRegistry.registerProtocolModule(ModuleRegistryKeys.LICENSING_MODULE, licensingModule);
+        termsHook = new TermsHook(address(accessControl));
 
         // Create Relationship Module
         relationshipModule = new RelationshipModule(

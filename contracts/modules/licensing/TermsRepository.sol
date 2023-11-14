@@ -8,6 +8,8 @@ import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 
+import "forge-std/console.sol";
+
 contract TermsRepository is Multicall {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using ShortStrings for *;
@@ -40,7 +42,7 @@ contract TermsRepository is Multicall {
         _;
     }
 
-    function addTermCategory(string calldata category_) public {
+    function addCategory(string calldata category_) public {
         _termCategories.add(ShortString.unwrap(category_.toShortString()));
         emit TermCategoryAdded(category_);
     }
@@ -69,11 +71,12 @@ contract TermsRepository is Multicall {
         ShortString category = category_.toShortString();
         _verifyCategoryExists(category);
         if (term_.comStatus == Licensing.CommercialStatus.Unset) {
+            console.log("TermsRegistry_CommercialStatusUnset");
             revert Errors.TermsRegistry_CommercialStatusUnset();
         }
         ShortString termId = termId_.toShortString();
-
         if (_terms[termId].comStatus != Licensing.CommercialStatus.Unset) {
+            console.log("TermsRegistry_TermAlreadyExists");
             revert Errors.TermsRegistry_TermAlreadyExists();
         }
         _terms[termId] = term_;
@@ -102,7 +105,6 @@ contract TermsRepository is Multicall {
     function getTerm(
         ShortString termId_
     ) public view onlyValidTerm(termId_) returns (Licensing.LicensingTerm memory) {
-        
         return _terms[termId_];
     }
 
@@ -141,6 +143,7 @@ contract TermsRepository is Multicall {
 
     function _verifyCategoryExists(ShortString category_) private view {
         if (!_termCategories.contains(ShortString.unwrap(category_))) {
+            console.log("TermsRegistry_UnsupportedTermCategory");
             revert Errors.TermsRegistry_UnsupportedTermCategory();
         }
     }

@@ -3,19 +3,20 @@ pragma solidity ^0.8.19;
 
 library TermCategories {
     string constant FORMAT_CATEGORIES = "FORMAT_CATEGORIES";
+    string constant SHARE_ALIKE = "SHARE_ALIKE";
 }
 
 /// @dev must be < 32 bytes long, or they will blow up at some point
 /// see https://docs.openzeppelin.com/contracts/4.x/api/utils#ShortStrings
 library TermIds {
-    string constant SHARE_ALIKE = "SHARE_ALIKE";
+    string constant NFT_SHARE_ALIKE = "NFT_SHARE_ALIKE";
 }
 
 library TermData {
-    // ShareAlike is so universal it could be enshrined in
-    // the protocol itself
-    struct ShareAlike {
+    struct NftShareAlike {
         bool enabled;
     }
+
+
 
 }

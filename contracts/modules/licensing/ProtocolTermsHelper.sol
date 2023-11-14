@@ -4,17 +4,14 @@ pragma solidity ^0.8.19;
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { OffChain } from "contracts/lib/OffChain.sol";
 import { TermsHook } from "contracts/hooks/licensing/TermsHook.sol";
+import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 
-abstract contract ProtocolTermsHelper {
+library ProtocolTermsHelper {
 
-    function getSelector(string memory func_) public pure returns (bytes4) {
-        return bytes4(keccak256(bytes(func_)));
-    }
-
-    function getExcludedCategoriesTerm(
+    function _getExcludedCategoriesTerm(
         Licensing.CommercialStatus comStatus_,
         TermsHook hook
-    ) public pure returns (Licensing.LicensingTerm memory) {
+    ) internal pure returns (Licensing.LicensingTerm memory) {
         return Licensing.LicensingTerm({
             comStatus: comStatus_,
             text: OffChain.Content({
@@ -23,4 +20,17 @@ abstract contract ProtocolTermsHelper {
             hook: hook
         });
     }
+
+    function _getNftShareAlikeTerm(
+        Licensing.CommercialStatus comStatus_
+    ) internal pure returns (Licensing.LicensingTerm memory) {
+        return Licensing.LicensingTerm({
+            comStatus: comStatus_,
+            text: OffChain.Content({
+                url: "https://sharealike.com"
+            }),
+            hook: IHook(address(0))
+        });
+    }
+
 }
