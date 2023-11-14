@@ -1,11 +1,25 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.19;
+
 /// @title IModuleRegistry
 /// @notice Module Registry Interface
 interface IModuleRegistry {
 
-    event ModuleAdded(address indexed ipOrg, string indexed moduleKey, BaseModule module);
+    /// @notice Emits when a new module is added for a specific IP Org.
+    event ModuleAdded(
+        address indexed ipOrg,
+        string indexed moduleKey,
+        address indexed module
+    );
 
-    event ModuleRemoved(address indexed ipOrg, string indexed moduleKey, BaseModule module);
+    /// @notice Emits when a module is removed for an IP Org.
+    event ModuleRemoved(
+        address indexed ipOrg,
+        string indexed moduleKey,
+        address indexed module
+    );
 
+    /// @notice Emits when a module is executed for an IP Org.
     event ModuleExecuted (
         address indexed ipOrg,
         string indexed moduleKey,
@@ -15,6 +29,7 @@ interface IModuleRegistry {
         bytes[] postHookParams
     );
 
+    /// @notice Emits when a module is configured for an IP Org.
     event ModuleConfigured(
         address indexed ipOrg,
         string indexed moduleKey,
@@ -22,5 +37,6 @@ interface IModuleRegistry {
         bytes params
     );
 
-    function protocolModules(string moduleKey) external returns (BaseModule);
+    /// @notice Fetches the latest protocol module bound to a specific key.
+    function protocolModule(string calldata moduleKey) external view returns (address);
 }

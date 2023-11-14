@@ -7,73 +7,65 @@ import { Registration } from "contracts/lib/modules/Registration.sol";
 interface IRegistrationModule {
 
     /// @notice Emits when an IPOrg updates metadata associated with its IPA.
+    /// @param ipOrg_ The address of the IP Org whose metadata was updated.
+    /// @param baseURI_ The base token URI to be used for token metadata.
+    /// @param contractURI_ The contract URI to be used for contract metadata.
     event MetadataUpdated(
-        address indexed ipOrg,
-        string memory baseURI,
-        string memory contractURI
-    )
+        address indexed ipOrg_,
+        string baseURI_,
+        string contractURI_
+    );
 
+    /// @notice Emits when a new IP asset is registered.
+    /// @param ipAssetId_ The identifier of the newly registered IP asset.
+    /// @param ipOrg_ The address of the IP Org of the IP asset.
+    /// @param ipOrgAssetId_ The IP Org localized id of the IP asset.
+    /// @param owner_ The address of the new IP asset owner.
+    /// @param name_ The name of the IP asset being registered.
+    /// @param ipAssetType_ The numerical id of the IP asset type.
+    /// @param hash_ The content hash of the registered IP asset.
     event IPAssetRegistered(
-        uint256 ipAssetId,
-        address indexed owner,
-        address indexed ipOrg,
-        uint256 ipOrgAssetId
-    )
-
-    /// Emitted with a new Relationship Type definitions is created
-    event RelationshipTypeSet(
-        // Short string naming the type
-        string indexed relType,
-        // Zero for protocol-wide, or address of the IPOrg
-        address indexed ipOrg,
-        // Allowed src address, zero address if empty, all F for all addresses are OK
-        address src,
-        // Allowed items for src
-        LibRelationship.Relatables srcRelatable,
-        // Mask of allowed subtypes for src (see LibUintArrayMask)
-        uint256 srcSubtypesMask,
-        // Allowed dst address, zero address if empty, all F for all addresses are OK
-        address dst,
-        // Allowed items for dst
-        LibRelationship.Relatables dstRelatable,
-        // Mask of allowed subtypes for dst (see LibUintArrayMask)
-        uint256 dstSubtypesMask
+        uint256 ipAssetId_,
+        address indexed ipOrg_,
+        uint256 ipOrgAssetId_,
+        address indexed owner_,
+        string name_,
+        uint64 indexed ipAssetType_,
+        bytes32 hash_
     );
 
-    /// Emitted when a Relationship Type definition is removed
-    event RelationshipTypeUnset(
-        // Short string naming the type
-        string indexed relType,
-        // Zero for protocol-wide, or address of the IPOrg
-        address ipOrg
+    /// @notice Emits when an IP asset is transferred to a new owner.
+    /// @param ipAssetId_ The identifier of the IP asset being transferred.
+    /// @param ipOrg_ The address of the IP Org which administers the IP asset.
+    /// @param ipOrgAssetId_ The local id of the wrapped IP within the IP Org.
+    /// @param prevOwner_ The address of the previous owner of the IP asset.
+    /// @param newOwner_ The address of the new owner of the IP asset.
+    event IPAssetTransferred(
+        uint256 indexed ipAssetId_,
+        address indexed ipOrg_,
+        uint256 ipOrgAssetId_,
+        address prevOwner_,
+        address newOwner_
     );
 
-    /// Emitted when a Relationship is created, linking 2 elements
-    event RelationshipCreated(
-        // Sequential Relationship ID
-        uint256 indexed relationshipId,
-        // Short string naming the type
-        string indexed relType,
-        // Source contract or EOA
-        address srcAddress,
-        // Source item ID
-        uint256 srcId,
-        // Destination contract or EOA
-        address dstAddress,
-        // Destination item ID
-        uint256 dstId
-    );
+    /// @notice Returns the current owner of an IP asset.
+    /// @param ipAssetId_ The global identifier of the IP asset within the GIPR.
+    function ownerOf(uint256 ipAssetId_) external view returns (address);
 
-    /// Gets relationship type definition for a given relationship type name
-    /// Will revert if no relationship type is found
-    /// @param ipOrg_ IP Org address or zero address for protocol level relationships
-    /// @param relType_ the name of the relationship type
-    /// @return result the relationship type definition
-    function getRelationshipType(address ipOrg_, string memory relType_) external view returns (LibRelationship.RelationshipType memory);
-    /// Gets relationship definition for a given relationship id
-    function getRelationship(uint256 relationshipId_) external view returns (LibRelationship.Relationship memory);
-    /// Gets relationship id for a given relationship
-    function getRelationshipId(LibRelationship.Relationship calldata rel_) external view returns (uint256);
-    /// Checks if a relationship has been set
-    function relationshipExists(LibRelationship.Relationship calldata rel_) external view returns (bool);   
+    /// @notice Gets the IP asset id associated with an IP Org asset.
+    /// @param ipOrg_ The address of the governing IP asset IP Org.
+    /// @param ipOrgAssetId_ The localized id of the IP asset within the IP Org.
+    function ipAssetId(address ipOrg_, uint256 ipOrgAssetId_) external returns (uint256);
+
+    /// @notice Renders metadata of an IP Asset localized for an IP Org.
+    /// @param ipOrg_ The address of the IP Org of the IP asset.
+    /// @param ipOrgAssetId_ The local id of the IP asset within the IP Org.
+    /// @return The token URI associated with the IP Org.
+    function tokenURI(address ipOrg_, uint256 ipOrgAssetId_) external view returns (string memory);
+
+    /// @notice Gets the contract URI for an IP Org.
+    /// @param ipOrg_ The address of the IP Org.
+    /// @return The contract URI associated with the IP Org.
+    function contractURI(address ipOrg_) external view returns (string memory);
+
 }

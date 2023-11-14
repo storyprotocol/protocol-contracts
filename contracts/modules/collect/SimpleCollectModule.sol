@@ -25,7 +25,7 @@ contract SimpleCollectModule is CollectModuleBase {
     function _authorizeUpgrade(address newImplementation_) internal override onlyRole(AccessControl.UPGRADER_ROLE) {}
 
     /// @dev Checks whether the collect action is authorized for an IP asset.
-    function _isCollectAuthorized(uint256 ipAssetId_) internal override returns (bool) {
+    function _isCollectAuthorized(uint256 ipAssetId_) internal view override returns (bool) {
         address ipAssetOrg = REGISTRY.ipAssetOrg(ipAssetId_);
         return msg.sender == ipAssetOrg;
     }

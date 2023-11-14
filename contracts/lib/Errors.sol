@@ -301,6 +301,22 @@ library Errors {
     error MultiTermsProcessor_TooManyTermsProcessors();
 
     ////////////////////////////////////////////////////////////////////////////
+    //                            RegistrationModule                          //
+    ////////////////////////////////////////////////////////////////////////////
+
+    /// @notice The caller is not authorized to perform registration.
+    error RegistrationModule_CallerNotAuthorized();
+
+    /// @notice The configured caller is invalid.
+    error RegistrationModule_InvalidCaller();
+
+    /// @notice The IP asset does not exist.
+    error RegistrationModule_IPAssetNonExistent();
+
+    /// @notice The registration module for the IP Org was not yet configured.
+    error RegistrationModule_IPOrgNotConfigured();
+
+    ////////////////////////////////////////////////////////////////////////////
     //                            RelationshipModule                          //
     ////////////////////////////////////////////////////////////////////////////
 

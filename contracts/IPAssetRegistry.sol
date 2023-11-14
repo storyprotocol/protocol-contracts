@@ -2,6 +2,8 @@
 pragma solidity ^0.8.19;
 
 import { IIPAssetRegistry } from "contracts/interfaces/IIPAssetRegistry.sol";
+import { IRegistrationModule } from "contracts/interfaces/modules/registration/IRegistrationModule.sol";
+import { IModuleRegistry } from "contracts/interfaces/modules/IModuleRegistry.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { Errors } from "contracts/lib/Errors.sol";
@@ -19,12 +21,13 @@ contract IPAssetRegistry is IIPAssetRegistry {
         address ipOrg;               // Address of the governing entity of the IP asset.
         bytes32 hash;                // A unique content hash of the IP asset for preserving integrity.
         uint64 registrationDate;     // Timestamp for which the IP asset was first registered.
+    }
 
     /// @notice Used for fetching modules associated with an IP asset.
     IModuleRegistry public immutable MODULE_REGISTRY;
 
     /// @notice Mapping from IP asset ids to registry records.
-    mapping(uint256 => IPA) public ipAssets;
+    mapping(uint256 => IPA) internal _ipAssets;
 
     /// @notice Tracks the total number of IP Assets in existence.
     /// TODO(leeren) Switch from numerical ids to a universal namehash.
@@ -33,7 +36,7 @@ contract IPAssetRegistry is IIPAssetRegistry {
     /// @notice Restricts calls to the registration module of the IP Asset.
     /// TODO(ramarti): Enable IPOrg-specific registration modules to be authorized.
     modifier onlyRegistrationModule() {
-        if (IModuleRegistry(_moduleRegistry).protocolModules(ModuleRegistryKeys.REGISTRATION_MODULE) != msg.sender) {
+        if (MODULE_REGISTRY.protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE) != msg.sender) {
             revert Errors.Unauthorized();
         }
         _;
@@ -48,7 +51,7 @@ contract IPAssetRegistry is IIPAssetRegistry {
     /// @notice Initializes the Global IP Asset Registry.
     /// @param moduleRegistry_ Address of the module registry.
     constructor(address moduleRegistry_) {
-        MODULE_REGISTRY = moduleRegistry_;
+        MODULE_REGISTRY = IModuleRegistry(moduleRegistry_);
     }
     
     /// @notice Registers a new IP asset.
@@ -58,26 +61,26 @@ contract IPAssetRegistry is IIPAssetRegistry {
     /// @param hash_ A content hash used for verifyign provenance of the asset.
     function register(
         address registrant_,
-        string name_,
+        string memory name_,
         uint64 ipAssetType_,
         bytes32 hash_
     ) public onlyRegistrationModule returns (uint256 ipAssetId) {
 
-        if (IModuleRegistry(_moduleRegistry).protocolModules(ModuleRegistryKeys.REGISTRATION_MODULE) != msg.sender) {
+        if (MODULE_REGISTRY.protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE) != msg.sender) {
             revert Errors.Unauthorized();
         }
 
         // Crate a new IP asset with the provided IP attributes.
         ipAssetId = totalSupply++;
         uint64 registrationDate = uint64(block.timestamp);
-        ipAssets[ipAssetId] = IPA({
+        _ipAssets[ipAssetId] = IPA({
             name: name_,
             ipAssetType: ipAssetType_,
             status: 0, // TODO(ramarti): Define status types.
             registrant: registrant_,
             ipOrg: msg.sender,
             hash: hash_,
-            registrationDate: registrationDate,
+            registrationDate: registrationDate
         });
         emit Registered(
             ipAssetId,
@@ -93,8 +96,8 @@ contract IPAssetRegistry is IIPAssetRegistry {
     /// @param ipAssetId_ The identifier of the IP asset being transferred.
     /// @param ipOrg_ The new IP Org to govern the IP asset.
     function transferIPOrg(uint256 ipAssetId_, address ipOrg_) public onlyRegistrationModule {
-        uint8 oldIPOrg = ipAssets[ipAssetId_].ipOrg;
-        ipAssets[ipAssetId_].ipOrg = ipOrg_;
+        address oldIPOrg = _ipAssets[ipAssetId_].ipOrg;
+        _ipAssets[ipAssetId_].ipOrg = ipOrg_;
         emit IPOrgTransferred(ipAssetId_, oldIPOrg, ipOrg_);
     }
 
@@ -103,21 +106,34 @@ contract IPAssetRegistry is IIPAssetRegistry {
     /// @param status_ The new status of the IP asset.
     /// TODO(ramarti) Finalize authorization logic around status changes.
     function setStatus(uint256 ipAssetId_, uint8 status_) public onlyDisputer(ipAssetId_) {
-        uint8 oldStatus = ipAssets[ipAssetId_].status;
-        ipAssets[ipAssetId_].status = status_;
+        uint8 oldStatus = _ipAssets[ipAssetId_].status;
+        _ipAssets[ipAssetId_].status = status_;
         emit StatusChanged(ipAssetId_, oldStatus, status_);
     }
 
     /// @notice Gets the status for a specific IP Asset.
     /// @param ipAssetId_ The id of the IP Asset being queried.
-    function getStatus(uint256 ipAssetId_) public view returns (uint8) {
-        return ipAssets[ipAssetId_].status;
+    function status(uint256 ipAssetId_) public view returns (uint8) {
+        return _ipAssets[ipAssetId_].status;
     }
 
     /// @notice Gets the IP Asset Org that administers a specific IP Asset.
-    /// @param ipAssetId_ The id of the IP Asset being queried.
-    function getIPOrg(uint256 ipAssetId_) public view returns (address) {
-        return ipAssets[ipAssetId_].ipOrg;
+    /// @param ipAssetId_ The id of the IP asset being queried.
+    function ipAssetOrg(uint256 ipAssetId_) public view returns (address) {
+        return _ipAssets[ipAssetId_].ipOrg;
+    }
+
+    /// @notice Returns the current owner of an IP asset.
+    /// @param ipAssetId_ The id of the IP asset being queried.
+    function ipAssetOwner(uint256 ipAssetId_) public view returns (address) {
+        address registrationModule = MODULE_REGISTRY.protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE);
+        return IRegistrationModule(registrationModule).ownerOf(ipAssetId_);
+    }
+
+    /// @notice Returns all attributes related to an IP asset.
+    /// @param ipAssetId_ The id of the IP asset being queried for.
+    function ipAsset(uint256 ipAssetId_) public view returns (IPA memory) {
+        return _ipAssets[ipAssetId_];
     }
 
 }

@@ -12,7 +12,7 @@ import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol
 
 contract StoryProtocol {
     // TODO: should this be immutable, or should the protocol be able to change factory
-    IIPOrgController public immutable FACTORY;
+    IIPOrgController public immutable IP_ORG_CONTROLLER;
     ModuleRegistry public immutable MODULE_REGISTRY;
 
     constructor(IIPOrgController ipOrgController_, ModuleRegistry moduleRegistry_) {
@@ -22,14 +22,20 @@ contract StoryProtocol {
         ) {
             revert Errors.ZeroAddress();
         }
-        FACTORY = ipOrgController_;
+        IP_ORG_CONTROLLER = ipOrgController_;
         MODULE_REGISTRY = moduleRegistry_;
     }
 
     function registerIpOrg(
-        IPOrgParams.RegisterIPOrgParams calldata params_
+        address owner_,
+        string calldata name_,
+        string calldata symbol_
     ) external returns (address) {
-        return FACTORY.registerIpOrg(params_);
+        return IP_ORG_CONTROLLER.registerIpOrg(
+            owner_,
+            name_,
+            symbol_
+        );
     }
 
     ////////////////////////////////////////////////////////////////////////////

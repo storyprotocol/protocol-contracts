@@ -63,9 +63,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         _setupAccessControl();
         _grantRole(vm, AccessControl.UPGRADER_ROLE, upgrader);
         
-        // Create IPAssetRegistry 
-        registry = new IPAssetRegistry();
-
         // Create IPOrg Factory
         ipOrgController = new IPOrgController();
         address ipOrgControllerImpl = address(new IPOrgController());
@@ -84,6 +81,10 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         _grantRole(vm, AccessControl.IPORG_CREATOR_ROLE, address(spg));
         _grantRole(vm, AccessControl.MODULE_EXECUTOR_ROLE, address(spg));
         _grantRole(vm, AccessControl.MODULE_REGISTRAR_ROLE, address(this));
+
+        // Create IPAssetRegistry 
+        registry = new IPAssetRegistry(address(moduleRegistry));
+
 
         // Create Relationship Module
         relationshipModule = new RelationshipModule(
@@ -120,7 +121,11 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         );
 
         vm.startPrank(ipAssetOrgOwner);
-        ipOrg = IPOrg(spg.registerIpOrg(ipAssetOrgParams));
+        ipOrg = IPOrg(spg.registerIpOrg(
+            ipAssetOrgOwner,
+            ipAssetOrgParams.name,
+            ipAssetOrgParams.symbol
+        ));
 
         // licenseRegistry = ILicenseRegistry(ipOrg.getLicenseRegistry());
 

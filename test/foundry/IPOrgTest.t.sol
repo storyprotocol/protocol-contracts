@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import { Errors } from "contracts/lib/Errors.sol";
 import { IPOrg } from "contracts/ip-org/IPOrg.sol";
 import { IPOrgController } from "contracts/ip-org/IPOrgController.sol";
+import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
 import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { AccessControlSingleton } from "contracts/access-control/AccessControlSingleton.sol";
@@ -34,7 +35,9 @@ contract IPOrgTest is Test, ProxyHelper, AccessControlHelper {
     function setUp() public {
         _setupAccessControl();
         _grantRole(vm, AccessControl.IPORG_CREATOR_ROLE, ipOrgOwner);
-        registry = new IPAssetRegistry();
+
+        address moduleRegistry = address(new ModuleRegistry(address(accessControl)));
+        registry = new IPAssetRegistry(moduleRegistry);
 
         address implementation = address(new IPOrgController());
         ipOrgController = IPOrgController(
@@ -48,15 +51,8 @@ contract IPOrgTest is Test, ProxyHelper, AccessControlHelper {
     }
 
     function test_ipOrgController_registerIpOrg() public {
-        IPOrgParams.RegisterIPOrgParams memory ipOrgParams = IPOrgParams.RegisterIPOrgParams(
-            address(registry),
-            "name",
-            "symbol",
-            "description",
-            "uri"
-        );
         vm.prank(ipOrgOwner);
-        ipOrg = IPOrg(ipOrgController.registerIpOrg(ipOrgParams));
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol"));
     }
 
 }
