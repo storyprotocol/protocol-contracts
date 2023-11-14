@@ -5,7 +5,6 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
-import { ProtocolRelationships } from "contracts/lib/modules/ProtocolRelationships.sol";
 import { BaseModule } from "contracts/modules/base/BaseModule.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { RelationshipModule } from "../relationships/RelationshipModule.sol";
@@ -119,24 +118,31 @@ contract LicenseCreatorModule is BaseModule, TermsRepository {
         address caller_,
         bytes calldata params_
     ) virtual internal override {
-        Licensing.LicenseCreationParams memory lParams = abi.decode(
+        (
+            Licensing.LicenseCreation memory lParams,
+            Licensing.LicenseeType licenseeType,
+            bytes memory data
+        ) = abi.decode(
             params_,
-            (Licensing.LicenseCreationParams)
+            (
+                Licensing.LicenseCreation,
+                Licensing.LicenseeType,
+                bytes
+            )
         );
-        // ------ Commercial status checks ------
-        if (!ipOrgAllowsCommercial(address(ipOrg_)) && lParams.isCommercial) {
-            revert Errors.LicensingModule_CommercialLicenseNotAllowed();
-        }
         // At least non commercial terms must be set
         if (_nonComIpOrgTermData[address(ipOrg_)].length == 0) {
             revert Errors.LicensingModule_IpOrgNotConfigured();
         }
-
+        // ------ Commercial status checks ------
+        if (!ipOrgAllowsCommercial(address(ipOrg_)) && lParams.isCommercial) {
+            revert Errors.LicensingModule_CommercialLicenseNotAllowed();
+        }
+        if (licenseeType == Licensing.LicenseeType.Unset) {
+            revert Errors.LicensingModule_InvalidLicenseeType();
+        }
         // ------ Root Ipa checks ------
         if (lParams.parentLicenseId == 0) {
-            if (lParams.ipaId == 0) {
-                revert Errors.LicensingModule_IpaIdRequired();
-            }
             if (ipOrg_.owner() != caller_) {
                 revert Errors.LicensingModule_CallerNotIpOrgOwner();
             }
@@ -150,20 +156,11 @@ contract LicenseCreatorModule is BaseModule, TermsRepository {
             if (nftShareAlikeIndex == FixedSet.INDEX_NOT_FOUND ||
                 !abi.decode(termData[nftShareAlikeIndex], (bool))
             ) {
-                // TODO: Is this licensor or licensee?
                 address parentLicensor = LICENSE_REGISTRY.getLicensor(lParams.parentLicenseId);
                 if (parentLicensor != caller_) {
                     revert Errors.LicensingModule_ShareAlikeDisabled();
                 }
             }
-        }
-        // ------ Categories status check ------
-        if (lParams.ipaId != 0) {
-            // Todo: define status types
-            if (IPA_REGISTRY.ipAssetStatus(lParams.ipaId) != 1) {
-                revert Errors.LicensingModule_IpaNotActive();
-            }
-            //TODO Check if IPA has a license already
         }
     }
 
@@ -172,70 +169,51 @@ contract LicenseCreatorModule is BaseModule, TermsRepository {
         address caller_,
         bytes calldata params_
     ) virtual internal override returns (bytes memory result) {
-        Licensing.LicenseCreationParams memory lParams = abi.decode(
+        (
+            Licensing.LicenseCreation memory lParams,
+            Licensing.LicenseeType licenseeType,
+            bytes memory data
+        ) = abi.decode(
             params_,
-            (Licensing.LicenseCreationParams)
+            (
+                Licensing.LicenseCreation,
+                Licensing.LicenseeType,
+                bytes
+            )
         );
-        
         (ShortString[] memory termIds, bytes[] memory termsData) = getIpOrgTerms(
             lParams.isCommercial,
             address(ipOrg_)
         );
-
-        Licensing.License memory license = Licensing.License({
+        uint256 ipaId = Licensing.LicenseeType.BoundToIpa == licenseeType ? abi.decode(data, (uint256)) : 0;
+        // TODO: compose IpOrg terms with user provider Terms
+        Licensing.RegistryAddition memory rParams = Licensing.RegistryAddition({
             isCommercial: lParams.isCommercial,
-            licenseeType: _getLicenseeType(lParams.ipaId),
             licensor: _getLicensor(
-                lParams.ipaId,
-                LICENSE_REGISTRY.getLicensee(lParams.parentLicenseId)
+                ipaId,
+                LICENSE_REGISTRY.getLicensor(lParams.parentLicenseId)
             ),
             revoker: _getRevoker(ipOrg_),
+            ipOrg: address(ipOrg_),
+            parentLicenseId: lParams.parentLicenseId,
             termIds: termIds,
-            termsData: termsData
+            termsData: termsData,
+            data: data
         });
-        uint256 licenseId = LICENSE_REGISTRY.addLicense(license, caller_);
-        if (lParams.ipaId != 0) {
-            _relateToIpa(lParams.ipaId, licenseId);
+        uint256 licenseId;
+        if (licenseeType == Licensing.LicenseeType.BoundToIpa) {
+            licenseId = LICENSE_REGISTRY.addBoundToIpaLicense(
+                rParams,
+                abi.decode(data, (uint256))
+            );
+        } else {
+            licenseId = LICENSE_REGISTRY.addTradeableLicense(
+                rParams,
+                abi.decode(data, (address))
+            );
         }
-        if (lParams.parentLicenseId != 0) {
-            _relateToParentLicense(lParams.parentLicenseId, licenseId);
-        }
+        
         return abi.encode(licenseId);
-    }
-
-    function _getLicenseeType(uint256 ipaId) private pure returns (Licensing.LicenseeType) {
-        if (ipaId == 0) {
-            return Licensing.LicenseeType.LNFTHolder;
-        }
-        return Licensing.LicenseeType.BoundToIpa;
-    }
-
-    function _relateToIpa(uint256 ipaId, uint256 licenseId) private returns (uint256) {
-        return _createRelationship(
-            LibRelationship.CreateRelationshipParams({
-                relType: ProtocolRelationships.IPA_LICENSE,
-                srcAddress: address(LICENSE_REGISTRY),
-                srcId: licenseId,
-                srcType: 0,
-                dstAddress: address(IPA_REGISTRY),
-                dstId: ipaId,
-                dstType: 0
-            })
-        );
-    }
-
-    function _relateToParentLicense(uint256 parentLicenseId, uint256 licenseId) private returns (uint256) {
-        return _createRelationship(
-            LibRelationship.CreateRelationshipParams({
-                relType: ProtocolRelationships.SUBLICENSE_OF,
-                srcAddress: address(LICENSE_REGISTRY),
-                srcId: licenseId,
-                srcType: 0,
-                dstAddress: address(LICENSE_REGISTRY),
-                dstId: parentLicenseId,
-                dstType: 0
-            })
-        );
     }
 
     function _getLicensor(

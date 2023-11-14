@@ -21,7 +21,6 @@ import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortSt
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
-import { ProtocolRelationships } from "contracts/lib/modules/ProtocolRelationships.sol";
 import { TermsHook } from "contracts/hooks/licensing/TermsHook.sol";
 // On active refactor
 
@@ -81,7 +80,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         _grantRole(vm, AccessControl.MODULE_REGISTRAR_ROLE, address(this));
 
         // Create Licensing contracts
-        licenseRegistry = new LicenseRegistry();
+        licenseRegistry = new LicenseRegistry(address(registry));
         licensingModule = new LicenseCreatorModule(
             BaseModule.ModuleConstruction({
                 ipaRegistry: registry,
@@ -102,13 +101,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             address(accessControl)
         );
         moduleRegistry.registerProtocolModule(ModuleRegistryKeys.RELATIONSHIP_MODULE, relationshipModule);
-        
-        // Set Protocol Relationships
-        _grantRole(vm, AccessControl.RELATIONSHIP_MANAGER_ROLE, relManager);
-        vm.startPrank(relManager);
-        spg.addRelationshipType(ProtocolRelationships._getIpLicenseAddRelPArams());
-        spg.addRelationshipType(ProtocolRelationships._getSublicenseAddRelParams());
-        vm.stopPrank();
+
 
         defaultCollectNftImpl = _deployCollectNFTImpl();
         collectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));

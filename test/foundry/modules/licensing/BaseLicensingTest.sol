@@ -104,13 +104,13 @@ contract BaseLicensingTest is BaseTest {
 
     modifier withRootLicense(bool commercial) {
         vm.prank(ipOrg.owner());
-        uint256 lId = spg.createLicense(
+        uint256 lId = spg.testCreateIpaBoundLicense(
             address(ipOrg),
-            Licensing.LicenseCreationParams({
+            Licensing.LicenseCreation({
                 parentLicenseId: 0,
-                isCommercial: commercial,
-                ipaId: rootIpaId
+                isCommercial: commercial
             }),
+            rootIpaId,
             new bytes[](0),
             new bytes[](0)
         );
@@ -255,36 +255,6 @@ contract BaseLicensingTest is BaseTest {
             assertTrue(ShortStringOps._equal(termIds[i], ipOrgTermsId[i]));
             assertTrue(keccak256(termData[i]) == keccak256(ipOrgTermsData[i]));
         }
-    }
-
-    function assertLicenseRelatedWithIpa(uint256 lId, uint256 ipaId, bool result) public {
-        assertEq(
-            relationshipModule.relationshipExists(
-                LibRelationship.Relationship({
-                    relType: ProtocolRelationships.IPA_LICENSE,
-                    srcAddress: address(licenseRegistry),
-                    srcId: lId,
-                    dstAddress: address(registry),
-                    dstId: ipaId
-                })
-            ),
-            result
-        );
-    }
-
-    function assertIsSublicenseOf(uint256 lId, uint256 parentLicenseId, bool result) public {
-        assertEq(
-            relationshipModule.relationshipExists(
-                LibRelationship.Relationship({
-                    relType: ProtocolRelationships.SUBLICENSE_OF,
-                    srcAddress: address(licenseRegistry),
-                    srcId: lId,
-                    dstAddress: address(licenseRegistry),
-                    dstId: parentLicenseId
-                })
-            ),
-            result
-        );
     }
 
     function _addShareAlike(Licensing.CommercialStatus comStatus) private {

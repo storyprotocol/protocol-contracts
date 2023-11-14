@@ -253,8 +253,13 @@ library Errors {
     //                            LicenseRegistry                             //
     ////////////////////////////////////////////////////////////////////////////
 
-    error LicenseRegistry_ZeroRelRegistryAddress();
-    error LicenseRegistry_LicenseNotBoundToLnft();
+    error LicensingModule_InvalidLicenseeType();
+    error LicenseRegistry_ZeroIpaRegistryAddress();
+    error LicenseRegistry_LNFTShouldNotHaveIpaId();
+    error LicenseRegistry_BoundToIpaShouldHaveIpaId();
+    error LicenseRegistry_UnknownLicenseId();
+    error LicenseRegistry_NotLicenseNFT();
+    error LicenseRegistry_InvalidIpa();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            RelationshipModule                          //

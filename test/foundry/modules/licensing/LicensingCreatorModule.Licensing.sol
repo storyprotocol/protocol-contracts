@@ -39,14 +39,15 @@ contract LicensingCreatorLicensingTest is BaseLicensingTest {
         public
         withNonCommFrameworkShareAlike
     {
+        // TODO: this should be create root IPA
         vm.prank(ipOrg.owner());
-        uint256 lId = spg.createLicense(
+        uint256 lId = spg.testCreateIpaBoundLicense(
             address(ipOrg),
-            Licensing.LicenseCreationParams({
+            Licensing.LicenseCreation({
                 parentLicenseId: 0,
-                isCommercial: false,
-                ipaId: rootIpaId
+                isCommercial: false
             }),
+            rootIpaId,
             new bytes[](0),
             new bytes[](0)
         );
@@ -57,7 +58,7 @@ contract LicensingCreatorLicensingTest is BaseLicensingTest {
         assertEq(license.licensor, ipaOwner, "licensor");
 
         assertTerms(license);
-        assertLicenseRelatedWithIpa(lId, rootIpaId, true);
+        assertEq(license.ipaId, rootIpaId);
     }
 
     function test_LicensingModule_licensing_createsCommercialSubLicense_noDestIpa()
@@ -67,13 +68,13 @@ contract LicensingCreatorLicensingTest is BaseLicensingTest {
         withRootLicense(true)
     {
         vm.prank(lnftOwner);
-        uint256 lId = spg.createLicense(
+        uint256 lId = spg.createLicenseNft(
             address(ipOrg),
-            Licensing.LicenseCreationParams({
+            Licensing.LicenseCreation({
                 parentLicenseId: commRootLicenseId,
-                isCommercial: true,
-                ipaId: 0
+                isCommercial: true
             }),
+            lnftOwner,
             new bytes[](0),
             new bytes[](0)
         );
@@ -83,13 +84,10 @@ contract LicensingCreatorLicensingTest is BaseLicensingTest {
         assertEq(licenseRegistry.ownerOf(lId), lnftOwner);
         assertEq(licenseRegistry.getLicensee(lId), lnftOwner);
         assertEq(license.revoker, ipOrg.owner());
-
-        // TODO: LicenseRegistry should be able to locate parent licensee
-        //assertEq(license.licensor, ipaOwner, "licensor");
-
-        assertTerms(license);
-        assertLicenseRelatedWithIpa(lId, rootIpaId, false);
-        assertIsSublicenseOf(lId, commRootLicenseId, true);
+        assertEq(license.licensor, ipaOwner, "licensor");
+        assertEq(license.ipaId, 0);
+        assertEq(license.parentLicenseId, commRootLicenseId);
+        assertEq(licenseRegistry.getLicensee(lId), lnftOwner);
     }
 
 }

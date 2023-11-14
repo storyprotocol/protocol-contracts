@@ -7,32 +7,43 @@ import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
 
 library Licensing {
+
     struct License {
         bool isCommercial;
-        LicenseeType licenseeType;
         address licensor;
         address revoker;
+        address ipOrg;
+        LicenseeType licenseeType;
+        uint256 ipaId;
+        uint256 parentLicenseId;
         ShortString[] termIds;
         bytes[] termsData;
+        bytes data;
     }
 
-    struct LicenseCreationParams {
-        uint256 parentLicenseId;
+    struct LicenseCreation {
         bool isCommercial;
-        uint256 ipaId;
-        // Intent intent;
+        uint256 parentLicenseId;
+        // TODO: How do we do per user configured terms?
+        // ShortString[] extraTermIds;
+        // bytes[] extraTermsData;
     }
 
+    struct RegistryAddition {
+        bool isCommercial;
+        address licensor;
+        address revoker;
+        address ipOrg;
+        uint256 parentLicenseId;
+        ShortString[] termIds;
+        bytes[] termsData;
+        bytes data;
+    }
+    
     enum LicenseeType {
         Unset,
         BoundToIpa,
         LNFTHolder
-    }
-
-    enum Intent {
-        RootIpa, // No parent license
-        DerivativeIpa,// Parent license id needed, will become untradeable after completion
-        OffchainDerivative // Parent license id needed, need to log back
     }
 
     enum CommercialStatus {
@@ -50,6 +61,8 @@ library Licensing {
         // a full blown hook
     }
 
+    // NOTE: we cannot use this in structs that are going to be saved
+    // to storage, like License
     struct TermsConfig {
         ShortString[] termIds;
         bytes[] termData;

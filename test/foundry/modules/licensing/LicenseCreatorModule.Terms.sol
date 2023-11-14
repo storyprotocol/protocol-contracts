@@ -29,6 +29,7 @@ contract LicensingCreatorModuleTermsTest is BaseLicensingTest {
         withNonCommFrameworkShareAlike
         withRootLicense(false)
     {
+        // TODO: This should be just creating an derivative IPA
         uint256 ipaId2 = registry.register(
             IPAsset.RegisterIpAssetParams({
                 name: "derivative",
@@ -41,13 +42,13 @@ contract LicensingCreatorModuleTermsTest is BaseLicensingTest {
             })
         );
         vm.prank(ipaOwner2);
-        uint256 lId = spg.createLicense(
+        uint256 lId = spg.testCreateIpaBoundLicense(
             address(ipOrg),
-            Licensing.LicenseCreationParams({
+            Licensing.LicenseCreation({
                 parentLicenseId: nonCommRootLicenseId,
-                isCommercial: false,
-                ipaId: ipaId2
+                isCommercial: false
             }),
+            ipaId2,
             new bytes[](0),
             new bytes[](0)
         );
@@ -55,25 +56,25 @@ contract LicensingCreatorModuleTermsTest is BaseLicensingTest {
         assertTerms(license);
         vm.expectRevert();
         licenseRegistry.ownerOf(lId);
-        assertLicenseRelatedWithIpa(lId, ipaId2, true);
-        assertIsSublicenseOf(lId, nonCommRootLicenseId, true);
+        assertEq(license.ipaId, ipaId2);
+        assertEq(license.parentLicenseId, nonCommRootLicenseId);
     }
 
     function test_LicensingModule_terms_revert_shareAlikeOff()
     public
     withNonCommFrameworkNoShareAlike
     withRootLicense(false) {
-
-        // expect revert LicensingModule_ShareAlikeDisabled when creating sublicense
+        // TODO: this should be create derivative IPA
+        // expect revert if share alike is off
         vm.startPrank(ipaOwner2);
         vm.expectRevert(Errors.LicensingModule_ShareAlikeDisabled.selector);
-        spg.createLicense(
+        spg.testCreateIpaBoundLicense(
             address(ipOrg),
-            Licensing.LicenseCreationParams({
+            Licensing.LicenseCreation({
                 parentLicenseId: nonCommRootLicenseId,
-                isCommercial: false,
-                ipaId: 1
+                isCommercial: false
             }),
+            1,
             new bytes[](0),
             new bytes[](0)
         );
@@ -82,13 +83,13 @@ contract LicensingCreatorModuleTermsTest is BaseLicensingTest {
         console.log("nonCommRootLicenseId", nonCommRootLicenseId);
         
         vm.prank(ipaOwner);
-        uint256 lId = spg.createLicense(
+        uint256 lId = spg.createLicenseNft(
             address(ipOrg),
-            Licensing.LicenseCreationParams({
+            Licensing.LicenseCreation({
                 parentLicenseId: nonCommRootLicenseId,
-                isCommercial: false,
-                ipaId: 0
+                isCommercial: false
             }),
+            ipaOwner,
             new bytes[](0),
             new bytes[](0)
         );
