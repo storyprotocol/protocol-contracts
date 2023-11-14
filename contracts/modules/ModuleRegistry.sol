@@ -157,9 +157,6 @@ contract ModuleRegistry is AccessControlled, Multicall {
         string calldata moduleKey_,
         bytes calldata params_
     ) private returns (bytes memory result) {
-        // if (IIPOrg(ipOrg_).owner() != msg.sender) {
-        //     revert Errors.ModuleRegistry_CallerNotOrgOwner();
-        //}
         BaseModule module = _protocolModules[moduleKey_];
         if (address(module) == address(0)) {
             revert Errors.ModuleRegistry_ModuleNotRegistered(moduleKey_);

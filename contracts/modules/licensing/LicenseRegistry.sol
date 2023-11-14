@@ -6,7 +6,13 @@ import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
+/// @title LicenseRegistry
+/// @notice This contract is the source of truth for all licenses that are registered in the protocol.
+/// It will only be called by licensing modules.
+/// It should not be upgradeable, so once a license is registered, it will be there forever.
+/// Licenses can be made invalid by the revoker, according to the terms of the license.
 contract LicenseRegistry is ERC721 {
+    // TODO: Figure out data needed for indexing
     event LicenseRegistered(
         uint256 indexed id
     );
@@ -15,7 +21,9 @@ contract LicenseRegistry is ERC721 {
         uint256 indexed ipaId
     );
 
+    /// license Id => License
     mapping(uint256 => Licensing.License) private _licenses;
+    /// counder for license Ids
     uint256 private _licenseCount;
 
     IPAssetRegistry public immutable IPA_REGISTRY;
@@ -29,6 +37,10 @@ contract LicenseRegistry is ERC721 {
         IPA_REGISTRY = IPAssetRegistry(ipaRegistry);
     }
 
+    /// Creates a License bound to a certain IPA
+    /// @param params_ RegistryAddition params
+    /// @param ipaId_ id of the bound IPA
+    /// @return id of the created license
     function addBoundToIpaLicense(
         Licensing.RegistryAddition memory params_,
         uint256 ipaId_
@@ -53,6 +65,11 @@ contract LicenseRegistry is ERC721 {
         );
     }
 
+    /// Creates a tradeable License NFT.
+    /// If the license is to create an IPA in the future, when registering, this license will be
+    /// bound to the IPA.
+    /// @param params_ RegistryAddition params
+    /// @param licensee_ address of the licensee (and owner of the NFT)
     function addTradeableLicense(
         Licensing.RegistryAddition memory params_,
         address licensee_
@@ -75,9 +92,8 @@ contract LicenseRegistry is ERC721 {
         return _licenseCount;
     }
 
-    function _addLicense(
-        Licensing.License memory license_
-    ) private returns (uint256) {
+
+    function _addLicense(Licensing.License memory license_) private returns (uint256) {
         // TODO: Check valid parent license
         _licenseCount++;
         _licenses[_licenseCount] = license_;
@@ -85,21 +101,19 @@ contract LicenseRegistry is ERC721 {
         return _licenseCount;
     }
 
-    function getLicense(
-        uint256 id_
-    ) external view returns (Licensing.License memory) {
+    /// Gets License struct for input id
+    function getLicense(uint256 id_) external view returns (Licensing.License memory) {
         return _licenses[id_];
     }
 
-    function getLicensor(
-        uint256 id_
-    ) external view returns (address) {
+    /// Gets the address granting a license, by id
+    function getLicensor(uint256 id_) external view returns (address) {
         return _licenses[id_].licensor;
     }
-
-    function getLicensee(
-        uint256 id_
-    ) external view returns (address) {
+    /// Gets the address a license is granted to
+    /// @param id_ of the license
+    /// @return licensee address, NFT owner if the license is tradeable, or IPA owner if bound to IPA
+    function getLicensee(uint256 id_) external view returns (address) {
         Licensing.LicenseeType licenseeType_ = _licenses[id_].licenseeType;
         if (licenseeType_ == Licensing.LicenseeType.Unset) {
             revert Errors.LicenseRegistry_UnknownLicenseId();
@@ -111,16 +125,18 @@ contract LicenseRegistry is ERC721 {
         }
     }
 
-    function boundLnftToIpa(
-        uint256 id_
-    ) external {
+    /// Burns a license NFT and binds the license to an IPA
+    /// @param licenseId_ id of the license NFT
+    /// @param ipaId_ id of the IPA
+    function boundLnftToIpa(uint256 licenseId_, uint256 ipaId_) external {
         // TODO add Authorization 
-        Licensing.License memory license_ = _licenses[id_];
+        Licensing.License memory license_ = _licenses[licenseId_];
         if (license_.licenseeType != Licensing.LicenseeType.LNFTHolder) {
             revert Errors.LicenseRegistry_NotLicenseNFT();
         }
-        _licenses[id_].licenseeType = Licensing.LicenseeType.BoundToIpa;
-        _burn(id_);
-        emit LicenseNftBoundedToIpa(id_, license_.ipaId);
+        _licenses[licenseId_].licenseeType = Licensing.LicenseeType.BoundToIpa;
+        _licenses[licenseId_].ipaId = ipaId_;
+        _burn(licenseId_);
+        emit LicenseNftBoundedToIpa(licenseId_, ipaId_);
     }
 }
