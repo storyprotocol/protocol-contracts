@@ -3,7 +3,8 @@ pragma solidity ^0.8.13;
 
 import { Errors } from "contracts/lib/Errors.sol";
 import { IPOrg } from "contracts/ip-org/IPOrg.sol";
-import { IPOrgFactory } from "contracts/ip-org/IPOrgFactory.sol";
+import { IPOrgController } from "contracts/ip-org/IPOrgController.sol";
+import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
 import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { AccessControlSingleton } from "contracts/access-control/AccessControlSingleton.sol";
@@ -11,7 +12,7 @@ import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { AccessControlHelper } from "./utils/AccessControlHelper.sol";
 import { MockCollectNFT } from "./mocks/MockCollectNFT.sol";
 import { MockCollectModule } from "./mocks/MockCollectModule.sol";
-import { MockIPOrgFactory } from "./mocks/MockIPOrgFactory.sol";
+import { MockIPOrgController } from "./mocks/MockIPOrgController.sol";
 import 'test/foundry/utils/ProxyHelper.sol';
 import "forge-std/Test.sol";
 
@@ -24,7 +25,7 @@ contract IPOrgTest is Test, ProxyHelper, AccessControlHelper {
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
 
     IPAssetRegistry public registry;
-    IPOrgFactory public ipOrgFactory;
+    IPOrgController public ipOrgController;
     IPOrg public ipOrg;
 
     uint256 internal ipOrgOwnerPk = 0xa11ce;
@@ -33,10 +34,12 @@ contract IPOrgTest is Test, ProxyHelper, AccessControlHelper {
     function setUp() public {
         _setupAccessControl();
         _grantRole(vm, AccessControl.IPORG_CREATOR_ROLE, ipOrgOwner);
-        registry = new IPAssetRegistry();
 
-        address implementation = address(new IPOrgFactory());
-        ipOrgFactory = IPOrgFactory(
+        address moduleRegistry = address(new ModuleRegistry(address(accessControl)));
+        registry = new IPAssetRegistry(moduleRegistry);
+
+        address implementation = address(new IPOrgController(moduleRegistry));
+        ipOrgController = IPOrgController(
             _deployUUPSProxy(
                 implementation,
                 abi.encodeWithSelector(
@@ -46,16 +49,9 @@ contract IPOrgTest is Test, ProxyHelper, AccessControlHelper {
         );
     }
 
-    function test_ipOrgFactory_registerIpOrg() public {
-        IPOrgParams.RegisterIPOrgParams memory ipOrgParams = IPOrgParams.RegisterIPOrgParams(
-            address(registry),
-            "name",
-            "symbol",
-            "description",
-            "uri"
-        );
+    function test_ipOrgController_registerIpOrg() public {
         vm.prank(ipOrgOwner);
-        ipOrg = IPOrg(ipOrgFactory.registerIpOrg(ipOrgParams));
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol"));
     }
 
 }

@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import { IVersioned } from "../utils/IVersioned.sol";
 import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 
-interface IIPOrgFactory is IVersioned {
+interface IIPOrgController is IVersioned {
 
     event IPOrgRegistered(
         address owner_,

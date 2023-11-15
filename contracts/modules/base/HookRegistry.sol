@@ -11,6 +11,7 @@ import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 /// The HookRegistry supports multiple arrays of hooks, each associated with a different configuration, separated by a `registryKey`
 /// Each module can define its own approach to generate its unique registryKey.
 abstract contract HookRegistry {
+
     enum HookType {
         PreAction,
         PostAction

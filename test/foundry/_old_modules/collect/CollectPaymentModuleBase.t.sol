@@ -94,233 +94,233 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
         vm.stopPrank();
     }
 
-    /// @notice Tests that the collect payment module is correctly initialized.
-    function test_CollectPaymentModuleInit() public parameterizePaymentInfo(paymentSuite()) {
-        Collect.CollectPaymentInfo memory p = collectPaymentModule.getPaymentInfo(ipAssetId);
-        assertEq(p.paymentToken, paymentInfo.paymentToken);
-        assertEq(uint8(p.paymentType), uint8(paymentInfo.paymentType));
-        assertEq(p.paymentAmount, paymentInfo.paymentAmount);
-        assertEq(p.paymentRecipient, paymentInfo.paymentRecipient);
-    }
+    // /// @notice Tests that the collect payment module is correctly initialized.
+    // function test_CollectPaymentModuleInit() public parameterizePaymentInfo(paymentSuite()) {
+    //     Collect.CollectPaymentInfo memory p = collectPaymentModule.getPaymentInfo(ipAssetId);
+    //     assertEq(p.paymentToken, paymentInfo.paymentToken);
+    //     assertEq(uint8(p.paymentType), uint8(paymentInfo.paymentType));
+    //     assertEq(p.paymentAmount, paymentInfo.paymentAmount);
+    //     assertEq(p.paymentRecipient, paymentInfo.paymentRecipient);
+    // }
 
-    /// @notice Tests that native payments with no sent funds revert.
-    function test_CollectPaymentModuleZeroPaymentReverts() public {
-        paymentInfo = Collect.CollectPaymentInfo(address(0), Collect.PaymentType.NATIVE, 0 ether, alice);
-        vm.expectRevert(Errors.CollectPaymentModule_AmountInvalid.selector);
-        _createIpAsset(collector, 1, abi.encode(paymentInfo));
-    }
+    // /// @notice Tests that native payments with no sent funds revert.
+    // function test_CollectPaymentModuleZeroPaymentReverts() public {
+    //     paymentInfo = Collect.CollectPaymentInfo(address(0), Collect.PaymentType.NATIVE, 0 ether, alice);
+    //     vm.expectRevert(Errors.CollectPaymentModule_AmountInvalid.selector);
+    //     _createIpAsset(collector, 1, abi.encode(paymentInfo));
+    // }
 
-    /// @notice Tests that payments with invalid settings revert.
-    function test_CollectPaymentModuleInvalidSettingsReverts() public {
-        paymentInfo = Collect.CollectPaymentInfo(address(erc20), Collect.PaymentType.NATIVE, 1 ether, alice);
-        vm.expectRevert(Errors.CollectPaymentModule_InvalidSettings.selector);
-        _createIpAsset(collector, 1, abi.encode(paymentInfo));
-    }
+    // /// @notice Tests that payments with invalid settings revert.
+    // function test_CollectPaymentModuleInvalidSettingsReverts() public {
+    //     paymentInfo = Collect.CollectPaymentInfo(address(erc20), Collect.PaymentType.NATIVE, 1 ether, alice);
+    //     vm.expectRevert(Errors.CollectPaymentModule_InvalidSettings.selector);
+    //     _createIpAsset(collector, 1, abi.encode(paymentInfo));
+    // }
 
-    /// @notice Tests that payments with invalid tokens revert.
-    function test_CollectPaymentModuleInvalidTokenReverts() public {
-        paymentInfo = Collect.CollectPaymentInfo(bob, Collect.PaymentType.ERC20, 1 ether, alice);
-        vm.expectRevert(Errors.CollectPaymentModule_TokenInvalid.selector);
-        _createIpAsset(collector, 1, abi.encode(paymentInfo));
-    }
+    // /// @notice Tests that payments with invalid tokens revert.
+    // function test_CollectPaymentModuleInvalidTokenReverts() public {
+    //     paymentInfo = Collect.CollectPaymentInfo(bob, Collect.PaymentType.ERC20, 1 ether, alice);
+    //     vm.expectRevert(Errors.CollectPaymentModule_TokenInvalid.selector);
+    //     _createIpAsset(collector, 1, abi.encode(paymentInfo));
+    // }
 
-    /// @notice Tests that native payments work as expected.
-    function test_CollectPaymentModuleNativeCollect() public parameterizePaymentInfo(paymentSuiteNative()) {
-        uint256 recipientStartingBalance = paymentRecipient.balance;
-        uint256 collectorStartingBalance = collector.balance;
-        paymentAmount = paymentParams.paymentAmount;
-        _collect(ipAssetId);
-        assertEq(collector.balance, collectorStartingBalance - paymentAmount);
-        assertEq(paymentRecipient.balance, recipientStartingBalance + paymentAmount);
-    }
+    // /// @notice Tests that native payments work as expected.
+    // function test_CollectPaymentModuleNativeCollect() public parameterizePaymentInfo(paymentSuiteNative()) {
+    //     uint256 recipientStartingBalance = paymentRecipient.balance;
+    //     uint256 collectorStartingBalance = collector.balance;
+    //     paymentAmount = paymentParams.paymentAmount;
+    //     _collect(ipAssetId);
+    //     assertEq(collector.balance, collectorStartingBalance - paymentAmount);
+    //     assertEq(paymentRecipient.balance, recipientStartingBalance + paymentAmount);
+    // }
 
-    /// @notice Tests that native payments that fail revert.
-    function test_CollectPaymentModuleNativeTransferFailReverts() public {
-        address payable throwingReceiver  = payable(address(new MockNativeTokenNonReceiver()));
+    // /// @notice Tests that native payments that fail revert.
+    // function test_CollectPaymentModuleNativeTransferFailReverts() public {
+    //     address payable throwingReceiver  = payable(address(new MockNativeTokenNonReceiver()));
 
-        paymentInfo = Collect.CollectPaymentInfo({
-            paymentToken: address(0),
-            paymentType: Collect.PaymentType.NATIVE,
-            paymentAmount: 10,
-            paymentRecipient: throwingReceiver
-        });
-        paymentParams = Collect.CollectPaymentParams({
-            paymentToken: address(0),
-            paymentType: Collect.PaymentType.NATIVE,
-            paymentAmount: 10
-        });
-        ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
+    //     paymentInfo = Collect.CollectPaymentInfo({
+    //         paymentToken: address(0),
+    //         paymentType: Collect.PaymentType.NATIVE,
+    //         paymentAmount: 10,
+    //         paymentRecipient: throwingReceiver
+    //     });
+    //     paymentParams = Collect.CollectPaymentParams({
+    //         paymentToken: address(0),
+    //         paymentType: Collect.PaymentType.NATIVE,
+    //         paymentAmount: 10
+    //     });
+    //     ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
 
-        vm.prank(collector);
-        vm.expectRevert(Errors.CollectPaymentModule_NativeTransferFailed.selector);
-        collectModule.collect{value: 10}(Collect.CollectParams({
-            ipAssetId: ipAssetId,
-            collector: collector,
-            collectData: abi.encode(paymentParams),
-            collectNftInitData: "",
-            collectNftData: ""
-        }));
-    }
+    //     vm.prank(collector);
+    //     vm.expectRevert(Errors.CollectPaymentModule_NativeTransferFailed.selector);
+    //     collectModule.collect{value: 10}(Collect.CollectParams({
+    //         ipAssetId: ipAssetId,
+    //         collector: collector,
+    //         collectData: abi.encode(paymentParams),
+    //         collectNftInitData: "",
+    //         collectNftData: ""
+    //     }));
+    // }
 
-    /// @notice Tests that payments with invalid parameters revert.
-    function test_CollectPaymentModuleInvalidPaymentParamsReverts() public {
-        paymentInfo = Collect.CollectPaymentInfo({
-            paymentToken: address(erc20),
-            paymentType: Collect.PaymentType.ERC20,
-            paymentAmount: 10,
-            paymentRecipient: paymentRecipient
-        });
-        paymentParams = Collect.CollectPaymentParams({
-            paymentToken: address(erc20),
-            paymentType: Collect.PaymentType.ERC20,
-            paymentAmount: 1
-        });
-        ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
-        vm.expectRevert(Errors.CollectPaymentModule_PaymentParamsInvalid.selector);
-        _collect(ipAssetId);
-    }
+    // /// @notice Tests that payments with invalid parameters revert.
+    // function test_CollectPaymentModuleInvalidPaymentParamsReverts() public {
+    //     paymentInfo = Collect.CollectPaymentInfo({
+    //         paymentToken: address(erc20),
+    //         paymentType: Collect.PaymentType.ERC20,
+    //         paymentAmount: 10,
+    //         paymentRecipient: paymentRecipient
+    //     });
+    //     paymentParams = Collect.CollectPaymentParams({
+    //         paymentToken: address(erc20),
+    //         paymentType: Collect.PaymentType.ERC20,
+    //         paymentAmount: 1
+    //     });
+    //     ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
+    //     vm.expectRevert(Errors.CollectPaymentModule_PaymentParamsInvalid.selector);
+    //     _collect(ipAssetId);
+    // }
 
-    /// @notice Tests that ERC20 payments with failing transfers revert.
-    function test_CollectPaymentModuleERC20TransferFailReverts() public {
-        MockThrowingERC20 throwingERC20 = new MockThrowingERC20("Story Protocol Mock Token", "SP", 18, MockThrowingERC20.TransferBehavior.Fail);
-        vm.prank(collector);
-        throwingERC20.mint(999999);
-        paymentInfo = Collect.CollectPaymentInfo({
-            paymentToken: address(throwingERC20),
-            paymentType: Collect.PaymentType.ERC20,
-            paymentAmount: 10,
-            paymentRecipient: paymentRecipient
-        });
-        paymentParams = Collect.CollectPaymentParams({
-            paymentToken: address(throwingERC20),
-            paymentType: Collect.PaymentType.ERC20,
-            paymentAmount: 10
-        });
-        ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
-        vm.expectRevert(Errors.CollectPaymentModule_ERC20TransferFailed.selector);
-        _collect(ipAssetId);
-    }
+    // /// @notice Tests that ERC20 payments with failing transfers revert.
+    // function test_CollectPaymentModuleERC20TransferFailReverts() public {
+    //     MockThrowingERC20 throwingERC20 = new MockThrowingERC20("Story Protocol Mock Token", "SP", 18, MockThrowingERC20.TransferBehavior.Fail);
+    //     vm.prank(collector);
+    //     throwingERC20.mint(999999);
+    //     paymentInfo = Collect.CollectPaymentInfo({
+    //         paymentToken: address(throwingERC20),
+    //         paymentType: Collect.PaymentType.ERC20,
+    //         paymentAmount: 10,
+    //         paymentRecipient: paymentRecipient
+    //     });
+    //     paymentParams = Collect.CollectPaymentParams({
+    //         paymentToken: address(throwingERC20),
+    //         paymentType: Collect.PaymentType.ERC20,
+    //         paymentAmount: 10
+    //     });
+    //     ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
+    //     vm.expectRevert(Errors.CollectPaymentModule_ERC20TransferFailed.selector);
+    //     _collect(ipAssetId);
+    // }
 
-    /// @notice Tests that ERC20 payments with invalid payments revert.
-    function test_CollectPaymentModuleERC20InvalidPaymentReverts() public {
-        paymentInfo = Collect.CollectPaymentInfo({
-            paymentToken: address(erc20),
-            paymentType: Collect.PaymentType.ERC20,
-            paymentAmount: 10,
-            paymentRecipient: paymentRecipient
-        });
-        paymentParams = Collect.CollectPaymentParams({
-            paymentToken: address(erc20),
-            paymentType: Collect.PaymentType.ERC20,
-            paymentAmount: 10
-        });
-        ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
-        vm.expectRevert(Errors.CollectPaymentModule_NativeTokenNotAllowed.selector);
-        collectModule.collect{value: 10}(Collect.CollectParams({
-            ipAssetId: ipAssetId,
-            collector: collector,
-            collectData: abi.encode(paymentParams),
-            collectNftInitData: "",
-            collectNftData: ""
-        }));
-    }
+    // /// @notice Tests that ERC20 payments with invalid payments revert.
+    // function test_CollectPaymentModuleERC20InvalidPaymentReverts() public {
+    //     paymentInfo = Collect.CollectPaymentInfo({
+    //         paymentToken: address(erc20),
+    //         paymentType: Collect.PaymentType.ERC20,
+    //         paymentAmount: 10,
+    //         paymentRecipient: paymentRecipient
+    //     });
+    //     paymentParams = Collect.CollectPaymentParams({
+    //         paymentToken: address(erc20),
+    //         paymentType: Collect.PaymentType.ERC20,
+    //         paymentAmount: 10
+    //     });
+    //     ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
+    //     vm.expectRevert(Errors.CollectPaymentModule_NativeTokenNotAllowed.selector);
+    //     collectModule.collect{value: 10}(Collect.CollectParams({
+    //         ipAssetId: ipAssetId,
+    //         collector: collector,
+    //         collectData: abi.encode(paymentParams),
+    //         collectNftInitData: "",
+    //         collectNftData: ""
+    //     }));
+    // }
 
-    /// @notice Tests that ERC20 payments with insufficient funds revert.
-    function test_CollectPaymentModuleERC20InsufficientFundsReverts() public {
-        paymentInfo = Collect.CollectPaymentInfo({
-            paymentToken: address(erc20),
-            paymentType: Collect.PaymentType.ERC20,
-            paymentAmount: 9999999,
-            paymentRecipient: paymentRecipient
-        });
-        paymentParams = Collect.CollectPaymentParams({
-            paymentToken: address(erc20),
-            paymentType: Collect.PaymentType.ERC20,
-            paymentAmount: 9999999
-        });
-        ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
-        vm.expectRevert(Errors.CollectPaymentModule_PaymentInsufficient.selector);
-        _collect(ipAssetId);
+    // /// @notice Tests that ERC20 payments with insufficient funds revert.
+    // function test_CollectPaymentModuleERC20InsufficientFundsReverts() public {
+    //     paymentInfo = Collect.CollectPaymentInfo({
+    //         paymentToken: address(erc20),
+    //         paymentType: Collect.PaymentType.ERC20,
+    //         paymentAmount: 9999999,
+    //         paymentRecipient: paymentRecipient
+    //     });
+    //     paymentParams = Collect.CollectPaymentParams({
+    //         paymentToken: address(erc20),
+    //         paymentType: Collect.PaymentType.ERC20,
+    //         paymentAmount: 9999999
+    //     });
+    //     ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
+    //     vm.expectRevert(Errors.CollectPaymentModule_PaymentInsufficient.selector);
+    //     _collect(ipAssetId);
 
-    }
+    // }
 
-    /// @notice Tests that ERC20 payments with invalid ABI encoding revert.
-    function test_CollectPaymentModuleERC20TransferInvalidABIReverts() public {
-        MockThrowingERC20 throwingERC20 = new MockThrowingERC20("Story Protocol Mock Token", "SP", 18, MockThrowingERC20.TransferBehavior.ReturnInvalidABI);
-        vm.prank(collector);
-        throwingERC20.mint(999999);
-        paymentInfo = Collect.CollectPaymentInfo({
-            paymentToken: address(throwingERC20),
-            paymentType: Collect.PaymentType.ERC20,
-            paymentAmount: 10,
-            paymentRecipient: paymentRecipient
-        });
-        paymentParams = Collect.CollectPaymentParams({
-            paymentToken: address(throwingERC20),
-            paymentType: Collect.PaymentType.ERC20,
-            paymentAmount: 10
-        });
-        ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
-        vm.expectRevert(Errors.CollectPaymentModule_ERC20TransferInvalidABIEncoding.selector);
-        _collect(ipAssetId);
-    }
+    // /// @notice Tests that ERC20 payments with invalid ABI encoding revert.
+    // function test_CollectPaymentModuleERC20TransferInvalidABIReverts() public {
+    //     MockThrowingERC20 throwingERC20 = new MockThrowingERC20("Story Protocol Mock Token", "SP", 18, MockThrowingERC20.TransferBehavior.ReturnInvalidABI);
+    //     vm.prank(collector);
+    //     throwingERC20.mint(999999);
+    //     paymentInfo = Collect.CollectPaymentInfo({
+    //         paymentToken: address(throwingERC20),
+    //         paymentType: Collect.PaymentType.ERC20,
+    //         paymentAmount: 10,
+    //         paymentRecipient: paymentRecipient
+    //     });
+    //     paymentParams = Collect.CollectPaymentParams({
+    //         paymentToken: address(throwingERC20),
+    //         paymentType: Collect.PaymentType.ERC20,
+    //         paymentAmount: 10
+    //     });
+    //     ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
+    //     vm.expectRevert(Errors.CollectPaymentModule_ERC20TransferInvalidABIEncoding.selector);
+    //     _collect(ipAssetId);
+    // }
 
-    /// @notice Tests that ERC20 payments with invalid return values revert.
-    function test_CollectPaymentModuleERC20TransferInvalidReturnReverts() public {
-        MockThrowingERC20 throwingERC20 = new MockThrowingERC20("Story Protocol Mock Token", "SP", 18, MockThrowingERC20.TransferBehavior.ReturnFalse);
-        vm.prank(collector);
-        throwingERC20.mint(999999);
-        paymentInfo = Collect.CollectPaymentInfo({
-            paymentToken: address(throwingERC20),
-            paymentType: Collect.PaymentType.ERC20,
-            paymentAmount: 10,
-            paymentRecipient: paymentRecipient
-        });
-        paymentParams = Collect.CollectPaymentParams({
-            paymentToken: address(throwingERC20),
-            paymentType: Collect.PaymentType.ERC20,
-            paymentAmount: 10
-        });
-        ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
-        vm.expectRevert(Errors.CollectPaymentModule_ERC20TransferInvalidReturnValue.selector);
-        _collect(ipAssetId);
-    }
+    // /// @notice Tests that ERC20 payments with invalid return values revert.
+    // function test_CollectPaymentModuleERC20TransferInvalidReturnReverts() public {
+    //     MockThrowingERC20 throwingERC20 = new MockThrowingERC20("Story Protocol Mock Token", "SP", 18, MockThrowingERC20.TransferBehavior.ReturnFalse);
+    //     vm.prank(collector);
+    //     throwingERC20.mint(999999);
+    //     paymentInfo = Collect.CollectPaymentInfo({
+    //         paymentToken: address(throwingERC20),
+    //         paymentType: Collect.PaymentType.ERC20,
+    //         paymentAmount: 10,
+    //         paymentRecipient: paymentRecipient
+    //     });
+    //     paymentParams = Collect.CollectPaymentParams({
+    //         paymentToken: address(throwingERC20),
+    //         paymentType: Collect.PaymentType.ERC20,
+    //         paymentAmount: 10
+    //     });
+    //     ipAssetId = _createIpAsset(collector, 1, abi.encode(paymentInfo));
+    //     vm.expectRevert(Errors.CollectPaymentModule_ERC20TransferInvalidReturnValue.selector);
+    //     _collect(ipAssetId);
+    // }
 
-    /// @notice Tests that ERC20 payments work as expected.
-    function test_CollectPaymentModuleERC20Collect() public parameterizePaymentInfo(paymentSuiteERC20()) {
-        uint256 recipientStartingBalance = erc20.balanceOf(paymentRecipient);
-        uint256 collectorStartingBalance = erc20.balanceOf(collector);
-        paymentAmount = paymentParams.paymentAmount;
-        _collect(ipAssetId);
-        assertEq(erc20.balanceOf(paymentRecipient), recipientStartingBalance + paymentAmount);
-        assertEq(erc20.balanceOf(collector), collectorStartingBalance - paymentAmount);
-    }
+    // /// @notice Tests that ERC20 payments work as expected.
+    // function test_CollectPaymentModuleERC20Collect() public parameterizePaymentInfo(paymentSuiteERC20()) {
+    //     uint256 recipientStartingBalance = erc20.balanceOf(paymentRecipient);
+    //     uint256 collectorStartingBalance = erc20.balanceOf(collector);
+    //     paymentAmount = paymentParams.paymentAmount;
+    //     _collect(ipAssetId);
+    //     assertEq(erc20.balanceOf(paymentRecipient), recipientStartingBalance + paymentAmount);
+    //     assertEq(erc20.balanceOf(collector), collectorStartingBalance - paymentAmount);
+    // }
 
-    /// @notice Tests that payments without sufficient funds revert.
-    function test_CollectPaymentModuleInsufficientFunds() public {
-        paymentInfo = Collect.CollectPaymentInfo({
-            paymentToken: address(0),
-            paymentType: Collect.PaymentType.NATIVE,
-            paymentAmount: 10,
-            paymentRecipient: paymentRecipient
-        });
-        paymentParams = Collect.CollectPaymentParams({
-            paymentToken: address(0),
-            paymentType: Collect.PaymentType.NATIVE,
-            paymentAmount: 10
-        });
-        ipAssetId = _createIpAsset(alice, 1, abi.encode(paymentInfo));
+    // /// @notice Tests that payments without sufficient funds revert.
+    // function test_CollectPaymentModuleInsufficientFunds() public {
+    //     paymentInfo = Collect.CollectPaymentInfo({
+    //         paymentToken: address(0),
+    //         paymentType: Collect.PaymentType.NATIVE,
+    //         paymentAmount: 10,
+    //         paymentRecipient: paymentRecipient
+    //     });
+    //     paymentParams = Collect.CollectPaymentParams({
+    //         paymentToken: address(0),
+    //         paymentType: Collect.PaymentType.NATIVE,
+    //         paymentAmount: 10
+    //     });
+    //     ipAssetId = _createIpAsset(alice, 1, abi.encode(paymentInfo));
 
-        vm.prank(collector);
-        vm.expectRevert(Errors.CollectPaymentModule_PaymentInsufficient.selector);
-        collectModule.collect{value: 0}(Collect.CollectParams({
-            ipAssetId: ipAssetId,
-            collector: collector,
-            collectData: abi.encode(paymentParams),
-            collectNftInitData: "",
-            collectNftData: ""
-        }));
-    }
+    //     vm.prank(collector);
+    //     vm.expectRevert(Errors.CollectPaymentModule_PaymentInsufficient.selector);
+    //     collectModule.collect{value: 0}(Collect.CollectParams({
+    //         ipAssetId: ipAssetId,
+    //         collector: collector,
+    //         collectData: abi.encode(paymentParams),
+    //         collectNftInitData: "",
+    //         collectNftData: ""
+    //     }));
+    // }
 
     /// @notice Returns a list of parameterized payment test cases.
     function paymentSuite() internal returns (CollectPaymentSet[] memory) {

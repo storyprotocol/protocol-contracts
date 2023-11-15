@@ -196,7 +196,7 @@ library Errors {
     error LibUintArrayMask_InvalidType(IPAsset.IPAssetType ipAsset);
 
     ////////////////////////////////////////////////////////////////////////////
-    //                              IPOrg                                     //
+    //                               IPOrg                                    //
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice IP identifier is over bounds.
@@ -204,6 +204,25 @@ library Errors {
 
     /// @notice Licensing is not configured.
     error IPOrg_LicensingNotConfigured();
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                             IPOrgController                            //
+    ////////////////////////////////////////////////////////////////////////////
+
+    /// @notice The caller is not the owner of the IP Org Controller.
+    error IPOrgController_InvalidOwner();
+
+    /// @notice IP Org does not exist.
+    error IPOrgController_IPOrgNonExistent();
+
+    /// @notice The caller is not the authorized IP Org owner.
+    error IPOrgController_InvalidIPOrgOwner();
+
+    /// @notice The new owner for an IP Org may not be the zero address.
+    error IPOrgController_InvalidNewIPOrgOwner();
+
+    /// @notice The owner transfer has not yet been initialized.
+    error IPOrgController_OwnerTransferUninitialized();
 
     ////////////////////////////////////////////////////////////////////////////
     //                                LibDuration                             //
@@ -229,12 +248,6 @@ library Errors {
     error TermsRegistry_UnsupportedTerm();
     error TermsRegistry_TermAlreadyExists();
     error TermsRegistry_CommercialStatusUnset();
-
-    ////////////////////////////////////////////////////////////////////////////
-    //                            TermsHook                                   //
-    ////////////////////////////////////////////////////////////////////////////
-
-    error TermsHook_UnsupportedTermsId();
 
     ////////////////////////////////////////////////////////////////////////////
     //                        LicenseCreatorModule                            //
@@ -269,6 +282,28 @@ library Errors {
     error LicenseRegistry_InvalidIpa();
     error LicenseRegistry_ZeroModuleRegistryAddress();
     error LicenseRegistry_CallerNotLicensingModule();
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                            RegistrationModule                          //
+    ////////////////////////////////////////////////////////////////////////////
+
+    /// @notice The caller is not authorized to perform registration.
+    error RegistrationModule_CallerNotAuthorized();
+
+    /// @notice The configured caller is invalid.
+    error RegistrationModule_InvalidCaller();
+
+    /// @notice The IP asset does not exist.
+    error RegistrationModule_IPAssetNonExistent();
+
+    /// @notice The registration module for the IP Org was not yet configured.
+    error RegistrationModule_IPOrgNotConfigured();
+
+    /// @notice The registration configuration action is not valid.
+    error RegistrationModule_InvalidConfigOperation();
+
+    /// @notice The registration execution action is not valid.
+    error RegistrationModule_InvalidExecutionOperation();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            RelationshipModule                          //

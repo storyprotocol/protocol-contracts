@@ -11,15 +11,21 @@ contract MockIPOrg is IIPOrg {
         _owner = owner_;
     }
 
-    function version() external pure override returns (string memory) {
-        return "1";
+    function ownerOf(uint256 id) external view returns (address) {
+        return _owner;
     }
 
-    function supportsInterface(bytes4) external pure override returns (bool) {
-        return true;
+    function burn(uint256 id) external override(IIPOrg) {}
+
+    function contractURI() external pure returns (string memory) {
+        return "";
     }
 
-    function owner() external view override returns (address) {
+    function transferFrom(address from, address to, uint256 id) external {}
+
+    function mint(address owner_) external override(IIPOrg) returns (uint256 id) {}
+
+    function owner() external view override(IIPOrg) returns (address) {
         return _owner;
     }
 }
