@@ -206,7 +206,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     /// @param from_ The current owner of the IP asset within the IP Org.
     /// @param to_ The new owner of the IP asset within the IP Org.
     function _transferIPAsset(
-        address ipOrg_,
+        IIPOrg ipOrg_,
         uint256 ipOrgAssetId_,
         address from_,
         address to_
