@@ -2,14 +2,13 @@
 pragma solidity ^0.8.19;
 
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
-import { TermsHook } from "contracts/hooks/licensing/TermsHook.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 
 library ProtocolTermsHelper {
 
     function _getExcludedCategoriesTerm(
         Licensing.CommercialStatus comStatus_,
-        TermsHook hook
+        IHook hook
     ) internal pure returns (Licensing.LicensingTerm memory) {
         return Licensing.LicensingTerm({
             comStatus: comStatus_,

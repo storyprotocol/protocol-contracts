@@ -5,6 +5,8 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
+import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 
 /// @title LicenseRegistry
 /// @notice This contract is the source of truth for all licenses that are registered in the protocol.
@@ -27,14 +29,27 @@ contract LicenseRegistry is ERC721 {
     uint256 private _licenseCount;
 
     IPAssetRegistry public immutable IPA_REGISTRY;
+    ModuleRegistry public immutable MODULE_REGISTRY;
+
+    modifier onlyLicensingModule() {
+        if (!MODULE_REGISTRY.isModule(ModuleRegistryKeys.LICENSING_MODULE, msg.sender)) {
+            revert Errors.LicenseRegistry_CallerNotLicensingModule();
+        }
+        _;
+    }
 
     constructor(
-        address ipaRegistry
+        address ipaRegistry_,
+        address moduleRegistry_
     ) ERC721("Story Protocol License NFT", "LNFT") {
-        if (ipaRegistry == address(0)) {
+        if (ipaRegistry_ == address(0)) {
             revert Errors.LicenseRegistry_ZeroIpaRegistryAddress();
         }
-        IPA_REGISTRY = IPAssetRegistry(ipaRegistry);
+        IPA_REGISTRY = IPAssetRegistry(ipaRegistry_);
+        if (moduleRegistry_ == address(0)) {
+            revert Errors.LicenseRegistry_ZeroModuleRegistryAddress();
+        }
+        MODULE_REGISTRY = ModuleRegistry(moduleRegistry_);
     }
 
     /// Creates a License bound to a certain IPA
@@ -44,7 +59,7 @@ contract LicenseRegistry is ERC721 {
     function addBoundToIpaLicense(
         Licensing.RegistryAddition memory params_,
         uint256 ipaId_
-    ) external returns (uint256) {
+    ) external onlyLicensingModule returns (uint256) {
         // TODO statuses
         if (IPA_REGISTRY.ipAssetStatus(ipaId_) == 0) {
             revert Errors.LicenseRegistry_InvalidIpa();
@@ -73,7 +88,7 @@ contract LicenseRegistry is ERC721 {
     function addTradeableLicense(
         Licensing.RegistryAddition memory params_,
         address licensee_
-    ) external returns (uint256) {
+    ) external onlyLicensingModule returns (uint256) {
         _addLicense(
             Licensing.License({
                 isCommercial: params_.isCommercial,
@@ -128,8 +143,7 @@ contract LicenseRegistry is ERC721 {
     /// Burns a license NFT and binds the license to an IPA
     /// @param licenseId_ id of the license NFT
     /// @param ipaId_ id of the IPA
-    function boundLnftToIpa(uint256 licenseId_, uint256 ipaId_) external {
-        // TODO add Authorization 
+    function boundLnftToIpa(uint256 licenseId_, uint256 ipaId_) external onlyLicensingModule {
         Licensing.License memory license_ = _licenses[licenseId_];
         if (license_.licenseeType != Licensing.LicenseeType.LNFTHolder) {
             revert Errors.LicenseRegistry_NotLicenseNFT();

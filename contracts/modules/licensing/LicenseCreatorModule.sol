@@ -12,7 +12,7 @@ import { TermsRepository } from "./TermsRepository.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
-import { TermIds, TermData } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
+import { TermIds } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
 
 /// @title License Creator module
 /// @notice Story Protocol module that:
@@ -62,7 +62,7 @@ contract LicenseCreatorModule is BaseModule, TermsRepository {
     }
 
     /// Get the number of terms configured for an ipOrg
-    /// @param commercial true for commercial terms, false for non-commercial terms
+    /// @param commercial_ true for commercial terms, false for non-commercial terms
     /// @param ipOrg_ the ipOrg address
     /// @return the number of terms configured for the ipOrg
     function getTotalIpOrgTerms(bool commercial_, address ipOrg_) public view returns (uint256) {
@@ -74,32 +74,33 @@ contract LicenseCreatorModule is BaseModule, TermsRepository {
     }
 
     /// Check if an ipOrg has a term configured
-    /// @param commercial true for commercial terms, false for non-commercial terms
+    /// @param commercial_ true for commercial terms, false for non-commercial terms
     /// @param ipOrg_ the ipOrg address
-    /// @param true if the term is configured, false otherwise
-    function ipOrgTermsContains(bool commercial_, address ipOrg_, ShortString termId) public view returns (bool) {
+    /// @param termId_ the term id
+    /// @return true if the term is configured, false otherwise
+    function ipOrgTermsContains(bool commercial_, address ipOrg_, ShortString termId_) public view returns (bool) {
         if (commercial_) {
-            return _comIpOrgTermIds[ipOrg_].contains(termId);
+            return _comIpOrgTermIds[ipOrg_].contains(termId_);
         } else {
-            return _nonComIpOrgTermIds[ipOrg_].contains(termId);
+            return _nonComIpOrgTermIds[ipOrg_].contains(termId_);
         }
     }
 
     /// Get the data for a term configured for an ipOrg
     /// @dev method will revert if the term is not configured
-    /// @param commercial true for commercial terms, false for non-commercial terms
+    /// @param commercial_ true for commercial terms, false for non-commercial terms
     /// @param ipOrg_ the ipOrg address
-    /// @param termId the term id
+    /// @param termId_ the term id
     /// @return the term data
-    function ipOrgTermData(bool commercial_, address ipOrg_, ShortString termId) public view returns (bytes memory) {
+    function ipOrgTermData(bool commercial_, address ipOrg_, ShortString termId_) public view returns (bytes memory) {
         if (commercial_) {
-            uint256 index = _comIpOrgTermIds[ipOrg_].indexOf(termId);
+            uint256 index = _comIpOrgTermIds[ipOrg_].indexOf(termId_);
             if (index == type(uint256).max) {
                 revert Errors.LicensingModule_ipOrgTermNotFound();
             }
             return _comIpOrgTermData[ipOrg_][index];
         } else {
-            uint256 index = _nonComIpOrgTermIds[ipOrg_].indexOf(termId);
+            uint256 index = _nonComIpOrgTermIds[ipOrg_].indexOf(termId_);
             if (index == type(uint256).max) {
                 revert Errors.LicensingModule_ipOrgTermNotFound();
             }
@@ -111,7 +112,8 @@ contract LicenseCreatorModule is BaseModule, TermsRepository {
     /// @param commercial_ true for commercial terms, false for non-commercial terms
     /// @param ipOrg_ the ipOrg address
     /// @param index_ the index
-    /// @return the term id and data
+    /// @return termId term Id
+    /// @return data the term data
     function ipOrgTermsAt(bool commercial_, address ipOrg_, uint index_) public view returns (ShortString termId, bytes memory data) {
         if (commercial_) {
             return (_comIpOrgTermIds[ipOrg_].at(index_), _comIpOrgTermData[ipOrg_][index_]);

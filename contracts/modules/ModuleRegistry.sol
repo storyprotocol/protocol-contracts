@@ -72,6 +72,11 @@ contract ModuleRegistry is AccessControlled, Multicall {
         return _protocolModules[moduleKey];
     }
 
+    // Returns true if the provided address is a module.
+    function isModule(string calldata moduleKey, address caller_) external view returns (bool) {
+        return address(_protocolModules[moduleKey]) == caller_;
+    }
+
     /// Execution entrypoint, callable by any address on its own behalf.
     /// @param ipOrg_ address of the IPOrg, or address(0) for protocol-level stuff
     /// @param moduleKey_ short module descriptor

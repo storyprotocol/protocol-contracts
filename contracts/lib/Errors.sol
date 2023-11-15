@@ -260,6 +260,8 @@ library Errors {
     error LicenseRegistry_UnknownLicenseId();
     error LicenseRegistry_NotLicenseNFT();
     error LicenseRegistry_InvalidIpa();
+    error LicenseRegistry_ZeroModuleRegistryAddress();
+    error LicenseRegistry_CallerNotLicensingModule();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            RelationshipModule                          //
