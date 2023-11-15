@@ -384,4 +384,16 @@ contract LicenseCreatorModule is BaseModule, TermsRepository {
         }
     }
 
+    ////////////////////////////////////////////////////////////////////////////
+    //                              Hooks                                     //
+    ////////////////////////////////////////////////////////////////////////////
+
+    function _hookRegistryKey(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes calldata params_
+    ) internal view virtual  override returns(bytes32) {
+        return keccak256("TODO");
+    }
+
 }

@@ -55,13 +55,13 @@ abstract contract BaseModule is IModule, HookRegistry {
     /// It's up to the module to decode and encode params appropriately.
     /// @param ipOrg_ address of the IPOrg or zero address 
     /// @param caller_ address requesting the execution
-    /// @param selfParams_ encoded params for module action
+    /// @param moduleParams_ encoded params for module action
     /// @param preHookParams_ encoded params for pre action hooks
     /// @param postHookParams_ encoded params for post action hooks
     function execute(
         IIPOrg ipOrg_,
         address caller_,
-        bytes calldata selfParams_,
+        bytes calldata moduleParams_,
         bytes[] calldata preHookParams_,
         bytes[] calldata postHookParams_
     ) external onlyModuleRegistry returns (bytes memory result) {
@@ -126,7 +126,7 @@ abstract contract BaseModule is IModule, HookRegistry {
     }
 
     function _hookRegistryAdmin() virtual override internal view returns (address);
-    function _configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal;
+    function _configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory);
     function _verifyExecution(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal {}
     function _performAction(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory result) {}
     
