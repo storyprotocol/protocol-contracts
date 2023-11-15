@@ -43,6 +43,10 @@ jobs:
         with:
           version: nightly
 
+      - name: List files in the repository
+        run: |
+          ls -R ${{ github.workspace }}          
+
       - name: Run Forge build
         run: |
           forge --version
