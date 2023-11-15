@@ -50,9 +50,16 @@ library Errors {
 
     /// @notice The hook is already registered.
     error HookRegistry_RegisteringDuplicatedHook();
+    /// @notice This error is thrown when trying to register a hook with the address 0.
     error HookRegistry_RegisteringZeroAddressHook();
+    /// @notice This error is thrown when the caller is not an admin of the HookRegistry.
     error HookRegistry_CallerNotAdmin();
+    /// @notice This error is thrown when trying to register more than the maximum allowed number of hooks.
     error HookRegistry_MaxHooksExceeded();
+    /// @notice This error is thrown when the length of the hooks configuration array does not match the length of the hooks array.
+    error HookRegistry_HooksConfigLengthMismatch();
+    /// @notice This error is thrown when the provided index is out of bounds of the hooks array.
+    error HookRegistry_IndexOutOfBounds(uint256 hooksIndex);
 
     ////////////////////////////////////////////////////////////////////////////
     //                            BaseRelationshipProcessor                   //
