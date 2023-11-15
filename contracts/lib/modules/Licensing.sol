@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
-import { ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
+import { ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
 /// @title Licensing Module Library
 /// Structs needed by the Licensing Modules and registries
