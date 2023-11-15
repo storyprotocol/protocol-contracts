@@ -18,7 +18,6 @@ import { AccessControl } from "contracts/lib/AccessControl.sol";
 contract BaseModuleTest is BaseTest {
     MockBaseModule module;
     IPAssetRegistry ipaRegistry = IPAssetRegistry(address(456));
-//    ModuleRegistry moduleRegistry = ModuleRegistry(address(789));
     MockIPOrg mockIpOrg;
     MockBaseModule.ModuleExecutionParams moduleExecutionParams;
 

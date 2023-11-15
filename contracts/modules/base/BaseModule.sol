@@ -103,7 +103,12 @@ abstract contract BaseModule is IModule, HookRegistry {
         return true;
     }
 
-    /// @dev Subclasses should override this function, if need to support Async hooks.
+    /// @dev Executes a hook.
+    /// This function should be overridden in derived contracts if they need to support Async hooks.
+    /// @param hook The address of the hook.
+    /// @param hookConfig_ The configuration of the hook.
+    /// @param hookParams_ The parameters of the hook.
+    /// @return True if the hook execution is completed, false otherwise.
     function _executeHook(
         HookRegistry.HookType,
         address hook,
@@ -123,5 +128,12 @@ abstract contract BaseModule is IModule, HookRegistry {
     function _configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal;
     function _verifyExecution(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal {}
     function _performAction(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory result) {}
+    
+    /// @dev Generates a registry key based on module execution parameters.
+    /// This function should be overridden in derived contracts to provide the actual logic for generating the registry key.
+    /// @param ipOrg_ The address of the IPOrg.
+    /// @param caller_ The address requesting the execution.
+    /// @param params_ The encoded parameters for module action.
+    /// @return The generated registry key.
     function _hookRegistryKey(IIPOrg ipOrg_, address caller_, bytes calldata params_) internal view virtual returns(bytes32);
 }

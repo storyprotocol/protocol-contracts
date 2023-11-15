@@ -4,6 +4,12 @@ pragma solidity ^0.8.13;
 import { Errors } from "contracts/lib/Errors.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 
+/// @title HookRegistry
+/// @notice This contract is an abstract contract that manages the registration of hooks.
+/// Hooks are small pieces of code that are called before and after certain operations in the protocol.
+/// @dev Each module that inherits from HookRegistry has its own local hook registry.
+/// The HookRegistry supports multiple arrays of hooks, each associated with a different configuration, separated by a `registryKey`
+/// Each module can define its own approach to generate its unique registryKey.
 abstract contract HookRegistry {
     enum HookType {
         PreAction,
@@ -22,120 +28,181 @@ abstract contract HookRegistry {
     event HooksRegistered(HookType indexed hType, bytes32 indexed registryKey, address[] indexed hook);
     event HooksCleared(HookType indexed hType, bytes32 indexed registryKey);
     
+    /// @dev Modifier to check if the caller is the hook registry admin.
+    /// Reverts if the caller is not the admin. 
     modifier onlyHookRegistryAdmin() {
         if (msg.sender != _hookRegistryAdmin())
             revert Errors.HookRegistry_CallerNotAdmin();
         _;
     }
 
+    /// @dev Registers hooks for a specific type and registry key.
+    /// Clears any existing hooks for the same type and registry key.
+    /// Emits a HooksRegistered event.
+    /// Can only be called by the hook registry admin.
+    /// @param hookType_ The type of the hooks to register.
+    /// @param registryKey_ The registry key for the hooks.
+    /// @param hooks_ The addresses of the hooks to register.
+    /// @param hooksConfig_ The configurations for the hooks.
     function registerHooks(
-        HookType hType_,
+        HookType hookType_,
         bytes32 registryKey_,
         address[] calldata hooks_,
         bytes[] calldata hooksConfig_
     ) public onlyHookRegistryAdmin {
-        clearHooks(hType_, registryKey_);
+        clearHooks(hookType_, registryKey_);
         _registerHooks(
-            _hooksForType(hType_, registryKey_),
-            _hooksConfigForType(hType_, registryKey_),
+            _hooksForType(hookType_, registryKey_),
+            _hooksConfigForType(hookType_, registryKey_),
             hooks_,
             hooksConfig_
         );
-        emit HooksRegistered(hType_, registryKey_, hooks_);
+        emit HooksRegistered(hookType_, registryKey_, hooks_);
     }
 
+    /// @dev Checks if a hook is registered for a specific type and registry key.
+    /// @param hookType_ The type of the hook.
+    /// @param registryKey_ The registry key for the hook.
+    /// @param hook_ The address of the hook.
+    /// @return True if the hook is registered, false otherwise.
     function isRegistered(
-        HookType hType_,
+        HookType hookType_,
         bytes32 registryKey_,
         address hook_
     ) external view returns (bool) {
-        return hookIndex(hType_, registryKey_, hook_) != INDEX_NOT_FOUND;
+        return hookIndex(hookType_, registryKey_, hook_) != INDEX_NOT_FOUND;
     }
 
+    /// @dev Returns the hook at a specific index for a specific type and registry key.
+    /// Reverts if the index is out of bounds.
+    /// @param hookType_ The type of the hook.
+    /// @param registryKey_ The registry key for the hook.
+    /// @param index_ The index of the hook.
+    /// @return The address of the hook.
     function hookAt(
-        HookType hType_,
+        HookType hookType_,
         bytes32 registryKey_,
         uint256 index_
     ) external view returns (address) {
-        address[] memory hooks = _hooksForType(hType_, registryKey_);
+        address[] memory hooks = _hooksForType(hookType_, registryKey_);
         if (index_ >= hooks.length) {
             revert Errors.HookRegistry_IndexOutOfBounds(index_);
         }
-        return _hooksForType(hType_, registryKey_)[index_];
+        return _hooksForType(hookType_, registryKey_)[index_];
     }
 
+    /// @dev Returns the hook configuration at a specific index for a specific type and registry key.
+    /// Reverts if the index is out of bounds.
+    /// @param hookType_ The type of the hook.
+    /// @param registryKey_ The registry key for the hook.
+    /// @param index_ The index of the hook.
+    /// @return The configuration of the hook.
     function hookConfigAt(
-        HookType hType_,
+        HookType hookType_,
         bytes32 registryKey_,
         uint256 index_
     ) external view returns (bytes memory) {
-        bytes[] memory hooksConfig = _hooksConfigForType(hType_, registryKey_);
+        bytes[] memory hooksConfig = _hooksConfigForType(hookType_, registryKey_);
         if (index_ >= hooksConfig.length) {
             revert Errors.HookRegistry_IndexOutOfBounds(index_);
         }
-        return _hooksConfigForType(hType_, registryKey_)[index_];
+        return _hooksConfigForType(hookType_, registryKey_)[index_];
     }
 
+    /// @dev Returns the total number of hooks for a specific type and registry key.
+    /// @param hookType_ The type of the hooks.
+    /// @param registryKey_ The registry key for the hooks.
+    /// @return The total number of hooks.
     function totalHooks(
-        HookType hType_,
+        HookType hookType_,
         bytes32 registryKey_
     ) external view returns (uint256) {
-        return _hooksForType(hType_, registryKey_).length;
+        return _hooksForType(hookType_, registryKey_).length;
     }
 
+    /// @dev Returns the total number of hook configurations for a specific type and registry key.
+    /// @param hookType_ The type of the hooks.
+    /// @param registryKey_ The registry key for the hooks.
+    /// @return The total number of hook configurations.
     function totalHooksConfig(
-        HookType hType_,
+        HookType hookType_,
         bytes32 registryKey_
     ) external view returns (uint256) {
-        return _hooksConfigForType(hType_, registryKey_).length;
+        return _hooksConfigForType(hookType_, registryKey_).length;
     }
     
+    /// @dev Clears all hooks for a specific type and registry key.
+    /// Emits a HooksCleared event.
+    /// Can only be called by the hook registry admin.
+    /// @param hookType_ The type of the hooks to clear.
+    /// @param registryKey_ The registry key for the hooks.    
     function clearHooks(
-        HookType hType_,
+        HookType hookType_,
         bytes32 registryKey_
     ) public onlyHookRegistryAdmin {
-        if (hType_ == HookType.PreAction && _preActionHooks[registryKey_].length > 0) {
+        if (hookType_ == HookType.PreAction && _preActionHooks[registryKey_].length > 0) {
             delete _preActionHooks[registryKey_];
             delete _preActionHooksConfig[registryKey_];
         } else if (_postActionHooks[registryKey_].length > 0) {
             delete _postActionHooks[registryKey_];
             delete _postActionHooksConfig[registryKey_];
         }
-        emit HooksCleared(hType_, registryKey_);
+        emit HooksCleared(hookType_, registryKey_);
     }
 
+    /// @dev Returns the index of a hook for a specific type and registry key.
+    /// @param hookType_ The type of the hook.
+    /// @param registryKey_ The registry key for the hook.
+    /// @param hook_ The address of the hook.
+    /// @return The index of the hook. Returns INDEX_NOT_FOUND if the hook is not registered.
     function hookIndex(
-        HookType hType_,
+        HookType hookType_,
         bytes32 registryKey_,
         address hook_
     ) public view returns (uint256) {
-        return _hookIndex(_hooksForType(hType_, registryKey_), hook_);
+        return _hookIndex(_hooksForType(hookType_, registryKey_), hook_);
     }
 
+    /// @dev Returns the address of the hook registry admin.
+    /// This function should be overridden in derived contracts to provide the actual admin address.
+    /// @return The address of the hook registry admin.
     function _hookRegistryAdmin() internal view virtual returns (address);
 
+    /// @dev Returns the hooks for a specific type and registry key.
+    /// @param hookType_ The type of the hooks.
+    /// @param registryKey_ The registry key for the hooks.
+    /// @return The array of hooks.
     function _hooksForType(
-        HookType hType_,
+        HookType hookType_,
         bytes32 registryKey_
     ) internal view returns (address[] storage) {
-        if (hType_ == HookType.PreAction) {
+        if (hookType_ == HookType.PreAction) {
             return _preActionHooks[registryKey_];
         } else {
             return _postActionHooks[registryKey_];
         }
     }
 
+    /// @dev Returns the hook configurations for a specific type and registry key.
+    /// @param hookType_ The type of the hooks.
+    /// @param registryKey_ The registry key for the hooks.
+    /// @return The array of hook configurations.
     function _hooksConfigForType(
-        HookType hType_,
+        HookType hookType_,
         bytes32 registryKey_
     ) internal view returns (bytes[] storage) {
-        if (hType_ == HookType.PreAction) {
+        if (hookType_ == HookType.PreAction) {
             return _preActionHooksConfig[registryKey_];
         } else {
             return _postActionHooksConfig[registryKey_];
         }
     }
 
+    /// @dev Registers new hooks and their configurations.
+    /// @param hooks_ The array of hooks to register.
+    /// @param hooksConfig_ The array of hook configurations to register.
+    /// @param newHooks_ The array of new hooks to register.
+    /// @param newHooksConfig_ The array of new hook configurations to register.
     function _registerHooks(
         address[] storage hooks_,
         bytes[] storage hooksConfig_,
@@ -164,6 +231,10 @@ abstract contract HookRegistry {
         }
     }
 
+    /// @dev Returns the index of a hook in the array of hooks.
+    /// @param hooks The array of hooks.
+    /// @param hook_ The hook to find.
+    /// @return The index of the hook. Returns INDEX_NOT_FOUND if the hook is not found.
     function _hookIndex(
         address[] storage hooks,
         address hook_

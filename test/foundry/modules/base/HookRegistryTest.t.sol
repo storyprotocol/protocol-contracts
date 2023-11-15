@@ -419,6 +419,30 @@ contract HookRegistryTest is BaseTest {
         hookRegistry.hookAt(HookRegistry.HookType.PreAction, keccak256(abi.encode("NonExistRegistryKey")), 0);
     }
 
+    function test_hookRegistry_revertHookConfigAtNonExistRegistryKey() public {
+        address hook1 = address(new MockBaseHook(address(accessControl)));
+        address hook2 = address(new MockBaseHook(address(accessControl)));
+
+        address[] memory hooksA = new address[](2);
+        hooksA[0] = hook1;
+        hooksA[1] = hook2;
+        bytes[] memory hooksConfigA = new bytes[](2);
+        hooksConfigA[0] = abi.encode("Hook1Config");
+        hooksConfigA[1] = abi.encode("Hook2Config");
+        address ipOrg1 = address(0x789);
+        bytes32 registryKeyA = hookRegistry.hookRegistryKey(ipOrg1, "RelationshipType_A");
+        vm.startPrank(admin);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyA, hooksA, hooksConfigA);
+        vm.stopPrank();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Errors.HookRegistry_IndexOutOfBounds.selector,
+                0
+            )
+        );
+        hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, keccak256(abi.encode("NonExistRegistryKey")), 0);
+    }
+
     function test_hookRegistry_revertHooksConfigMismatch() public {
         address hook1 = address(new MockBaseHook(address(accessControl)));
         address hook2 = address(new MockBaseHook(address(accessControl)));

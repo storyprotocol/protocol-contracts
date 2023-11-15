@@ -74,19 +74,19 @@ contract MockBaseModule is BaseModule {
     function registerHooks(
         HookType hType_,
         IIPOrg ipOrg_,
-        string memory someHookRegisteringRelatedInfo_,
+        string memory hookRegistrationInfo_,
         address[] calldata hooks_,
         bytes[] calldata hooksConfig_
     ) external onlyHookRegistryAdmin {
-        bytes32 registryKey = _generateRegistryKey(address(ipOrg_), someHookRegisteringRelatedInfo_);
+        bytes32 registryKey = _generateRegistryKey(address(ipOrg_), hookRegistrationInfo_);
         registerHooks(hType_, registryKey, hooks_, hooksConfig_);
     }
 
     function hookRegistryKey(
         address ipOrg_,
-        string calldata someHookRegisteringRelatedInfo_
+        string calldata hookRegistrationInfo_
     ) external pure returns(bytes32) {
-        return _generateRegistryKey(ipOrg_, someHookRegisteringRelatedInfo_);
+        return _generateRegistryKey(ipOrg_, hookRegistrationInfo_);
     }
 
     function _hookRegistryKey(
@@ -100,9 +100,9 @@ contract MockBaseModule is BaseModule {
 
     function _generateRegistryKey(
         address ipOrg_,
-        string memory someHookRegisteringRelatedInfo_
+        string memory hookRegistrationInfo_
     ) private pure returns(bytes32) {
-        return keccak256(abi.encode(ipOrg_, someHookRegisteringRelatedInfo_));
+        return keccak256(abi.encode(ipOrg_, hookRegistrationInfo_));
     }
 
 
