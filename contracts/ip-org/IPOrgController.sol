@@ -145,6 +145,7 @@ contract IPOrgController is
     /// @param name_ The name to associated with the new IP Org.
     /// @param symbol_ The symbol to associate with the new IP Org.
     /// TODO: Add module configurations to the IP Org registration process.
+    /// TODO: Add authorization for IP Org registration.
     function registerIpOrg(
         address owner_,
         string calldata name_,

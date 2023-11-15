@@ -316,6 +316,12 @@ library Errors {
     /// @notice The registration module for the IP Org was not yet configured.
     error RegistrationModule_IPOrgNotConfigured();
 
+    /// @notice The registration configuration action is not valid.
+    error RegistrationModule_InvalidConfigOperation();
+
+    /// @notice The registration execution action is not valid.
+    error RegistrationModule_InvalidExecutionOperation();
+
     ////////////////////////////////////////////////////////////////////////////
     //                            RelationshipModule                          //
     ////////////////////////////////////////////////////////////////////////////
