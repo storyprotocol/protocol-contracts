@@ -11,9 +11,9 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 contract RightsManagerHarness is IPOrg {
 
     constructor(
-        address ipAssetRegistry_,
+        address ipOrgController_,
         address moduleRegistry_
-    ) IPOrg(ipAssetRegistry_, moduleRegistry_) {}
+    ) IPOrg(ipOrgController_, moduleRegistry_) {}
 
     function mockMint(address to, uint256 tokenId) external {
         _mint(to, tokenId);

@@ -39,7 +39,7 @@ contract IPOrgTest is Test, ProxyHelper, AccessControlHelper {
         address moduleRegistry = address(new ModuleRegistry(address(accessControl)));
         registry = new IPAssetRegistry(moduleRegistry);
 
-        address implementation = address(new IPOrgController());
+        address implementation = address(new IPOrgController(moduleRegistry));
         ipOrgController = IPOrgController(
             _deployUUPSProxy(
                 implementation,

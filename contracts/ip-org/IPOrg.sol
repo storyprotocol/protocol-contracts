@@ -41,12 +41,13 @@ contract IPOrg is
     }
 
     /// @notice Creates the IP Org implementation contract.
-    /// @param ipAssetRegistry_ Address of the Global IP Asset Registry.
+    /// @param controller_ Address of the IP Org controller.
+    /// @param moduleRegistry_ Address of the IP asset module registry.
     constructor(
-        address ipAssetRegistry_,
+        address controller_,
         address moduleRegistry_
     ) initializer {
-        CONTROLLER = msg.sender;
+        CONTROLLER = controller_;
         MODULE_REGISTRY = IModuleRegistry(moduleRegistry_);
     }
 

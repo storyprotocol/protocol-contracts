@@ -37,17 +37,26 @@ contract IPOrgController is
         address owner;
     }
 
-    /// @notice Implementation address used for all IP Orgs.
-    /// TODO(leeren): Make this immutable and assigned via constructor.
+    /// @notice The IP asset module registry.
+    address public immutable MODULE_REGISTRY;
+
+    /// @notice The IP Org implementation address.
     address public IP_ORG_IMPL;
 
     bytes32 private constant _STORAGE_LOCATION = bytes32(uint256(keccak256("story-protocol.ip-org-factory.storage")) - 1);
 
+
+    /// @notice Creates the IP Org Controller contract.
+    /// @param moduleRegistry_ Address of the IP asset module registry.
+    constructor(address moduleRegistry_) {
+        MODULE_REGISTRY = moduleRegistry_;
+    }
+
     /// @notice Initializes the IP Org Controller
     /// @param accessControl_ Address of the contract responsible for access control.
     /// TODO(leeren): Deprecate this function in favor of an immutable factory.
-    function initialize(address ipOrgImpl_, address accessControl_) public initializer {
-        IP_ORG_IMPL = ipOrgImpl_;
+    function initialize(address accessControl_) public initializer {
+        IP_ORG_IMPL = address(new IPOrg(address(this), MODULE_REGISTRY));
         __UUPSUpgradeable_init();
         __AccessControlledUpgradeable_init(accessControl_);
     }

@@ -33,7 +33,6 @@ import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol
 contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
 
     IPOrg public ipOrg;
-    address ipAssetOrgImpl;
     IPOrgController public ipOrgController;
     ModuleRegistry public moduleRegistry;
     // LicensingModule public licensingModule;
@@ -63,9 +62,14 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         _setupAccessControl();
         _grantRole(vm, AccessControl.UPGRADER_ROLE, upgrader);
         
-        // Create IPOrg Factory
-        ipOrgController = new IPOrgController();
-        address ipOrgControllerImpl = address(new IPOrgController());
+        // Setup module registry
+        moduleRegistry = new ModuleRegistry(address(accessControl));
+
+        // Create IPAssetRegistry 
+        registry = new IPAssetRegistry(address(moduleRegistry));
+
+        // Create IPOrgController
+        address ipOrgControllerImpl = address(new IPOrgController(address(moduleRegistry)));
         ipOrgController = IPOrgController(
             _deployUUPSProxy(
                 ipOrgControllerImpl,
@@ -76,14 +80,10 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             )
         );
 
-        moduleRegistry = new ModuleRegistry(address(accessControl));
         spg = new StoryProtocol(ipOrgController, moduleRegistry);
         _grantRole(vm, AccessControl.IPORG_CREATOR_ROLE, address(spg));
         _grantRole(vm, AccessControl.MODULE_EXECUTOR_ROLE, address(spg));
         _grantRole(vm, AccessControl.MODULE_REGISTRAR_ROLE, address(this));
-
-        // Create IPAssetRegistry 
-        registry = new IPAssetRegistry(address(moduleRegistry));
 
 
         // Create Relationship Module

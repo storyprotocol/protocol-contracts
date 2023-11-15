@@ -244,4 +244,12 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         return address(0);
     }
 
+    function _hookRegistryKey(
+        IIPOrg ipOrg_,
+        address,
+        bytes calldata params_
+    ) internal view virtual override returns(bytes32) {
+        return keccak256(abi.encode(address(ipOrg_), "REGISTRATION"));
+    }
+
 }
