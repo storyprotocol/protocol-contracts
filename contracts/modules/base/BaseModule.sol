@@ -2,6 +2,8 @@
 pragma solidity ^0.8.13;
 
 import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
+import { IHook, HookResult } from "contracts/interfaces/hooks/base/IHook.sol";
+import { Hook } from "contracts/lib/hooks/Hook.sol";
 import { HookRegistry } from "./HookRegistry.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
@@ -63,13 +65,14 @@ abstract contract BaseModule is IModule, HookRegistry {
         bytes[] calldata preHookParams_,
         bytes[] calldata postHookParams_
     ) external onlyModuleRegistry returns (bytes memory result) {
-        _verifyExecution(ipOrg_, caller_, selfParams_);
-        if (!_executeHooks(preHookParams_, HookType.PreAction)) {
+        _verifyExecution(ipOrg_, caller_, moduleParams_);
+        bytes32 registryKey = _hookRegistryKey(ipOrg_, caller_, moduleParams_);
+        if (!_executeHooks(preHookParams_, HookType.PreAction, registryKey)) {
             emit RequestPending(caller_);
             return "";
         }
-        result = _performAction(ipOrg_, caller_, selfParams_);
-        _executeHooks(postHookParams_, HookType.PostAction);
+        result = _performAction(ipOrg_, caller_, moduleParams_);
+        _executeHooks(postHookParams_, HookType.PostAction, registryKey);
         emit RequestCompleted(caller_);
         return result;
     }
@@ -82,21 +85,56 @@ abstract contract BaseModule is IModule, HookRegistry {
         return _configure(ipOrg_, caller_, params_);
     }
 
-    function _executeHooks(bytes[] calldata params_, HookRegistry.HookType hType_) virtual internal returns (bool) {
-        address[] memory hooks = _hooksForType(hType_);
+    function _executeHooks(
+        bytes[] calldata params_,
+        HookRegistry.HookType hType_,
+        bytes32 registryKey_
+    ) virtual internal returns (bool) {
+        address[] memory hooks = _hooksForType(hType_, registryKey_);
+        bytes[] memory hooksConfig = _hooksConfigForType(hType_, registryKey_);
         uint256 hooksLength = hooks.length;
         if (params_.length != hooksLength) {
             revert Errors.BaseModule_HooksParamsLengthMismatch(uint8(hType_));
         }
         for (uint256 i = 0; i < hooksLength; i++) {
-            // TODO: hook execution and return false if a hook returns false
+            if (!_executeHook(hType_, hooks[i], hooksConfig[i], params_[i])) {
+                return false;
+            }
         }
         return true;
     }
 
-    function _hookRegistryAdmin() virtual override internal view returns (address);
-    function _configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory result);
-    function _verifyExecution(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal;
-    function _performAction(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory result);
+    /// @dev Executes a hook.
+    /// This function should be overridden in derived contracts if they need to support Async hooks.
+    /// @param hook The address of the hook.
+    /// @param hookConfig_ The configuration of the hook.
+    /// @param hookParams_ The parameters of the hook.
+    /// @return True if the hook execution is completed, false otherwise.
+    function _executeHook(
+        HookRegistry.HookType,
+        address hook,
+        bytes memory hookConfig_,
+        bytes memory hookParams_
+    ) internal virtual returns (bool) {
+        Hook.ExecutionContext memory context = Hook.ExecutionContext({
+            config: hookConfig_,
+            params: hookParams_
+        });
+        HookResult result;
+        (result,) = IHook(hook).executeSync(abi.encode(context));
+        return result == HookResult.Completed;
+    }
 
+    function _hookRegistryAdmin() virtual override internal view returns (address);
+    function _configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal;
+    function _verifyExecution(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal {}
+    function _performAction(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory result) {}
+    
+    /// @dev Generates a registry key based on module execution parameters.
+    /// This function should be overridden in derived contracts to provide the actual logic for generating the registry key.
+    /// @param ipOrg_ The address of the IPOrg.
+    /// @param caller_ The address requesting the execution.
+    /// @param params_ The encoded parameters for module action.
+    /// @return The generated registry key.
+    function _hookRegistryKey(IIPOrg ipOrg_, address caller_, bytes calldata params_) internal view virtual returns(bytes32);
 }
