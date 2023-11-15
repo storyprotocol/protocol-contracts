@@ -7,7 +7,7 @@ import 'test/foundry/utils/AccessControlHelper.sol';
 import "test/foundry/mocks/MockCollectNFT.sol";
 import "test/foundry/mocks/MockCollectModule.sol";
 import "contracts/StoryProtocol.sol";
-import "contracts/ip-org/IPOrgFactory.sol";
+import "contracts/ip-org/IPOrgController.sol";
 import "contracts/ip-org/IPOrg.sol";
 import "contracts/lib/IPOrgParams.sol";
 
@@ -33,8 +33,7 @@ import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol
 contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
 
     IPOrg public ipOrg;
-    address ipAssetOrgImpl;
-    IPOrgFactory public ipOrgFactory;
+    IPOrgController public ipOrgController;
     ModuleRegistry public moduleRegistry;
     // LicensingModule public licensingModule;
     // ILicenseRegistry public licenseRegistry;
@@ -63,15 +62,17 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         _setupAccessControl();
         _grantRole(vm, AccessControl.UPGRADER_ROLE, upgrader);
         
-        // Create IPAssetRegistry 
-        registry = new IPAssetRegistry();
+        // Setup module registry
+        moduleRegistry = new ModuleRegistry(address(accessControl));
 
-        // Create IPOrg Factory
-        ipOrgFactory = new IPOrgFactory();
-        address ipOrgFactoryImpl = address(new IPOrgFactory());
-        ipOrgFactory = IPOrgFactory(
+        // Create IPAssetRegistry 
+        registry = new IPAssetRegistry(address(moduleRegistry));
+
+        // Create IPOrgController
+        address ipOrgControllerImpl = address(new IPOrgController(address(moduleRegistry)));
+        ipOrgController = IPOrgController(
             _deployUUPSProxy(
-                ipOrgFactoryImpl,
+                ipOrgControllerImpl,
                 abi.encodeWithSelector(
                     bytes4(keccak256(bytes("initialize(address)"))),
                     address(accessControl)
@@ -79,11 +80,11 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             )
         );
 
-        moduleRegistry = new ModuleRegistry(address(accessControl));
-        spg = new StoryProtocol(ipOrgFactory, moduleRegistry);
+        spg = new StoryProtocol(ipOrgController, moduleRegistry);
         _grantRole(vm, AccessControl.IPORG_CREATOR_ROLE, address(spg));
         _grantRole(vm, AccessControl.MODULE_EXECUTOR_ROLE, address(spg));
         _grantRole(vm, AccessControl.MODULE_REGISTRAR_ROLE, address(this));
+
 
         // Create Relationship Module
         relationshipModule = new RelationshipModule(
@@ -120,7 +121,11 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         );
 
         vm.startPrank(ipAssetOrgOwner);
-        ipOrg = IPOrg(spg.registerIpOrg(ipAssetOrgParams));
+        ipOrg = IPOrg(spg.registerIpOrg(
+            ipAssetOrgOwner,
+            ipAssetOrgParams.name,
+            ipAssetOrgParams.symbol
+        ));
 
         // licenseRegistry = ILicenseRegistry(ipOrg.getLicenseRegistry());
 

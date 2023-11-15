@@ -22,7 +22,7 @@ contract TestBaseHook is BaseTest {
         hook = new MockBaseHook(address(accessControl));
     }
 
-    function test_baseHook_validateGoodConfig() public {
+    function test_baseHook_validateGoodConfig() public view {
         hook.validateConfig(abi.encode("GoodConfig"));
     }
 

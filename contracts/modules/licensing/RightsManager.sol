@@ -119,7 +119,7 @@ abstract contract RightsManager is
 
     
     /// Creates the root licenses that all other licenses of a IPOrg may be based on.
-    /// @dev Throws if caller not owner of the IPOrgFactory NFt.
+    /// @dev Throws if caller not owner of the IPOrgController NFt.
     /// @param licenseHolder_ The address of the sublicense holder, will own the ILicenseRegistry NFT.
     /// @param uri_ License terms URI.
     /// @param revoker_ address that can revoke the license.
@@ -163,9 +163,9 @@ abstract contract RightsManager is
         // TODO: should revoker come from allowed revoker list?
         if (revoker_ == address(0)) revert Errors.RightsManager_ZeroRevokerAddress();
         RightsManagerStorage storage $ = _getRightsManagerStorage();
-        // Only licenses minted to the IPOrgFactory Owner as a root license should
+        // Only licenses minted to the IPOrgController Owner as a root license should
         // have tokenId = ROOT_LICENSE_ID, otherwise the tokenId should be a minted NFT (IPAsset.IPAssetType)
-        // Checks for the IPOrgFactory Owner should be done in the calling function
+        // Checks for the IPOrgController Owner should be done in the calling function
         if (tokenId_ != ROOT_LICENSE_ID) {
             if (!_exists(tokenId_)) {
                 revert Errors.NonExistentID(tokenId_);

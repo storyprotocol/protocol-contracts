@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.19;
 
+import { IModuleRegistry } from "contracts/interfaces/modules/IModuleRegistry.sol";
 import { AccessControlled } from "contracts/access-control/AccessControlled.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { Errors } from "contracts/lib/Errors.sol";
@@ -12,30 +13,19 @@ import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 /// @notice This contract is the source of truth for all modules that are registered in the protocol.
 /// It's also the entrypoint for execution and configuration of modules, either directly by users
 /// or by MODULE_EXECUTOR_ROLE holders.
-contract ModuleRegistry is AccessControlled, Multicall {
-
-    event ModuleAdded(address indexed ipOrg, string indexed moduleKey, BaseModule module);
-    event ModuleRemoved(address indexed ipOrg, string indexed moduleKey, BaseModule module);
-    event ModuleExecuted (
-        address indexed ipOrg,
-        string indexed moduleKey,
-        address indexed caller,
-        bytes selfParams,
-        bytes[] preHookParams,
-        bytes[] postHookParams
-    );
-    event ModuleConfigured(
-        address indexed ipOrg,
-        string indexed moduleKey,
-        address indexed caller,
-        bytes params
-    );
-
-    mapping(string => BaseModule) private _protocolModules;
+contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
 
     address public constant PROTOCOL_LEVEL = address(0);
 
+    mapping(string => BaseModule) internal _protocolModules;
+
     constructor(address accessControl_) AccessControlled(accessControl_) { }
+
+    /// @notice Gets the protocol-wide module associated with a module key.
+    /// @param moduleKey_ The unique module key used to identify the module.
+    function protocolModule(string calldata moduleKey_) public view returns (address) {
+        return address(_protocolModules[moduleKey_]);
+    }
 
     /// Add a module to the protocol, that will be available for all IPOrgs.
     /// This is only callable by MODULE_REGISTRAR_ROLE holders.
@@ -50,7 +40,7 @@ contract ModuleRegistry is AccessControlled, Multicall {
             revert Errors.ZeroAddress();
         }
         _protocolModules[moduleKey] = moduleAddress;
-        emit ModuleAdded(PROTOCOL_LEVEL, moduleKey, moduleAddress);
+        emit ModuleAdded(PROTOCOL_LEVEL, moduleKey, address(moduleAddress));
     }
 
     /// Remove a module from the protocol (all IPOrgs)
@@ -62,7 +52,7 @@ contract ModuleRegistry is AccessControlled, Multicall {
         if (address(_protocolModules[moduleKey]) == address(0)) {
             revert Errors.ModuleRegistry_ModuleNotRegistered(moduleKey);
         }
-        BaseModule moduleAddress = _protocolModules[moduleKey];
+        address moduleAddress = address(_protocolModules[moduleKey]);
         delete _protocolModules[moduleKey];
         emit ModuleRemoved(PROTOCOL_LEVEL, moduleKey, moduleAddress);
     }

@@ -14,7 +14,7 @@
 // contract RightsManagerInternalTest is Test, ProxyHelper {
 
 //     IPAssetRegistry registry;
-//     MockERC721 mockIPOrgFactory;
+//     MockERC721 mockIPOrgController;
 //     RightsManagerHarness rightsManager;
 //     address constant mockEventEmitter = address(0x1234567);
 //     address constant mockLicensingModule = address(0x23445);
@@ -25,7 +25,7 @@
 //     function setUp() public {
         
 //         registry = new IPAssetRegistry();
-//         mockIPOrgFactory = new MockERC721();
+//         mockIPOrgController = new MockERC721();
 //         RightsManagerHarness impl = new RightsManagerHarness();
 //         rightsManager = RightsManagerHarness(
 //             _deployUUPSProxy(

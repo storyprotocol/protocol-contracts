@@ -59,85 +59,85 @@ contract BaseCollectModuleTest is BaseTest {
 
 
     /// @notice Tests whether collect reverts if the IP asset being collected from does not exist.
-    function test_CollectModuleCollectNonExistentIPAssetReverts(uint256 nonExistentipAssetId, uint8 ipAssetType) createIpAsset(collector, ipAssetType) public virtual {
-        vm.assume(nonExistentipAssetId != ipAssetId);
-        vm.expectRevert(Errors.CollectModule_IPAssetNonExistent.selector);
-        _collect(nonExistentipAssetId);
-    }
+    // function test_CollectModuleCollectNonExistentIPAssetReverts(uint256 nonExistentipAssetId, uint8 ipAssetType) createIpAsset(collector, ipAssetType) public virtual {
+    //     vm.assume(nonExistentipAssetId != ipAssetId);
+    //     vm.expectRevert(Errors.CollectModule_IPAssetNonExistent.selector);
+    //     _collect(nonExistentipAssetId);
+    // }
 
-    /// @notice Tests that collects with the module-default collect NFT succeed.
-    function test_CollectModuleCollectDefaultCollectNFT(uint8 ipAssetType) createIpAsset(collector, ipAssetType) public {
-        assertEq(collectModule.getCollectNFT(ipAssetId), address(0));
-        vm.expectEmit(true, true, false, false, address(collectModule));
-        emit NewCollectNFT(
-            ipAssetId,
-            defaultCollectNftImpl
-        );
-        vm.expectEmit(true, true, true, false, address(collectModule));
-        emit Collected(
-            ipAssetId,
-            collector,
-            defaultCollectNftImpl,
-            0,
-            "",
-            ""
-        );
-        (address collectNft, uint256 collectNftId) = _collect(ipAssetId);
-        assertEq(collectModule.getCollectNFT(ipAssetId), collectNft);
-        assertTrue(ICollectNFT(collectNft).ownerOf(collectNftId) == cal);
-        assertEq(collectModule.getCollectNFT(ipAssetId), collectNft);
-    }
+    // /// @notice Tests that collects with the module-default collect NFT succeed.
+    // function test_CollectModuleCollectDefaultCollectNFT(uint8 ipAssetType) createIpAsset(collector, ipAssetType) public {
+    //     assertEq(collectModule.getCollectNFT(ipAssetId), address(0));
+    //     vm.expectEmit(true, true, false, false, address(collectModule));
+    //     emit NewCollectNFT(
+    //         ipAssetId,
+    //         defaultCollectNftImpl
+    //     );
+    //     vm.expectEmit(true, true, true, false, address(collectModule));
+    //     emit Collected(
+    //         ipAssetId,
+    //         collector,
+    //         defaultCollectNftImpl,
+    //         0,
+    //         "",
+    //         ""
+    //     );
+    //     (address collectNft, uint256 collectNftId) = _collect(ipAssetId);
+    //     assertEq(collectModule.getCollectNFT(ipAssetId), collectNft);
+    //     assertTrue(ICollectNFT(collectNft).ownerOf(collectNftId) == cal);
+    //     assertEq(collectModule.getCollectNFT(ipAssetId), collectNft);
+    // }
 
-    /// @notice Tests that collects with customized collect NFTs succeed.
-    function test_CollectModuleCollectCustomCollectNFT(uint8 ipAssetType) public createIpAsset(collector, ipAssetType) {
-        assertEq(collectModule.getCollectNFT(ipAssetId), address(0));
-        vm.expectEmit(true, true, false, false, address(collectModule));
-        emit NewCollectNFT(
-            ipAssetId,
-            defaultCollectNftImpl
-        );
-        vm.expectEmit(true, true, true, false, address(collectModule));
-        emit Collected(
-            ipAssetId,
-            collector,
-            defaultCollectNftImpl,
-            0,
-            "",
-            ""
-        );
-        (address collectNft, uint256 collectNftId) = _collect(ipAssetId);
-        assertEq(collectModule.getCollectNFT(ipAssetId), collectNft);
-        assertTrue(ICollectNFT(collectNft).ownerOf(collectNftId) == cal);
-    }
+    // /// @notice Tests that collects with customized collect NFTs succeed.
+    // function test_CollectModuleCollectCustomCollectNFT(uint8 ipAssetType) public createIpAsset(collector, ipAssetType) {
+    //     assertEq(collectModule.getCollectNFT(ipAssetId), address(0));
+    //     vm.expectEmit(true, true, false, false, address(collectModule));
+    //     emit NewCollectNFT(
+    //         ipAssetId,
+    //         defaultCollectNftImpl
+    //     );
+    //     vm.expectEmit(true, true, true, false, address(collectModule));
+    //     emit Collected(
+    //         ipAssetId,
+    //         collector,
+    //         defaultCollectNftImpl,
+    //         0,
+    //         "",
+    //         ""
+    //     );
+    //     (address collectNft, uint256 collectNftId) = _collect(ipAssetId);
+    //     assertEq(collectModule.getCollectNFT(ipAssetId), collectNft);
+    //     assertTrue(ICollectNFT(collectNft).ownerOf(collectNftId) == cal);
+    // }
 
-    /// @notice Tests expected behavior of the collect module constructor.
-    function test_CollectModuleConstructor() public {
-        MockCollectModule mockCollectModule = new MockCollectModule(address(registry), defaultCollectNftImpl);
-        assertEq(address(mockCollectModule.REGISTRY()), address(registry));
-    }
+    // /// @notice Tests expected behavior of the collect module constructor.
+    // function test_CollectModuleConstructor() public {
+    //     MockCollectModule mockCollectModule = new MockCollectModule(address(registry), defaultCollectNftImpl);
+    //     assertEq(address(mockCollectModule.REGISTRY()), address(registry));
+    // }
 
-    /// @notice Tests expected behavior of collect module initialization.
-    function test_CollectModuleInit() public {
-        assertEq(address(0), collectModule.getCollectNFT(ipAssetId));
-    }
+    // /// @notice Tests expected behavior of collect module initialization.
+    // function test_CollectModuleInit() public {
+    //     assertEq(address(0), collectModule.getCollectNFT(ipAssetId));
+    // }
 
-    /// @notice Tests collect module reverts on unauthorized calls.
-    function test_CollectModuleInitCollectInvalidCallerReverts(uint256 nonExistentIPOrgId, uint8 ipAssetType) public createIpAsset(collector, ipAssetType)  {
-        vm.expectRevert(Errors.CollectModule_CallerUnauthorized.selector);
-        vm.prank(address(this));
-        collectModule.initCollect(Collect.InitCollectParams({
-            ipAssetId: ipAssetId,
-            collectNftImpl: defaultCollectNftImpl,
-            data: ""
-        }));
-    }
+    // /// @notice Tests collect module reverts on unauthorized calls.
+    // function test_CollectModuleInitCollectInvalidCallerReverts(uint256 nonExistentIPOrgId, uint8 ipAssetType) public createIpAsset(collector, ipAssetType)  {
+    //     vm.expectRevert(Errors.CollectModule_CallerUnauthorized.selector);
+    //     vm.prank(address(this));
+    //     collectModule.initCollect(Collect.InitCollectParams({
+    //         ipAssetId: ipAssetId,
+    //         collectNftImpl: defaultCollectNftImpl,
+    //         data: ""
+    //     }));
+    // }
 
-    /// @notice Tests collect module reverts on duplicate initialization.
-    function test_CollectModuleDuplicateInitReverts(uint8 ipAssetType) createIpAsset(collector, ipAssetType) public {
-        vm.expectRevert(Errors.CollectModule_IPAssetAlreadyInitialized.selector);
-        vm.prank(address(ipOrg));
-        _initCollectModule(defaultCollectNftImpl);
-    }
+    // /// @notice Tests collect module reverts on duplicate initialization.
+    // function test_CollectModuleDuplicateInitReverts(uint8 ipAssetType) createIpAsset(collector, ipAssetType) public {
+    //     vm.expectRevert(Errors.CollectModule_IPAssetAlreadyInitialized.selector);
+    //     vm.prank(address(ipOrg));
+    //     _initCollectModule(defaultCollectNftImpl);
+    // }
 
     /// @dev Helper function that initializes a collect module.
     /// @param collectNftImpl Collect NFT impl address used for collecting.

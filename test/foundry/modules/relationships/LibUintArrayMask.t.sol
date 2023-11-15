@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 
 import { Errors } from "contracts/lib/Errors.sol";
 import { LibUintArrayMask } from "contracts/lib/LibUintArrayMask.sol";
-import { IPOrgFactory } from "contracts/ip-org/IPOrgFactory.sol";
+import { IPOrgController } from "contracts/ip-org/IPOrgController.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { MockERC721 } from "test/foundry/mocks/MockERC721.sol";
 

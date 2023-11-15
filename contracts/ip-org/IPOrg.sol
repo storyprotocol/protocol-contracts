@@ -2,78 +2,127 @@
 pragma solidity ^0.8.13;
 
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { IPOrgController } from "contracts/ip-org/IPOrgController.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
+import { IModuleRegistry } from "contracts/interfaces/modules/IModuleRegistry.sol";
+import { IRegistrationModule } from "contracts/interfaces/modules/registration/IRegistrationModule.sol";
 import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
-import { MulticallUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
+import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 
 /// @notice IP Asset Organization
+/// TODO(leeren): Deprecate upgradeability once the IPOrg contracts is finalized.
 contract IPOrg is
     IIPOrg,
-    ERC721Upgradeable,
-    MulticallUpgradeable,
-    OwnableUpgradeable
+    ERC721Upgradeable
 {
 
-    /// @custom:storage-location erc7201:story-protocol.ip-asset-org.storage
-    // TODO: Refactor IP asset types to be specified through the IP Asset Registry or one of its modules.
-    struct IPOrgStorage {
-        uint256 placeholder;
+    /// @notice Tracks the last index of the IP asset wrapper.
+    uint256 lastIndex = 0;
+
+    /// @notice Tracks the total number of IP Assets owned by the IP org.
+    uint256 totalSupply = 0;
+
+    // Address of the module registry.
+    IModuleRegistry public immutable MODULE_REGISTRY;
+
+    // Address of the IP Org Controller.
+    address public immutable CONTROLLER;
+
+    /// @notice Restricts calls to being through the registration module.
+    modifier onlyRegistrationModule() {
+        if (IModuleRegistry(MODULE_REGISTRY).protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE) != msg.sender) {
+            revert Errors.Unauthorized();
+        }
+        _;
     }
 
-    IPAssetRegistry public REGISTRY;
-
-    // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.ip-org-registry.storage")) - 1)))
-    bytes32 private constant _STORAGE_LOCATION = 0x1a0b8fa444ff575656111a4368b8e6a743b70cbf31ffb9ee2c7afe1983f0e378;
-    string private constant _VERSION = "0.1.0";
-
-    // TODO(ramarti): Refactor to configure IP Asset types via registry modules.
-    uint256 private constant _ROOT_IP_ASSET = 0;
-
-    /// @notice Returns the current version of the IP asset org contract.
-    function version() external pure virtual returns (string memory) {
-        return _VERSION;
+    /// @notice Creates the IP Org implementation contract.
+    /// @param controller_ Address of the IP Org controller.
+    /// @param moduleRegistry_ Address of the IP asset module registry.
+    constructor(
+        address controller_,
+        address moduleRegistry_
+    ) initializer {
+        CONTROLLER = controller_;
+        MODULE_REGISTRY = IModuleRegistry(moduleRegistry_);
     }
 
-    function initialize(IPOrgParams.InitIPOrgParams memory params_) public initializer {
-
-        // TODO(ramarti) Decouple IPOrg from the RightsManager and make sure to move `__ERC721_init` here.
-        __ERC721_init(params_.name, params_.symbol);
-
-        __Multicall_init();
-        __Ownable_init();
-        // TODO: Weird bug does not allow OZ to specify owner in init...
-        _transferOwnership(params_.owner);
-
-        if (params_.registry == address(0)) revert Errors.ZeroAddress();
-        REGISTRY = IPAssetRegistry(params_.registry);
+    /// @notice Retrieves the current owner of the IP Org.
+    function owner() external view returns (address) {
+        return IPOrgController(CONTROLLER).ownerOf(msg.sender);
     }
 
+    /// @notice Gets the current owner of an IP asset within the IP Org.
+    function ownerOf(uint256 id) public view override(IIPOrg, ERC721Upgradeable) returns (address) {
+        return ERC721Upgradeable.ownerOf(id);
+    }
 
     /// @notice Retrieves the token URI for an IP Asset within the IP Asset Org.
     /// @param tokenId_ The id of the IP Asset within the IP Asset Org.
     function tokenURI(
         uint256 tokenId_
     ) public view override returns (string memory) {
-        // TODO: should this reference the license too?
-        return "TODO";
+        address registrationModule = IModuleRegistry(MODULE_REGISTRY).protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE);
+        return IRegistrationModule(registrationModule).tokenURI(address(this), tokenId_);
     }
 
-    function owner() public view override(IIPOrg, OwnableUpgradeable) returns (address) {
-        return super.owner();
+    /// @notice Retrieves the contract URI for the IP Org collection.
+    function contractURI() public view override returns (string memory) {
+        address registrationModule = IModuleRegistry(MODULE_REGISTRY).protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE);
+        return IRegistrationModule(registrationModule).contractURI(address(this));
     }
 
-    /// @dev Gets the storage associated with the IPOrg contract.
-    function _getIPOrgStorage()
-        private
-        pure
-        returns (IPOrgStorage storage $)
-    {
-        assembly {
-            $.slot := _STORAGE_LOCATION
+    /// @notice Gets the global IP asset id associated with this IP Org asset.
+    /// @param id The local id of the IP Org wrapped IP asset.
+    /// @return The global identifier of the IP asset.
+    function ipAssetId(uint256 id) public returns (uint256) {
+        address registrationModule = MODULE_REGISTRY.protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE);
+        return IRegistrationModule(registrationModule).ipAssetId(address(this), id);
+    }
+
+    /// @notice Initializes an IP Org.
+    /// @param name_ Name to assign to the IP Org.
+    /// @param symbol_ Symbol to assign to the IP Org.
+    function initialize(
+        string calldata name_,
+        string calldata symbol_
+    ) public initializer {
+
+        if (msg.sender != CONTROLLER) {
+            revert Errors.Unauthorized();
         }
+
+        __ERC721_init(name_, symbol_);
     }
+
+    /// @notice Registers a new IP Asset wrapper for the IP Org.
+    function mint(address owner_) public onlyRegistrationModule returns (uint256 id) {
+        totalSupply++;
+        id = lastIndex++;
+        _mint(owner_, id);
+    }
+
+    /// @notice Burns an IP Asset wrapper of the IP Org.
+    /// @param id The identifier of the IP asset wrapper being burned.
+    function burn(uint256 id) public onlyRegistrationModule {
+        totalSupply--;
+        _burn(id);
+    }
+
+    /// @notice Transfers ownership of an IP Asset within an Org to a new owner.
+    /// @param from_ The original owner of the IP asset in the IP Org.
+    /// @param to_ The new owner of the IP asset in the IP Org.
+    /// @param id_ The identifier of the IP asset within the IP Org.
+    function transferFrom(
+        address from_,
+        address to_,
+        uint256 id_
+    ) public override(IIPOrg, ERC721Upgradeable) onlyRegistrationModule {
+        _transfer(from_, to_, id_);
+    }
+
 }
