@@ -60,12 +60,10 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         if (owner == address(0)) {
             revert Errors.RegistrationModule_IPAssetNonExistent();
         }
+
         Registration.IPOrgConfig memory config = ipOrgConfigs[ipOrg_];
         if (bytes(config.baseURI).length != 0) {
-            return string(abi.encodePacked(
-                config.baseURI,
-                Strings.toString(id)
-            ));
+            return string(abi.encodePacked(config.baseURI, Strings.toString(id)));
         }
 
         IPAssetRegistry.IPA memory ipAsset = IPA_REGISTRY.ipAsset(id);
@@ -77,13 +75,16 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
             '", "description": "IP Org Asset Registration Details", "attributes": ['
         ));
 
-        // Parse individual GIPR attributes
-        string memory attributes = string(abi.encodePacked(
-            '{"trait_type": "Current IP Owner", "value": "', Strings.toHexString(uint160(owner), 20), '"},',
+
+        string memory ipOrgAttributes = string(abi.encodePacked(
+            '{"trait_type": "IP Org", "value": "', Strings.toHexString(uint160(ipAsset.ipOrg), 20), '"},',
+            '{"trait_type": "Current IP Owner", "value": "', Strings.toHexString(uint160(owner), 20), '"},'
+        ));
+
+        string memory ipAssetAttributes = string(abi.encodePacked(
+            '{"trait_type": "Initial Registrant", "value": "', Strings.toHexString(uint160(ipAsset.registrant), 20), '"},',
             '{"trait_type": "IP Asset Type", "value": "', Strings.toString(ipAsset.ipAssetType), '"},',
             '{"trait_type": "Status", "value": "', Strings.toString(ipAsset.status), '"},',
-            '{"trait_type": "Registrant", "value": "', Strings.toHexString(uint160(ipAsset.registrant), 20), '"},',
-            '{"trait_type": "IP Org", "value": "', Strings.toHexString(uint160(ipAsset.ipOrg), 20), '"},',
             '{"trait_type": "Hash", "value": "', Strings.toHexString(uint256(ipAsset.hash), 32), '"},',
             '{"trait_type": "Registration Date", "value": "', Strings.toString(ipAsset.registrationDate), '"}'
         ));
@@ -92,9 +93,14 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
             "data:application/json;base64,",
             Base64.encode(
                 bytes(
-                    string(abi.encodePacked(baseJson, attributes, ']}'))
+                    string(abi.encodePacked(
+                        baseJson,
+                        ipOrgAttributes,
+                        ipAssetAttributes,
+                        ']}'
+                    )
                 )
-            )
+            ))
         ));
     }
 
