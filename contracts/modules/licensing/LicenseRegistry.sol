@@ -61,7 +61,7 @@ contract LicenseRegistry is ERC721 {
         uint256 ipaId_
     ) external onlyLicensingModule returns (uint256) {
         // TODO statuses
-        if (IPA_REGISTRY.ipAssetStatus(ipaId_) == 0) {
+        if (IPA_REGISTRY.status(ipaId_) == 0) {
             revert Errors.LicenseRegistry_InvalidIpa();
         }
         return _addLicense(
