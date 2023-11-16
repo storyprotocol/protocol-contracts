@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import { Errors } from "contracts/lib/Errors.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
+import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 
 /// @title HookRegistry
 /// @notice This contract is an abstract contract that manages the registration of hooks.
@@ -29,29 +30,34 @@ abstract contract HookRegistry {
     event HooksRegistered(HookType indexed hType, bytes32 indexed registryKey, address[] indexed hook);
     event HooksCleared(HookType indexed hType, bytes32 indexed registryKey);
     
-    /// @dev Modifier to check if the caller is the hook registry admin.
-    /// Reverts if the caller is not the admin. 
-    modifier onlyHookRegistryAdmin() {
-        if (msg.sender != _hookRegistryAdmin())
-            revert Errors.HookRegistry_CallerNotAdmin();
+    /// @dev Modifier to check if the caller is the IPOrg owner.
+    /// Reverts if the caller is not the IP Org owner.
+    modifier onlyIpOrgOwner(IIPOrg ipOrg_) {
+        if (address(ipOrg_) == address(0)) {
+            revert Errors.ZeroAddress();
+        }
+
+        if (msg.sender != ipOrg_.owner())
+            revert Errors.HookRegistry_CallerNotIPOrgOwner();
         _;
     }
 
     /// @dev Registers hooks for a specific type and registry key.
     /// Clears any existing hooks for the same type and registry key.
     /// Emits a HooksRegistered event.
-    /// Can only be called by the hook registry admin.
+    /// Can only be called by the IP Org owner.
     /// @param hookType_ The type of the hooks to register.
     /// @param registryKey_ The registry key for the hooks.
     /// @param hooks_ The addresses of the hooks to register.
     /// @param hooksConfig_ The configurations for the hooks.
     function registerHooks(
         HookType hookType_,
+        IIPOrg ipOrg_,
         bytes32 registryKey_,
         address[] calldata hooks_,
         bytes[] calldata hooksConfig_
-    ) public onlyHookRegistryAdmin {
-        clearHooks(hookType_, registryKey_);
+    ) public onlyIpOrgOwner(ipOrg_) {
+        clearHooks(hookType_, ipOrg_, registryKey_);
         _registerHooks(
             _hooksForType(hookType_, registryKey_),
             _hooksConfigForType(hookType_, registryKey_),
@@ -134,13 +140,14 @@ abstract contract HookRegistry {
     
     /// @dev Clears all hooks for a specific type and registry key.
     /// Emits a HooksCleared event.
-    /// Can only be called by the hook registry admin.
+    /// Can only be called by the IP Org owner.
     /// @param hookType_ The type of the hooks to clear.
     /// @param registryKey_ The registry key for the hooks.    
     function clearHooks(
         HookType hookType_,
+        IIPOrg ipOrg_,
         bytes32 registryKey_
-    ) public onlyHookRegistryAdmin {
+    ) public onlyIpOrgOwner(ipOrg_) {
         if (hookType_ == HookType.PreAction && _preActionHooks[registryKey_].length > 0) {
             delete _preActionHooks[registryKey_];
             delete _preActionHooksConfig[registryKey_];
@@ -163,11 +170,6 @@ abstract contract HookRegistry {
     ) public view returns (uint256) {
         return _hookIndex(_hooksForType(hookType_, registryKey_), hook_);
     }
-
-    /// @dev Returns the address of the hook registry admin.
-    /// This function should be overridden in derived contracts to provide the actual admin address.
-    /// @return The address of the hook registry admin.
-    function _hookRegistryAdmin() internal view virtual returns (address);
 
     /// @dev Returns the hooks for a specific type and registry key.
     /// @param hookType_ The type of the hooks.
