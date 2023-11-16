@@ -272,6 +272,8 @@ library Errors {
     error LicensingModule_LicenseAlreadyActivated();
     error LicensingModule_CallerNotLicensor();
     error LicensingModule_ParentLicenseNotActive();
+    error LicensingModule_InvalidIpa();
+    error LicensingModule_CallerNotLicenseOwner();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            LicenseRegistry                             //
@@ -289,6 +291,7 @@ library Errors {
     error LicenseRegistry_CallerNotRevoker();
     error LicenseRegistry_LicenseNotPending();
     error LicenseRegistry_InvalidLicenseStatus();
+    
 
     ////////////////////////////////////////////////////////////////////////////
     //                            RegistrationModule                          //

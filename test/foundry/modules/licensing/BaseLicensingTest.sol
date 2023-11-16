@@ -129,17 +129,7 @@ contract BaseLicensingTest is BaseTest {
         nonCommTermData = [bytes(""), bytes("")];
         commTermIds = [commTextTermId];
         commTermData = [bytes("")];
-        (uint256 rootIpaId, uint256 ignored) = spg.registerIPAsset(
-            address(ipOrg),
-            Registration.RegisterIPAssetParams({
-                owner: ipaOwner,
-                name: "bob",
-                ipAssetType: 2,
-                hash: keccak256("test")
-            }),
-            new bytes[](0),
-            new bytes[](0)
-        );
+        rootIpaId = _createIpAsset(ipaOwner, 2, bytes(""));
     }
 
     function getEmptyFramework() public pure returns (Licensing.FrameworkConfig memory) {

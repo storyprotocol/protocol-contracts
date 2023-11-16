@@ -51,6 +51,7 @@ contract LicensingCreatorModuleTermsTest is BaseLicensingTest {
             new bytes[](0)
         );
         Licensing.License memory license = licenseRegistry.getLicense(lId);
+        assertTrue(licenseRegistry.isLicenseActive(lId));
         assertTerms(license);
         vm.expectRevert();
         licenseRegistry.ownerOf(lId);
@@ -91,6 +92,8 @@ contract LicensingCreatorModuleTermsTest is BaseLicensingTest {
             new bytes[](0)
         );
         Licensing.License memory license = licenseRegistry.getLicense(lId);
+        assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.Pending));
+        assertFalse(licenseRegistry.isLicenseActive(lId));
         console.log("lId", lId);
         console.log("licenseeType", uint8(license.licenseeType));
         assertEq(licenseRegistry.ownerOf(lId), ipaOwner);
@@ -99,8 +102,38 @@ contract LicensingCreatorModuleTermsTest is BaseLicensingTest {
         vm.prank(ipaOwner);
         licenseRegistry.transferFrom(ipaOwner, ipaOwner2, lId);
         // have other guy activate license
-        
+        vm.prank(ipaOwner2);
+        spg.activateLicense(address(ipOrg), lId);
 
+        license = licenseRegistry.getLicense(lId);
+        assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.Pending));
+        assertFalse(licenseRegistry.isLicenseActive(lId));
+        // Fail to bound if not active
+        vm.expectRevert();
+        spg.boundLnftToIpa(
+            address(ipOrg),
+            lId,
+            1
+        );
+        // Bond if active
+        vm.prank(license.licensor);
+        spg.activateLicense(
+            address(ipOrg),
+            lId
+        );
+        license = licenseRegistry.getLicense(lId);
+        assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.Active));
+        assertTrue(licenseRegistry.isLicenseActive(lId));
+        vm.prank(ipaOwner2);
+        spg.boundLnftToIpa(
+            address(ipOrg),
+            lId,
+            1
+        );
+        license = licenseRegistry.getLicense(lId);
+        assertEq(uint8(license.licenseeType), uint8(Licensing.LicenseeType.BoundToIpa));
+        assertEq(licenseRegistry.ownerOf(lId), address(0));
+        assertEq(licenseRegistry.getLicensee(lId), ipaOwner2);
     }
 
 }

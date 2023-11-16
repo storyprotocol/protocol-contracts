@@ -131,4 +131,5 @@ library Licensing {
     bytes32 constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");
     bytes32 constant CREATE_LICENSE = keccak256("CREATE_LICENSE");
     bytes32 constant ACTIVATE_LICENSE = keccak256("ACTIVATE_LICENSE");
+    bytes32 constant BOUND_LNFT_TO_IPA = keccak256("BOUND_LNFT_TO_IPA");
 }

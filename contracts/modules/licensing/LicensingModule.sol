@@ -15,6 +15,8 @@ import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { TermIds, TermCategories } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 
+import "forge-std/console2.sol";
+
 /// @title License Creator module
 /// @notice Story Protocol module that:
 /// - Enables each IP Org to select a collection of terms from the TermsRepository to form
@@ -141,7 +143,7 @@ contract LicensingModule is BaseModule, TermsRepository{
        (bytes32 action, bytes memory params) = abi.decode(params_, (bytes32, bytes));
         if (action == Licensing.CREATE_LICENSE) {
             _verifyCreateLicense(ipOrg_, caller_, params);
-        } if (action == Licensing.ACTIVATE_LICENSE) {
+        } else if (action == Licensing.ACTIVATE_LICENSE) {
             _verifyActivateLicense(ipOrg_, caller_, params);
         } else {
             revert Errors.LicensingModule_InvalidAction();
@@ -182,20 +184,28 @@ contract LicensingModule is BaseModule, TermsRepository{
                 revert Errors.LicensingModule_ParentLicenseNotActive();  
             }
         // ------ Derivative license checks: Terms ------
-            FixedSet.ShortStringSet storage termIds = _getIpOrgTermIds(lParams.isCommercial, address(ipOrg_));
-            bytes[] storage termData = _getIpOrgTermData(lParams.isCommercial, address(ipOrg_));
+            if (licenseeType == Licensing.LicenseeType.BoundToIpa) {
+                _verifyShareAlike(lParams, caller_, ipOrg_);
+            }
+            
+        }
+    }
 
-            // Share Alike ----
-            uint256 nftShareAlikeIndex = termIds.indexOf(TermIds.NFT_SHARE_ALIKE.toShortString());
-            // If there is no NFT_SHARE_ALIKE term, or if it is false then we cannot have
-            // a derivative license unless caller owns the parent license
-            if (nftShareAlikeIndex == FixedSet.INDEX_NOT_FOUND ||
-                !abi.decode(termData[nftShareAlikeIndex], (bool))
-            ) {
-                address parentLicensor = LICENSE_REGISTRY.getLicensor(lParams.parentLicenseId);
-                if (parentLicensor != caller_) {
-                    revert Errors.LicensingModule_ShareAlikeDisabled();
-                }
+    function _verifyShareAlike(Licensing.LicenseCreation memory lParams, address caller_, IIPOrg ipOrg_) private {
+        FixedSet.ShortStringSet storage termIds = _getIpOrgTermIds(lParams.isCommercial, address(ipOrg_));
+        bytes[] storage termData = _getIpOrgTermData(lParams.isCommercial, address(ipOrg_));
+
+        // Share Alike ----
+        uint256 nftShareAlikeIndex = termIds.indexOf(TermIds.NFT_SHARE_ALIKE.toShortString());
+        // If there is no NFT_SHARE_ALIKE term, or if it is false then we cannot have
+        // a derivative license unless caller owns the parent license
+        if (
+            nftShareAlikeIndex == FixedSet.INDEX_NOT_FOUND ||
+            !abi.decode(termData[nftShareAlikeIndex], (bool))
+        ) {
+            address parentLicensor = LICENSE_REGISTRY.getLicensor(lParams.parentLicenseId);
+            if (parentLicensor != caller_) {
+                revert Errors.LicensingModule_ShareAlikeDisabled();
             }
         }
     }
@@ -216,6 +226,23 @@ contract LicensingModule is BaseModule, TermsRepository{
 
     }
 
+    function _verifyBoundNftToIpa(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes memory params_
+    ) private {
+        (uint256 licenseId, uint256 ipaId) = abi.decode(params_, (uint256, uint256));
+        if (caller_ != LICENSE_REGISTRY.ownerOf(licenseId)) {
+            revert Errors.LicensingModule_CallerNotLicenseOwner();
+        }
+        if (!LICENSE_REGISTRY.isLicenseActive(licenseId)) {
+            revert Errors.LicensingModule_ParentLicenseNotActive();  
+        }
+        if (IPA_REGISTRY.status(ipaId) == 0) {
+            revert Errors.LicensingModule_InvalidIpa();
+        }
+    }
+
     /// Module entrypoint to create licenses
     function _performAction(
         IIPOrg ipOrg_,
@@ -225,8 +252,11 @@ contract LicensingModule is BaseModule, TermsRepository{
         (bytes32 action, bytes memory params) = abi.decode(params_, (bytes32, bytes));
         if (action == Licensing.CREATE_LICENSE) {
             return _createLicense(ipOrg_, caller_, params);
-        } if (action == Licensing.ACTIVATE_LICENSE) {
+        } else if (action == Licensing.ACTIVATE_LICENSE) {
             return _activateLicense(ipOrg_, caller_, params);
+        } else if (action == Licensing.BOUND_LNFT_TO_IPA) {
+            (uint256 licenseId, uint256 ipaId) = abi.decode(params_, (uint256, uint256));
+            LICENSE_REGISTRY.boundLnftToIpa(licenseId, ipaId);
         } else {
             revert Errors.LicensingModule_InvalidAction();
         }
@@ -323,6 +353,9 @@ contract LicensingModule is BaseModule, TermsRepository{
         uint256 ipaId,
         address parentLicenseOwner
     ) private view returns (address) {
+        console2.log("ipaId", ipaId);
+        console2.log("parentLicenseOwner", parentLicenseOwner);
+        console2.log("IPA_REGISTRY", IPA_REGISTRY.ipAssetOwner(ipaId));
         // TODO: Check for Licensor term in terms registry.
         if (parentLicenseOwner != address(0) || ipaId == 0) {
             return parentLicenseOwner;
