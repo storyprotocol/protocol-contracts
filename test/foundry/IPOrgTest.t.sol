@@ -51,7 +51,8 @@ contract IPOrgTest is Test, ProxyHelper, AccessControlHelper {
 
     function test_ipOrgController_registerIpOrg() public {
         vm.prank(ipOrgOwner);
-        ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol"));
+        string[] memory ipAssetTypes = new string[](0);
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", ipAssetTypes));
     }
 
 }

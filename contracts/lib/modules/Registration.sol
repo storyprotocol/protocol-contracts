@@ -8,6 +8,7 @@ library Registration {
     struct IPOrgConfig {
         string baseURI;
         string contractURI;
+        string[] assetTypes;
     }
 
     /// @notice Struct used for IP asset registration.
@@ -22,6 +23,7 @@ library Registration {
 
     // Constants used for determining module configuration logic.
     bytes32 public constant SET_IP_ORG_METADATA = keccak256("SET_IP_ORG_METADATA");
+    bytes32 public constant SET_IP_ORG_ASSET_TYPES = keccak256("SET_IP_ORG_ASSET_TYPES");
 
     // Constants used for determining module execution logic.
     bytes32 public constant REGISTER_IP_ASSET = keccak256("REGISTER_IP_ASSET");
