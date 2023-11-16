@@ -9,6 +9,7 @@ import { Errors } from "contracts/lib/Errors.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
+import { LicenseRegistry } from "contracts/modules/licensing/LicenseRegistry.sol";
 
 /// @title BaseModule
 /// @notice Base implementation for all modules in Story Protocol. This is meant to ensure
@@ -20,12 +21,12 @@ abstract contract BaseModule is IModule, HookRegistry {
     struct ModuleConstruction {
         IPAssetRegistry ipaRegistry;
         ModuleRegistry moduleRegistry;
-        address licenseRegistry;
+        LicenseRegistry licenseRegistry;
     }
 
     IPAssetRegistry public immutable IPA_REGISTRY;
     ModuleRegistry public immutable MODULE_REGISTRY;
-    address public immutable LICENSE_REGISTRY;
+    LicenseRegistry public immutable LICENSE_REGISTRY;
 
     modifier onlyModuleRegistry() {
         if (msg.sender != address(MODULE_REGISTRY)) {
@@ -43,7 +44,7 @@ abstract contract BaseModule is IModule, HookRegistry {
             revert Errors.BaseModule_ZeroModuleRegistry();
         }
         MODULE_REGISTRY = params_.moduleRegistry;
-        if (params_.licenseRegistry == address(0)) {
+        if (address(params_.licenseRegistry) == address(0)) {
             revert Errors.BaseModule_ZeroLicenseRegistry();
         }
         LICENSE_REGISTRY = params_.licenseRegistry;
@@ -80,8 +81,8 @@ abstract contract BaseModule is IModule, HookRegistry {
     /// @param ipOrg_ address of the IPOrg or zero address 
     /// @param caller_ address requesting the execution
     /// @param params_ encoded configuration params
-    function configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) onlyModuleRegistry external {
-        _configure(ipOrg_, caller_, params_);
+    function configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) onlyModuleRegistry external returns (bytes memory) {
+        return _configure(ipOrg_, caller_, params_);
     }
 
     function _executeHooks(
@@ -125,7 +126,7 @@ abstract contract BaseModule is IModule, HookRegistry {
     }
 
     function _hookRegistryAdmin() virtual override internal view returns (address);
-    function _configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal;
+    function _configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory);
     function _verifyExecution(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal {}
     function _performAction(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory result) {}
     

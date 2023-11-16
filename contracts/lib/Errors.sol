@@ -62,7 +62,7 @@ library Errors {
     error HookRegistry_IndexOutOfBounds(uint256 hooksIndex);
 
     ////////////////////////////////////////////////////////////////////////////
-    //                            BaseRelationshipProcessor                   //
+    //                      BaseRelationshipProcessor                         //
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice Call may only be processed by the relationship module.
@@ -196,7 +196,7 @@ library Errors {
     error LibUintArrayMask_InvalidType(IPAsset.IPAssetType ipAsset);
 
     ////////////////////////////////////////////////////////////////////////////
-    //                                  IPOrg                                 //
+    //                               IPOrg                                    //
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice IP identifier is over bounds.
@@ -239,66 +239,49 @@ library Errors {
 
     /// @notice A zero TTL may not be used for configuration.
     error LibDuration_ZeroTTL();
-    
+
     ////////////////////////////////////////////////////////////////////////////
-    //                             LicensingModule                            //
+    //                            TermsRegistry                               //
+    ////////////////////////////////////////////////////////////////////////////
+
+    error TermsRegistry_UnsupportedTermCategory();
+    error TermsRegistry_UnsupportedTerm();
+    error TermsRegistry_TermAlreadyExists();
+    error TermsRegistry_CommercialStatusUnset();
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                        LicenseCreatorModule                            //
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice The franchise does not exist.
     error LicensingModule_NonExistentIPOrg();
-
-    /// @notice The root license is not active
-    error LicensingModule_RootLicenseNotActive(uint256 rootLicenseId);
-
-    /// @notice The revoker may not be a zero address.
-    error LicensingModule_ZeroRevokerAddress();
-
-    ////////////////////////////////////////////////////////////////////////////
-    //                              RightsManager                             //
-    ////////////////////////////////////////////////////////////////////////////
-
-    /// @notice Root license is already configured.
-    error RightsManager_AlreadyHasRootLicense();
-
-    /// @notice License cannot be sublicensed.
-    error RightsManager_CannotSublicense();
-
-    /// @notice Commercial terms do not match.
-    error RightsManager_CommercialTermsMismatch();
-
-    /// @notice License is inactive.
-    error RightsManager_InactiveLicense();
-
-    /// @notice Parent license is inactive.
-    error RightsManager_InactiveParentLicense();
-
-    /// @notice The license registry is not configured.
-    error RightsManager_LicenseRegistryNotConfigured();
-
-    /// @notice NFT is not associated with a license.
-    error RightsManager_NFTHasNoAssociatedLicense();
-
-    /// @notice Caller is not owner of parent license.
-    error RightsManager_NotOwnerOfParentLicense();
-
-    /// @notice The targeted license is not a sublicense.
-    error RightsManager_NotSublicense();
-
-    /// @notice Sender is not the license revoker.
-    error RightsManager_SenderNotRevoker();
-
-    /// @notice A create franchise root license must be used.
-    error RightsManager_UseCreateIPOrgRootLicenseInstead();
-
-    /// @notice The revoker may not be the zero address.
-    error RightsManager_ZeroRevokerAddress();
+    error LicensingModule_CallerNotIpOrgOwner();
+    error LicensingModule_InvalidConfigType();
+    error LicensingModule_InvalidTermCommercialStatus();
+    error LicensingModule_IpOrgFrameworkAlreadySet();
+    error LicensingModule_DuplicateTermId();
+    error LicensingModule_InvalidIntent();
+    error LicensingModule_IpaNotActive();
+    error LicensingModule_IpaIdRequired();
+    error LicensingModule_CommercialLicenseNotAllowed();
+    error LicensingModule_NonCommercialTermsRequired();
+    error LicensingModule_IpOrgNotConfigured();
+    error LicensingModule_ipOrgTermNotFound();
+    error LicensingModule_ShareAlikeDisabled();
 
     ////////////////////////////////////////////////////////////////////////////
-    //                             MultiTermsProcessor                        //
+    //                            LicenseRegistry                             //
     ////////////////////////////////////////////////////////////////////////////
 
-    /// @notice Too many terms were selected.
-    error MultiTermsProcessor_TooManyTermsProcessors();
+    error LicensingModule_InvalidLicenseeType();
+    error LicenseRegistry_ZeroIpaRegistryAddress();
+    error LicenseRegistry_LNFTShouldNotHaveIpaId();
+    error LicenseRegistry_BoundToIpaShouldHaveIpaId();
+    error LicenseRegistry_UnknownLicenseId();
+    error LicenseRegistry_NotLicenseNFT();
+    error LicenseRegistry_InvalidIpa();
+    error LicenseRegistry_ZeroModuleRegistryAddress();
+    error LicenseRegistry_CallerNotLicensingModule();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            RegistrationModule                          //

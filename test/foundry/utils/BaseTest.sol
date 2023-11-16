@@ -10,50 +10,39 @@ import "contracts/StoryProtocol.sol";
 import "contracts/ip-org/IPOrgController.sol";
 import "contracts/ip-org/IPOrg.sol";
 import "contracts/lib/IPOrgParams.sol";
-
 import "contracts/IPAssetRegistry.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/errors/General.sol";
-import "contracts/modules/relationships/RelationshipModule.sol";
 import "contracts/IPAssetRegistry.sol";
 import "contracts/interfaces/modules/collect/ICollectModule.sol";
-
+import "contracts/modules/relationships/RelationshipModule.sol";
+import "contracts/modules/licensing/LicenseRegistry.sol";
+import "contracts/modules/licensing/LicenseCreatorModule.sol";
+import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
+import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
+import { RegistrationModule } from "contracts/modules/registration/RegistrationModule.sol";
 
-// On active refactor
-// import "contracts/modules/licensing/LicensingModule.sol";
-// import "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
-// import "contracts/modules/licensing/LicenseRegistry.sol";
-// import '../mocks/MockTermsProcessor.sol';
-// import { Licensing } from "contracts/lib/modules/Licensing.sol";
-
-// TODO: Commented out contracts in active refactor. 
-// Run tests from make lint, which will not run collect and license
 contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
+    using ShortStrings for *;
 
     IPOrg public ipOrg;
     IPOrgController public ipOrgController;
     ModuleRegistry public moduleRegistry;
-    // LicensingModule public licensingModule;
-    // ILicenseRegistry public licenseRegistry;
-    // MockTermsProcessor public nonCommercialTermsProcessor;
-    // MockTermsProcessor public commercialTermsProcessor;
     ICollectModule public collectModule;
     RelationshipModule public relationshipModule;
     IPAssetRegistry public registry;
     StoryProtocol public spg;
+    LicenseCreatorModule public licensingModule;
+    LicenseRegistry public licenseRegistry;
+    RegistrationModule public registrationModule;
 
     address public defaultCollectNftImpl;
     address public collectModuleImpl;
 
     address constant upgrader = address(6969);
     address constant ipAssetOrgOwner = address(456);
-    address constant revoker = address(789);
-    // string constant NON_COMMERCIAL_LICENSE_URI = "https://noncommercial.license";
-    // string constant COMMERCIAL_LICENSE_URI = "https://commercial.license";
-
-    constructor() {}
+    address constant relManager = address(9999);
 
     function setUp() virtual override(BaseTestUtils) public {
         super.setUp();
@@ -85,29 +74,39 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         _grantRole(vm, AccessControl.MODULE_EXECUTOR_ROLE, address(spg));
         _grantRole(vm, AccessControl.MODULE_REGISTRAR_ROLE, address(this));
 
+        // Create Licensing contracts
+        licenseRegistry = new LicenseRegistry(address(registry), address(moduleRegistry));
+        licensingModule = new LicenseCreatorModule(
+            BaseModule.ModuleConstruction({
+                ipaRegistry: registry,
+                moduleRegistry: moduleRegistry,
+                licenseRegistry: licenseRegistry
+            })
+        );
+        moduleRegistry.registerProtocolModule(ModuleRegistryKeys.LICENSING_MODULE, licensingModule);
+
+        // Create Registration Module
+        registrationModule = new RegistrationModule(
+            BaseModule.ModuleConstruction({
+                ipaRegistry: registry,
+                moduleRegistry: moduleRegistry,
+                licenseRegistry: licenseRegistry
+            }),
+            address(accessControl)
+        );
+        moduleRegistry.registerProtocolModule(ModuleRegistryKeys.REGISTRATION_MODULE, registrationModule);
 
         // Create Relationship Module
         relationshipModule = new RelationshipModule(
             BaseModule.ModuleConstruction({
                 ipaRegistry: registry,
                 moduleRegistry: moduleRegistry,
-                licenseRegistry: address(123)
+                licenseRegistry: licenseRegistry
             }),
             address(accessControl)
         );
         moduleRegistry.registerProtocolModule(ModuleRegistryKeys.RELATIONSHIP_MODULE, relationshipModule);
-        
-        // Create Licensing Module
-        // address licensingImplementation = address(new LicensingModule(address(ipAssetOrgFactory)));
-        // licensingModule = LicensingModule(
-        //     _deployUUPSProxy(
-        //         licensingImplementation,
-        //         abi.encodeWithSelector(
-        //             bytes4(keccak256(bytes("initialize(address,string)"))),
-        //             address(accessControl), NON_COMMERCIAL_LICENSE_URI
-        //         )
-        //     )
-        // );
+
 
         defaultCollectNftImpl = _deployCollectNFTImpl();
         collectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));
@@ -127,40 +126,10 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             ipAssetOrgParams.symbol
         ));
 
-        // licenseRegistry = ILicenseRegistry(ipOrg.getLicenseRegistry());
-
-        // Configure Licensing for IPOrg
-        // nonCommercialTermsProcessor = new MockTermsProcessor();
-        // commercialTermsProcessor = new MockTermsProcessor();
-        // licensingModule.configureIpOrgLicensing(address(ipOrg), _getLicensingConfig());
 
         vm.stopPrank();
 
     }
-
-    // function _getLicensingConfig() view internal returns (Licensing.IPOrgConfig memory) {
-    //     return Licensing.IPOrgConfig({
-    //         nonCommercialConfig: Licensing.IpAssetConfig({
-    //             canSublicense: true,
-    //             ipAssetOrgRootLicenseId: 0
-    //         }),
-    //         nonCommercialTerms: Licensing.TermsProcessorConfig({
-    //             processor: address(0), //nonCommercialTermsProcessor,
-    //             data: abi.encode("nonCommercial")
-    //         }),
-    //         commercialConfig: Licensing.IpAssetConfig({
-    //             canSublicense: false,
-    //             ipAssetOrgRootLicenseId: 0
-    //         }),
-    //         commercialTerms: Licensing.TermsProcessorConfig({
-    //             processor: address(0),// commercialTermsProcessor,
-    //             data: abi.encode("commercial")
-    //         }),
-    //         rootIpAssetHasCommercialRights: false,
-    //         revoker: revoker,
-    //         commercialLicenseUri: "uriuri"
-    //     });
-    // }
 
     function _deployCollectNFTImpl() internal virtual returns (address) {
         return address(new MockCollectNFT());

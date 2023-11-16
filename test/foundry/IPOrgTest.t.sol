@@ -12,7 +12,6 @@ import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { AccessControlHelper } from "./utils/AccessControlHelper.sol";
 import { MockCollectNFT } from "./mocks/MockCollectNFT.sol";
 import { MockCollectModule } from "./mocks/MockCollectModule.sol";
-import { MockLicensingModule } from "./mocks/MockLicensingModule.sol";
 import { MockIPOrgController } from "./mocks/MockIPOrgController.sol";
 import 'test/foundry/utils/ProxyHelper.sol';
 import "forge-std/Test.sol";

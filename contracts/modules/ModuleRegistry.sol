@@ -62,6 +62,11 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
         return _protocolModules[moduleKey];
     }
 
+    // Returns true if the provided address is a module.
+    function isModule(string calldata moduleKey, address caller_) external view returns (bool) {
+        return address(_protocolModules[moduleKey]) == caller_;
+    }
+
     /// Execution entrypoint, callable by any address on its own behalf.
     /// @param ipOrg_ address of the IPOrg, or address(0) for protocol-level stuff
     /// @param moduleKey_ short module descriptor
@@ -71,10 +76,10 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
     /// @return encoded result of the module execution
     function execute(
         IIPOrg ipOrg_,
-        string calldata moduleKey_,
-        bytes calldata moduleParams_,
-        bytes[] calldata preHookParams_,
-        bytes[] calldata postHookParams_
+        string memory moduleKey_,
+        bytes memory moduleParams_,
+        bytes[] memory preHookParams_,
+        bytes[] memory postHookParams_
     ) external returns (bytes memory) {
         return _execute(ipOrg_, msg.sender, moduleKey_, moduleParams_, preHookParams_, postHookParams_);
     }
@@ -120,17 +125,17 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
         address caller_,
         string calldata moduleKey_,
         bytes calldata params_
-    ) external onlyRole(AccessControl.MODULE_EXECUTOR_ROLE) {
-        _configure(ipOrg_, caller_, moduleKey_, params_);
+    ) external onlyRole(AccessControl.MODULE_EXECUTOR_ROLE) returns (bytes memory) {
+        return _configure(ipOrg_, caller_, moduleKey_, params_);
     }
 
     function _execute(
         IIPOrg ipOrg_,
         address caller_,
-        string calldata moduleKey_,
-        bytes calldata moduleParams_,
-        bytes[] calldata preHookParams_,
-        bytes[] calldata postHookParams_
+        string memory moduleKey_,
+        bytes memory moduleParams_,
+        bytes[] memory preHookParams_,
+        bytes[] memory postHookParams_
     ) private returns (bytes memory result) {
         BaseModule module = _protocolModules[moduleKey_];
         if (address(module) == address(0)) {
@@ -146,15 +151,13 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
         address caller_,
         string calldata moduleKey_,
         bytes calldata params_
-    ) private {
-        // if (IIPOrg(ipOrg_).owner() != msg.sender) {
-        //     revert Errors.ModuleRegistry_CallerNotOrgOwner();
-        //}
+    ) private returns (bytes memory result) {
         BaseModule module = _protocolModules[moduleKey_];
         if (address(module) == address(0)) {
             revert Errors.ModuleRegistry_ModuleNotRegistered(moduleKey_);
         }
-        module.configure(ipOrg_, caller_, params_);
+        result = module.configure(ipOrg_, caller_, params_);
         emit ModuleConfigured(address(ipOrg_), moduleKey_, caller_, params_);
+        return result;
     }
 }

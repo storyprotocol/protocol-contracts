@@ -8,7 +8,6 @@ import { IAccessControlled } from "contracts/interfaces/access-control/IAccessCo
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 // solhint-disable-next-line max-line-length
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
-import { UnsupportedInterface } from "../errors/General.sol";
 
 abstract contract AccessControlled is IAccessControlled {
     using ERC165CheckerUpgradeable for address;

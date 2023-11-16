@@ -37,6 +37,11 @@ interface IModule {
     /// @param ipOrg_ address of the IPOrg or zero address
     /// @param caller_ address requesting the execution
     /// @param params_ encoded params for module configuration
-    function configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) external;
+    /// @return result of the module configuration
+    function configure(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes calldata params_
+    ) external returns (bytes memory result);
 
 }

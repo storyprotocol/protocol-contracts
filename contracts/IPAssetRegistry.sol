@@ -7,27 +7,17 @@ import { IModuleRegistry } from "contracts/interfaces/modules/IModuleRegistry.so
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { Errors } from "contracts/lib/Errors.sol";
+import { IPAsset } from "contracts/lib/IPAsset.sol";
 
 /// @title Global IP Asset Registry
 /// @notice The source of truth for IP on Story Protocol.
 contract IPAssetRegistry is IIPAssetRegistry {
 
-    /// @notice Core attributes that make up an IP Asset.
-    struct IPA {
-        string name;                 // Human-readable identifier for the IP asset.
-        uint64 ipAssetType;          // Numerical code corresponding to IP type (e.g. patent, copyright, etc.)
-        address registrant;          // Address of the initial registrant of the IP asset.
-        uint8 status;                // Current status of the IP asset (e.g. active, expired, etc.)
-        address ipOrg;               // Address of the governing entity of the IP asset.
-        bytes32 hash;                // A unique content hash of the IP asset for preserving integrity.
-        uint64 registrationDate;     // Timestamp for which the IP asset was first registered.
-    }
-
     /// @notice Used for fetching modules associated with an IP asset.
     IModuleRegistry public immutable MODULE_REGISTRY;
 
     /// @notice Mapping from IP asset ids to registry records.
-    mapping(uint256 => IPA) internal _ipAssets;
+    mapping(uint256 => IPAsset.IPA) internal _ipAssets;
 
     /// @notice Tracks the total number of IP Assets in existence.
     /// TODO(leeren) Switch from numerical ids to a universal namehash.
@@ -73,10 +63,10 @@ contract IPAssetRegistry is IIPAssetRegistry {
         // Crate a new IP asset with the provided IP attributes.
         ipAssetId = totalSupply++;
         uint64 registrationDate = uint64(block.timestamp);
-        _ipAssets[ipAssetId] = IPA({
+        _ipAssets[ipAssetId] = IPAsset.IPA({
             name: name_,
             ipAssetType: ipAssetType_,
-            status: 0, // TODO(ramarti): Define status types.
+            status: 1, // TODO(ramarti): Define status types.
             registrant: registrant_,
             ipOrg: msg.sender,
             hash: hash_,
@@ -132,7 +122,7 @@ contract IPAssetRegistry is IIPAssetRegistry {
 
     /// @notice Returns all attributes related to an IP asset.
     /// @param ipAssetId_ The id of the IP asset being queried for.
-    function ipAsset(uint256 ipAssetId_) public view returns (IPA memory) {
+    function ipAsset(uint256 ipAssetId_) public view returns (IPAsset.IPA memory) {
         return _ipAssets[ipAssetId_];
     }
 

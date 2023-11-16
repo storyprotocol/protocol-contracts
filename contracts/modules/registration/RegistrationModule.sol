@@ -13,6 +13,7 @@ import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
 import { Registration } from "contracts/lib/modules/Registration.sol";
 import { LibUintArrayMask } from "contracts/lib/LibUintArrayMask.sol";
 import { Errors } from "contracts/lib/Errors.sol";
+import { IPAsset } from "contracts/lib/IPAsset.sol";
 
 /// @title Registration Module
 /// @notice Handles registration and transferring of IP assets..
@@ -66,7 +67,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
             return string(abi.encodePacked(config.baseURI, Strings.toString(id)));
         }
 
-        IPAssetRegistry.IPA memory ipAsset = IPA_REGISTRY.ipAsset(id);
+        IPAsset.IPA memory ipAsset = IPA_REGISTRY.ipAsset(id);
 
         // Construct the base JSON metadata with custom name format
         string memory baseJson = string(abi.encodePacked(
@@ -138,15 +139,16 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     /// @param ipOrg_ The IP Org being configured.
     /// @param caller_ The caller authorized to perform configuration.
     /// @param params_ Parameters passed for registration configuration.
-    function _configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual override internal {
+    function _configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual override internal returns (bytes memory) {
         _verifyConfigCaller(ipOrg_, caller_);    
         (bytes32 configType, bytes memory configData) = abi.decode(params_, (bytes32, bytes));
         if (configType == Registration.SET_IP_ORG_METADATA) {
-            (string memory baseURI, string memory contractURI) = abi.decode(configData, (string, string));
-            _setMetadata(address(ipOrg_), baseURI, contractURI);
+            (string memory baseURI, string memory contractURI__) = abi.decode(configData, (string, string));
+            _setMetadata(address(ipOrg_), baseURI, contractURI__);
         } else {
             revert Errors.RegistrationModule_InvalidConfigOperation();
         }
+        return "";
     }
 
     /// @notice Registers an IP Asset.
@@ -160,8 +162,8 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
             return "";
         } else if (executionType == Registration.REGISTER_IP_ASSET) {
             Registration.RegisterIPAssetParams memory params = abi.decode(executionData, (Registration.RegisterIPAssetParams));
-            (uint256 ipAssetId, uint256 ipOrgAssetId) = _registerIPAsset(ipOrg_, params.owner, params.name, params.ipAssetType, params.hash);
-            return abi.encode(ipAssetId, ipOrgAssetId);
+            (uint256 ipAssetId__, uint256 ipOrgAssetId) = _registerIPAsset(ipOrg_, params.owner, params.name, params.ipAssetType, params.hash);
+            return abi.encode(ipAssetId__, ipOrgAssetId);
         }
         return "";
     }

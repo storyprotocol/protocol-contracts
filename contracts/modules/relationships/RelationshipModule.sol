@@ -60,6 +60,10 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
     /// Gets relationship definition for a given relationship id
     function getRelationship(uint256 relationshipId_) external view returns (LibRelationship.Relationship memory) {
         return _relationships[relationshipId_];
+        // TODO: store hash(src) -> hash(dst),
+        // easier to check if a relation exist
+        // we can traverse the graph
+        // if we delete one end, it's easier to propagate
     }
 
     /// Gets relationship id for a given relationship
@@ -83,7 +87,11 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
     }
 
     /// Relationship module supports configuration to add or remove relationship types
-    function _configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual override internal {
+    function _configure(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes calldata params_
+    ) virtual override internal returns (bytes memory) {
         _verifyConfigCaller(ipOrg_, caller_);    
         (bytes32 configType, bytes memory configData) = abi.decode(params_, (bytes32, bytes));
         if (configType == LibRelationship.ADD_REL_TYPE_CONFIG) {
@@ -94,6 +102,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         } else {
             revert Errors.RelationshipModule_InvalidConfigOperation();
         }
+        return "";
     }
 
     /// Auth check for caller, if wanting to configure a protocol level relationship type,
@@ -129,7 +138,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         } else if (relatable_ == LibRelationship.Relatables.IPORG_ENTRY) {
             return (address(ipOrg_), LibUintArrayMask._convertToMask(allowedTypes_));
         } else if (relatable_ == LibRelationship.Relatables.LICENSE) {
-            return (LICENSE_REGISTRY, 0);
+            return (address(LICENSE_REGISTRY), 0);
         } else if (relatable_ == LibRelationship.Relatables.ADDRESS) {
             return (LibRelationship.NO_ADDRESS_RESTRICTIONS, 0);
         } else if (relatable_ == LibRelationship.Relatables.EXTERNAL_NFT) {

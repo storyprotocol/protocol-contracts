@@ -50,7 +50,7 @@ contract MockBaseModule is BaseModule {
         IIPOrg ipOrg_,
         address caller_,
         bytes calldata params_
-    ) internal virtual override {
+    ) internal virtual override returns (bytes memory) {
         _callStack.push(BaseModuleCall(address(ipOrg_), caller_, params_));
     }
 

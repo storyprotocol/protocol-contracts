@@ -10,6 +10,7 @@ import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
 import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
 import { Registration } from "contracts/lib/modules/Registration.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
+import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 contract StoryProtocol {
 
@@ -82,10 +83,6 @@ contract StoryProtocol {
         bytes[] calldata preHooksData_,
         bytes[] calldata postHooksData_
     ) public returns (uint256, uint256) {
-        bytes memory encodedParams = abi.encode(
-            Registration.REGISTER_IP_ASSET,
-            abi.encode(params_)
-        );
         bytes memory result = MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             msg.sender,
@@ -169,5 +166,86 @@ contract StoryProtocol {
             postHooksData_
         );
         return abi.decode(result, (uint256));
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                            Licensing                                   //
+    ////////////////////////////////////////////////////////////////////////////
+
+    /// Allows an IPOrg to configure its licensing framework (collection of commercial and non-commercial terms)
+    /// @param ipOrg_ the ipOrg address
+    /// @param framework_ licensing term id array, and matching term data array to configure them
+    function configureIpOrgLicensing(
+        address ipOrg_,
+        Licensing.FrameworkConfig calldata framework_
+    ) external {
+        MODULE_REGISTRY.configure(
+            IIPOrg(ipOrg_),
+            msg.sender,
+            ModuleRegistryKeys.LICENSING_MODULE,
+            abi.encode(Licensing.LICENSING_FRAMEWORK_CONFIG, abi.encode(framework_))
+        );
+    }
+    
+    /// Creates a tradeable License NFT in License Registry.
+    /// @param ipOrg_ the ipOrg address
+    /// @param params_ LicenseCreation params
+    /// @param licensee_ address of the licensee (and owner of the NFT)
+    /// @param preHooksData_ Hooks data to embed with the registration pre-call.
+    /// @param postHooksData_ Hooks data to embed with the registration post-call.
+    /// @return id of the created license
+    function createLicenseNft(
+        address ipOrg_,
+        Licensing.LicenseCreation calldata params_,
+        address licensee_,
+        bytes[] calldata preHooksData_,
+        bytes[] calldata postHooksData_
+    ) external returns (uint256) {
+        bytes memory params = abi.encode(
+            params_,
+            Licensing.LicenseeType.LNFTHolder,
+            abi.encode(licensee_)
+        );
+        return abi.decode(
+            MODULE_REGISTRY.execute(
+                IIPOrg(ipOrg_),
+                msg.sender,
+                ModuleRegistryKeys.LICENSING_MODULE,
+                params,
+                preHooksData_,
+                postHooksData_
+            ),
+            (uint256)
+        );
+    }
+
+    /// Creates a License bound to a certain IPA. It's not an NFT, the licensee will be the owner of the IPA.
+    /// @param ipOrg_ the ipOrg address
+    /// @param params_ LicenseCreation params
+    /// @param ipaId_ id of the bound IPA
+    /// @param preHooksData_ Hooks data to embed with the registration pre-call.
+    /// @param postHooksData_ Hooks data to embed with the registration post-call.
+    /// @return id of the created license
+    function createIpaBoundLicense(
+        address ipOrg_,
+        Licensing.LicenseCreation calldata params_,
+        uint256 ipaId_,
+        bytes[] calldata preHooksData_,
+        bytes[] calldata postHooksData_
+    ) external returns (uint256) {
+        bytes memory params = abi.encode(
+            params_,
+            Licensing.LicenseeType.BoundToIpa,
+            abi.encode(ipaId_)
+        );
+        return abi.decode( MODULE_REGISTRY.execute(
+            IIPOrg(ipOrg_),
+            msg.sender,
+            ModuleRegistryKeys.LICENSING_MODULE,
+            params,
+            preHooksData_,
+            postHooksData_
+        ),
+        (uint256));
     }
 }

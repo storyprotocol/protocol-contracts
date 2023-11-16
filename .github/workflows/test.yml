@@ -67,20 +67,3 @@ jobs:
       #   run:
       #     forge coverage --report lcov --report summary
       #   id: forge-code-coverage
-
-  hardhat-test:
-    strategy:
-      fail-fast: true
-
-    name: Hardhat Unit Test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Environment
-        uses: actions/setup-node@v3
-      - name: Test
-        uses: ambersun1234/hardhat-test-action@v0.0.1
-        with:
-          network: hardhat

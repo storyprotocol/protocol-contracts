@@ -29,7 +29,7 @@ contract BaseModuleTest is BaseTest {
 
         mockIpOrg = new MockIPOrg(admin);
         vm.startPrank(admin);
-        module = new MockBaseModule(admin, BaseModule.ModuleConstruction(ipaRegistry, moduleRegistry, address(888)));
+        module = new MockBaseModule(admin, BaseModule.ModuleConstruction(ipaRegistry, moduleRegistry, licenseRegistry));
         accessControl.grantRole(AccessControl.HOOK_CALLER_ROLE, address(module));
         vm.stopPrank();
         moduleExecutionParams = MockBaseModule.ModuleExecutionParams({
@@ -42,13 +42,27 @@ contract BaseModuleTest is BaseTest {
     function test_baseModule_revert_constructorIpaRegistryIsZero() public {
         vm.prank(admin);
         vm.expectRevert(Errors.BaseModule_ZeroIpaRegistry.selector);
-        new MockBaseModule(admin, BaseModule.ModuleConstruction(IPAssetRegistry(address(0)), moduleRegistry, address(888)));
+        new MockBaseModule(
+            admin,
+            BaseModule.ModuleConstruction(
+                IPAssetRegistry(address(0)),
+                moduleRegistry,
+                licenseRegistry
+            )
+        );
     }
 
     function test_baseModule_revert_constructorModuleRegistryIsZero() public {
         vm.prank(admin);
         vm.expectRevert(Errors.BaseModule_ZeroModuleRegistry.selector);
-        module = new MockBaseModule(admin, BaseModule.ModuleConstruction(ipaRegistry, ModuleRegistry(address(0)), address(888)));
+        module = new MockBaseModule(
+            admin,
+            BaseModule.ModuleConstruction(
+                ipaRegistry,
+                ModuleRegistry(address(0)),
+                licenseRegistry
+            )
+        );
     }
 
     function test_baseModule_setup() public {
