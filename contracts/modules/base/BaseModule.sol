@@ -7,6 +7,7 @@ import { Hook } from "contracts/lib/hooks/Hook.sol";
 import { HookRegistry } from "./HookRegistry.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
+import { IPOrgController } from "contracts/ip-org/IPOrgController.sol";
 import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { LicenseRegistry } from "contracts/modules/licensing/LicenseRegistry.sol";
@@ -22,11 +23,13 @@ abstract contract BaseModule is IModule, HookRegistry {
         IPAssetRegistry ipaRegistry;
         ModuleRegistry moduleRegistry;
         LicenseRegistry licenseRegistry;
+        IPOrgController ipOrgController;
     }
 
     IPAssetRegistry public immutable IPA_REGISTRY;
     ModuleRegistry public immutable MODULE_REGISTRY;
     LicenseRegistry public immutable LICENSE_REGISTRY;
+    IPOrgController public immutable IP_ORG_CONTROLLER;
 
     modifier onlyModuleRegistry() {
         if (msg.sender != address(MODULE_REGISTRY)) {
@@ -48,6 +51,7 @@ abstract contract BaseModule is IModule, HookRegistry {
             revert Errors.BaseModule_ZeroLicenseRegistry();
         }
         LICENSE_REGISTRY = params_.licenseRegistry;
+        IP_ORG_CONTROLLER = params_.ipOrgController;
     }
 
     /// Main execution entrypoint. It will verify params, execute pre action hooks, perform the action,

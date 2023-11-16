@@ -53,6 +53,25 @@ contract StoryProtocol {
         );
     }
 
+    /// @notice Adds additional IP asset types for an IP Org.
+    /// @param ipOrg_ The address of the IP Org being configured.
+    /// @param ipAssetTypes_ The new IP asset type descriptors to add.
+    function addIPAssetTypes(
+        address ipOrg_,
+        string[] calldata ipAssetTypes_
+    ) public {
+        bytes memory encodedParams = abi.encode(
+            Registration.SET_IP_ORG_ASSET_TYPES,
+            abi.encode(ipAssetTypes_)
+        );
+        MODULE_REGISTRY.configure(
+            IIPOrg(ipOrg_),
+            msg.sender,
+            ModuleRegistryKeys.REGISTRATION_MODULE,
+            encodedParams
+        );
+    }
+
     /// @notice Registers a new IP Org
     /// @param owner_ The address of the IP Org to be registered.
     /// @param name_ A name to associate with the IP Org.
@@ -62,12 +81,14 @@ contract StoryProtocol {
     function registerIpOrg(
         address owner_,
         string calldata name_,
-        string calldata symbol_
+        string calldata symbol_,
+        string[] calldata ipAssetTypes_
     ) external returns (address ipOrg_) {
         return IP_ORG_CONTROLLER.registerIpOrg(
             owner_,
             name_,
-            symbol_
+            symbol_,
+            ipAssetTypes_
         );
     }
 
@@ -83,11 +104,12 @@ contract StoryProtocol {
         bytes[] calldata preHooksData_,
         bytes[] calldata postHooksData_
     ) public returns (uint256, uint256) {
+        bytes memory encodedParams = abi.encode(Registration.REGISTER_IP_ASSET, abi.encode(params_));
         bytes memory result = MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             msg.sender,
             ModuleRegistryKeys.REGISTRATION_MODULE,
-            abi.encode(params_),
+            encodedParams,
             preHooksData_,
             postHooksData_
         );

@@ -29,7 +29,7 @@ contract BaseModuleTest is BaseTest {
 
         mockIpOrg = new MockIPOrg(admin);
         vm.startPrank(admin);
-        module = new MockBaseModule(admin, BaseModule.ModuleConstruction(ipaRegistry, moduleRegistry, licenseRegistry));
+        module = new MockBaseModule(admin, BaseModule.ModuleConstruction(ipaRegistry, moduleRegistry, licenseRegistry, ipOrgController));
         accessControl.grantRole(AccessControl.HOOK_CALLER_ROLE, address(module));
         vm.stopPrank();
         moduleExecutionParams = MockBaseModule.ModuleExecutionParams({
@@ -47,7 +47,8 @@ contract BaseModuleTest is BaseTest {
             BaseModule.ModuleConstruction(
                 IPAssetRegistry(address(0)),
                 moduleRegistry,
-                licenseRegistry
+                licenseRegistry,
+                ipOrgController
             )
         );
     }
@@ -60,7 +61,8 @@ contract BaseModuleTest is BaseTest {
             BaseModule.ModuleConstruction(
                 ipaRegistry,
                 ModuleRegistry(address(0)),
-                licenseRegistry
+                licenseRegistry,
+                ipOrgController
             )
         );
     }
