@@ -6,6 +6,7 @@ import "forge-std/Test.sol";
 import "contracts/modules/base/BaseModule.sol";
 import "test/foundry/utils/AccessControlHelper.sol";
 import "test/foundry/mocks/MockBaseModule.sol";
+import "contracts/ip-org/IPOrgController.sol";
 import "contracts/lib/Errors.sol";
 import "contracts/modules/ModuleRegistry.sol";
 
@@ -26,7 +27,8 @@ contract ModuleRegistryTest is Test, AccessControlHelper {
         BaseModule.ModuleConstruction memory moduleConstruction = BaseModule.ModuleConstruction(
             IPAssetRegistry(address(0x123)),
             ModuleRegistry(address(0x983)),
-            LicenseRegistry(address(0x123))
+            LicenseRegistry(address(0x123)),
+            IPOrgController(address(0x123))
         );
         MockBaseModule module = new MockBaseModule(admin, moduleConstruction);
         vm.prank(admin);
@@ -38,7 +40,8 @@ contract ModuleRegistryTest is Test, AccessControlHelper {
         BaseModule.ModuleConstruction memory moduleConstruction = BaseModule.ModuleConstruction(
             IPAssetRegistry(address(0x123)),
             ModuleRegistry(address(0x983)),
-            LicenseRegistry(address(0x123))
+            LicenseRegistry(address(0x123)),
+            IPOrgController(address(0x123))
         );
         MockBaseModule module = new MockBaseModule(admin, moduleConstruction);
         vm.startPrank(admin);

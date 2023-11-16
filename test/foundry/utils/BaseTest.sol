@@ -73,6 +73,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         spg = new StoryProtocol(ipOrgController, moduleRegistry);
         _grantRole(vm, AccessControl.IPORG_CREATOR_ROLE, address(spg));
         _grantRole(vm, AccessControl.MODULE_EXECUTOR_ROLE, address(spg));
+        _grantRole(vm, AccessControl.MODULE_EXECUTOR_ROLE, address(address(ipOrgController)));
         _grantRole(vm, AccessControl.MODULE_REGISTRAR_ROLE, address(this));
 
         // Create Licensing contracts
@@ -81,7 +82,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             BaseModule.ModuleConstruction({
                 ipaRegistry: registry,
                 moduleRegistry: moduleRegistry,
-                licenseRegistry: licenseRegistry
+                licenseRegistry: licenseRegistry,
+                ipOrgController: ipOrgController
             })
         );
         moduleRegistry.registerProtocolModule(ModuleRegistryKeys.LICENSING_MODULE, licensingModule);
@@ -91,7 +93,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             BaseModule.ModuleConstruction({
                 ipaRegistry: registry,
                 moduleRegistry: moduleRegistry,
-                licenseRegistry: licenseRegistry
+                licenseRegistry: licenseRegistry,
+                ipOrgController: ipOrgController
             }),
             address(accessControl)
         );
@@ -102,7 +105,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             BaseModule.ModuleConstruction({
                 ipaRegistry: registry,
                 moduleRegistry: moduleRegistry,
-                licenseRegistry: licenseRegistry
+                licenseRegistry: licenseRegistry,
+                ipOrgController: ipOrgController
             }),
             address(accessControl)
         );
@@ -121,10 +125,12 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         );
 
         vm.startPrank(ipAssetOrgOwner);
+        string[] memory ipAssetTypes = new string[](0);
         ipOrg = IPOrg(spg.registerIpOrg(
             ipAssetOrgOwner,
             ipAssetOrgParams.name,
-            ipAssetOrgParams.symbol
+            ipAssetOrgParams.symbol,
+            ipAssetTypes
         ));
 
 

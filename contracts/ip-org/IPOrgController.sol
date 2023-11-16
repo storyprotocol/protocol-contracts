@@ -5,9 +5,14 @@ import { Clones } from '@openzeppelin/contracts/proxy/Clones.sol';
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
+import { IRegistrationModule } from "contracts/interfaces/modules/registration/IRegistrationModule.sol";
+import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
+import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 import { Errors } from "contracts/lib/Errors.sol";
+import { Registration } from "contracts/lib/modules/Registration.sol";
 import { IIPOrgController } from "contracts/interfaces/ip-org/IIPOrgController.sol";
+import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { IPOrg } from "contracts/ip-org/IPOrg.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 
@@ -149,7 +154,8 @@ contract IPOrgController is
     function registerIpOrg(
         address owner_,
         string calldata name_,
-        string calldata symbol_
+        string calldata symbol_,
+        string[] calldata ipAssetTypes_
     ) public returns (address ipOrg_) {
         // Check that the owner is a non-zero address.
         if (owner_ == address(0)) {
@@ -169,6 +175,17 @@ contract IPOrgController is
             owner: owner_,
             pendingOwner: address(0)
         });
+
+        // bytes memory encodedParams = abi.encode(
+        //     Registration.SET_IP_ORG_ASSET_TYPES,
+        //     abi.encode(ipAssetTypes_)
+        // );
+        // ModuleRegistry(MODULE_REGISTRY).configure(
+        //     IIPOrg(ipOrg_),
+        //     address(this),
+        //     ModuleRegistryKeys.REGISTRATION_MODULE,
+        //     encodedParams
+        // );
 
         emit IPOrgRegistered(
             msg.sender,

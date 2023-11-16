@@ -41,10 +41,12 @@ interface IIPOrgController {
     /// @param owner_ The address of the IP Org owner.
     /// @param name_ Metadata name to attach to the IP Org.
     /// @param symbol_ Metadata symbol to attach to the IP Org.
+    /// @param ipAssetTypes_ String descriptors of the IP asset types available.
     function registerIpOrg(
        address owner_,
         string calldata name_,
-        string calldata symbol_
+        string calldata symbol_,
+        string[] calldata ipAssetTypes_
     ) external returns(address);
 
     /// @notice Checks whether an IP Org exists.

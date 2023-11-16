@@ -121,6 +121,10 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         ));
     }
 
+    function getIPAssetTypes(address ipOrg_) public view returns (string[] memory) {
+        return ipOrgConfigs[ipOrg_].assetTypes;
+    }
+
     /// @notice Gets the current owner of an IP asset.
     /// @param ipAssetId_ The global IP asset id being queried.
     function ownerOf(uint256 ipAssetId_) public view returns (address) {
@@ -161,6 +165,9 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         if (configType == Registration.SET_IP_ORG_METADATA) {
             (string memory baseURI, string memory contractURI__) = abi.decode(configData, (string, string));
             _setMetadata(address(ipOrg_), baseURI, contractURI__);
+        } else if (configType == Registration.SET_IP_ORG_ASSET_TYPES) {
+            (string[] memory ipAssetTypes) = abi.decode(configData, (string[]));
+            _addIPAssetTypes(address(ipOrg_), ipAssetTypes);
         } else {
             revert Errors.RegistrationModule_InvalidConfigOperation();
         }
@@ -271,6 +278,20 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     }
 
 
+    /// @dev Adds new IP asset types to an IP Org.
+    /// @param ipOrg_ The address of the IP Org whose asset types we are adding.
+    /// @param ipAssetTypes_ String descriptors of the asset types being added.
+    /// TODO: Add ability to deprecate asset types.
+    function _addIPAssetTypes(
+        address ipOrg_,
+        string[] memory ipAssetTypes_
+    ) internal {
+        Registration.IPOrgConfig storage ipOrg = ipOrgConfigs[ipOrg_];
+        for (uint i = 0; i < ipAssetTypes_.length; i++) {
+            ipOrg.assetTypes.push(ipAssetTypes_[i]);
+        }
+    }
+
     /// @dev Sets the IPOrg token and contract metadata.
     /// @param ipOrg_ The address of the IP Org whose metadata is changing.
     /// @param baseURI_ The new base URI to assign for the IP Org.
@@ -280,17 +301,16 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         string memory baseURI_,
         string memory contractURI_
     ) internal {
-        ipOrgConfigs[ipOrg_] = Registration.IPOrgConfig({
-            baseURI: baseURI_,
-            contractURI: contractURI_
-        });
+        Registration.IPOrgConfig storage config =  ipOrgConfigs[ipOrg_];
+        config.baseURI = baseURI_;
+        config.contractURI = contractURI_;
         emit MetadataUpdated(ipOrg_, baseURI_, contractURI_);
     }
 
     /// @dev Verifies the caller of a configuration action.
     /// TODO(leeren): Deprecate in favor of policy-based function auth.
     function _verifyConfigCaller(IIPOrg ipOrg_, address caller_) private view {
-        if (ipOrg_.owner() != caller_) {
+        if (ipOrg_.owner() != caller_ && address(IP_ORG_CONTROLLER) != caller_) {
             revert Errors.Unauthorized();
         }
     }
