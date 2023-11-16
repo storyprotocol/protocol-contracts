@@ -29,19 +29,19 @@ contract LicensingCreatorModuleTermsTest is BaseLicensingTest {
         withRootLicense(false)
     {
         // TODO: This should be just creating an derivative IPA
-        uint256 ipaId2 = registry.register(
-            IPAsset.RegisterIpAssetParams({
-                name: "derivative",
+        (uint256 ipaId2, uint256 ignored) = spg.registerIPAsset(
+            address(ipOrg),
+            Registration.RegisterIPAssetParams({
+                owner: ipaOwner,
+                name: "bob",
                 ipAssetType: 2,
-                owner: ipaOwner2,
-                ipOrg: (address(ipOrg)),
-                hash: keccak256("test2"),
-                url: "https://example2.com",
-                data: ""
-            })
+                hash: keccak256("test")
+            }),
+            new bytes[](0),
+            new bytes[](0)
         );
         vm.prank(ipaOwner2);
-        uint256 lId = spg.testCreateIpaBoundLicense(
+        uint256 lId = spg.createIpaBoundLicense(
             address(ipOrg),
             Licensing.LicenseCreation({
                 parentLicenseId: nonCommRootLicenseId,
@@ -67,7 +67,7 @@ contract LicensingCreatorModuleTermsTest is BaseLicensingTest {
         // expect revert if share alike is off
         vm.startPrank(ipaOwner2);
         vm.expectRevert(Errors.LicensingModule_ShareAlikeDisabled.selector);
-        spg.testCreateIpaBoundLicense(
+        spg.createIpaBoundLicense(
             address(ipOrg),
             Licensing.LicenseCreation({
                 parentLicenseId: nonCommRootLicenseId,

@@ -103,7 +103,7 @@ contract BaseLicensingTest is BaseTest {
 
     modifier withRootLicense(bool commercial) {
         vm.prank(ipOrg.owner());
-        uint256 lId = spg.testCreateIpaBoundLicense(
+        uint256 lId = spg.createIpaBoundLicense(
             address(ipOrg),
             Licensing.LicenseCreation({
                 parentLicenseId: 0,
@@ -129,16 +129,16 @@ contract BaseLicensingTest is BaseTest {
         nonCommTermData = [bytes(""), bytes("")];
         commTermIds = [commTextTermId];
         commTermData = [bytes("")];
-        rootIpaId = registry.register(
-            IPAsset.RegisterIpAssetParams({
-                name: "test",
-                ipAssetType: 2,
+        (uint256 rootIpaId, uint256 ignored) = spg.registerIPAsset(
+            address(ipOrg),
+            Registration.RegisterIPAssetParams({
                 owner: ipaOwner,
-                ipOrg: (address(ipOrg)),
-                hash: keccak256("test"),
-                url: "https://example.com",
-                data: ""
-            })
+                name: "bob",
+                ipAssetType: 2,
+                hash: keccak256("test")
+            }),
+            new bytes[](0),
+            new bytes[](0)
         );
     }
 

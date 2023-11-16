@@ -21,12 +21,8 @@ import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortSt
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
-// On active refactor
+import { RegistrationModule } from "contracts/modules/registration/RegistrationModule.sol";
 
-// import { Licensing } from "contracts/lib/modules/Licensing.sol";
-
-// TODO: Commented out contracts in active refactor. 
-// Run tests from make lint, which will not run collect and license
 contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     using ShortStrings for *;
 
@@ -39,6 +35,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     StoryProtocol public spg;
     LicenseCreatorModule public licensingModule;
     LicenseRegistry public licenseRegistry;
+    RegistrationModule public registrationModule;
 
     address public defaultCollectNftImpl;
     address public collectModuleImpl;
@@ -87,6 +84,17 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             })
         );
         moduleRegistry.registerProtocolModule(ModuleRegistryKeys.LICENSING_MODULE, licensingModule);
+
+        // Create Registration Module
+        registrationModule = new RegistrationModule(
+            BaseModule.ModuleConstruction({
+                ipaRegistry: registry,
+                moduleRegistry: moduleRegistry,
+                licenseRegistry: licenseRegistry
+            }),
+            address(accessControl)
+        );
+        moduleRegistry.registerProtocolModule(ModuleRegistryKeys.REGISTRATION_MODULE, registrationModule);
 
         // Create Relationship Module
         relationshipModule = new RelationshipModule(

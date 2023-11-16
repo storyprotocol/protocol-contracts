@@ -40,7 +40,7 @@ contract LicensingCreatorLicensingTest is BaseLicensingTest {
     {
         // TODO: this should be create root IPA
         vm.prank(ipOrg.owner());
-        uint256 lId = spg.testCreateIpaBoundLicense(
+        uint256 lId = spg.createIpaBoundLicense(
             address(ipOrg),
             Licensing.LicenseCreation({
                 parentLicenseId: 0,
