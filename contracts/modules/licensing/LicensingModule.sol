@@ -124,16 +124,6 @@ contract LicensingModule is BaseModule, TermsRepository{
         }
     }
 
-    function _hookRegistryAdmin()
-        internal
-        view
-        virtual
-        override
-        returns (address)
-    {
-        return address(0);
-    }
-
     ////////////////////////////////////////////////////////////////////////////
     //                          Create License                                //
     ////////////////////////////////////////////////////////////////////////////

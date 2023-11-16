@@ -36,16 +36,6 @@ contract MockBaseModule is BaseModule {
         return _callStack[index_];
     }
 
-    function _hookRegistryAdmin()
-        internal
-        view
-        virtual
-        override
-        returns (address)
-    {
-        return _admin;
-    }
-
     function _configure(
         IIPOrg ipOrg_,
         address caller_,
@@ -77,9 +67,9 @@ contract MockBaseModule is BaseModule {
         string memory hookRegistrationInfo_,
         address[] calldata hooks_,
         bytes[] calldata hooksConfig_
-    ) external onlyHookRegistryAdmin {
+    ) external onlyIpOrgOwner(ipOrg_) {
         bytes32 registryKey = _generateRegistryKey(address(ipOrg_), hookRegistrationInfo_);
-        registerHooks(hType_, registryKey, hooks_, hooksConfig_);
+        registerHooks(hType_, ipOrg_, registryKey, hooks_, hooksConfig_);
     }
 
     function hookRegistryKey(

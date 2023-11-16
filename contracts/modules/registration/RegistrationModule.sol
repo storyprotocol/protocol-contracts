@@ -42,6 +42,23 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         address accessControl_
     ) BaseModule(params_) AccessControlled(accessControl_) {}
 
+
+    /// @notice Registers hooks for a specific type and IP Org.
+    /// @dev This function can only be called by the IP Org owner.
+    /// @param hType_ The type of the hooks to register.
+    /// @param ipOrg_ The IP Org for which the hooks are being registered.
+    /// @param hooks_ The addresses of the hooks to register.
+    /// @param hooksConfig_ The configurations for the hooks.
+    function registerHooks(
+        HookType hType_,
+        IIPOrg ipOrg_,
+        address[] calldata hooks_,
+        bytes[] calldata hooksConfig_
+    ) external onlyIpOrgOwner(ipOrg_) {
+        bytes32 registryKey = _generateRegistryKey(ipOrg_);
+        registerHooks(hType_, ipOrg_, registryKey, hooks_, hooksConfig_);
+    }
+
     /// @notice Gets the contract URI for an IP Org.
     /// @param ipOrg_ The address of the IP Org.
     function contractURI(address ipOrg_) public view returns (string memory) {
@@ -278,24 +295,15 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         }
     }
 
-    /// @dev Returns the administrator for the registration module hooks.
-    /// TODO(kingter) Define the administrator for this call.
-    function _hookRegistryAdmin()
-        internal
-        view
-        virtual
-        override
-        returns (address)
-    {
-        return address(0);
-    }
-
     function _hookRegistryKey(
         IIPOrg ipOrg_,
         address,
-        bytes calldata params_
+        bytes calldata
     ) internal view virtual override returns(bytes32) {
-        return keccak256(abi.encode(address(ipOrg_), "REGISTRATION"));
+        return _generateRegistryKey(ipOrg_);
     }
 
+    function _generateRegistryKey(IIPOrg ipOrg_) private pure returns(bytes32) {
+        return keccak256(abi.encode(address(ipOrg_), "REGISTRATION"));
+    }
 }
