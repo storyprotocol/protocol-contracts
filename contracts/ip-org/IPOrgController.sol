@@ -176,16 +176,16 @@ contract IPOrgController is
             pendingOwner: address(0)
         });
 
-        // bytes memory encodedParams = abi.encode(
-        //     Registration.SET_IP_ORG_ASSET_TYPES,
-        //     abi.encode(ipAssetTypes_)
-        // );
-        // ModuleRegistry(MODULE_REGISTRY).configure(
-        //     IIPOrg(ipOrg_),
-        //     address(this),
-        //     ModuleRegistryKeys.REGISTRATION_MODULE,
-        //     encodedParams
-        // );
+        bytes memory encodedParams = abi.encode(
+            Registration.SET_IP_ORG_ASSET_TYPES,
+            abi.encode(ipAssetTypes_)
+        );
+        ModuleRegistry(MODULE_REGISTRY).configure(
+            IIPOrg(ipOrg_),
+            address(this),
+            ModuleRegistryKeys.REGISTRATION_MODULE,
+            encodedParams
+        );
 
         emit IPOrgRegistered(
             msg.sender,
