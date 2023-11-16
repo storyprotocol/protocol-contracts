@@ -16,7 +16,7 @@ import "contracts/IPAssetRegistry.sol";
 import "contracts/interfaces/modules/collect/ICollectModule.sol";
 import "contracts/modules/relationships/RelationshipModule.sol";
 import "contracts/modules/licensing/LicenseRegistry.sol";
-import "contracts/modules/licensing/LicenseCreatorModule.sol";
+import "contracts/modules/licensing/LicensingModule.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
@@ -33,7 +33,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     RelationshipModule public relationshipModule;
     IPAssetRegistry public registry;
     StoryProtocol public spg;
-    LicenseCreatorModule public licensingModule;
+    LicensingModule public licensingModule;
     LicenseRegistry public licenseRegistry;
     RegistrationModule public registrationModule;
 
@@ -76,7 +76,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
 
         // Create Licensing contracts
         licenseRegistry = new LicenseRegistry(address(registry), address(moduleRegistry));
-        licensingModule = new LicenseCreatorModule(
+        licensingModule = new LicensingModule(
             BaseModule.ModuleConstruction({
                 ipaRegistry: registry,
                 moduleRegistry: moduleRegistry,

@@ -12,7 +12,12 @@ import { TermsRepository } from "./TermsRepository.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
-import { TermIds } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
+import { TermIds, TermCategories } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
+import { ICallbackHandler } from "contracts/interfaces/hooks/base/ICallbackHandler.sol";
+import { Hook } from "contracts/lib/hooks/Hook.sol";
+import { AsyncBaseHook } from "contracts/hooks/base/AsyncBaseHook.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 
 /// @title License Creator module
 /// @notice Story Protocol module that:
@@ -20,7 +25,8 @@ import { TermIds } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
 ///   their licensing framework.
 /// - Enables Other modules to attach licensing terms to IPAs
 /// - Enables license holders to create derivative licenses
-contract LicenseCreatorModule is BaseModule, TermsRepository {
+/// Thanks to ERC-5218 authors for inspiration (see https://eips.ethereum.org/EIPS/eip-5218)
+contract LicensingModule is BaseModule, TermsRepository, ICallbackHandler, ERC165 {
     using ShortStrings for *;
     using FixedSet for FixedSet.ShortStringSet;
 
@@ -142,6 +148,25 @@ contract LicenseCreatorModule is BaseModule, TermsRepository {
         address caller_,
         bytes calldata params_
     ) virtual internal override {
+        // At least non commercial terms must be set
+        if (_nonComIpOrgTermData[address(ipOrg_)].length == 0) {
+            revert Errors.LicensingModule_IpOrgNotConfigured();
+        }
+       (bytes32 action, bytes memory params) = abi.decode(params_, (bytes32, bytes));
+        if (action == Licensing.CREATE_LICENSE) {
+            _verifyCreateLicense(ipOrg_, caller_, params);
+        } if (action == Licensing.ACTIVATE_LICENSE) {
+            _verifyActivateLicense(ipOrg_, caller_, params);
+        } else {
+            revert Errors.LicensingModule_InvalidAction();
+        }
+    }
+
+    function _verifyCreateLicense(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes memory params_
+    ) private {
         (
             Licensing.LicenseCreation memory lParams,
             Licensing.LicenseeType licenseeType,
@@ -154,10 +179,6 @@ contract LicenseCreatorModule is BaseModule, TermsRepository {
                 bytes
             )
         );
-        // At least non commercial terms must be set
-        if (_nonComIpOrgTermData[address(ipOrg_)].length == 0) {
-            revert Errors.LicensingModule_IpOrgNotConfigured();
-        }
         // ------ Commercial status checks ------
         if (!ipOrgAllowsCommercial(address(ipOrg_)) && lParams.isCommercial) {
             revert Errors.LicensingModule_CommercialLicenseNotAllowed();
@@ -171,6 +192,9 @@ contract LicenseCreatorModule is BaseModule, TermsRepository {
                 revert Errors.LicensingModule_CallerNotIpOrgOwner();
             }
         } else {
+            if (!LICENSE_REGISTRY.isLicenseActive(lParams.parentLicenseId)) {
+                revert Errors.LicensingModule_ParentLicenseNotActive();  
+            }
         // ------ Derivative license checks: Terms ------
             FixedSet.ShortStringSet storage termIds = _getIpOrgTermIds(lParams.isCommercial, address(ipOrg_));
             bytes[] storage termData = _getIpOrgTermData(lParams.isCommercial, address(ipOrg_));
@@ -190,12 +214,43 @@ contract LicenseCreatorModule is BaseModule, TermsRepository {
         }
     }
 
+    function _verifyActivateLicense(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes memory params_
+    ) private {
+        (uint256 licenseId) = abi.decode(params_, (uint256));
+        Licensing.License memory license = LICENSE_REGISTRY.getLicense(licenseId);
+        if (caller_ != LICENSE_REGISTRY.getLicensee(licenseId)) {
+            revert Errors.LicensingModule_CallerNotLicensee();
+        }
+        if (license.parentLicenseId != 0 && !LICENSE_REGISTRY.isLicenseActive(license.parentLicenseId)) {
+            revert Errors.LicensingModule_ParentLicenseNotActive();  
+        }
+
+    }
+
     /// Module entrypoint to create licenses
     function _performAction(
         IIPOrg ipOrg_,
         address caller_,
         bytes calldata params_
     ) virtual internal override returns (bytes memory result) {
+        (bytes32 action, bytes memory params) = abi.decode(params_, (bytes32, bytes));
+        if (action == Licensing.CREATE_LICENSE) {
+            return _createLicense(ipOrg_, caller_, params);
+        } if (action == Licensing.ACTIVATE_LICENSE) {
+            return _activateLicense(ipOrg_, caller_, params);
+        } else {
+            revert Errors.LicensingModule_InvalidAction();
+        }
+    }
+
+    function _createLicense(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes memory params_
+    ) private returns (bytes memory result) {
         (
             Licensing.LicenseCreation memory lParams,
             Licensing.LicenseeType licenseeType,
@@ -214,8 +269,13 @@ contract LicenseCreatorModule is BaseModule, TermsRepository {
         );
         uint256 ipaId = Licensing.LicenseeType.BoundToIpa == licenseeType ? abi.decode(data, (uint256)) : 0;
         // TODO: compose IpOrg terms with user provider Terms
+        Licensing.LicenseStatus status = Licensing.LicenseStatus.Active;
+        if (_hasActivationTerms(lParams.isCommercial, address(ipOrg_))) {
+            status = Licensing.LicenseStatus.Pending;
+        }
         Licensing.RegistryAddition memory rParams = Licensing.RegistryAddition({
             isCommercial: lParams.isCommercial,
+            status: status,
             licensor: _getLicensor(
                 ipaId,
                 LICENSE_REGISTRY.getLicensor(lParams.parentLicenseId)
@@ -228,6 +288,7 @@ contract LicenseCreatorModule is BaseModule, TermsRepository {
             data: data
         });
         uint256 licenseId;
+        // Create the licenses
         if (licenseeType == Licensing.LicenseeType.BoundToIpa) {
             licenseId = LICENSE_REGISTRY.addBoundToIpaLicense(
                 rParams,
@@ -239,8 +300,65 @@ contract LicenseCreatorModule is BaseModule, TermsRepository {
                 abi.decode(data, (address))
             );
         }
-        
         return abi.encode(licenseId);
+    }
+
+    function _hasActivationTerms(bool commercial, address ipOrg_) private view returns (bool) {
+        FixedSet.ShortStringSet storage termIds = _getIpOrgTermIds(commercial, ipOrg_);
+        uint256 termsLength = termIds.length();
+        for (uint256 i = 0; i < termsLength; i++) {
+            ShortString termId = termIds.at(i);
+            if (
+                ShortStringOps._equal(
+                    shortStringCategoryForTerm(termId),
+                    TermCategories.ACTIVATION.toShortString()
+                )
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function _activateLicense(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes memory params_
+    ) private returns (bytes memory result) {
+        (uint256 licenseId) = abi.decode(params_, (uint256));
+        Licensing.License memory license = LICENSE_REGISTRY.getLicense(licenseId);
+        ShortString[] memory termIds = license.termIds;
+        bytes[] memory termsData = license.termsData;
+        uint256 termsLength = termIds.length;
+        bool activate = true;
+        // TODO: check if optimization is possible
+        for (uint256 i = 0; i < termsLength; i++) {
+            ShortString termId = termIds[i];
+            
+            if (
+                !ShortStringOps._equal(
+                    shortStringCategoryForTerm(termId),
+                    TermCategories.ACTIVATION.toShortString()
+                )
+            ) {
+                continue;
+            }
+            Licensing.LicensingTerm memory term = getTerm(termId);
+            if (address(term.hook) != address(0)) {
+                Hook.ExecutionContext memory context = Hook.ExecutionContext({
+                    config: bytes(""), // unused
+                    params: abi.encode(license.licensor, licenseId)
+                });
+                // TODO: simplify this
+                AsyncBaseHook(address(term.hook)).executeAsync(
+                    abi.encode(context),
+                    address(this)
+                );
+            }
+        }
+        if (activate) {
+            LICENSE_REGISTRY.activateLicense(licenseId);
+        }
     }
 
     /// Gets the licensor address for this IPA.
@@ -387,6 +505,13 @@ contract LicenseCreatorModule is BaseModule, TermsRepository {
     ////////////////////////////////////////////////////////////////////////////
     //                              Hooks                                     //
     ////////////////////////////////////////////////////////////////////////////
+
+    function handleHookCallback(
+        bytes32 requestId_,
+        bytes calldata callbackData_
+    ) external virtual override {
+
+    }
 
     function _hookRegistryKey(
         IIPOrg ipOrg_,

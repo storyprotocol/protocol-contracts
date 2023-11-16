@@ -13,6 +13,8 @@ library Licensing {
     struct License {
         /// States the commercial nature of the license. All terms will follow.
         bool isCommercial;
+        /// License status. // TODO: IPA status should follow
+        LicenseStatus status;
         /// address granting the license
         address licensor;
         /// address that could make a license invalid
@@ -34,6 +36,13 @@ library Licensing {
         bytes data;
     }
 
+    enum LicenseStatus {
+        Unset,
+        Active,
+        Revoked,
+        Pending
+    }
+
     /// User facing parameters for creating a license
     struct LicenseCreation {
         bool isCommercial;
@@ -47,6 +56,8 @@ library Licensing {
     struct RegistryAddition {
         /// States the commercial nature of the license. All terms will follow.
         bool isCommercial;
+        /// Only Active or Pending will be accepted here
+        LicenseStatus status;
         /// address granting the license
         address licensor;
         /// address that could make a license invalid
@@ -110,12 +121,14 @@ library Licensing {
         bytes[] termData;
     }
 
-    /// Input for IpOrg legal terms configuration in LicenseCreatorModule
+    /// Input for IpOrg legal terms configuration in LicensingModule
     struct FrameworkConfig {
         TermsConfig comTermsConfig;
         TermsConfig nonComTermsConfig;
     }
     
-    /// Input for IpOrg legal terms configuration in LicenseCreatorModule (for now, the only option)
+    /// Input for IpOrg legal terms configuration in LicensingModule (for now, the only option)
     bytes32 constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");
+    bytes32 constant CREATE_LICENSE = keccak256("CREATE_LICENSE");
+    bytes32 constant ACTIVATE_LICENSE = keccak256("ACTIVATE_LICENSE");
 }

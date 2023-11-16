@@ -102,6 +102,12 @@ contract TermsRepository is Multicall {
         return _termCategoryByTermId[termId_.toShortString()].toString();
     }
 
+    function shortStringCategoryForTerm(
+        ShortString termId_
+    ) public view returns (ShortString) {
+        return _termCategoryByTermId[termId_];
+    }
+
     function getTerm(
         ShortString termId_
     ) public view onlyValidTerm(termId_) returns (Licensing.LicensingTerm memory) {

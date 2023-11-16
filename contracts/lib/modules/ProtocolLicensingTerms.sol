@@ -3,8 +3,9 @@ pragma solidity ^0.8.19;
 
 /// List of Licensing Term categories
 library TermCategories {
-    string constant FORMAT_CATEGORIES = "FORMAT_CATEGORIES";
+    string constant FORMAT = "FORMAT";
     string constant SHARE_ALIKE = "SHARE_ALIKE";
+    string constant ACTIVATION = "ACTIVATION";
 }
 
 /// List of Protocol Term Ids (meaning the Licensing Module will have specific instructions
@@ -13,4 +14,7 @@ library TermCategories {
 /// see https://docs.openzeppelin.com/contracts/4.x/api/utils#ShortStrings
 library TermIds {
     string constant NFT_SHARE_ALIKE = "NFT_SHARE_ALIKE";
+    string constant LICENSOR_APPROVAL = "LICENSOR_APPROVAL";
+    string constant FORMAT_CATEGORY = "FORMAT_CATEGORY";
+
 }

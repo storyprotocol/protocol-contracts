@@ -250,7 +250,7 @@ library Errors {
     error TermsRegistry_CommercialStatusUnset();
 
     ////////////////////////////////////////////////////////////////////////////
-    //                        LicenseCreatorModule                            //
+    //                        LicensingModule                            //
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice The franchise does not exist.
@@ -268,6 +268,10 @@ library Errors {
     error LicensingModule_IpOrgNotConfigured();
     error LicensingModule_ipOrgTermNotFound();
     error LicensingModule_ShareAlikeDisabled();
+    error LicensingModule_InvalidAction();
+    error LicensingModule_LicenseAlreadyActivated();
+    error LicensingModule_CallerNotLicensee();
+    error LicensingModule_ParentLicenseNotActive();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            LicenseRegistry                             //
@@ -282,6 +286,9 @@ library Errors {
     error LicenseRegistry_InvalidIpa();
     error LicenseRegistry_ZeroModuleRegistryAddress();
     error LicenseRegistry_CallerNotLicensingModule();
+    error LicenseRegistry_CallerNotRevoker();
+    error LicenseRegistry_LicenseNotPending();
+    error LicenseRegistry_InvalidLicenseStatus();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            RegistrationModule                          //
@@ -331,7 +338,7 @@ library Errors {
     error RelationshipModule_UnsupportedRelationshipDst();
 
     error RelationshipModule_InvalidConfigOperation();
-
+   
     error RelationshipModule_CallerNotIpOrgOwner();
     error RelationshipModule_InvalidRelatable();
     error RelationshipModule_RelTypeNotSet(string relType);
@@ -371,4 +378,14 @@ library Errors {
 
     /// @notice The address is not the owner of the token.
     error TokenGatedHook_NotTokenOwner(address tokenAddress, address ownerAddress);
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                       LicensorApprovalHook                             //
+    ////////////////////////////////////////////////////////////////////////////
+
+    error LicensorApprovalHook_ApprovalAlreadyRequested();
+    error LicensorApprovalHook_InvalidLicensor();
+    error LicensorApprovalHook_InvalidLicenseId();
+    error LicensorApprovalHook_NoApprovalRequested();
+    error LicensorApprovalHook_InvalidResponseStatus();
 }

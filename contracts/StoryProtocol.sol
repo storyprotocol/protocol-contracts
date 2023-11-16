@@ -248,4 +248,21 @@ contract StoryProtocol {
         ),
         (uint256));
     }
+
+    function activateLicense(
+        address ipOrg_,
+        uint256 licenseId_
+    ) external {
+        MODULE_REGISTRY.execute(
+            IIPOrg(ipOrg_),
+            msg.sender,
+            ModuleRegistryKeys.LICENSING_MODULE,
+            abi.encode(
+                Licensing.ACTIVATE_LICENSE,
+                abi.encode(licenseId_)
+            ),
+            new bytes[](0),
+            new bytes[](0)
+        );
+    }
 }
