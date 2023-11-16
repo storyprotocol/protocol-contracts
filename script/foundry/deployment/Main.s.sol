@@ -156,7 +156,8 @@ import "test/foundry/mocks/MockERC721.sol";
          newAddress = address(new RegistrationModule(BaseModule.ModuleConstruction({
              ipaRegistry: IPAssetRegistry(ipAssetRegistry),
              moduleRegistry: ModuleRegistry(moduleRegistry),
-             licenseRegistry: LicenseRegistry(licenseRegistry)
+             licenseRegistry: LicenseRegistry(licenseRegistry),
+             ipOrgController: IPOrgController(ipOrgController)
          }), accessControl));
          _writeAddress(contractKey, newAddress);
          console.log(string.concat(contractKey, " deployed to:"), newAddress);
@@ -171,7 +172,8 @@ import "test/foundry/mocks/MockERC721.sol";
          newAddress = address(new RelationshipModule(BaseModule.ModuleConstruction({
              ipaRegistry: IPAssetRegistry(ipAssetRegistry),
              moduleRegistry: ModuleRegistry(moduleRegistry),
-             licenseRegistry: LicenseRegistry(licenseRegistry)
+             licenseRegistry: LicenseRegistry(licenseRegistry),
+             ipOrgController: IPOrgController(ipOrgController)
          }), accessControl));
          _writeAddress(contractKey, newAddress);
          console.log(string.concat(contractKey, " deployed to:"), newAddress);
@@ -186,7 +188,8 @@ import "test/foundry/mocks/MockERC721.sol";
          newAddress = address(new LicenseCreatorModule(BaseModule.ModuleConstruction({
              ipaRegistry: IPAssetRegistry(ipAssetRegistry),
              moduleRegistry: ModuleRegistry(moduleRegistry),
-             licenseRegistry: LicenseRegistry(licenseRegistry)
+             licenseRegistry: LicenseRegistry(licenseRegistry),
+             ipOrgController: IPOrgController(ipOrgController)
          })));
          _writeAddress(contractKey, newAddress);
          console.log(string.concat(contractKey, " deployed to:"), newAddress);
@@ -235,8 +238,10 @@ import "test/foundry/mocks/MockERC721.sol";
              ModuleRegistryKeys.RELATIONSHIP_MODULE, BaseModule(relationshipModule));
          ModuleRegistry(moduleRegistry).registerProtocolModule(
              ModuleRegistryKeys.LICENSING_MODULE, BaseModule(licenseCreatorModule));
-
-         address ipOrg = StoryProtocol(spg).registerIpOrg(admin, "Sample IP Org", "SIPO");
+         string[] memory ipAssetTypes = new string[](2);
+         ipAssetTypes[0] = "STORY";
+         ipAssetTypes[1] = "CHARACTER";
+         address ipOrg = StoryProtocol(spg).registerIpOrg(admin, "Sample IP Org", "SIPO", ipAssetTypes);
 
          // REGISTER TOKEN_GATED_HOOK
          address[] memory hooks = new address[](1);
