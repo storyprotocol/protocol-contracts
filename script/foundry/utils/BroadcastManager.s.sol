@@ -19,6 +19,10 @@ contract BroadcastManager is Script {
             deployerPrivateKey = vm.envUint("GOERLI_PRIVATEKEY");
             admin = vm.envAddress("GOERLI_ADMIN_ADDRESS");
             vm.startBroadcast(deployerPrivateKey);
+        } else if (block.chainid == 11155111) {
+            deployerPrivateKey = vm.envUint("SEPOLIA_PRIVATEKEY");
+            admin = vm.envAddress("SEPOLIA_ADMIN_ADDRESS");
+            vm.startBroadcast(deployerPrivateKey);
         } else {
             vm.startPrank(admin);
         }
