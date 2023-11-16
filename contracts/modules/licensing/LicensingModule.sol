@@ -13,10 +13,6 @@ import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortSt
 import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { TermIds, TermCategories } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
-import { ICallbackHandler } from "contracts/interfaces/hooks/base/ICallbackHandler.sol";
-import { Hook } from "contracts/lib/hooks/Hook.sol";
-import { AsyncBaseHook } from "contracts/hooks/base/AsyncBaseHook.sol";
-import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 
 /// @title License Creator module
@@ -26,7 +22,7 @@ import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 /// - Enables Other modules to attach licensing terms to IPAs
 /// - Enables license holders to create derivative licenses
 /// Thanks to ERC-5218 authors for inspiration (see https://eips.ethereum.org/EIPS/eip-5218)
-contract LicensingModule is BaseModule, TermsRepository, ICallbackHandler, ERC165 {
+contract LicensingModule is BaseModule, TermsRepository{
     using ShortStrings for *;
     using FixedSet for FixedSet.ShortStringSet;
 
@@ -221,8 +217,8 @@ contract LicensingModule is BaseModule, TermsRepository, ICallbackHandler, ERC16
     ) private {
         (uint256 licenseId) = abi.decode(params_, (uint256));
         Licensing.License memory license = LICENSE_REGISTRY.getLicense(licenseId);
-        if (caller_ != LICENSE_REGISTRY.getLicensee(licenseId)) {
-            revert Errors.LicensingModule_CallerNotLicensee();
+        if (caller_ != license.licensor) {
+            revert Errors.LicensingModule_CallerNotLicensor();
         }
         if (license.parentLicenseId != 0 && !LICENSE_REGISTRY.isLicenseActive(license.parentLicenseId)) {
             revert Errors.LicensingModule_ParentLicenseNotActive();  
@@ -327,38 +323,9 @@ contract LicensingModule is BaseModule, TermsRepository, ICallbackHandler, ERC16
     ) private returns (bytes memory result) {
         (uint256 licenseId) = abi.decode(params_, (uint256));
         Licensing.License memory license = LICENSE_REGISTRY.getLicense(licenseId);
-        ShortString[] memory termIds = license.termIds;
-        bytes[] memory termsData = license.termsData;
-        uint256 termsLength = termIds.length;
-        bool activate = true;
-        // TODO: check if optimization is possible
-        for (uint256 i = 0; i < termsLength; i++) {
-            ShortString termId = termIds[i];
-            
-            if (
-                !ShortStringOps._equal(
-                    shortStringCategoryForTerm(termId),
-                    TermCategories.ACTIVATION.toShortString()
-                )
-            ) {
-                continue;
-            }
-            Licensing.LicensingTerm memory term = getTerm(termId);
-            if (address(term.hook) != address(0)) {
-                Hook.ExecutionContext memory context = Hook.ExecutionContext({
-                    config: bytes(""), // unused
-                    params: abi.encode(license.licensor, licenseId)
-                });
-                // TODO: simplify this
-                AsyncBaseHook(address(term.hook)).executeAsync(
-                    abi.encode(context),
-                    address(this)
-                );
-            }
-        }
-        if (activate) {
-            LICENSE_REGISTRY.activateLicense(licenseId);
-        }
+        // For now, we just support activating license with an explicit approval from
+        // Licensor. TODO: support more activation terms
+        LICENSE_REGISTRY.activateLicense(licenseId);
     }
 
     /// Gets the licensor address for this IPA.
@@ -505,13 +472,6 @@ contract LicensingModule is BaseModule, TermsRepository, ICallbackHandler, ERC16
     ////////////////////////////////////////////////////////////////////////////
     //                              Hooks                                     //
     ////////////////////////////////////////////////////////////////////////////
-
-    function handleHookCallback(
-        bytes32 requestId_,
-        bytes calldata callbackData_
-    ) external virtual override {
-
-    }
 
     function _hookRegistryKey(
         IIPOrg ipOrg_,

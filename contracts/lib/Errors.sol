@@ -270,7 +270,7 @@ library Errors {
     error LicensingModule_ShareAlikeDisabled();
     error LicensingModule_InvalidAction();
     error LicensingModule_LicenseAlreadyActivated();
-    error LicensingModule_CallerNotLicensee();
+    error LicensingModule_CallerNotLicensor();
     error LicensingModule_ParentLicenseNotActive();
 
     ////////////////////////////////////////////////////////////////////////////
