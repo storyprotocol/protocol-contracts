@@ -7,22 +7,6 @@ import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 /// @title Mock Hook Registry
 /// @notice This mock contract is used for testing the base hook registry.
 contract MockHookRegistry is HookRegistry {
-    address public immutable ADMIN;
-
-
-    constructor() {
-        ADMIN = msg.sender;
-    }
-
-    function _hookRegistryAdmin()
-        internal
-        view
-        virtual
-        override
-        returns (address)
-    {
-        return ADMIN;
-    }
 
     function hookRegistryKey(
         address ipOrg_,

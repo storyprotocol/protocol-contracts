@@ -76,16 +76,6 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         return _relHashes[keccak256(abi.encode(rel_))] != 0;
     }
 
-    function _hookRegistryAdmin()
-        internal
-        view
-        virtual
-        override
-        returns (address)
-    {
-        return address(0); // TODO
-    }
-
     /// Relationship module supports configuration to add or remove relationship types
     function _configure(
         IIPOrg ipOrg_,

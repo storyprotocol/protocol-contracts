@@ -9,6 +9,8 @@ import { MockHookRegistry } from "test/foundry/mocks/MockHookRegistry.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { MockBaseHook } from "test/foundry/mocks/MockBaseHook.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
+import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
+import { MockIPOrg } from "test/foundry/mocks/MockIPOrg.sol";
 
 contract HookRegistryTest is BaseTest {
     MockHookRegistry hookRegistry;
@@ -30,12 +32,13 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfig = new bytes[](2);
         hooksConfig[0] = abi.encode("Hook1Config");
         hooksConfig[1] = abi.encode("Hook2Config");
-        address ipOrg = address(0x789);
-        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
-        vm.startPrank(admin);
+        address ipOrgOwner = address(0x789);
+        IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
+        vm.startPrank(ipOrgOwner);
         vm.expectEmit(true, false, false, true);
         emit HooksRegistered(HookRegistry.HookType.PreAction, registryKey, hooks);
-        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKey, hooks, hooksConfig);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg, registryKey, hooks, hooksConfig);
         vm.stopPrank();
         assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKey, 0), hooks[0]);
         assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKey, 1), hooks[1]);
@@ -52,13 +55,14 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfig = new bytes[](2);
         hooksConfig[0] = abi.encode("Hook1Config");
         hooksConfig[1] = abi.encode("Hook2Config");
-        address ipOrg = address(0x789);
-        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
-        vm.startPrank(admin);
-        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKey, hooks, hooksConfig);
+        address ipOrgOwner = address(0x789);
+        IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
+        vm.startPrank(ipOrgOwner);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg, registryKey, hooks, hooksConfig);
         vm.expectEmit(true, false, false, true);
         emit HooksCleared(HookRegistry.HookType.PreAction, registryKey);
-        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKey, hooks, hooksConfig);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg, registryKey, hooks, hooksConfig);
         vm.stopPrank();
         assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKey, 0), hooks[0]);
         assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKey, 1), hooks[1]);
@@ -75,12 +79,13 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfig = new bytes[](2);
         hooksConfig[0] = abi.encode("Hook1Config");
         hooksConfig[1] = abi.encode("Hook2Config");
-        address ipOrg = address(0x789);
-        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
-        vm.startPrank(admin);
+        address ipOrgOwner = address(0x789);
+        IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
+        vm.startPrank(ipOrgOwner);
         vm.expectEmit(true, false, false, true);
         emit HooksRegistered(HookRegistry.HookType.PostAction, registryKey, hooks);
-        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, ipOrg, registryKey, hooks, hooksConfig);
         vm.stopPrank();
         assertEq(hookRegistry.hookAt(HookRegistry.HookType.PostAction, registryKey, 0), hooks[0]);
         assertEq(hookRegistry.hookAt(HookRegistry.HookType.PostAction, registryKey, 1), hooks[1]);
@@ -97,13 +102,14 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfig = new bytes[](2);
         hooksConfig[0] = abi.encode("Hook1Config");
         hooksConfig[1] = abi.encode("Hook2Config");
-        address ipOrg = address(0x789);
-        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
-        vm.startPrank(admin);
-        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
+        address ipOrgOwner = address(0x789);
+        IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
+        vm.startPrank(ipOrgOwner);
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, ipOrg, registryKey, hooks, hooksConfig);
         vm.expectEmit(true, false, false, true);
         emit HooksCleared(HookRegistry.HookType.PostAction, registryKey);
-        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, ipOrg, registryKey, hooks, hooksConfig);
         vm.stopPrank();
         assertEq(hookRegistry.hookAt(HookRegistry.HookType.PostAction, registryKey, 0), hooks[0]);
         assertEq(hookRegistry.hookAt(HookRegistry.HookType.PostAction, registryKey, 1), hooks[1]);
@@ -113,33 +119,35 @@ contract HookRegistryTest is BaseTest {
         assertEq(hookRegistry.totalHooksConfig(HookRegistry.HookType.PostAction, registryKey), hooksConfig.length);
     }
 
-    function test_hookRegistry_revertRegisterHooksCallerNotAdmin() public {
+    function test_hookRegistry_revertRegisterHooksCallerNotIpOrgOwner() public {
         address[] memory hooks = new address[](2);
         hooks[0] = address(new MockBaseHook(address(accessControl)));
         hooks[1] = address(new MockBaseHook(address(accessControl)));
         bytes[] memory hooksConfig = new bytes[](2);
         hooksConfig[0] = abi.encode("Hook1Config");
         hooksConfig[1] = abi.encode("Hook2Config");
-        address ipOrg = address(0x789);
-        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
-        vm.expectRevert(Errors.HookRegistry_CallerNotAdmin.selector);
-        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
+        address ipOrgOwner = address(0x789);
+        IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
+        vm.expectRevert(Errors.HookRegistry_CallerNotIPOrgOwner.selector);
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, ipOrg, registryKey, hooks, hooksConfig);
     }
 
     function test_hookRegistry_revertRegisterMaxHooksExceeded() public {
         address[] memory hooks = new address[](hookRegistry.MAX_HOOKS() + 1);
         bytes[] memory hooksConfig = new bytes[](hookRegistry.MAX_HOOKS() + 1);
-        address ipOrg = address(0x789);
-        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
-        vm.startPrank(admin);
+        address ipOrgOwner = address(0x789);
+        IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
+        vm.startPrank(ipOrgOwner);
         for(uint256 i = 0; i <= hookRegistry.MAX_HOOKS(); i++) {
             hooks[i] = address(new MockBaseHook(address(accessControl)));
             hooksConfig[i] = abi.encode("HookConfig", i + 1);
         }
         vm.expectRevert(Errors.HookRegistry_MaxHooksExceeded.selector);
-        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, ipOrg, registryKey, hooks, hooksConfig);
         vm.expectRevert(Errors.HookRegistry_MaxHooksExceeded.selector);
-        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKey, hooks, hooksConfig);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg, registryKey, hooks, hooksConfig);
         vm.stopPrank();
     }
 
@@ -151,11 +159,12 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfig = new bytes[](2);
         hooksConfig[0] = abi.encode("Hook1Config");
         hooksConfig[1] = abi.encode("Hook2Config");
-        address ipOrg = address(0x789);
-        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
-        vm.startPrank(admin);
+        address ipOrgOwner = address(0x789);
+        IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
+        vm.startPrank(ipOrgOwner);
         vm.expectRevert(Errors.HookRegistry_RegisteringDuplicatedHook.selector);
-        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, ipOrg, registryKey, hooks, hooksConfig);
         vm.stopPrank();
     }
 
@@ -166,11 +175,12 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfig = new bytes[](2);
         hooksConfig[0] = abi.encode("Hook1Config");
         hooksConfig[1] = abi.encode("Hook2Config");
-        address ipOrg = address(0x789);
-        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
-        vm.startPrank(admin);
+        address ipOrgOwner = address(0x789);
+        IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
+        vm.startPrank(ipOrgOwner);
 
-        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKey, hooks, hooksConfig);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg, registryKey, hooks, hooksConfig);
         assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKey, 0), hooks[0]);
         assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKey, 1), hooks[1]);
         assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKey, 0), hooksConfig[0]);
@@ -182,7 +192,7 @@ contract HookRegistryTest is BaseTest {
         assertEq(hookRegistry.isRegistered(HookRegistry.HookType.PreAction, registryKey, hooks[0]), true);
         assertEq(hookRegistry.isRegistered(HookRegistry.HookType.PreAction, registryKey, hooks[1]), true);
 
-        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, ipOrg, registryKey, hooks, hooksConfig);
         assertEq(hookRegistry.hookAt(HookRegistry.HookType.PostAction, registryKey, 0), hooks[0]);
         assertEq(hookRegistry.hookAt(HookRegistry.HookType.PostAction, registryKey, 1), hooks[1]);
         assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PostAction, registryKey, 0), hooksConfig[0]);
@@ -204,13 +214,14 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfig = new bytes[](2);
         hooksConfig[0] = abi.encode("Hook1Config");
         hooksConfig[1] = abi.encode("Hook2Config");
-        address ipOrg = address(0x789);
-        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
-        vm.startPrank(admin);
-        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKey, hooks, hooksConfig);
+        address ipOrgOwner = address(0x789);
+        IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
+        vm.startPrank(ipOrgOwner);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg, registryKey, hooks, hooksConfig);
         vm.expectEmit(true, true, false, true);
-        emit HooksCleared(HookRegistry.HookType.PreAction, registryKey);
-        hookRegistry.clearHooks(HookRegistry.HookType.PreAction, registryKey);
+        emit HooksCleared(HookRegistry.HookType.PreAction,  registryKey);
+        hookRegistry.clearHooks(HookRegistry.HookType.PreAction, ipOrg, registryKey);
         vm.stopPrank();
         assertEq(hookRegistry.hookIndex(HookRegistry.HookType.PreAction, registryKey, hooks[0]), hookRegistry.INDEX_NOT_FOUND());
         assertEq(hookRegistry.hookIndex(HookRegistry.HookType.PreAction, registryKey, hooks[1]), hookRegistry.INDEX_NOT_FOUND());
@@ -226,13 +237,14 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfig = new bytes[](2);
         hooksConfig[0] = abi.encode("Hook1Config");
         hooksConfig[1] = abi.encode("Hook2Config");
-        address ipOrg = address(0x789);
-        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
-        vm.startPrank(admin);
-        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
+        address ipOrgOwner = address(0x789);
+        IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
+        vm.startPrank(ipOrgOwner);
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, ipOrg, registryKey, hooks, hooksConfig);
         vm.expectEmit(true, true, false, true);
         emit HooksCleared(HookRegistry.HookType.PostAction, registryKey);
-        hookRegistry.clearHooks(HookRegistry.HookType.PostAction, registryKey);
+        hookRegistry.clearHooks(HookRegistry.HookType.PostAction, ipOrg, registryKey);
         vm.stopPrank();
         assertEq(hookRegistry.hookIndex(HookRegistry.HookType.PostAction, registryKey, hooks[0]), hookRegistry.INDEX_NOT_FOUND());
         assertEq(hookRegistry.hookIndex(HookRegistry.HookType.PostAction, registryKey, hooks[1]), hookRegistry.INDEX_NOT_FOUND());
@@ -248,10 +260,14 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfig = new bytes[](2);
         hooksConfig[0] = abi.encode("Hook1Config");
         hooksConfig[1] = abi.encode("Hook2Config");
-        address ipOrg = address(0x789);
-        bytes32 registryKey = hookRegistry.hookRegistryKey(ipOrg, "RelationshipType_A");
-        vm.expectRevert(Errors.HookRegistry_CallerNotAdmin.selector);
-        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, registryKey, hooks, hooksConfig);
+        address ipOrgOwner = address(0x789);
+        IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
+        bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
+        vm.startPrank(ipOrgOwner);
+        hookRegistry.registerHooks(HookRegistry.HookType.PostAction, ipOrg, registryKey, hooks, hooksConfig);
+        vm.stopPrank();
+        vm.expectRevert(Errors.HookRegistry_CallerNotIPOrgOwner.selector);
+        hookRegistry.clearHooks(HookRegistry.HookType.PostAction, ipOrg, registryKey);
     }
 
     function test_hookRegistry_registerHooksWithMultipleRegistryKeys() public {
@@ -266,8 +282,8 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfigA = new bytes[](2);
         hooksConfigA[0] = abi.encode("Hook1Config");
         hooksConfigA[1] = abi.encode("Hook2Config");
-        address ipOrg1 = address(0x789);
-        bytes32 registryKeyA = hookRegistry.hookRegistryKey(ipOrg1, "RelationshipType_A");
+        IIPOrg ipOrg1 = new MockIPOrg(address(0x789));
+        bytes32 registryKeyA = hookRegistry.hookRegistryKey(address(ipOrg1), "RelationshipType_A");
 
         // hooks B shares same ipOrg with hooks A
         address[] memory hooksB = new address[](2);
@@ -276,7 +292,7 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfigB = new bytes[](2);
         hooksConfigB[0] = abi.encode("Hook3Config");
         hooksConfigB[1] = abi.encode("Hook5Config");
-        bytes32 registryKeyB = hookRegistry.hookRegistryKey(ipOrg1, "RelationshipType_B");
+        bytes32 registryKeyB = hookRegistry.hookRegistryKey(address(ipOrg1), "RelationshipType_B");
 
         address[] memory hooksC = new address[](2);
         hooksC[0] = hook2;
@@ -284,22 +300,21 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfigC = new bytes[](2);
         hooksConfigC[0] = abi.encode("Hook2Config");
         hooksConfigC[1] = abi.encode("Hook3Config");
-        address ipOrg2 = address(0x999);
-        bytes32 registryKeyC = hookRegistry.hookRegistryKey(ipOrg2, "RelationshipType_C");
-
-        vm.startPrank(admin);
+        IIPOrg ipOrg2 = new MockIPOrg(address(0x999));
+        bytes32 registryKeyC = hookRegistry.hookRegistryKey(address(ipOrg2), "RelationshipType_C");
+        vm.startPrank(address(0x789));
         vm.expectEmit(true, false, false, true);
         emit HooksRegistered(HookRegistry.HookType.PreAction, registryKeyA, hooksA);
-        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyA, hooksA, hooksConfigA);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg1, registryKeyA, hooksA, hooksConfigA);
         vm.expectEmit(true, false, false, true);
         emit HooksRegistered(HookRegistry.HookType.PreAction, registryKeyB, hooksB);
-        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyB, hooksB, hooksConfigB);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg1, registryKeyB, hooksB, hooksConfigB);
+        vm.stopPrank();
+        vm.startPrank(address(0x999));
         vm.expectEmit(true, false, false, true);
         emit HooksRegistered(HookRegistry.HookType.PreAction, registryKeyC, hooksC);
-        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyC, hooksC, hooksConfigC);
-
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg2, registryKeyC, hooksC, hooksConfigC);
         vm.stopPrank();
-
         assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKeyA, 0), hooksA[0]);
         assertEq(hookRegistry.hookAt(HookRegistry.HookType.PreAction, registryKeyA, 1), hooksA[1]);
         assertEq(hookRegistry.hookConfigAt(HookRegistry.HookType.PreAction, registryKeyA, 0), hooksConfigA[0]);
@@ -337,8 +352,9 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfigA = new bytes[](2);
         hooksConfigA[0] = abi.encode("Hook1Config");
         hooksConfigA[1] = abi.encode("Hook2Config");
-        address ipOrg1 = address(0x789);
-        bytes32 registryKeyA = hookRegistry.hookRegistryKey(ipOrg1, "RelationshipType_A");
+        address ipOrgOwner1 = address(0x789);
+        IIPOrg ipOrg1 = new MockIPOrg(ipOrgOwner1);
+        bytes32 registryKeyA = hookRegistry.hookRegistryKey(address(ipOrg1), "RelationshipType_A");
 
         // hooks B shares same ipOrg with hooks A
         address[] memory hooksB = new address[](2);
@@ -347,7 +363,7 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfigB = new bytes[](2);
         hooksConfigB[0] = abi.encode("Hook3Config");
         hooksConfigB[1] = abi.encode("Hook5Config");
-        bytes32 registryKeyB = hookRegistry.hookRegistryKey(ipOrg1, "RelationshipType_B");
+        bytes32 registryKeyB = hookRegistry.hookRegistryKey(address(ipOrg1), "RelationshipType_B");
 
         address[] memory hooksC = new address[](3);
         hooksC[0] = hook6;
@@ -358,13 +374,13 @@ contract HookRegistryTest is BaseTest {
         hooksConfigC[1] = abi.encode("Hook7Config");
         hooksConfigC[2] = abi.encode("Hook8Config");
 
-        vm.startPrank(admin);
+        vm.startPrank(ipOrgOwner1);
         vm.expectEmit(true, false, false, true);
         emit HooksRegistered(HookRegistry.HookType.PreAction, registryKeyA, hooksA);
-        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyA, hooksA, hooksConfigA);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg1, registryKeyA, hooksA, hooksConfigA);
         vm.expectEmit(true, false, false, true);
         emit HooksRegistered(HookRegistry.HookType.PreAction, registryKeyB, hooksB);
-        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyB, hooksB, hooksConfigB);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg1, registryKeyB, hooksB, hooksConfigB);
 
         // Expecting both clear and register events should be emitted
         vm.expectEmit(true, false, false, true);
@@ -372,7 +388,7 @@ contract HookRegistryTest is BaseTest {
         vm.expectEmit(true, false, false, true);
         emit HooksRegistered(HookRegistry.HookType.PreAction, registryKeyA, hooksC);
         // register new hooks with the same registryKeyA, expecting the existing hooks should be replaced
-        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyA, hooksC, hooksConfigC);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg1, registryKeyA, hooksC, hooksConfigC);
 
         vm.stopPrank();
 
@@ -405,10 +421,11 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfigA = new bytes[](2);
         hooksConfigA[0] = abi.encode("Hook1Config");
         hooksConfigA[1] = abi.encode("Hook2Config");
-        address ipOrg1 = address(0x789);
-        bytes32 registryKeyA = hookRegistry.hookRegistryKey(ipOrg1, "RelationshipType_A");
-        vm.startPrank(admin);
-        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyA, hooksA, hooksConfigA);
+        address ipOrgOwner1 = address(0x789);
+        IIPOrg ipOrg1 = new MockIPOrg(ipOrgOwner1);
+        bytes32 registryKeyA = hookRegistry.hookRegistryKey(address(ipOrg1), "RelationshipType_A");
+        vm.startPrank(ipOrgOwner1);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg1, registryKeyA, hooksA, hooksConfigA);
         vm.stopPrank();
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -429,10 +446,11 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfigA = new bytes[](2);
         hooksConfigA[0] = abi.encode("Hook1Config");
         hooksConfigA[1] = abi.encode("Hook2Config");
-        address ipOrg1 = address(0x789);
-        bytes32 registryKeyA = hookRegistry.hookRegistryKey(ipOrg1, "RelationshipType_A");
-        vm.startPrank(admin);
-        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyA, hooksA, hooksConfigA);
+        address ipOrgOwner1 = address(0x789);
+        IIPOrg ipOrg1 = new MockIPOrg(ipOrgOwner1);
+        bytes32 registryKeyA = hookRegistry.hookRegistryKey(address(ipOrg1), "RelationshipType_A");
+        vm.startPrank(ipOrgOwner1);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg1, registryKeyA, hooksA, hooksConfigA);
         vm.stopPrank();
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -452,11 +470,12 @@ contract HookRegistryTest is BaseTest {
         hooksA[1] = hook2;
         bytes[] memory hooksConfigA = new bytes[](1);
         hooksConfigA[0] = abi.encode("Hook1Config");
-        address ipOrg1 = address(0x789);
-        bytes32 registryKeyA = hookRegistry.hookRegistryKey(ipOrg1, "RelationshipType_A");
-        vm.startPrank(admin);
+        address ipOrgOwner1 = address(0x789);
+        IIPOrg ipOrg1 = new MockIPOrg(ipOrgOwner1);
+        bytes32 registryKeyA = hookRegistry.hookRegistryKey(address(ipOrg1), "RelationshipType_A");
+        vm.startPrank(ipOrgOwner1);
         vm.expectRevert(Errors.HookRegistry_HooksConfigLengthMismatch.selector);
-        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyA, hooksA, hooksConfigA);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg1, registryKeyA, hooksA, hooksConfigA);
         vm.stopPrank();
     }
 
@@ -470,11 +489,12 @@ contract HookRegistryTest is BaseTest {
         bytes[] memory hooksConfigA = new bytes[](2);
         hooksConfigA[0] = abi.encode("Hook1Config");
         hooksConfigA[1] = abi.encode("Hook2Config");
-        address ipOrg1 = address(0x789);
-        bytes32 registryKeyA = hookRegistry.hookRegistryKey(ipOrg1, "RelationshipType_A");
-        vm.startPrank(admin);
+        address ipOrgOwner1 = address(0x789);
+        IIPOrg ipOrg1 = new MockIPOrg(ipOrgOwner1);
+        bytes32 registryKeyA = hookRegistry.hookRegistryKey(address(ipOrg1), "RelationshipType_A");
+        vm.startPrank(ipOrgOwner1);
         vm.expectRevert(Errors.HookRegistry_RegisteringZeroAddressHook.selector);
-        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, registryKeyA, hooksA, hooksConfigA);
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg1, registryKeyA, hooksA, hooksConfigA);
         vm.stopPrank();
     }
 }

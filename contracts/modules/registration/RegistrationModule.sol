@@ -278,22 +278,10 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         }
     }
 
-    /// @dev Returns the administrator for the registration module hooks.
-    /// TODO(kingter) Define the administrator for this call.
-    function _hookRegistryAdmin()
-        internal
-        view
-        virtual
-        override
-        returns (address)
-    {
-        return address(0);
-    }
-
     function _hookRegistryKey(
         IIPOrg ipOrg_,
         address,
-        bytes calldata params_
+        bytes calldata
     ) internal view virtual override returns(bytes32) {
         return keccak256(abi.encode(address(ipOrg_), "REGISTRATION"));
     }
