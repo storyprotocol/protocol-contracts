@@ -83,11 +83,12 @@ contract StoryProtocol {
         bytes[] calldata preHooksData_,
         bytes[] calldata postHooksData_
     ) public returns (uint256, uint256) {
+        bytes memory encodedParams = abi.encode(Registration.REGISTER_IP_ASSET, abi.encode(params_));
         bytes memory result = MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             msg.sender,
             ModuleRegistryKeys.REGISTRATION_MODULE,
-            abi.encode(params_),
+            encodedParams,
             preHooksData_,
             postHooksData_
         );

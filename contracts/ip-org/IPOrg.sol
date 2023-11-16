@@ -53,7 +53,7 @@ contract IPOrg is
 
     /// @notice Retrieves the current owner of the IP Org.
     function owner() external view returns (address) {
-        return IPOrgController(CONTROLLER).ownerOf(msg.sender);
+        return IPOrgController(CONTROLLER).ownerOf(address(this));
     }
 
     /// @notice Gets the current owner of an IP asset within the IP Org.

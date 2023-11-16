@@ -183,7 +183,7 @@ contract IPOrgController is
     function _ipOrgRecord(address ipOrg_) internal view returns (IPOrgRecord storage record) {
         IPOrgControllerStorage storage $ = _getIpOrgControllerStorage();
         record = $.ipOrgs[ipOrg_];
-        if (record.owner == address(0)) {
+        if (!$.ipOrgs[ipOrg_].registered) {
             revert Errors.IPOrgController_IPOrgNonExistent();
         }
     }
@@ -192,7 +192,7 @@ contract IPOrgController is
     /// @param ipOrg_ The address of the IP Org being queried.
     function _assertIPOrgExists(address ipOrg_) internal view {
         IPOrgControllerStorage storage $ = _getIpOrgControllerStorage();
-        if ($.ipOrgs[ipOrg_].registered) {
+        if (!$.ipOrgs[ipOrg_].registered) {
             revert Errors.IPOrgController_IPOrgNonExistent();
         }
     }

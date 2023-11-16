@@ -11,6 +11,7 @@ import "contracts/ip-org/IPOrgController.sol";
 import "contracts/ip-org/IPOrg.sol";
 import "contracts/lib/IPOrgParams.sol";
 import "contracts/IPAssetRegistry.sol";
+import "contracts/lib/modules/Registration.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/IPAssetRegistry.sol";
 import "contracts/interfaces/modules/collect/ICollectModule.sol";
@@ -153,19 +154,16 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     function _createIpAsset(address ipAssetOwner, uint8 ipAssetType, bytes memory collectData) internal isValidReceiver(ipAssetOwner) returns (uint256) {
         // vm.assume(ipAssetType > uint8(type(IPAsset.IPAssetType).min));
         // vm.assume(ipAssetType < uint8(type(IPAsset.IPAssetType).max));
-        vm.prank(address(ipOrg));
-        // TODO: This was commented for compilation
-        // (uint256 id, ) = ipOrg.createIpAsset(IPAsset.CreateIpAssetParams({
-        //     ipAssetType: IPAsset.IPAssetType(ipAssetType),
-        //     name: "name",
-        //     description: "description",
-        //     mediaUrl: "mediaUrl",
-        //     to: ipAssetOwner,
-        //     parentIpAssetOrgId: 0,
-        //     collectData: collectData
-        // }));
-        // return id;
-        return 1;
+        vm.prank(address(ipAssetOwner));
+        Registration.RegisterIPAssetParams memory params = Registration.RegisterIPAssetParams({
+            owner: ipAssetOwner,
+            name: "TestIPAsset",
+            ipAssetType: 0, 
+            hash: ""
+        });
+        bytes[] memory hooks = new bytes[](0);
+        (uint256 globalId, uint256 localId) = spg.registerIPAsset(address(ipOrg), params, hooks, hooks);
+        return globalId;
     }
 
 }

@@ -84,15 +84,14 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
             return string(abi.encodePacked(config.baseURI, Strings.toString(id)));
         }
 
-        IPAsset.IPA memory ipAsset = IPA_REGISTRY.ipAsset(id);
+        IPAssetRegistry.IPA memory ipAsset = IPA_REGISTRY.ipAsset(id);
 
         // Construct the base JSON metadata with custom name format
         string memory baseJson = string(abi.encodePacked(
             '{"name": "Global IP Asset #', Strings.toString(id),
-            ': ', ipAsset.name,
-            '", "description": "IP Org Asset Registration Details", "attributes": ['
+            '", "description": "IP Org Asset Registration Details", "attributes": [',
+            '{"trait_type": "Name", "value": "', ipAsset.name, '"},'
         ));
-
 
         string memory ipOrgAttributes = string(abi.encodePacked(
             '{"trait_type": "IP Org", "value": "', Strings.toHexString(uint160(ipAsset.ipOrg), 20), '"},',
@@ -199,6 +198,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         bytes32 hash_
     ) internal returns (uint256 ipAssetId_, uint256 ipOrgAssetId_) {
         ipAssetId_ = IPA_REGISTRY.register(
+            address(ipOrg_),
             owner_,
             name_,
             ipAssetType_,
