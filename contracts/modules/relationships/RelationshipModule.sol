@@ -40,7 +40,25 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         address accessControl_
     ) BaseModule(params_) AccessControlled(accessControl_) {}
 
-    
+
+    /// @notice Registers hooks for a specific hook type, based on IP Org and relationship type.
+    /// @dev This function can only be called by the IP Org owner.
+    /// @param hType_ The type of the hooks to register.
+    /// @param ipOrg_ The IP Org for which the hooks are being registered.
+    /// @param relType_ The relationship type for which the hooks are being registered.
+    /// @param hooks_ The addresses of the hooks to register.
+    /// @param hooksConfig_ The configurations for the hooks.
+    function registerHooks(
+        HookType hType_,
+        IIPOrg ipOrg_,
+        string calldata relType_,
+        address[] calldata hooks_,
+        bytes[] calldata hooksConfig_
+    ) external onlyIpOrgOwner(ipOrg_) {
+        bytes32 registryKey = _generateRegistryKey(ipOrg_, relType_);
+        registerHooks(hType_, ipOrg_, registryKey, hooks_, hooksConfig_);
+    }
+
     /// Gets relationship type definition for a given relationship type name
     /// Will revert if no relationship type is found
     /// @param ipOrg_ IP Org address or zero address for protocol level relationships
@@ -242,6 +260,10 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         bytes calldata params_
     ) internal view virtual override returns(bytes32) {
         LibRelationship.CreateRelationshipParams memory createParams = abi.decode(params_, (LibRelationship.CreateRelationshipParams));
-        return keccak256(abi.encode(address(ipOrg_), createParams.relType));
+        return _generateRegistryKey(ipOrg_, createParams.relType);
+    }
+
+    function _generateRegistryKey(IIPOrg ipOrg_, string memory relType_) private pure returns(bytes32) {
+        return keccak256(abi.encode(address(ipOrg_), relType_));
     }
 }
