@@ -95,8 +95,7 @@ contract LicenseRegistry is ERC721 {
                     termIds: params_.termIds,
                     termsData: params_.termsData,
                     ipaId: ipaId_,
-                    parentLicenseId: params_.parentLicenseId,
-                    data: params_.data
+                    parentLicenseId: params_.parentLicenseId
                 })
             );
     }
@@ -126,8 +125,7 @@ contract LicenseRegistry is ERC721 {
                 termIds: params_.termIds,
                 termsData: params_.termsData,
                 ipaId: 0,
-                parentLicenseId: params_.parentLicenseId,
-                data: params_.data
+                parentLicenseId: params_.parentLicenseId
             })
         );
         _mint(licensee_, _licenseCount);

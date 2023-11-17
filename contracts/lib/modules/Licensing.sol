@@ -32,8 +32,6 @@ library Licensing {
         ShortString[] termIds;
         /// The data configuring each term. May be empty bytes. May be passed to the term hook
         bytes[] termsData;
-        /// Future use
-        bytes data;
     }
 
     enum LicenseStatus {
@@ -70,8 +68,6 @@ library Licensing {
         ShortString[] termIds;
         /// The data configuring each term. May be empty bytes. May be passed to the term hook
         bytes[] termsData;
-        /// Future use
-        bytes data;
     }
 
     enum LicenseeType {

@@ -11,6 +11,7 @@ import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
 import { Registration } from "contracts/lib/modules/Registration.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
+import { FixedSet } from "contracts/utils/FixedSet.sol";
 import "forge-std/console2.sol";
 
 contract StoryProtocol {
