@@ -7,7 +7,15 @@ import { ShortStrings, ShortString } from "@openzeppelin/contracts/utils/ShortSt
 import 'test/foundry/utils/BaseTest.sol';
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { TermCategories, TermIds } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
-import { ProtocolTermsHelper } from "contracts/modules/licensing/ProtocolTermsHelper.sol";
+
+struct LicTestConfig {
+    bool shareAlike;
+    TermsData.LicensorConfig licConfig;
+}
+struct TestTermConfig {
+    ShortString termId;
+    bytes data;
+}
 
 contract BaseLicensingTest is BaseTest {
     using ShortStrings for *;
@@ -26,6 +34,8 @@ contract BaseLicensingTest is BaseTest {
     bytes[] public nonCommTermData;
     ShortString[] public commTermIds;
     bytes[] public commTermData;
+
+     
 
     modifier withNonCommFrameworkShareAlike() {
         vm.prank(ipOrg.owner());
@@ -123,7 +133,7 @@ contract BaseLicensingTest is BaseTest {
 
     function setUp() virtual override public {
         super.setUp();
-        _addShareAlike(Licensing.CommercialStatus.Both);
+        _addProtocolTerms();
         _addTextTerms();
         nonCommTermIds = [textTermId, nonCommTextTermId];
         nonCommTermData = [bytes(""), bytes("")];
@@ -146,11 +156,20 @@ contract BaseLicensingTest is BaseTest {
             });
     }
 
-    function getCommFramework(bool comShareAlike, bool nonComShareAlike) public returns (Licensing.FrameworkConfig memory) {
-        commTermIds.push(TermIds.NFT_SHARE_ALIKE.toShortString());
-        commTermData.push(abi.encode(comShareAlike));
+    function getCommFramework(
+        bool comShareAlike,
+        TermsData.LicensorConfig comLicConfig,
+        bool nonComShareAlike,
+        TermsData.LicensorConfig nonComLicConfig
+    ) public returns (Licensing.FrameworkConfig memory) {
         nonCommTermIds.push(TermIds.NFT_SHARE_ALIKE.toShortString());
         nonCommTermData.push(abi.encode(nonComShareAlike));
+        nonCommTermIds.push(TermIds.LICENSOR_IPORG_OR_PARENT.toShortString());
+        nonCommTermData.push(abi.encode(nonComShareAlike));
+        commTermIds.push(TermIds.NFT_SHARE_ALIKE.toShortString());
+        commTermData.push(abi.encode(comShareAlike));
+        commTermIds.push(TermIds.LICENSOR_IPORG_OR_PARENT.toShortString());
+        commTermData.push(abi.encode(comLicConfig));
         return
             Licensing.FrameworkConfig({
                 comTermsConfig: Licensing.TermsConfig({
@@ -164,9 +183,11 @@ contract BaseLicensingTest is BaseTest {
             });
     }
 
-    function getNonCommFramework(bool shareAlike) public returns (Licensing.FrameworkConfig memory) {
+    function getNonCommFramework(bool shareAlike, TermsData.LicensorConfig licConfig) public returns (Licensing.FrameworkConfig memory) {
         nonCommTermIds.push(TermIds.NFT_SHARE_ALIKE.toShortString());
         nonCommTermData.push(abi.encode(shareAlike));
+        nonCommTermIds.push(TermIds.LICENSOR_IPORG_OR_PARENT.toShortString());
+        nonCommTermData.push(abi.encode(licConfig));
         return
             Licensing.FrameworkConfig({
                 comTermsConfig: Licensing.TermsConfig({
@@ -181,22 +202,19 @@ contract BaseLicensingTest is BaseTest {
     }
 
     function getNonCommFrameworkAndPush(
-        bool shareAlike,
-        ShortString termId,
-        bytes memory data
+        LicTestConfig comConf,
+        TestTermConfig comTerm
     ) public returns (Licensing.FrameworkConfig memory) {
-        nonCommTermIds.push(termId);
-        nonCommTermData.push(data);
-        return getNonCommFramework(shareAlike);
+        nonCommTermIds.push(comTerm.termId);
+        nonCommTermData.push(comTerm.data);
+        return getNonCommFramework(comConf.shareAlike, comConf.licConfig);
     }
 
     function getCommFrameworkAndPush(
-        bool cShareAlike,
-        ShortString ncTermId,
-        bytes memory ncData,
-        bool ncShareAlike,
-        ShortString cTermId,
-        bytes memory cData
+        LicTestConfig comConf,
+        TestTermConfig comTerm,
+        LicTestConfig nonComConf,
+        TestTermConfig nonComTerm
     ) public returns (Licensing.FrameworkConfig memory) {
         nonCommTermIds.push(ncTermId);
         nonCommTermData.push(ncData);
@@ -204,7 +222,7 @@ contract BaseLicensingTest is BaseTest {
         commTermIds.push(cTermId);
         commTermData.push(cData);
 
-        return getCommFramework(cShareAlike, ncShareAlike);
+        return getCommFramework(com, ncShareAlike);
     }
 
 
@@ -246,14 +264,36 @@ contract BaseLicensingTest is BaseTest {
         }
     }
 
-    function _addShareAlike(Licensing.CommercialStatus comStatus) private {
+    function _addProtocolTerms() private {
+        Licensing.CommercialStatus comStatus = Licensing.CommercialStatus.Both;
         licensingModule.addCategory(TermCategories.SHARE_ALIKE);
-        Licensing.LicensingTerm memory term = ProtocolTermsHelper._getNftShareAlikeTerm(comStatus);
-        licensingModule.addTerm(
-            TermCategories.SHARE_ALIKE,
-            TermIds.NFT_SHARE_ALIKE,
-            term
-        );
+        Licensing.LicensingTerm memory term = _getTerm(TermIds.NFT_SHARE_ALIKE, comStatus);
+        licensingModule.addTerm(TermCategories.SHARE_ALIKE, TermIds.NFT_SHARE_ALIKE, term);
+
+        licensingModule.addCategory(TermCategories.LICENSOR);
+        term = _getTerm(TermIds.LICENSOR_APPROVAL, comStatus);
+        licensingModule.addTerm(TermCategories.LICENSOR, TermIds.LICENSOR_APPROVAL, term);
+
+        licensingModule.addCategory(TermCategories.CATEGORIZATION);
+        term = _getTerm(TermIds.FORMAT_CATEGORY, comStatus);
+        licensingModule.addTerm(TermCategories.CATEGORIZATION, TermIds.FORMAT_CATEGORY, term);
+
+        licensingModule.addCategory(TermCategories.ACTIVATION);
+        term = _getTerm(TermIds.LICENSOR_IPORG_OR_PARENT, comStatus);
+        licensingModule.addTerm(TermCategories.ACTIVATION, TermIds.LICENSOR_IPORG_OR_PARENT, term);
+    }
+
+    function _getTerm(
+        string memory termId,
+        Licensing.CommercialStatus comStatus_
+    ) internal pure returns (Licensing.LicensingTerm memory) {
+        return Licensing.LicensingTerm({
+            comStatus: comStatus_,
+            url: string(abi.encodePacked("https://", termId,".com")),
+            hash: "qwertyu",
+            algorithm: "sha256",
+            hook: IHook(address(0))
+        });
     }
 
     function _addTextTerms() private {

@@ -17,7 +17,7 @@ library TermIds {
     string constant NFT_SHARE_ALIKE = "NFT_SHARE_ALIKE";
     string constant LICENSOR_APPROVAL = "LICENSOR_APPROVAL";
     string constant FORMAT_CATEGORY = "FORMAT_CATEGORY";
-    string constant LICENSOR_IPORG_OR_PARENT_LICENSOR = "LICENSOR_IPORG_OR_PARENT_LICENSOR";
+    string constant LICENSOR_IPORG_OR_PARENT = "LICENSOR_IPORG_OR_PARENT";
 }
 
 library TermsData {

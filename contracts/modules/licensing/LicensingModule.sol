@@ -433,7 +433,7 @@ contract LicensingModule is BaseModule, TermsRepository{
             bytes memory data = termsConfig_.termData[i];
             if (ShortStringOps._equal(termId, TermIds.NFT_SHARE_ALIKE)) {
                 _shareAlike[termsKey_] = abi.decode(data, (bool));
-            } else if (ShortStringOps._equal(termId, TermIds.LICENSOR_IPORG_OR_PARENT_LICENSOR)) {
+            } else if (ShortStringOps._equal(termId, TermIds.LICENSOR_IPORG_OR_PARENT)) {
                 _licensorConfig[termsKey_] = abi.decode(data, (TermsData.LicensorConfig));
             } else if (ShortStringOps._equal(termId, TermIds.LICENSOR_APPROVAL)) {
                 _licensorApprovalNeeded[termsKey_] = abi.decode(data, (bool));

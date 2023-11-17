@@ -11,7 +11,6 @@ import { TermIds, TermCategories } from "contracts/lib/modules/ProtocolLicensing
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { BaseLicensingTest } from "./BaseLicensingTest.sol";
-import { ProtocolTermsHelper } from "contracts/modules/licensing/ProtocolTermsHelper.sol";
 
 contract LicensingCreatorModuleTermsTest is BaseLicensingTest {
     using ShortStrings for *;
