@@ -36,6 +36,9 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     /// @notice Reverse lookup from IP Org asset to global IP asset ids.
     mapping(address => mapping(uint256 => uint256)) public ipAssetId;
 
+    /// @notice IP Org asset to its tokenURI.
+    mapping(address => mapping(uint256 => string)) public tokenUris;
+
     /// @notice Initializes the registration module.
     constructor(
         BaseModule.ModuleConstruction memory params_,
@@ -77,6 +80,12 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         address owner = IIPOrg(ipOrg_).ownerOf(ipOrgAssetId_);
         if (owner == address(0)) {
             revert Errors.RegistrationModule_IPAssetNonExistent();
+        }
+
+        // If the token URI has been set to specific IP Org asset, return it.
+        // It overrides the base URI.
+        if (bytes(tokenUris[ipOrg_][ipOrgAssetId_]).length > 0) {
+            return tokenUris[ipOrg_][ipOrgAssetId_];
         }
 
         Registration.IPOrgConfig memory config = ipOrgConfigs[ipOrg_];
@@ -185,7 +194,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
             return "";
         } else if (executionType == Registration.REGISTER_IP_ASSET) {
             Registration.RegisterIPAssetParams memory params = abi.decode(executionData, (Registration.RegisterIPAssetParams));
-            (uint256 ipAssetId__, uint256 ipOrgAssetId) = _registerIPAsset(ipOrg_, params.owner, params.name, params.ipAssetType, params.hash);
+            (uint256 ipAssetId__, uint256 ipOrgAssetId) = _registerIPAsset(ipOrg_, params.owner, params.name, params.ipAssetType, params.hash, params.mediaUrl);
             return abi.encode(ipAssetId__, ipOrgAssetId);
         }
         return "";
@@ -197,12 +206,14 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     /// @param name_ A descriptive name for the IP asset being registered.
     /// @param ipAssetType_ A numerical identifier for the IP asset type.
     /// @param hash_ The content hash of the IP asset being registered.
+    /// @param mediaUrl_ The media URL of the IP asset being registered.
     function _registerIPAsset(
         IIPOrg ipOrg_,
         address owner_,
         string memory name_,
         uint64 ipAssetType_,
-        bytes32 hash_
+        bytes32 hash_,
+        string memory mediaUrl_
     ) internal returns (uint256 ipAssetId_, uint256 ipOrgAssetId_) {
         ipAssetId_ = IPA_REGISTRY.register(
             address(ipOrg_),
@@ -215,6 +226,9 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         ipAssetId[address(ipOrg_)][ipOrgAssetId_] = ipAssetId_;
         IPOrgAsset memory ipOrgAsset = IPOrgAsset(address(ipOrg_), ipOrgAssetId_);
         ipOrgAssets[ipAssetId_] = ipOrgAsset;
+        if (bytes(mediaUrl_).length > 0) {
+            tokenUris[address(ipOrg_)][ipOrgAssetId_] = mediaUrl_;
+        }
         emit IPAssetRegistered(
             ipAssetId_,
             address(ipOrg_),
@@ -222,7 +236,8 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
             owner_,
             name_,
             ipAssetType_,
-            hash_
+            hash_,
+            mediaUrl_
         );
     }
 

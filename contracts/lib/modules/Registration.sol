@@ -17,6 +17,7 @@ library Registration {
         string name;
         uint64 ipAssetType;
         bytes32 hash;
+        string mediaUrl;
     }
 
     // TODO(leeren): Change in favor of granular function-selector based auth.
