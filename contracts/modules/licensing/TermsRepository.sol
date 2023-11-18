@@ -71,12 +71,10 @@ contract TermsRepository is Multicall {
         ShortString category = category_.toShortString();
         _verifyCategoryExists(category);
         if (term_.comStatus == Licensing.CommercialStatus.Unset) {
-            console.log("TermsRegistry_CommercialStatusUnset");
             revert Errors.TermsRegistry_CommercialStatusUnset();
         }
         ShortString termId = termId_.toShortString();
         if (_terms[termId].comStatus != Licensing.CommercialStatus.Unset) {
-            console.log("TermsRegistry_TermAlreadyExists");
             revert Errors.TermsRegistry_TermAlreadyExists();
         }
         _terms[termId] = term_;
@@ -149,7 +147,6 @@ contract TermsRepository is Multicall {
 
     function _verifyCategoryExists(ShortString category_) private view {
         if (!_termCategories.contains(ShortString.unwrap(category_))) {
-            console.log("TermsRegistry_UnsupportedTermCategory");
             revert Errors.TermsRegistry_UnsupportedTermCategory();
         }
     }

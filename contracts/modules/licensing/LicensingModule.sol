@@ -15,7 +15,6 @@ import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { TermIds, TermsData } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 
-import "forge-std/console2.sol";
 
 /// @title License Creator module
 /// @notice Story Protocol module that:
@@ -272,9 +271,6 @@ contract LicensingModule is BaseModule, TermsRepository {
             params_,
             (bytes32, bytes)
         );
-        console2.log("LicensingModule._performAction");
-        console2.logBytes32(action);
-        console2.logBytes32(Licensing.BOND_LNFT_TO_IPA);
         if (action == Licensing.CREATE_LICENSE) {
             return _createLicense(ipOrg_, caller_, actionParams);
         } else if (action == Licensing.ACTIVATE_LICENSE) {
@@ -284,7 +280,6 @@ contract LicensingModule is BaseModule, TermsRepository {
                 actionParams,
                 (uint256, uint256)
             );
-            console2.log(" licenseId, ipaId", licenseId, ipaId);
             LICENSE_REGISTRY.bondLnftToIpa(licenseId, ipaId);
             return bytes("");
         } else {

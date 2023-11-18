@@ -15,6 +15,8 @@ import { LibUintArrayMask } from "contracts/lib/LibUintArrayMask.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 
+import "forge-std/console2.sol";
+
 /// @title Registration Module
 /// @notice Handles registration and transferring of IP assets..
 contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled {
@@ -211,7 +213,9 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
             ipAssetType_,
             hash_
         );
+        console2.log("ipAssetId_", ipAssetId_);
         ipOrgAssetId_ = ipOrg_.mint(owner_);
+        console2.log("ipOrgAssetId_", ipOrgAssetId_);
         ipAssetId[address(ipOrg_)][ipOrgAssetId_] = ipAssetId_;
         IPOrgAsset memory ipOrgAsset = IPOrgAsset(address(ipOrg_), ipOrgAssetId_);
         ipOrgAssets[ipAssetId_] = ipOrgAsset;
