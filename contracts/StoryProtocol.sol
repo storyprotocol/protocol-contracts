@@ -12,7 +12,6 @@ import { Registration } from "contracts/lib/modules/Registration.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
-import "forge-std/console2.sol";
 
 contract StoryProtocol {
 
@@ -225,7 +224,6 @@ contract StoryProtocol {
         bytes[] calldata preHooksData_,
         bytes[] calldata postHooksData_
     ) external returns (uint256) {
-        console2.log("createLicenseNft");
         bytes memory params = abi.encode(
             params_,
             Licensing.LicenseeType.LNFTHolder,
@@ -259,7 +257,6 @@ contract StoryProtocol {
         bytes[] calldata preHooksData_,
         bytes[] calldata postHooksData_
     ) external returns (uint256) {
-        console2.log("createIpaBoundLicense");
         bytes memory params = abi.encode(
             params_,
             Licensing.LicenseeType.BoundToIpa,
@@ -283,7 +280,6 @@ contract StoryProtocol {
         address ipOrg_,
         uint256 licenseId_
     ) external {
-        console2.log("activateLicense");
         MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             msg.sender,
@@ -297,12 +293,11 @@ contract StoryProtocol {
         );
     }
 
-    function bondLnftToIpa(
+    function bindLnftToIpa(
         address ipOrg_,
         uint256 licenseId_,
         uint256 ipaId_
     ) external {
-        console2.log("bondLnftToIpa");
         MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             msg.sender,

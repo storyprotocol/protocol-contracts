@@ -280,7 +280,7 @@ contract LicensingModule is BaseModule, TermsRepository {
                 actionParams,
                 (uint256, uint256)
             );
-            LICENSE_REGISTRY.bondLnftToIpa(licenseId, ipaId);
+            LICENSE_REGISTRY.bindLnftToIpa(licenseId, ipaId);
             return bytes("");
         } else {
             revert Errors.LicensingModule_InvalidAction();

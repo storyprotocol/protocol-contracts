@@ -171,7 +171,7 @@ contract LicensingModuleLicensingTest is BaseLicensingTest {
         // Fail to bound if not active
         console2.log("Fail to bound if not active");
         vm.expectRevert();
-        spg.bondLnftToIpa(
+        spg.bindLnftToIpa(
             address(ipOrg),
             lid2,
             1
@@ -194,7 +194,7 @@ contract LicensingModuleLicensingTest is BaseLicensingTest {
         // Bond if active
         console2.log("Bond if active");
         vm.prank(ipaOwner2);
-        spg.bondLnftToIpa(
+        spg.bindLnftToIpa(
             address(ipOrg),
             lid2,
             1

@@ -172,7 +172,7 @@ contract LicenseRegistry is ERC721 {
     /// Burns a license NFT and binds the license to an IPA
     /// @param licenseId_ id of the license NFT
     /// @param ipaId_ id of the IPA
-    function bondLnftToIpa(
+    function bindLnftToIpa(
         uint256 licenseId_,
         uint256 ipaId_
     ) external onlyLicensingModule {
