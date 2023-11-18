@@ -38,6 +38,7 @@ library IPAsset {
         uint64 ipAssetType;
         address owner;
         bytes32 hash;
+        string mediaUrl;
     }
 
     struct CreateIpAssetParams {

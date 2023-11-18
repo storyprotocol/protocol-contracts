@@ -24,6 +24,7 @@ interface IRegistrationModule {
     /// @param name_ The name of the IP asset being registered.
     /// @param ipAssetType_ The numerical id of the IP asset type.
     /// @param hash_ The content hash of the registered IP asset.
+    /// @param mediaUrl_ The media URL of the registered IP asset.
     event IPAssetRegistered(
         uint256 ipAssetId_,
         address indexed ipOrg_,
@@ -31,7 +32,8 @@ interface IRegistrationModule {
         address indexed owner_,
         string name_,
         uint64 indexed ipAssetType_,
-        bytes32 hash_
+        bytes32 hash_,
+        string mediaUrl_
     );
 
     /// @notice Emits when an IP asset is transferred to a new owner.
