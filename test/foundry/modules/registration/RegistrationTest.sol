@@ -65,17 +65,17 @@ contract RegistrationModuleTest is BaseTest {
             "https://storyprotocol.xyz/",
             "https://storyprotocol.xyz"
         );
-        assertEq(registrationModule.tokenURI(address(ipOrg), 0), "https://storyprotocol.xyz/0");
+        assertEq(registrationModule.tokenURI(address(ipOrg), 1), "https://storyprotocol.xyz/1");
     }
 
     /// @notice Tests the default token URI for IPAs.
     function test_RegistrationModuleDefaultIPOrgMetadata() public virtual createIpAsset(registrant, 0) {
-        IPAssetRegistry.IPA memory ipa = registry.ipAsset(0);
+        IPAssetRegistry.IPA memory ipa = registry.ipAsset(1);
         string memory ipOrgStr = Strings.toHexString(uint160(address(ipOrg)), 20);
         string memory registrantStr = Strings.toHexString(uint160(address(registrant)), 20);
 
         string memory part1 = string(abi.encodePacked(
-            '{"name": "Global IP Asset #0", "description": "IP Org Asset Registration Details", "attributes": [',
+            '{"name": "Global IP Asset #1", "description": "IP Org Asset Registration Details", "attributes": [',
             '{"trait_type": "Name", "value": "TestIPAsset"},',
             '{"trait_type": "IP Org", "value": "', ipOrgStr, '"},',
             '{"trait_type": "Current IP Owner", "value": "', registrantStr, '"},',
@@ -84,7 +84,7 @@ contract RegistrationModuleTest is BaseTest {
 
         string memory part2 = string(abi.encodePacked(
             '{"trait_type": "IP Asset Type", "value": "0"},',
-            '{"trait_type": "Status", "value": "0"},',
+            '{"trait_type": "Status", "value": "1"},',
             '{"trait_type": "Hash", "value": "0x0000000000000000000000000000000000000000000000000000000000000000"},',
             '{"trait_type": "Registration Date", "value": "', Strings.toString(ipa.registrationDate), '"}'
             ']}'
@@ -93,7 +93,7 @@ contract RegistrationModuleTest is BaseTest {
             "data:application/json;base64,",
             Base64.encode(bytes(string(abi.encodePacked(part1, part2))))
         ));
-        assertEq(expectedURI, registrationModule.tokenURI(address(ipOrg), 0));
+        assertEq(expectedURI, registrationModule.tokenURI(address(ipOrg), 1));
 
     }
 
@@ -102,7 +102,7 @@ contract RegistrationModuleTest is BaseTest {
         vm.prank(cal);
         vm.expectEmit(true, true, true, true, address(registry));
         emit Registered(
-            0,
+            1,
             "TestIPA",
             0,
             address(ipOrg),
@@ -111,9 +111,9 @@ contract RegistrationModuleTest is BaseTest {
         );
         vm.expectEmit(true, true, true, true, address(registrationModule));
         emit IPAssetRegistered(
-            0,
+            1,
             address(ipOrg),
-            0,
+            1,
             cal,
             "TestIPA",
             0,
@@ -121,8 +121,8 @@ contract RegistrationModuleTest is BaseTest {
             ""
         );
         _register(address(ipOrg), cal, "TestIPA", 0, "", "");
-        assertEq(registry.ipAssetOwner(0), cal);
-        assertEq(ipOrg.ownerOf(0), cal);
+        assertEq(registry.ipAssetOwner(1), cal);
+        assertEq(ipOrg.ownerOf(1), cal);
     }
 
     /// @notice Tests IP Asset registration with media URL.
@@ -131,7 +131,7 @@ contract RegistrationModuleTest is BaseTest {
         vm.prank(cal);
         vm.expectEmit(true, true, true, true, address(registry));
         emit Registered(
-            0,
+            1,
             "TestIPA",
             0,
             address(ipOrg),
@@ -140,9 +140,9 @@ contract RegistrationModuleTest is BaseTest {
         );
         vm.expectEmit(true, true, true, true, address(registrationModule));
         emit IPAssetRegistered(
-            0,
+            1,
             address(ipOrg),
-            0,
+            1,
             cal,
             "TestIPA",
             0,
@@ -150,9 +150,9 @@ contract RegistrationModuleTest is BaseTest {
             mediaUrl
         );
         _register(address(ipOrg), cal, "TestIPA", 0, "", mediaUrl);
-        assertEq(registry.ipAssetOwner(0), cal);
-        assertEq(ipOrg.ownerOf(0), cal);
-        assertEq(mediaUrl, registrationModule.tokenURI(address(ipOrg), 0));
+        assertEq(registry.ipAssetOwner(1), cal);
+        assertEq(ipOrg.ownerOf(1), cal);
+        assertEq(mediaUrl, registrationModule.tokenURI(address(ipOrg), 1));
     }
 
     /// @dev Helper function that performs registration.

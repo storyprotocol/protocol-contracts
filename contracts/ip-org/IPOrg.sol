@@ -58,7 +58,7 @@ contract IPOrg is
 
     /// @notice Gets the current owner of an IP asset within the IP Org.
     function ownerOf(uint256 id) public view override(IIPOrg, ERC721Upgradeable) returns (address) {
-        return ERC721Upgradeable.ownerOf(id);
+        return super.ownerOf(id);
     }
 
     /// @notice Retrieves the token URI for an IP Asset within the IP Asset Org.
@@ -102,7 +102,7 @@ contract IPOrg is
     /// @notice Registers a new IP Asset wrapper for the IP Org.
     function mint(address owner_) public onlyRegistrationModule returns (uint256 id) {
         totalSupply++;
-        id = lastIndex++;
+        id = ++lastIndex;
         _mint(owner_, id);
     }
 

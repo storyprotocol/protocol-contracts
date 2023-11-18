@@ -7,6 +7,7 @@ import { AsyncBaseHook } from "contracts/hooks/base/AsyncBaseHook.sol";
 /// @notice This contract is a mock for testing the AsyncBaseHook contract.
 /// @dev It overrides the _requestAsyncCall and handleCallback functions for testing purposes.
 contract MockAsyncHook is AsyncBaseHook {
+    address immutable CALLBACK_CALLER;
 
     /// @notice Constructs the MockAsyncHook contract.
     /// @param accessControl_ The address of the access control contract.
@@ -15,7 +16,9 @@ contract MockAsyncHook is AsyncBaseHook {
     constructor(
         address accessControl_,
         address callbackCaller_
-    ) AsyncBaseHook(accessControl_, callbackCaller_) {}
+    ) AsyncBaseHook(accessControl_) {
+        CALLBACK_CALLER = callbackCaller_;
+    }
 
     /// @notice Requests an asynchronous call.
     /// @dev This function is overridden for testing purposes.
@@ -34,7 +37,10 @@ contract MockAsyncHook is AsyncBaseHook {
         returns (bytes memory hookData, bytes32 requestId)
     {
         // Simply return the input parameters
-        return (abi.encode(hookConfig_, hookParams_), bytes32(uint256(keccak256(hookParams_))));
+        return (
+            abi.encode(hookConfig_, hookParams_),
+            bytes32(uint256(keccak256(hookParams_)))
+        );
     }
 
     /// @notice Handles a callback.
@@ -51,4 +57,10 @@ contract MockAsyncHook is AsyncBaseHook {
     }
 
     function _validateConfig(bytes memory) internal view override {}
+
+    function _callbackCaller(
+        bytes32
+    ) internal view virtual override returns (address) {
+        return CALLBACK_CALLER;
+    }
 }

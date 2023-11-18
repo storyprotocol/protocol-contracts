@@ -11,6 +11,7 @@ import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
 import { Registration } from "contracts/lib/modules/Registration.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
+import { FixedSet } from "contracts/utils/FixedSet.sol";
 
 contract StoryProtocol {
 
@@ -228,17 +229,18 @@ contract StoryProtocol {
             Licensing.LicenseeType.LNFTHolder,
             abi.encode(licensee_)
         );
-        return abi.decode(
-            MODULE_REGISTRY.execute(
-                IIPOrg(ipOrg_),
-                msg.sender,
-                ModuleRegistryKeys.LICENSING_MODULE,
-                params,
-                preHooksData_,
-                postHooksData_
+        bytes memory result = MODULE_REGISTRY.execute(
+            IIPOrg(ipOrg_),
+            msg.sender,
+            ModuleRegistryKeys.LICENSING_MODULE,
+            abi.encode(
+                Licensing.CREATE_LICENSE,
+                params
             ),
-            (uint256)
+            preHooksData_,
+            postHooksData_
         );
+        return abi.decode(result, (uint256));
     }
 
     /// Creates a License bound to a certain IPA. It's not an NFT, the licensee will be the owner of the IPA.
@@ -260,14 +262,53 @@ contract StoryProtocol {
             Licensing.LicenseeType.BoundToIpa,
             abi.encode(ipaId_)
         );
-        return abi.decode( MODULE_REGISTRY.execute(
+        bytes memory result = MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             msg.sender,
             ModuleRegistryKeys.LICENSING_MODULE,
-            params,
+            abi.encode(
+                Licensing.CREATE_LICENSE,
+                params
+            ),
             preHooksData_,
             postHooksData_
-        ),
-        (uint256));
+        );
+        return abi.decode(result, (uint256));
     }
+
+    function activateLicense(
+        address ipOrg_,
+        uint256 licenseId_
+    ) external {
+        MODULE_REGISTRY.execute(
+            IIPOrg(ipOrg_),
+            msg.sender,
+            ModuleRegistryKeys.LICENSING_MODULE,
+            abi.encode(
+                Licensing.ACTIVATE_LICENSE,
+                abi.encode(licenseId_)
+            ),
+            new bytes[](0),
+            new bytes[](0)
+        );
+    }
+
+    function bindLnftToIpa(
+        address ipOrg_,
+        uint256 licenseId_,
+        uint256 ipaId_
+    ) external {
+        MODULE_REGISTRY.execute(
+            IIPOrg(ipOrg_),
+            msg.sender,
+            ModuleRegistryKeys.LICENSING_MODULE,
+            abi.encode(
+                Licensing.BOND_LNFT_TO_IPA,
+                abi.encode(licenseId_, ipaId_)
+            ),
+            new bytes[](0),
+            new bytes[](0)
+        );
+    }
+    
 }

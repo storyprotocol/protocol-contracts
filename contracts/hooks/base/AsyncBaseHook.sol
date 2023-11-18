@@ -16,7 +16,6 @@ import { Hook } from "contracts/lib/hooks/Hook.sol";
 abstract contract AsyncBaseHook is BaseHook {
     using ERC165Checker for address;
 
-    address private immutable CALLBACK_CALLER;
     /// @dev requestId => callback handler
     mapping(bytes32 => ICallbackHandler) public callbackHandlers;
 
@@ -40,15 +39,10 @@ abstract contract AsyncBaseHook is BaseHook {
 
     /// @notice Constructs the AsyncBaseHook contract.
     /// @param accessControl_ The address of the access control contract.
-    /// @param callbackCaller_ The address of the callback caller contract.
     /// @dev The constructor sets the access control and callback caller addresses.
     constructor(
-        address accessControl_,
-        address callbackCaller_
-    ) BaseHook(accessControl_) {
-        if (callbackCaller_ == address(0)) revert Errors.ZeroAddress();
-        CALLBACK_CALLER = callbackCaller_;
-    }
+        address accessControl_
+    ) BaseHook(accessControl_) {}
 
     /// @notice Executes an asynchronous hook.
     /// @dev Modules would utilize the function to make an async call.
@@ -108,21 +102,28 @@ abstract contract AsyncBaseHook is BaseHook {
         bytes memory hookParams_
     ) internal virtual returns (bytes memory hookData, bytes32 requestId);
 
+    /// @dev Internal function to get the address of the callback caller.
+    /// concrete hoot implementation should override the function.
+    /// @param requestId_ The ID of the request.
+    /// @return The address of the callback caller.
+    function _callbackCaller(bytes32 requestId_) internal view virtual returns (address);
 
     /// @dev Internal function to handle a callback from an asynchronous call.
     /// @param requestId_ The ID of the request.
     /// @param callbackData_ The data returned by the callback.
     function _handleCallback(
         bytes32 requestId_,
-        bytes calldata callbackData_
+        bytes memory callbackData_
     ) internal virtual {
         // Only designated callback caller can make a callback
-        if (msg.sender != CALLBACK_CALLER) {
+        address caller = _callbackCaller(requestId_);
+        if (msg.sender != caller) {
             revert Errors.Hook_OnlyCallbackCallerCanCallback(
                 msg.sender,
-                CALLBACK_CALLER
+                caller
             );
         }
+
         // Checking if a callback handler exists for the given request ID
         if (address(callbackHandlers[requestId_]) == address(0)) {
             revert Errors.Hook_InvalidAsyncRequestId(requestId_);

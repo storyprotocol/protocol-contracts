@@ -250,39 +250,42 @@ library Errors {
     error TermsRegistry_CommercialStatusUnset();
 
     ////////////////////////////////////////////////////////////////////////////
-    //                        LicenseCreatorModule                            //
+    //                        LicensingModule                            //
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice The franchise does not exist.
-    error LicensingModule_NonExistentIPOrg();
     error LicensingModule_CallerNotIpOrgOwner();
     error LicensingModule_InvalidConfigType();
     error LicensingModule_InvalidTermCommercialStatus();
     error LicensingModule_IpOrgFrameworkAlreadySet();
     error LicensingModule_DuplicateTermId();
-    error LicensingModule_InvalidIntent();
-    error LicensingModule_IpaNotActive();
-    error LicensingModule_IpaIdRequired();
     error LicensingModule_CommercialLicenseNotAllowed();
     error LicensingModule_NonCommercialTermsRequired();
     error LicensingModule_IpOrgNotConfigured();
     error LicensingModule_ipOrgTermNotFound();
     error LicensingModule_ShareAlikeDisabled();
-
+    error LicensingModule_InvalidAction();
+    error LicensingModule_CallerNotLicensor();
+    error LicensingModule_ParentLicenseNotActive();
+    error LicensingModule_InvalidIpa();
+    error LicensingModule_CallerNotLicenseOwner();
+    error LicensingModule_CantFindParentLicenseOrRelatedIpa();
+    error LicensingModule_InvalidLicenseeType();
+    error LicensingModule_InvalidLicensorType();
     ////////////////////////////////////////////////////////////////////////////
     //                            LicenseRegistry                             //
     ////////////////////////////////////////////////////////////////////////////
 
-    error LicensingModule_InvalidLicenseeType();
     error LicenseRegistry_ZeroIpaRegistryAddress();
-    error LicenseRegistry_LNFTShouldNotHaveIpaId();
-    error LicenseRegistry_BoundToIpaShouldHaveIpaId();
     error LicenseRegistry_UnknownLicenseId();
     error LicenseRegistry_NotLicenseNFT();
     error LicenseRegistry_InvalidIpa();
     error LicenseRegistry_ZeroModuleRegistryAddress();
     error LicenseRegistry_CallerNotLicensingModule();
-
+    error LicenseRegistry_CallerNotRevoker();
+    error LicenseRegistry_LicenseNotPending();
+    error LicenseRegistry_InvalidLicenseStatus();
+    
     ////////////////////////////////////////////////////////////////////////////
     //                            RegistrationModule                          //
     ////////////////////////////////////////////////////////////////////////////
@@ -331,7 +334,7 @@ library Errors {
     error RelationshipModule_UnsupportedRelationshipDst();
 
     error RelationshipModule_InvalidConfigOperation();
-
+   
     error RelationshipModule_CallerNotIpOrgOwner();
     error RelationshipModule_InvalidRelatable();
     error RelationshipModule_RelTypeNotSet(string relType);
@@ -371,4 +374,14 @@ library Errors {
 
     /// @notice The address is not the owner of the token.
     error TokenGatedHook_NotTokenOwner(address tokenAddress, address ownerAddress);
+
+    ////////////////////////////////////////////////////////////////////////////
+    //                       LicensorApprovalHook                             //
+    ////////////////////////////////////////////////////////////////////////////
+
+    error LicensorApprovalHook_ApprovalAlreadyRequested();
+    error LicensorApprovalHook_InvalidLicensor();
+    error LicensorApprovalHook_InvalidLicenseId();
+    error LicensorApprovalHook_NoApprovalRequested();
+    error LicensorApprovalHook_InvalidResponseStatus();
 }

@@ -17,12 +17,13 @@ import "contracts/IPAssetRegistry.sol";
 import "contracts/interfaces/modules/collect/ICollectModule.sol";
 import "contracts/modules/relationships/RelationshipModule.sol";
 import "contracts/modules/licensing/LicenseRegistry.sol";
-import "contracts/modules/licensing/LicenseCreatorModule.sol";
+import "contracts/modules/licensing/LicensingModule.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { RegistrationModule } from "contracts/modules/registration/RegistrationModule.sol";
+import { TermsRepository } from "contracts/modules/licensing/TermsRepository.sol";
 
 contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     using ShortStrings for *;
@@ -34,9 +35,10 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     RelationshipModule public relationshipModule;
     IPAssetRegistry public registry;
     StoryProtocol public spg;
-    LicenseCreatorModule public licensingModule;
+    LicensingModule public licensingModule;
     LicenseRegistry public licenseRegistry;
     RegistrationModule public registrationModule;
+    TermsRepository public termsRepository;
 
     address public defaultCollectNftImpl;
     address public collectModuleImpl;
@@ -44,6 +46,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     address constant upgrader = address(6969);
     address constant ipAssetOrgOwner = address(456);
     address constant relManager = address(9999);
+    address constant termSetter = address(444);
 
     function setUp() virtual override(BaseTestUtils) public {
         super.setUp();
@@ -77,14 +80,18 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         _grantRole(vm, AccessControl.MODULE_REGISTRAR_ROLE, address(this));
 
         // Create Licensing contracts
+        termsRepository = new TermsRepository(address(accessControl));
+        _grantRole(vm, AccessControl.TERMS_SETTER_ROLE, termSetter);
+
         licenseRegistry = new LicenseRegistry(address(registry), address(moduleRegistry));
-        licensingModule = new LicenseCreatorModule(
+        licensingModule = new LicensingModule(
             BaseModule.ModuleConstruction({
                 ipaRegistry: registry,
                 moduleRegistry: moduleRegistry,
                 licenseRegistry: licenseRegistry,
                 ipOrgController: ipOrgController
-            })
+            }),
+            address(termsRepository)
         );
         moduleRegistry.registerProtocolModule(ModuleRegistryKeys.LICENSING_MODULE, licensingModule);
 

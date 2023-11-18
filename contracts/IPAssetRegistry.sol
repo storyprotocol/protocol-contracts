@@ -72,12 +72,13 @@ contract IPAssetRegistry is IIPAssetRegistry {
         }
 
         // Crate a new IP asset with the provided IP attributes.
-        ipAssetId = totalSupply++;
+        ipAssetId = ++totalSupply;
         uint64 registrationDate = uint64(block.timestamp);
         _ipAssets[ipAssetId] = IPA({
             name: name_,
             ipAssetType: ipAssetType_,
-            status: 0, // TODO(ramarti): Define status types.
+            // For now, let's assume 0 == unset, 1 is OK. TODO: Add status enum and synch with License status
+            status: 1, 
             registrant: registrant_,
             ipOrg: ipOrg_,
             hash: hash_,
