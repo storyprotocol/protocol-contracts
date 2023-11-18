@@ -5,14 +5,15 @@
     "IPAssetRegistry": "0x446ce25bff9fe7049Aaf3339124F51F301e9c220",
     "IPOrgController-Impl": "0xa1833d78f09e2198774E612ca3d9879597ACc859",
     "IPOrgController-Proxy": "0xd8562c2C2f7497D96C7Cf2f9E15392fe4c31c84f",
-    "LicenseCreatorModule": "0x0e0C15Fe242628fce34A123A0317C97f1D3256c8",
     "LicenseRegistry": "0x687E4e5a4471c259a8f56F1f06b0E5c5FEa808c8",
-    "MockERC721": "0xdCc500f52a509F65023696FE7B717c81F8a432d5",
+    "LicensingModule": "0xb9162E7d63aDAC660f987755D45f55710EB5542a",
+    "MockERC721": "0x29715b74703b258D045fed347A8B3909aBdE5179",
     "ModuleRegistry": "0xC06CBc0B7A136bda48865BE24228396Dea4094Ec",
     "RegistrationModule": "0x869b721BbF176D0130d87E3aD2eEA02CEBB883eE",
     "RelationshipModule": "0x812d70D430362c56E56F7Cfc73464FE2F1670ec9",
     "StoryProtocol": "0xB61c296B51f542EeD7B76022c736488A571ac05b",
-    "TokenGatedHook": "0xb9162E7d63aDAC660f987755D45f55710EB5542a"
+    "TermsRepository": "0x0e0C15Fe242628fce34A123A0317C97f1D3256c8",
+    "TokenGatedHook": "0xdCc500f52a509F65023696FE7B717c81F8a432d5"
   },
   "relationship-processors": {
     "DstOwnerRelationshipProcessor": "0x6E447CeC286dbaBe885fDbD9723DD63Cc2DE0Bd2",

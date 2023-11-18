@@ -25,12 +25,15 @@ import "contracts/modules/base/BaseModule.sol";
 import "contracts/modules/licensing/LicenseRegistry.sol";
 import "contracts/modules/relationships/RelationshipModule.sol";
 import "contracts/lib/modules/ModuleRegistryKeys.sol";
-import "contracts/modules/licensing/LicenseCreatorModule.sol";
+import "contracts/modules/licensing/LicensingModule.sol";
 import "contracts/hooks/TokenGatedHook.sol";
 import "contracts/modules/base/HookRegistry.sol";
 import "contracts/interfaces/hooks/base/IHook.sol";
 import { TokenGated } from "contracts/lib/hooks/TokenGated.sol";
 import "test/foundry/mocks/MockERC721.sol";
+import "contracts/modules/licensing/TermsRepository.sol";
+import { Licensing } from "contracts/lib/modules/Licensing.sol";
+import { TermCategories, TermIds } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
 
  contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
@@ -45,9 +48,10 @@ import "test/foundry/mocks/MockERC721.sol";
      address licenseRegistry;
      address registrationModule;
      address relationshipModule;
-     address licenseCreatorModule;
+     address licensingModule;
      address tokenGatedHook;
      address mockNFT;
+     address termsRepository;
 
      string constant NON_COMMERCIAL_LICENSE_URI = "https://noncommercial.license";
      string constant COMMERCIAL_LICENSE_URI = "https://commercial.license";
@@ -180,21 +184,30 @@ import "test/foundry/mocks/MockERC721.sol";
 
          relationshipModule = newAddress;
 
-
-         /// LICENSE_MODULE
-         contractKey = "LicenseCreatorModule";
+         /// TERMS_REPOSITORY
+         contractKey = "TermsRepository";
 
          console.log(string.concat("Deploying ", contractKey, "..."));
-         newAddress = address(new LicenseCreatorModule(BaseModule.ModuleConstruction({
+         newAddress = address(new TermsRepository(accessControl));
+         _writeAddress(contractKey, newAddress);
+         console.log(string.concat(contractKey, " deployed to:"), newAddress);
+
+         termsRepository = newAddress;
+
+         /// LICENSE_MODULE
+         contractKey = "LicensingModule";
+
+         console.log(string.concat("Deploying ", contractKey, "..."));
+         newAddress = address(new LicensingModule(BaseModule.ModuleConstruction({
              ipaRegistry: IPAssetRegistry(ipAssetRegistry),
              moduleRegistry: ModuleRegistry(moduleRegistry),
              licenseRegistry: LicenseRegistry(licenseRegistry),
              ipOrgController: IPOrgController(ipOrgController)
-         })));
+         }), termsRepository) );
          _writeAddress(contractKey, newAddress);
          console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-         licenseCreatorModule = newAddress;
+         licensingModule = newAddress;
 
 
          /// TOKEN_GATED_HOOK
@@ -227,6 +240,7 @@ import "test/foundry/mocks/MockERC721.sol";
          accessControlSingleton.grantRole(AccessControl.UPGRADER_ROLE, admin);
          accessControlSingleton.grantRole(AccessControl.RELATIONSHIP_MANAGER_ROLE, admin);
          accessControlSingleton.grantRole(AccessControl.LICENSING_MANAGER_ROLE, admin);
+         accessControlSingleton.grantRole(AccessControl.TERMS_SETTER_ROLE, admin);
          accessControlSingleton.grantRole(AccessControl.IPORG_CREATOR_ROLE, admin);
          accessControlSingleton.grantRole(AccessControl.MODULE_REGISTRAR_ROLE, admin);
          accessControlSingleton.grantRole(AccessControl.MODULE_EXECUTOR_ROLE, spg);
@@ -237,7 +251,7 @@ import "test/foundry/mocks/MockERC721.sol";
          ModuleRegistry(moduleRegistry).registerProtocolModule(
              ModuleRegistryKeys.RELATIONSHIP_MODULE, BaseModule(relationshipModule));
          ModuleRegistry(moduleRegistry).registerProtocolModule(
-             ModuleRegistryKeys.LICENSING_MODULE, BaseModule(licenseCreatorModule));
+             ModuleRegistryKeys.LICENSING_MODULE, BaseModule(licensingModule));
          string[] memory ipAssetTypes = new string[](2);
          ipAssetTypes[0] = "STORY";
          ipAssetTypes[1] = "CHARACTER";
@@ -254,8 +268,39 @@ import "test/foundry/mocks/MockERC721.sol";
          hooksConfig[0] = abi.encode(tokenGatedConfig);
          RegistrationModule(registrationModule).registerHooks(HookRegistry.HookType.PreAction, IIPOrg(ipOrg), hooks, hooksConfig);
 
+         // CONFIG LICENSING MODULE
+         Licensing.CommercialStatus comStatus = Licensing.CommercialStatus.Both;
+         TermsRepository(termsRepository).addCategory(TermCategories.SHARE_ALIKE);
+         Licensing.LicensingTerm memory term = _getTerm(TermIds.NFT_SHARE_ALIKE, comStatus);
+         TermsRepository(termsRepository).addTerm(TermCategories.SHARE_ALIKE, TermIds.NFT_SHARE_ALIKE, term);
+
+         TermsRepository(termsRepository).addCategory(TermCategories.LICENSOR);
+         term = _getTerm(TermIds.LICENSOR_APPROVAL, comStatus);
+         TermsRepository(termsRepository).addTerm(TermCategories.LICENSOR, TermIds.LICENSOR_APPROVAL, term);
+
+         TermsRepository(termsRepository).addCategory(TermCategories.CATEGORIZATION);
+         term = _getTerm(TermIds.FORMAT_CATEGORY, comStatus);
+         TermsRepository(termsRepository).addTerm(TermCategories.CATEGORIZATION, TermIds.FORMAT_CATEGORY, term);
+
+         TermsRepository(termsRepository).addCategory(TermCategories.ACTIVATION);
+         term = _getTerm(TermIds.LICENSOR_IPORG_OR_PARENT, comStatus);
+         TermsRepository(termsRepository).addTerm(TermCategories.ACTIVATION, TermIds.LICENSOR_IPORG_OR_PARENT, term);
+
+
          _writeDeployment();
          _endBroadcast();
      }
-    
+
+     function _getTerm(
+         string memory termId,
+         Licensing.CommercialStatus comStatus_
+     ) internal pure returns (Licensing.LicensingTerm memory) {
+         return Licensing.LicensingTerm({
+             comStatus: comStatus_,
+             url: string(abi.encodePacked("https://", termId,".com")),
+             hash: "qwertyu",
+             algorithm: "sha256",
+             hook: IHook(address(0))
+         });
+     }
  }
