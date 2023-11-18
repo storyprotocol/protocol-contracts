@@ -69,7 +69,7 @@ contract RegistrationModuleTest is BaseTest {
 
     /// @notice Tests the default token URI for IPAs.
     function test_RegistrationModuleDefaultIPOrgMetadata() public virtual createIpAsset(registrant, 0) {
-        IPAssetRegistry.IPA memory ipa = registry.ipAsset(0);
+        IPAssetRegistry.IPA memory ipa = registry.ipAsset(1);
         string memory ipOrgStr = Strings.toHexString(uint160(address(ipOrg)), 20);
         string memory registrantStr = Strings.toHexString(uint160(address(registrant)), 20);
 
