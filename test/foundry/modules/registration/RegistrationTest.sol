@@ -34,7 +34,8 @@ contract RegistrationModuleTest is BaseTest {
         address indexed owner_,
         string name_,
         uint64 indexed ipAssetType_,
-        bytes32 hash_
+        bytes32 hash_,
+        string mediaUrl_
     );
 
     // Id of IP asset which may differ per test based on testing constraints.
@@ -116,11 +117,42 @@ contract RegistrationModuleTest is BaseTest {
             cal,
             "TestIPA",
             0,
+            "",
             ""
         );
-        _register(address(ipOrg), cal, "TestIPA", 0, "");
+        _register(address(ipOrg), cal, "TestIPA", 0, "", "");
         assertEq(registry.ipAssetOwner(1), cal);
         assertEq(ipOrg.ownerOf(1), cal);
+    }
+
+    /// @notice Tests IP Asset registration with media URL.
+    function test_RegistrationModuleIPARegistrationWithMediaUrl() public virtual {
+        string memory mediaUrl = "http://token.url";
+        vm.prank(cal);
+        vm.expectEmit(true, true, true, true, address(registry));
+        emit Registered(
+            1,
+            "TestIPA",
+            0,
+            address(ipOrg),
+            cal,
+            ""
+        );
+        vm.expectEmit(true, true, true, true, address(registrationModule));
+        emit IPAssetRegistered(
+            1,
+            address(ipOrg),
+            1,
+            cal,
+            "TestIPA",
+            0,
+            "",
+            mediaUrl
+        );
+        _register(address(ipOrg), cal, "TestIPA", 0, "", mediaUrl);
+        assertEq(registry.ipAssetOwner(1), cal);
+        assertEq(ipOrg.ownerOf(1), cal);
+        assertEq(mediaUrl, registrationModule.tokenURI(address(ipOrg), 1));
     }
 
     /// @dev Helper function that performs registration.
@@ -134,13 +166,15 @@ contract RegistrationModuleTest is BaseTest {
         address owner_,
         string memory name_,
         uint64 ipAssetType_,
-        bytes32 hash_
+        bytes32 hash_,
+        string memory mediaUrl_
     ) internal virtual returns (uint256, uint256) {
         Registration.RegisterIPAssetParams memory params = Registration.RegisterIPAssetParams({
             owner: owner_,
             name: name_,
             ipAssetType: ipAssetType_, 
-            hash: hash_
+            hash: hash_,
+            mediaUrl: mediaUrl_
         });
         bytes[] memory hooks = new bytes[](0);
         return spg.registerIPAsset(address(ipOrg), params, hooks, hooks);

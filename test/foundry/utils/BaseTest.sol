@@ -165,7 +165,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             owner: ipAssetOwner,
             name: "TestIPAsset",
             ipAssetType: 0, 
-            hash: ""
+            hash: "",
+            mediaUrl: ""
         });
         bytes[] memory hooks = new bytes[](0);
         (uint256 globalId, uint256 localId) = spg.registerIPAsset(address(ipOrg), params, hooks, hooks);
