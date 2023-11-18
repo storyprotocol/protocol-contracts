@@ -23,7 +23,7 @@ import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 /// - Enables Other modules to attach licensing terms to IPAs
 /// - Enables license holders to create derivative licenses
 /// Thanks to ERC-5218 authors for inspiration (see https://eips.ethereum.org/EIPS/eip-5218)
-contract LicensingModule is BaseModule, TermsRepository {
+contract LicensingModule is BaseModule {
     using ShortStrings for *;
     using FixedSet for FixedSet.ShortStringSet;
 
@@ -45,7 +45,14 @@ contract LicensingModule is BaseModule, TermsRepository {
     // TODO: support different activation terms on chain
     mapping(bytes32 => bool) private _licensorApprovalNeeded;
 
-    constructor(ModuleConstruction memory params_) BaseModule(params_) {}
+    TermsRepository public immutable TERMS_REPOSITORY;
+
+    constructor(ModuleConstruction memory params_, address termRepository_) BaseModule(params_) {
+        if (termRepository_ == address(0)) {
+            revert Errors.ZeroAddress();
+        }  
+        TERMS_REPOSITORY = TermsRepository(termRepository_);
+    }
 
     /// Returns true if the share alike term is on for this ipOrg and commercial status,
     function isShareAlikeOn(
@@ -518,7 +525,7 @@ contract LicensingModule is BaseModule, TermsRepository {
             if (ipOrgTermIds_.contains(termId)) {
                 revert Errors.LicensingModule_DuplicateTermId();
             }
-            Licensing.LicensingTerm memory term = getTerm(termId);
+            Licensing.LicensingTerm memory term = TERMS_REPOSITORY.getTerm(termId);
             // Since there is CommercialStatus.Both, we need to be specific here
             if (
                 (commercial_ &&

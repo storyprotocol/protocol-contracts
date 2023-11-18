@@ -7,10 +7,15 @@ import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortSt
 import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
+import { AccessControlled } from "contracts/access-control/AccessControlled.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
 
-import "forge-std/console.sol";
-
-contract TermsRepository is Multicall {
+/// @title TermsRepository
+/// @notice Protocol repository for terms that can be used by Licensing Modules to compose
+/// licenses. Terms are grouped by categories, and each term has a unique id within its category.
+/// Terms are added by the protocol.
+/// The text of the terms is not stored in the contract, but in external storage.
+contract TermsRepository is AccessControlled, Multicall {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using ShortStrings for *;
 
@@ -42,32 +47,42 @@ contract TermsRepository is Multicall {
         _;
     }
 
+    constructor(address accessControl_) AccessControlled(accessControl_) { }
+
+    /// Adds a new category of terms
     function addCategory(string calldata category_) public {
         _termCategories.add(ShortString.unwrap(category_.toShortString()));
         emit TermCategoryAdded(category_);
     }
 
-    function removeTermCategory(string calldata category_) public {
+    /// Removes a category of terms
+    function removeCategory(string calldata category_) public {
         _termCategories.remove(ShortString.unwrap(category_.toShortString()));
         emit TermCategoryRemoved(category_);
     }
 
+    /// Returns the total number of term categories
     function totalTermCategories() public view returns (uint256) {
         return _termCategories.length();
     }
 
+    /// Returns the term category at the given index
     function termCategoryAt(
         uint256 index_
     ) public view returns (string memory) {
         return ShortString.wrap(_termCategories.at(index_)).toString();
     }
 
-    // TODO: access control
+    /// Adds a new term to a category
+    /// @param category_ The category to add the term to
+    /// @param termId_ The unique id of the term within the category
+    /// @param term_ The term definition
     function addTerm(
         string calldata category_,
         string calldata termId_,
         Licensing.LicensingTerm calldata term_
-    ) public {
+    ) public onlyRole(AccessControl.TERMS_SETTER_ROLE) {
+        // TODO: access control
         ShortString category = category_.toShortString();
         _verifyCategoryExists(category);
         if (term_.comStatus == Licensing.CommercialStatus.Unset) {
@@ -80,18 +95,6 @@ contract TermsRepository is Multicall {
         _terms[termId] = term_;
         _termIdsByCategory[category].add(ShortString.unwrap(termId));
         emit TermAdded(category_, termId_);
-    }
-
-    // TODO: access control
-    function disableTerm(
-        string calldata category_,
-        string calldata termId_
-    ) public {
-        ShortString category = category_.toShortString();
-        _verifyCategoryExists(category);
-        ShortString termId = termId_.toShortString();
-        _termIdsByCategory[category].add(ShortString.unwrap(termId));
-        emit TermDisabled(category_, termId_);
     }
 
     function categoryForTerm(

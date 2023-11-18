@@ -118,21 +118,23 @@ contract BaseLicensingTest is BaseTest {
 
     function _addProtocolTerms() private {
         Licensing.CommercialStatus comStatus = Licensing.CommercialStatus.Both;
-        licensingModule.addCategory(TermCategories.SHARE_ALIKE);
+        vm.startPrank(termSetter);
+        termsRepository.addCategory(TermCategories.SHARE_ALIKE);
         Licensing.LicensingTerm memory term = _getTerm(TermIds.NFT_SHARE_ALIKE, comStatus);
-        licensingModule.addTerm(TermCategories.SHARE_ALIKE, TermIds.NFT_SHARE_ALIKE, term);
+        termsRepository.addTerm(TermCategories.SHARE_ALIKE, TermIds.NFT_SHARE_ALIKE, term);
 
-        licensingModule.addCategory(TermCategories.LICENSOR);
+        termsRepository.addCategory(TermCategories.LICENSOR);
         term = _getTerm(TermIds.LICENSOR_APPROVAL, comStatus);
-        licensingModule.addTerm(TermCategories.LICENSOR, TermIds.LICENSOR_APPROVAL, term);
+        termsRepository.addTerm(TermCategories.LICENSOR, TermIds.LICENSOR_APPROVAL, term);
 
-        licensingModule.addCategory(TermCategories.CATEGORIZATION);
+        termsRepository.addCategory(TermCategories.CATEGORIZATION);
         term = _getTerm(TermIds.FORMAT_CATEGORY, comStatus);
-        licensingModule.addTerm(TermCategories.CATEGORIZATION, TermIds.FORMAT_CATEGORY, term);
+        termsRepository.addTerm(TermCategories.CATEGORIZATION, TermIds.FORMAT_CATEGORY, term);
 
-        licensingModule.addCategory(TermCategories.ACTIVATION);
+        termsRepository.addCategory(TermCategories.ACTIVATION);
         term = _getTerm(TermIds.LICENSOR_IPORG_OR_PARENT, comStatus);
-        licensingModule.addTerm(TermCategories.ACTIVATION, TermIds.LICENSOR_IPORG_OR_PARENT, term);
+        termsRepository.addTerm(TermCategories.ACTIVATION, TermIds.LICENSOR_IPORG_OR_PARENT, term);
+        vm.stopPrank();
     }
 
     function _getTerm(
@@ -149,8 +151,9 @@ contract BaseLicensingTest is BaseTest {
     }
 
     function _addTextTerms() private {
-        licensingModule.addCategory("test_category");
-        licensingModule.addTerm(
+        vm.startPrank(termSetter);
+        termsRepository.addCategory("test_category");
+        termsRepository.addTerm(
             "test_category",
             "text_term_id",
             Licensing.LicensingTerm({
@@ -161,7 +164,7 @@ contract BaseLicensingTest is BaseTest {
                 hook: IHook(address(0))
             }
         ));
-        licensingModule.addTerm(
+        termsRepository.addTerm(
             "test_category",
             "non_comm_text_term_id",
             Licensing.LicensingTerm({
@@ -172,7 +175,7 @@ contract BaseLicensingTest is BaseTest {
                 hook: IHook(address(0))
             }
         ));
-        licensingModule.addTerm(
+        termsRepository.addTerm(
             "test_category",
             "comm_text_term_id",
             Licensing.LicensingTerm({
@@ -183,6 +186,7 @@ contract BaseLicensingTest is BaseTest {
                 hook: IHook(address(0))
             }
         ));
+        vm.stopPrank();
     }
 
     function assertTerms(Licensing.License memory license) public {
@@ -194,7 +198,7 @@ contract BaseLicensingTest is BaseTest {
         for (uint256 i = 0; i < license.termIds.length; i++) {
             assertTrue(ShortStringOps._equal(license.termIds[i], ipOrgTermsId[i]));
             assertTrue(keccak256(license.termsData[i]) == keccak256(ipOrgTermsData[i]));
-            Licensing.LicensingTerm memory term = licensingModule.getTerm(ipOrgTermsId[i]);
+            Licensing.LicensingTerm memory term = termsRepository.getTerm(ipOrgTermsId[i]);
             if (license.isCommercial) {
                 assertTrue(
                     term.comStatus == Licensing.CommercialStatus.Commercial ||

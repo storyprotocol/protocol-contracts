@@ -23,6 +23,7 @@ import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { RegistrationModule } from "contracts/modules/registration/RegistrationModule.sol";
+import { TermsRepository } from "contracts/modules/licensing/TermsRepository.sol";
 
 contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     using ShortStrings for *;
@@ -37,6 +38,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     LicensingModule public licensingModule;
     LicenseRegistry public licenseRegistry;
     RegistrationModule public registrationModule;
+    TermsRepository public termsRepository;
 
     address public defaultCollectNftImpl;
     address public collectModuleImpl;
@@ -44,6 +46,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     address constant upgrader = address(6969);
     address constant ipAssetOrgOwner = address(456);
     address constant relManager = address(9999);
+    address constant termSetter = address(444);
 
     function setUp() virtual override(BaseTestUtils) public {
         super.setUp();
@@ -77,6 +80,9 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         _grantRole(vm, AccessControl.MODULE_REGISTRAR_ROLE, address(this));
 
         // Create Licensing contracts
+        termsRepository = new TermsRepository(address(accessControl));
+        _grantRole(vm, AccessControl.TERMS_SETTER_ROLE, termSetter);
+
         licenseRegistry = new LicenseRegistry(address(registry), address(moduleRegistry));
         licensingModule = new LicensingModule(
             BaseModule.ModuleConstruction({
@@ -84,7 +90,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
                 moduleRegistry: moduleRegistry,
                 licenseRegistry: licenseRegistry,
                 ipOrgController: ipOrgController
-            })
+            }),
+            address(termsRepository)
         );
         moduleRegistry.registerProtocolModule(ModuleRegistryKeys.LICENSING_MODULE, licensingModule);
 
