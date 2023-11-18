@@ -11,8 +11,10 @@ import { TermCategories, TermIds } from "contracts/lib/modules/ProtocolLicensing
 struct LicTestConfig {
     bool shareAlike;
     TermsData.LicensorConfig licConfig;
+    bool needsActivation;
 }
-struct TestTermConfig {
+
+struct AddTermConfig {
     ShortString termId;
     bytes data;
 }
@@ -24,244 +26,94 @@ contract BaseLicensingTest is BaseTest {
     ShortString public nonCommTextTermId = "non_comm_text_term_id".toShortString();
     ShortString public commTextTermId = "comm_text_term_id".toShortString();
 
-    uint256 public rootIpaId;
     address public ipaOwner = address(0x13333);
 
-    uint256 public commRootLicenseId;
-    uint256 public nonCommRootLicenseId;
+    mapping(bool => ShortString[]) public termIds;
+    mapping(bool => bytes[]) public termData;
 
-    ShortString[] public nonCommTermIds;
-    bytes[] public nonCommTermData;
-    ShortString[] public commTermIds;
-    bytes[] public commTermData;
-
-     
-
-    modifier withNonCommFrameworkShareAlike() {
+    modifier withNonCommFramework(LicTestConfig memory config) {
+        _addTerms(false, config);
         vm.prank(ipOrg.owner());
         spg.configureIpOrgLicensing(
             address(ipOrg),
-            getNonCommFramework(true)
+            _getFramework(false)
         );
         _;
     }
 
-    modifier withNonCommFrameworkNoShareAlike() {
+    modifier withCommFramework(LicTestConfig memory config) {
+        _addTerms(false, config);
+        _addTerms(true, config);
         vm.prank(ipOrg.owner());
         spg.configureIpOrgLicensing(
             address(ipOrg),
-            getNonCommFramework(false)
+            _getFramework(true)
         );
         _;
     }
 
-    modifier withNonCommFrameworkShareAlikeAnd(
-        ShortString termId,
-        bytes memory data
-    ) {
-        vm.prank(ipOrg.owner());
-        spg.configureIpOrgLicensing(
-            address(ipOrg),
-            getNonCommFrameworkAndPush(true, termId, data)
-        );
-        _;
-    }
-
-    modifier withNonCommFrameworkNoShareAlikeAnd(
-        ShortString termId,
-        bytes memory data
-    ) {
-        vm.prank(ipOrg.owner());
-        spg.configureIpOrgLicensing(
-            address(ipOrg),
-            getNonCommFrameworkAndPush(false, termId, data)
-        );
-        _;
-    }
-
-    modifier withCommFrameworkShareAlike() {
-        vm.prank(ipOrg.owner());
-        spg.configureIpOrgLicensing(
-            address(ipOrg),
-            getCommFramework(true, true)
-        );
-        _;
-    }
-
-    modifier withCommFrameworkNoShareAlike() {
-        vm.prank(ipOrg.owner());
-        spg.configureIpOrgLicensing(
-            address(ipOrg),
-            getCommFramework(false, false)
-        );
-        _;
-    }
-
-    modifier withCommFrameworkShareAlikeAnd(
-        ShortString ncTermId,
-        bytes memory ncData,
-        ShortString cTermId,
-        bytes memory cData
-    ) {
-        vm.prank(ipOrg.owner());
-        spg.configureIpOrgLicensing(
-            address(ipOrg),
-            getCommFrameworkAndPush(true, ncTermId, ncData, true, cTermId, cData)
-        );
-        _;
-    }
-
-    modifier withRootLicense(bool commercial) {
-        vm.prank(ipOrg.owner());
-        uint256 lId = spg.createIpaBoundLicense(
-            address(ipOrg),
-            Licensing.LicenseCreation({
-                parentLicenseId: 0,
-                isCommercial: commercial
-            }),
-            rootIpaId,
-            new bytes[](0),
-            new bytes[](0)
-        );
-        if (commercial) {
-            commRootLicenseId = lId;
-        } else {
-            nonCommRootLicenseId = lId;
-        }
-        _;
-    }
 
     function setUp() virtual override public {
         super.setUp();
         _addProtocolTerms();
         _addTextTerms();
-        nonCommTermIds = [textTermId, nonCommTextTermId];
-        nonCommTermData = [bytes(""), bytes("")];
-        commTermIds = [commTextTermId];
-        commTermData = [bytes("")];
-        rootIpaId = _createIpAsset(ipaOwner, 2, bytes(""));
+        termIds[true].push(textTermId);
+        termIds[true].push(commTextTermId);
+        termData[true].push(bytes(""));
+        termData[true].push(bytes(""));
+
+        termIds[false].push(textTermId);
+        termIds[false].push(nonCommTextTermId);
+        termData[false].push(bytes(""));
+        termData[false].push(bytes(""));
     }
 
-    function getEmptyFramework() public pure returns (Licensing.FrameworkConfig memory) {
-        return
-            Licensing.FrameworkConfig({
+    function _addTerms(bool commercial, LicTestConfig memory config) internal {
+        termIds[commercial].push(TermIds.NFT_SHARE_ALIKE.toShortString());
+        termData[commercial].push(abi.encode(config.shareAlike));
+        termIds[commercial].push(TermIds.LICENSOR_APPROVAL.toShortString());
+        termData[commercial].push(abi.encode(config.needsActivation));
+        termIds[commercial].push(TermIds.LICENSOR_IPORG_OR_PARENT.toShortString());
+        termData[commercial].push(abi.encode(config.licConfig));
+    }
+
+    function _getFramework(bool commercial) internal view returns (Licensing.FrameworkConfig memory) {
+        if (commercial) {
+            return Licensing.FrameworkConfig({
+                comTermsConfig: Licensing.TermsConfig({
+                    termIds: termIds[commercial],
+                    termData: termData[commercial]
+                }),
+                nonComTermsConfig: Licensing.TermsConfig({
+                    termIds: termIds[!commercial],
+                    termData: termData[!commercial]
+                })
+            });
+        } else {
+            return Licensing.FrameworkConfig({
                 comTermsConfig: Licensing.TermsConfig({
                     termIds: new ShortString[](0),
                     termData: new bytes[](0)
                 }),
                 nonComTermsConfig: Licensing.TermsConfig({
-                    termIds: new ShortString[](0),
-                    termData: new bytes[](0)
+                    termIds: termIds[commercial],
+                    termData: termData[commercial]
                 })
             });
-    }
-
-    function getCommFramework(
-        bool comShareAlike,
-        TermsData.LicensorConfig comLicConfig,
-        bool nonComShareAlike,
-        TermsData.LicensorConfig nonComLicConfig
-    ) public returns (Licensing.FrameworkConfig memory) {
-        nonCommTermIds.push(TermIds.NFT_SHARE_ALIKE.toShortString());
-        nonCommTermData.push(abi.encode(nonComShareAlike));
-        nonCommTermIds.push(TermIds.LICENSOR_IPORG_OR_PARENT.toShortString());
-        nonCommTermData.push(abi.encode(nonComShareAlike));
-        commTermIds.push(TermIds.NFT_SHARE_ALIKE.toShortString());
-        commTermData.push(abi.encode(comShareAlike));
-        commTermIds.push(TermIds.LICENSOR_IPORG_OR_PARENT.toShortString());
-        commTermData.push(abi.encode(comLicConfig));
-        return
-            Licensing.FrameworkConfig({
-                comTermsConfig: Licensing.TermsConfig({
-                    termIds: commTermIds,
-                    termData: commTermData
-                }),
-                nonComTermsConfig: Licensing.TermsConfig({
-                    termIds: nonCommTermIds,
-                    termData: nonCommTermData
-                })
-            });
-    }
-
-    function getNonCommFramework(bool shareAlike, TermsData.LicensorConfig licConfig) public returns (Licensing.FrameworkConfig memory) {
-        nonCommTermIds.push(TermIds.NFT_SHARE_ALIKE.toShortString());
-        nonCommTermData.push(abi.encode(shareAlike));
-        nonCommTermIds.push(TermIds.LICENSOR_IPORG_OR_PARENT.toShortString());
-        nonCommTermData.push(abi.encode(licConfig));
-        return
-            Licensing.FrameworkConfig({
-                comTermsConfig: Licensing.TermsConfig({
-                    termIds: new ShortString[](0),
-                    termData: new bytes[](0)
-                }),
-                nonComTermsConfig: Licensing.TermsConfig({
-                    termIds: nonCommTermIds,
-                    termData: nonCommTermData
-                })
-            });
-    }
-
-    function getNonCommFrameworkAndPush(
-        LicTestConfig comConf,
-        TestTermConfig comTerm
-    ) public returns (Licensing.FrameworkConfig memory) {
-        nonCommTermIds.push(comTerm.termId);
-        nonCommTermData.push(comTerm.data);
-        return getNonCommFramework(comConf.shareAlike, comConf.licConfig);
-    }
-
-    function getCommFrameworkAndPush(
-        LicTestConfig comConf,
-        TestTermConfig comTerm,
-        LicTestConfig nonComConf,
-        TestTermConfig nonComTerm
-    ) public returns (Licensing.FrameworkConfig memory) {
-        nonCommTermIds.push(ncTermId);
-        nonCommTermData.push(ncData);
-        
-        commTermIds.push(cTermId);
-        commTermData.push(cData);
-
-        return getCommFramework(com, ncShareAlike);
-    }
-
-
-    function assertTerms(Licensing.License memory license) public {
-        (ShortString[] memory ipOrgTermsId, bytes[] memory ipOrgTermsData) = licensingModule.getIpOrgTerms(
-            license.isCommercial, address(ipOrg)
-        );
-        assertEq(license.termIds.length, ipOrgTermsId.length);
-        assertEq(license.termsData.length, ipOrgTermsData.length);
-        for (uint256 i = 0; i < license.termIds.length; i++) {
-            assertTrue(ShortStringOps._equal(license.termIds[i], ipOrgTermsId[i]));
-            assertTrue(keccak256(license.termsData[i]) == keccak256(ipOrgTermsData[i]));
-            Licensing.LicensingTerm memory term = licensingModule.getTerm(ipOrgTermsId[i]);
-            if (license.isCommercial) {
-                assertTrue(
-                    term.comStatus == Licensing.CommercialStatus.Commercial ||
-                    term.comStatus == Licensing.CommercialStatus.Both
-                );
-            } else {
-                assertTrue(
-                    term.comStatus == Licensing.CommercialStatus.NonCommercial ||
-                    term.comStatus == Licensing.CommercialStatus.Both
-                );
-            }
         }
     }
-
-    function assertTermsSetInIpOrg(bool commercial) public {
-        (ShortString[] memory ipOrgTermsId, bytes[] memory ipOrgTermsData) = licensingModule.getIpOrgTerms(
-            commercial, address(ipOrg)
-        );
-        ShortString[] memory termIds = commercial ? commTermIds : nonCommTermIds;
-        bytes[] memory termData = commercial ? commTermData : nonCommTermData;
-        assertEq(termIds.length, ipOrgTermsId.length);
-        assertEq(termData.length, ipOrgTermsData.length);
-        for (uint256 i = 0; i < termIds.length; i++) {
-            assertTrue(ShortStringOps._equal(termIds[i], ipOrgTermsId[i]));
-            assertTrue(keccak256(termData[i]) == keccak256(ipOrgTermsData[i]));
-        }
+    
+    function _getEmptyFramework() internal pure returns (Licensing.FrameworkConfig memory) {
+        return Licensing.FrameworkConfig({
+            comTermsConfig: Licensing.TermsConfig({
+                termIds: new ShortString[](0),
+                termData: new bytes[](0)
+            }),
+            nonComTermsConfig: Licensing.TermsConfig({
+                termIds: new ShortString[](0),
+                termData: new bytes[](0)
+            })
+        });
     }
 
     function _addProtocolTerms() private {
@@ -333,4 +185,42 @@ contract BaseLicensingTest is BaseTest {
         ));
     }
 
+    function assertTerms(Licensing.License memory license) public {
+        (ShortString[] memory ipOrgTermsId, bytes[] memory ipOrgTermsData) = licensingModule.getIpOrgTerms(
+            license.isCommercial, address(ipOrg)
+        );
+        assertEq(license.termIds.length, ipOrgTermsId.length);
+        assertEq(license.termsData.length, ipOrgTermsData.length);
+        for (uint256 i = 0; i < license.termIds.length; i++) {
+            assertTrue(ShortStringOps._equal(license.termIds[i], ipOrgTermsId[i]));
+            assertTrue(keccak256(license.termsData[i]) == keccak256(ipOrgTermsData[i]));
+            Licensing.LicensingTerm memory term = licensingModule.getTerm(ipOrgTermsId[i]);
+            if (license.isCommercial) {
+                assertTrue(
+                    term.comStatus == Licensing.CommercialStatus.Commercial ||
+                    term.comStatus == Licensing.CommercialStatus.Both
+                );
+            } else {
+                assertTrue(
+                    term.comStatus == Licensing.CommercialStatus.NonCommercial ||
+                    term.comStatus == Licensing.CommercialStatus.Both
+                );
+            }
+        }
+    }
+
+    function assertTermsSetInIpOrg(bool commercial) public {
+        (ShortString[] memory ipOrgTermsId, bytes[] memory ipOrgTermsData) = licensingModule.getIpOrgTerms(
+            commercial, address(ipOrg)
+        );
+        ShortString[] memory tIds = termIds[commercial];
+        bytes[] memory tData = termData[commercial];
+        assertEq(tIds.length, ipOrgTermsId.length);
+        assertEq(tData.length, ipOrgTermsData.length);
+        uint256 length = termIds[commercial].length;
+        for (uint256 i = 0; i < length; i++) {
+            assertTrue(ShortStringOps._equal(tIds[i], ipOrgTermsId[i]));
+            assertTrue(keccak256(tData[i]) == keccak256(ipOrgTermsData[i]));
+        }
+    }
 }

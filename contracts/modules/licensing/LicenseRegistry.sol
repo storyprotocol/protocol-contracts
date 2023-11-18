@@ -8,6 +8,8 @@ import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 
+import "forge-std/console2.sol";
+
 /// @title LicenseRegistry
 /// @notice This contract is the source of truth for all licenses that are registered in the protocol.
 /// It will only be called by licensing modules.
@@ -25,7 +27,7 @@ contract LicenseRegistry is ERC721 {
 
     /// license Id => License
     mapping(uint256 => Licensing.License) private _licenses;
-    /// counder for license Ids
+    /// counter for license Ids
     uint256 private _licenseCount;
 
     IPAssetRegistry public immutable IPA_REGISTRY;
@@ -136,8 +138,7 @@ contract LicenseRegistry is ERC721 {
         Licensing.License memory license_
     ) private returns (uint256) {
         // Note: Valid parent license must be checked in Licensing module
-        _licenseCount++;
-        _licenses[_licenseCount] = license_;
+        _licenses[++_licenseCount] = license_;
         emit LicenseRegistered(_licenseCount);
         return _licenseCount;
     }
@@ -158,12 +159,11 @@ contract LicenseRegistry is ERC721 {
     /// @param id_ of the license
     /// @return licensee address, NFT owner if the license is tradeable, or IPA owner if bound to IPA
     function getLicensee(uint256 id_) external view returns (address) {
-        Licensing.LicenseeType licenseeType_ = _licenses[id_].licenseeType;
-        if (licenseeType_ == Licensing.LicenseeType.Unset) {
+        Licensing.License storage license = _licenses[id_];
+        if (license.licenseeType == Licensing.LicenseeType.Unset) {
             revert Errors.LicenseRegistry_UnknownLicenseId();
-        }
-        if (_licenses[id_].licenseeType == Licensing.LicenseeType.BoundToIpa) {
-            return IPA_REGISTRY.ipAssetOwner(id_);
+        } else if (license.licenseeType == Licensing.LicenseeType.BoundToIpa) {
+            return IPA_REGISTRY.ipAssetOwner(license.ipaId);
         } else {
             return ownerOf(id_);
         }
@@ -172,11 +172,15 @@ contract LicenseRegistry is ERC721 {
     /// Burns a license NFT and binds the license to an IPA
     /// @param licenseId_ id of the license NFT
     /// @param ipaId_ id of the IPA
-    function boundLnftToIpa(
+    function bondLnftToIpa(
         uint256 licenseId_,
         uint256 ipaId_
     ) external onlyLicensingModule {
+        console2.log("bondLnftToIpa");
         Licensing.License memory license_ = _licenses[licenseId_];
+        console2.log("licenseId_", licenseId_);
+        console2.log("license_.licenseeType", uint8(license_.licenseeType));
+        console2.log("Licensing.LicenseeType.LNFTHolder", uint8(Licensing.LicenseeType.LNFTHolder));
         if (license_.licenseeType != Licensing.LicenseeType.LNFTHolder) {
             revert Errors.LicenseRegistry_NotLicenseNFT();
         }
@@ -205,7 +209,7 @@ contract LicenseRegistry is ERC721 {
         if (_licenses[licenseId_].status != Licensing.LicenseStatus.Pending) {
             revert Errors.LicenseRegistry_LicenseNotPending();
         }
-        _licenses[licenseId_].status = Licensing.LicenseStatus.Pending;
+        _licenses[licenseId_].status = Licensing.LicenseStatus.Active;
         // TODO: change IPA status
         emit LicenseActivated(licenseId_);
     }

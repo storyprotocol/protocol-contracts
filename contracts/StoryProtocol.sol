@@ -297,18 +297,18 @@ contract StoryProtocol {
         );
     }
 
-    function boundLnftToIpa(
+    function bondLnftToIpa(
         address ipOrg_,
         uint256 licenseId_,
         uint256 ipaId_
     ) external {
-        console2.log("boundLnftToIpa");
+        console2.log("bondLnftToIpa");
         MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             msg.sender,
             ModuleRegistryKeys.LICENSING_MODULE,
             abi.encode(
-                Licensing.BOUND_LNFT_TO_IPA,
+                Licensing.BOND_LNFT_TO_IPA,
                 abi.encode(licenseId_, ipaId_)
             ),
             new bytes[](0),
