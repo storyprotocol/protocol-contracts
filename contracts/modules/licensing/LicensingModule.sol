@@ -16,7 +16,7 @@ import { TermIds, TermsData } from "contracts/lib/modules/ProtocolLicensingTerms
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 
 
-/// @title License Creator module
+/// @title Licensing module
 /// @notice Story Protocol module that:
 /// - Enables each IP Org to select a collection of terms from the TermsRepository to form
 ///   their licensing framework.
