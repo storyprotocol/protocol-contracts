@@ -176,11 +176,7 @@ contract LicenseRegistry is ERC721 {
         uint256 licenseId_,
         uint256 ipaId_
     ) external onlyLicensingModule {
-        console2.log("bondLnftToIpa");
         Licensing.License memory license_ = _licenses[licenseId_];
-        console2.log("licenseId_", licenseId_);
-        console2.log("license_.licenseeType", uint8(license_.licenseeType));
-        console2.log("Licensing.LicenseeType.LNFTHolder", uint8(Licensing.LicenseeType.LNFTHolder));
         if (license_.licenseeType != Licensing.LicenseeType.LNFTHolder) {
             revert Errors.LicenseRegistry_NotLicenseNFT();
         }

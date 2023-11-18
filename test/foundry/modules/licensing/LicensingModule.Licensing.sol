@@ -45,11 +45,11 @@ contract LicensingModuleLicensingTest is BaseLicensingTest {
             new bytes[](0)
         );
         Licensing.License memory license = licenseRegistry.getLicense(lId);
-        assertFalse(license.isCommercial);
-        assertEq(license.revoker, ipOrg.owner());
-        assertEq(license.licensor,  address(ipOrg));
-        assertEq(licenseRegistry.isLicenseActive(lId), true);
-        assertEq(licenseRegistry.getLicensee(lId), ipaOwner);
+        assertFalse(license.isCommercial, "commercial");
+        assertEq(license.revoker, ipOrg.owner(), "revoker is iporg");
+        assertEq(license.licensor, ipOrg.owner(), "licensor is owner is iporg");
+        assertEq(licenseRegistry.isLicenseActive(lId), true, "license is active");
+        assertEq(licenseRegistry.getLicensee(lId), ipaOwner, "licensee is ipa owner");
         assertTerms(license);
         assertEq(license.ipaId, rootIpaId);
     }
@@ -58,7 +58,7 @@ contract LicensingModuleLicensingTest is BaseLicensingTest {
         public
         withCommFramework(LicTestConfig({
             shareAlike: true,
-            licConfig: TermsData.LicensorConfig.ParentLicensor,
+            licConfig: TermsData.LicensorConfig.ParentLicensee,
             needsActivation: false
         }))
     {
@@ -74,8 +74,8 @@ contract LicensingModuleLicensingTest is BaseLicensingTest {
             new bytes[](0)
         );
         Licensing.License memory license = licenseRegistry.getLicense(lId);
-        assertFalse(license.isCommercial);
-        assertEq(license.licensor,  ipaOwner);
+        assertTrue(license.isCommercial, "is commercial");
+        assertEq(license.licensor,  ipaOwner, "licensor is ipaOwner");
 
         uint256 lId2 = spg.createLicenseNft(
             address(ipOrg),
@@ -88,10 +88,10 @@ contract LicensingModuleLicensingTest is BaseLicensingTest {
             new bytes[](0)
         );
         Licensing.License memory license2 = licenseRegistry.getLicense(lId2);
-        assertEq(license2.licensor,  licenseRegistry.getLicensee(lId));
-        assertEq(license2.parentLicenseId, lId);
-        assertEq(license2.ipaId, 0);
-        assertEq(licenseRegistry.getLicensee(lId2), lnftOwner);
+        assertEq(license2.licensor,  licenseRegistry.getLicensee(lId), "licensor is parent licensee");
+        assertEq(license2.parentLicenseId, lId, "parent is first license");
+        assertEq(license2.ipaId, 0, "no ipa id");
+        assertEq(licenseRegistry.getLicensee(lId2), lnftOwner, "licensee is lnft owner");
 
     }
 
@@ -100,7 +100,7 @@ contract LicensingModuleLicensingTest is BaseLicensingTest {
         public
         withNonCommFramework(LicTestConfig({
             shareAlike: false,
-            licConfig: TermsData.LicensorConfig.ParentLicensor,
+            licConfig: TermsData.LicensorConfig.ParentLicensee,
             needsActivation: true
         }))
     {

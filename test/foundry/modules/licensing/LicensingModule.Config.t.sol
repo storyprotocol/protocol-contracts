@@ -104,13 +104,13 @@ contract LicensingModuleConfigTest is BaseLicensingTest {
         public
         withNonCommFramework(LicTestConfig({
             shareAlike: true,
-            licConfig: TermsData.LicensorConfig.ParentLicensor,
+            licConfig: TermsData.LicensorConfig.ParentLicensee,
             needsActivation: true
         })) {
             assertEq(licensingModule.isShareAlikeOn(false, address(ipOrg)), true);
             assertEq(
                 uint8(licensingModule.getLicensorConfig(false, address(ipOrg))),
-                uint8(TermsData.LicensorConfig.ParentLicensor)
+                uint8(TermsData.LicensorConfig.ParentLicensee)
             );
             assertEq(licensingModule.isLicensorAppovalOn(false, address(ipOrg)), true);
     }

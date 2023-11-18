@@ -388,7 +388,7 @@ contract LicensingModule is BaseModule, TermsRepository {
         ];
         if (licensorConfig == TermsData.LicensorConfig.IpOrg) {
             return IIPOrg(ipOrg_).owner();
-        } else if (licensorConfig == TermsData.LicensorConfig.ParentLicensor) {
+        } else if (licensorConfig == TermsData.LicensorConfig.ParentLicensee) {
             if (parentLicenseId_ == 0) {
                 if (ipa_ == 0) {
                     revert Errors
@@ -396,7 +396,7 @@ contract LicensingModule is BaseModule, TermsRepository {
                 }
                 return IPA_REGISTRY.ipAssetOwner(ipa_);
             } else {
-                return LICENSE_REGISTRY.getLicensor(parentLicenseId_);
+                return LICENSE_REGISTRY.getLicensee(parentLicenseId_);
             }
         } else {
             revert Errors.LicensingModule_InvalidLicensorType();

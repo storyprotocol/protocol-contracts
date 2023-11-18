@@ -24,6 +24,6 @@ library TermsData {
     enum LicensorConfig {
         Unset,
         IpOrg,
-        ParentLicensor
+        ParentLicensee
     }
 }
