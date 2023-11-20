@@ -53,7 +53,6 @@ import { TermCategories, TermIds } from "contracts/lib/modules/ProtocolLicensing
      address mockNFT;
      address termsRepository;
 
-     string constant COMMERCIAL_LICENSE_URI = "https://commercial.license";
 
      constructor() JsonDeploymentHandler("main") {
      }
