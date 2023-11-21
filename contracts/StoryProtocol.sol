@@ -12,8 +12,9 @@ import { Registration } from "contracts/lib/modules/Registration.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
+import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 
-contract StoryProtocol {
+contract StoryProtocol is Multicall {
 
     IIPOrgController public immutable IP_ORG_CONTROLLER;
     ModuleRegistry public immutable MODULE_REGISTRY;
