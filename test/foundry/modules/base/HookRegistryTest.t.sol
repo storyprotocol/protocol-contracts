@@ -15,7 +15,7 @@ import { MockIPOrg } from "test/foundry/mocks/MockIPOrg.sol";
 contract HookRegistryTest is BaseTest {
     MockHookRegistry hookRegistry;
 
-    event HooksRegistered(HookRegistry.HookType indexed hType, bytes32 indexed registryKey, address[] indexed hook);
+    event HooksRegistered(HookRegistry.HookType indexed hType, bytes32 indexed registryKey, address[] hook);
     event HooksCleared(HookRegistry.HookType indexed hType, bytes32 indexed registryKey);
 
     function setUp() public override {
