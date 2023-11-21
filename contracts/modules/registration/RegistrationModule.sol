@@ -15,8 +15,6 @@ import { LibUintArrayMask } from "contracts/lib/LibUintArrayMask.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 
-import "forge-std/console2.sol";
-
 /// @title Registration Module
 /// @notice Handles registration and transferring of IP assets..
 contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled {
