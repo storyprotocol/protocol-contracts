@@ -83,7 +83,7 @@ contract RegistrationModuleTest is BaseTest {
         ));
 
         string memory part2 = string(abi.encodePacked(
-            '{"trait_type": "IP Asset Type", "value": "0"},',
+            '{"trait_type": "IP Org Type", "value": "0"},',
             '{"trait_type": "Status", "value": "1"},',
             '{"trait_type": "Hash", "value": "0x0000000000000000000000000000000000000000000000000000000000000000"},',
             '{"trait_type": "Registration Date", "value": "', Strings.toString(ipa.registrationDate), '"}'

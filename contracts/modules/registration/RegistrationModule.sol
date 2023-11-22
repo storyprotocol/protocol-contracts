@@ -113,7 +113,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
 
         string memory ipAssetAttributes = string(abi.encodePacked(
             '{"trait_type": "Initial Registrant", "value": "', Strings.toHexString(uint160(ipAsset.registrant), 20), '"},',
-            '{"trait_type": "IP Org Type Value", "value": "', config.assetTypes[ipOrgAssetType_], '"},',
+            '{"trait_type": "IP Org Type", "value": "', config.assetTypes[ipOrgAssetType_], '"},',
             '{"trait_type": "Status", "value": "', Strings.toString(ipAsset.status), '"},',
             '{"trait_type": "Hash", "value": "', Strings.toHexString(uint256(ipAsset.hash), 32), '"},',
             '{"trait_type": "Registration Date", "value": "', Strings.toString(ipAsset.registrationDate), '"}'
