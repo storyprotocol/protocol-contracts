@@ -20,7 +20,7 @@ import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol
 import 'test/foundry/utils/ProxyHelper.sol';
 import "forge-std/Test.sol";
 
-contract IPOrgTest is Test, ProxyHelper, AccessControlHelper {
+contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
     using stdStorage for StdStorage;
 
     event CollectionCreated(address indexed collection, string name, string indexed symbol);
@@ -77,4 +77,52 @@ contract IPOrgTest is Test, ProxyHelper, AccessControlHelper {
         ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", ipAssetTypes));
     }
 
+    function test_ipOrg_mint() public {
+        string[] memory ipAssetTypes = new string[](2);
+        ipAssetTypes[0] = "type1";
+        ipAssetTypes[1] = "type2";
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", ipAssetTypes));
+        moduleRegistry.registerProtocolModule(ModuleRegistryKeys.REGISTRATION_MODULE, BaseModule(address(this)));
+        uint256 ipAssetId = ipOrg.mint(ipOrgOwner, 1);
+        assertEq(ipOrg.ipOrgAssetType(ipAssetId), 1);
+        assertEq(ipOrg.ownerOf(ipAssetId), ipOrgOwner);
+        assertEq(ipOrg.totalSupply(), 1);
+    }
+
+    function test_ipOrg_revert_mintWhenNotRegistrationModule() public {
+        string[] memory ipAssetTypes = new string[](2);
+        ipAssetTypes[0] = "type1";
+        ipAssetTypes[1] = "type2";
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", ipAssetTypes));
+        vm.expectRevert(Errors.Unauthorized.selector);
+        ipOrg.mint(ipOrgOwner, 1);
+    }
+
+    function test_ipOrg_burn() public {
+        string[] memory ipAssetTypes = new string[](2);
+        ipAssetTypes[0] = "type1";
+        ipAssetTypes[1] = "type2";
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", ipAssetTypes));
+        moduleRegistry.registerProtocolModule(ModuleRegistryKeys.REGISTRATION_MODULE, BaseModule(address(this)));
+        uint256 ipAssetId = ipOrg.mint(ipOrgOwner, 1);
+        ipOrg.burn(ipAssetId);
+        vm.expectRevert(Errors.IPOrg_IdDoesNotExist.selector);
+        ipOrg.ipOrgAssetType(ipAssetId);
+        vm.expectRevert();
+        ipOrg.ownerOf(ipAssetId);
+    }
+
+    function test_ipOrg_revert_burnWhenNotRegistrationModule() public {
+        string[] memory ipAssetTypes = new string[](2);
+        ipAssetTypes[0] = "type1";
+        ipAssetTypes[1] = "type2";
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", ipAssetTypes));
+        moduleRegistry.registerProtocolModule(ModuleRegistryKeys.REGISTRATION_MODULE, BaseModule(address(this)));
+        uint256 ipAssetId = ipOrg.mint(ipOrgOwner, 1);
+        vm.prank(ipOrgOwner);
+        vm.expectRevert(Errors.Unauthorized.selector);
+        ipOrg.burn(ipAssetId);
+    }
+
+    
 }
