@@ -10,6 +10,8 @@ import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
 import { LibUintArrayMask } from "contracts/lib/LibUintArrayMask.sol";
 import { Errors } from "contracts/lib/Errors.sol";
+import { IRegistrationModule } from "contracts/interfaces/modules/registration/IRegistrationModule.sol";
+import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 
 /// @title Relationship Module
 /// @notice Contract that handles the creation and management of relationships between entities.
@@ -143,6 +145,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
             if (ipOrg_ == address(0)) {
                 revert Errors.RelationshipModule_IpOrgRelatableCannotBeProtocolLevel();
             }
+            _verifySupportedIpOrgIndexType(ipOrg_, allowedTypes_);
             return (ipOrg_, LibUintArrayMask._convertToMask(allowedTypes_));
         } else if (relatable_ == LibRelationship.Relatables.LICENSE) {
             return (address(LICENSE_REGISTRY), 0);
@@ -152,6 +155,21 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
             return (LibRelationship.NO_ADDRESS_RESTRICTIONS, 0);
         }
         revert Errors.RelationshipModule_InvalidRelatable();
+    }
+
+    function _verifySupportedIpOrgIndexType(
+        address ipOrg_,
+        uint8[] memory allowedTypes_
+    ) private view {
+        IRegistrationModule regModule = IRegistrationModule(
+            MODULE_REGISTRY.protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE)
+        );
+        uint256 length = allowedTypes_.length;
+        for (uint256 i = 0; i < length; i++) {
+            if (!regModule.isTypeIndexSupported(ipOrg_, allowedTypes_[i])) {
+                revert Errors.RelationshipModule_UnsupportedIpOrgIndexType();
+            }
+        }
     }
     
     /// Configures a Relationship Type from the more user friendly AddRelationshipTypeParams struct,

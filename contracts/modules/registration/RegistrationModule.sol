@@ -15,6 +15,7 @@ import { LibUintArrayMask } from "contracts/lib/LibUintArrayMask.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 
+
 /// @title Registration Module
 /// @notice Handles registration and transferring of IP assets..
 contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled {
@@ -135,8 +136,13 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     }
 
     /// @notice Gets the asset types of an IP Org.
-    function getIpAssetTypes(address ipOrg_) public view returns (string[] memory) {
+    function getIpOrgAssetTypes(address ipOrg_) public view returns (string[] memory) {
         return ipOrgConfigs[ipOrg_].assetTypes;
+    }
+
+    /// @notice returns true if the index for an IP Org asset type is supported.
+    function isTypeIndexSupported(address ipOrg_, uint8 index) public view returns (bool) {
+        return index < ipOrgConfigs[ipOrg_].assetTypes.length;
     }
 
     /// @notice Gets the current owner of an IP asset.
@@ -321,6 +327,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         }
         Registration.IPOrgConfig storage ipOrg = ipOrgConfigs[ipOrg_];
         for (uint i = 0; i < assetsLength; i++) {
+            // TODO: this should be a set, and check empty strings
             ipOrg.assetTypes.push(ipOrgTypes_[i]);
         }
     }
@@ -349,7 +356,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     }
 
     function _verifyIpOrgAssetType(address ipOrg_, uint8 ipOrgAssetType_) private view {
-        uint256 length = ipOrgConfigs[ipOrg_].assetTypes.length;
+        uint8 length = uint8(ipOrgConfigs[ipOrg_].assetTypes.length);
         if (ipOrgAssetType_ >= length) {
             revert Errors.RegistrationModule_InvalidIPAssetType();
         }

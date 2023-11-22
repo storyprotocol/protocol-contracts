@@ -47,7 +47,7 @@ contract BaseCollectModuleTest is BaseTest {
     /// @param ipAssetOwner The owner address for the new IP asset.
     /// @param ipAssetType The type of the IP asset being created.
     modifier createIpAsset(address ipAssetOwner, uint8 ipAssetType) virtual {
-        ipAssetId = _createIpAsset(ipAssetOwner, ipAssetType, "");
+        (ipAssetId, ) = _createIpAsset(ipAssetOwner, ipAssetType, "");
         _;
     }
 

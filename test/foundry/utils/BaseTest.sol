@@ -167,7 +167,11 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     ///      tested against. The reason this is currently added is that during
     ///      fuzz testing, foundry may plug existing contracts as potential
     ///      owners for IP asset creation.
-    function _createIpAsset(address ipAssetOwner, uint8 ipOrgAssetType, bytes memory collectData) internal isValidReceiver(ipAssetOwner) returns (uint256) {
+    function _createIpAsset(
+        address ipAssetOwner,
+        uint8 ipOrgAssetType,
+        bytes memory collectData
+    ) internal isValidReceiver(ipAssetOwner) returns (uint256 globalId, uint256 localId) {
         // vm.assume(ipAssetType > uint8(type(IPAsset.IPAssetType).min));
         // vm.assume(ipAssetType < uint8(type(IPAsset.IPAssetType).max));
         vm.prank(address(ipAssetOwner));
@@ -179,8 +183,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             mediaUrl: ""
         });
         bytes[] memory hooks = new bytes[](0);
-        (uint256 globalId, uint256 localId) = spg.registerIPAsset(address(ipOrg), params, hooks, hooks);
-        return globalId;
+        return spg.registerIPAsset(address(ipOrg), params, hooks, hooks);
     }
 
 }

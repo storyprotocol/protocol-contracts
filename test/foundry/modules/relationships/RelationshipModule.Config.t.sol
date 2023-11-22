@@ -44,7 +44,7 @@ contract RelationshipModuleConfigTest is BaseTest {
         assertEq(relType.dstSubtypesMask, 0);
     }
 
-    function test_RelationshipModule_addProtocolRelationshipTypeWithAllowedTypes() public {
+    function test_RelationshipModule_addIpOrgIpOrgRelationships() public {
         LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
             src: LibRelationship.Relatables.IPORG_ENTRY,
             dst: LibRelationship.Relatables.IPORG_ENTRY
@@ -75,6 +75,34 @@ contract RelationshipModuleConfigTest is BaseTest {
 
     }
 
+    function test_RelationshipModule_revert_addIpOrgIpOrgRelationships_UnsupportedTypes() public {
+        uint8[] memory allowedSrcs = new uint8[](0);
+        uint8[] memory allowedDsts = new uint8[](0);
+        allowedSrcs = new uint8[](3);
+        allowedSrcs[0] = 1;
+        allowedSrcs[1] = 2;
+        allowedSrcs[2] = 0;
+        allowedDsts = new uint8[](1);
+        allowedDsts[0] = 9;
+
+        LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
+            src: LibRelationship.Relatables.IPORG_ENTRY,
+            dst: LibRelationship.Relatables.IPORG_ENTRY
+        });
+        
+        LibRelationship.AddRelationshipTypeParams memory params = LibRelationship.AddRelationshipTypeParams({
+            relType: "TEST_RELATIONSHIP",
+            ipOrg: address(ipOrg),
+            allowedElements: allowedElements,
+            allowedSrcs: allowedSrcs,
+            allowedDsts: allowedDsts
+        });
+        vm.prank(ipOrgOwner);
+        // Todo test event
+        vm.expectRevert(Errors.RelationshipModule_UnsupportedIpOrgIndexType.selector);
+        spg.addRelationshipType(params);
+    }
+
     function test_RelationshipModule_revert_RelationshipModule_CallerNotIpOrgOwner() public {
         LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
             src: LibRelationship.Relatables.IPORG_ENTRY,
@@ -94,10 +122,6 @@ contract RelationshipModuleConfigTest is BaseTest {
         });
         vm.expectRevert(Errors.RelationshipModule_CallerNotIpOrgOwner.selector);
         spg.addRelationshipType(params);
-        relationshipModule.getRelationshipType(
-            LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
-            "TEST_RELATIONSHIP"
-        );
     }
 
     function test_RelationshipModule_revert_ipOrgRelatableCannotBeProtocolLevel() public {
@@ -149,6 +173,5 @@ contract RelationshipModuleConfigTest is BaseTest {
     }
 
 
-    // function test_RelationshipModule_revert_addRelationshipTypeIpaWithoutAllowedTypes() public {}
 }
 

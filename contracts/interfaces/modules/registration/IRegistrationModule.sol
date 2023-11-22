@@ -71,4 +71,9 @@ interface IRegistrationModule {
     /// @return The contract URI associated with the IP Org.
     function contractURI(address ipOrg_) external view returns (string memory);
 
+    /// @notice get the ip Asset types of an ipOrg
+    function getIpOrgAssetTypes(address ipOrg_) external view returns (string[] memory);
+
+    /// @notice Returns true if the index for an IP Org asset type is supported.
+    function isTypeIndexSupported(address ipOrg_, uint8 index) external view returns (bool);
 }

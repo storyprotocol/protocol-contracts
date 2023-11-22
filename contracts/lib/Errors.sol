@@ -368,6 +368,9 @@ library Errors {
     /// ipOrg address must be set
     error RelationshipModule_IpOrgRelatableCannotBeProtocolLevel();
 
+    /// @notice Index is not found for the asset types of that IP Org.
+    error RelationshipModule_UnsupportedIpOrgIndexType();
+
     ////////////////////////////////////////////////////////////////////////////
     //                                RoyaltyNFT                              //
     ////////////////////////////////////////////////////////////////////////////
