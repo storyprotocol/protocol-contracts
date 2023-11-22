@@ -132,8 +132,9 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         );
 
         vm.startPrank(ipAssetOrgOwner);
-        string[] memory ipAssetTypes = new string[](1);
+        string[] memory ipAssetTypes = new string[](2);
         ipAssetTypes[0] = "CHARACTER";
+        ipAssetTypes[1] = "STORY";
         ipOrg = IPOrg(spg.registerIpOrg(
             ipAssetOrgOwner,
             ipAssetOrgParams.name,

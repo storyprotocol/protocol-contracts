@@ -21,7 +21,6 @@ contract RegistrationModuleTest is BaseTest {
     event Registered(
         uint256 ipAssetId_,
         string name_,
-        uint8 indexed ipOrgAssetType_,
         address indexed ipOrg_,
         address indexed registrant_,
         bytes32 hash_
@@ -83,7 +82,7 @@ contract RegistrationModuleTest is BaseTest {
         ));
 
         string memory part2 = string(abi.encodePacked(
-            '{"trait_type": "IP Org Type", "value": "0"},',
+            '{"trait_type": "IP Org Type", "value": "CHARACTER"},',
             '{"trait_type": "Status", "value": "1"},',
             '{"trait_type": "Hash", "value": "0x0000000000000000000000000000000000000000000000000000000000000000"},',
             '{"trait_type": "Registration Date", "value": "', Strings.toString(ipa.registrationDate), '"}'
@@ -104,7 +103,6 @@ contract RegistrationModuleTest is BaseTest {
         emit Registered(
             1,
             "TestIPA",
-            0,
             address(ipOrg),
             cal,
             ""
@@ -133,7 +131,6 @@ contract RegistrationModuleTest is BaseTest {
         emit Registered(
             1,
             "TestIPA",
-            0,
             address(ipOrg),
             cal,
             ""
@@ -150,9 +147,9 @@ contract RegistrationModuleTest is BaseTest {
             mediaUrl
         );
         _register(address(ipOrg), cal, "TestIPA", 0, "", mediaUrl);
-        assertEq(registry.ipAssetOwner(1), cal);
-        assertEq(ipOrg.ownerOf(1), cal);
-        assertEq(mediaUrl, registrationModule.tokenURI(address(ipOrg), 1, 0));
+        assertEq(registry.ipAssetOwner(1), cal, "ipa owner");
+        assertEq(ipOrg.ownerOf(1), cal, "iporg owner");
+        assertEq(mediaUrl, registrationModule.tokenURI(address(ipOrg), 1, 0), "media url");
     }
 
     /// @dev Helper function that performs registration.

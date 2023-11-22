@@ -279,11 +279,13 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     /// @param fromIpOrg_ The address of the original governing IP Org.
     /// @param fromIpOrgAssetId_ The existing id of the IP asset within the IP Org.
     /// @param toIpOrg_ The address of the new governing IP Org.
+    /// @param toIpOrgType_ The type of the IP asset within the new IP Org.
     /// TODO(leeren) Expose this function to FE once IP Orgs are finalized.
     function _transferIPAssetToIPOrg(
         address fromIpOrg_,
         uint256 fromIpOrgAssetId_,
         address toIpOrg_,
+        uint8 toIpOrgType_,
         address from_,
         address to_
     ) internal returns (uint256 ipAssetId_, uint256 ipOrgAssetId_) {
@@ -298,7 +300,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
             ipAssetId_,
             toIpOrg_
         );
-        ipOrgAssetId_ = IIPOrg(toIpOrg_).mint(owner, IIPOrg(fromIpOrg_).ipOrgAssetType(fromIpOrgAssetId_));
+        ipOrgAssetId_ = IIPOrg(toIpOrg_).mint(owner, toIpOrgType_);
         IPOrgAsset memory ipOrgAsset = IPOrgAsset(toIpOrg_, ipOrgAssetId_);
         ipOrgAssets[id] = ipOrgAsset;
         ipAssetId[address(toIpOrg_)][ipOrgAssetId_] = id;
