@@ -135,7 +135,7 @@ contract StoryProtocol is Multicall {
             Registration.TRANSFER_IP_ASSET,
             abi.encode(from_, to_, ipAssetId_)
         );
-        bytes memory result = MODULE_REGISTRY.execute(
+        MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             msg.sender,
             ModuleRegistryKeys.REGISTRATION_MODULE,

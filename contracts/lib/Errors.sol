@@ -192,8 +192,6 @@ library Errors {
 
     error LibUintArrayMask_EmptyArray();
     error LibUintArrayMask_UndefinedArrayElement();
-    /// @notice IP asset is invalid.
-    error LibUintArrayMask_InvalidType(IPAsset.IPAssetType ipAsset);
 
     ////////////////////////////////////////////////////////////////////////////
     //                               IPOrg                                    //
@@ -204,6 +202,9 @@ library Errors {
 
     /// @notice Licensing is not configured.
     error IPOrg_LicensingNotConfigured();
+
+    /// @notice IP Org wrapper id does not exist.
+    error IPOrg_IdDoesNotExist();
 
     ////////////////////////////////////////////////////////////////////////////
     //                             IPOrgController                            //
@@ -307,6 +308,13 @@ library Errors {
 
     /// @notice The registration execution action is not valid.
     error RegistrationModule_InvalidExecutionOperation();
+
+    /// @notice IP asset type is not in the list of supported types for
+    /// the IP Org.
+    error RegistrationModule_InvalidIPAssetType();
+
+    /// @notice IPAsset types provided are more than the maximum allowed.
+    error RegistrationModule_TooManyAssetTypes();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            RelationshipModule                          //

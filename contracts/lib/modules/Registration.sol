@@ -14,8 +14,8 @@ library Registration {
     /// @notice Struct used for IP asset registration.
     struct RegisterIPAssetParams {
         address owner;
+        uint8 ipOrgAssetType;
         string name;
-        uint64 ipAssetType;
         bytes32 hash;
         string mediaUrl;
     }

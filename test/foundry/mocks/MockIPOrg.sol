@@ -23,9 +23,13 @@ contract MockIPOrg is IIPOrg {
 
     function transferFrom(address from, address to, uint256 id) external {}
 
-    function mint(address owner_) external override(IIPOrg) returns (uint256 id) {}
+    function mint(address owner_, uint8 type_) external override(IIPOrg) returns (uint256 id) {}
 
     function owner() external view override(IIPOrg) returns (address) {
         return _owner;
+    }
+
+    function ipOrgAssetType(uint256 id_) external view override(IIPOrg) returns (uint8) {
+        return 0;
     }
 }

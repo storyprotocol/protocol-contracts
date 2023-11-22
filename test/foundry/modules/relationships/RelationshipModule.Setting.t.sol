@@ -37,10 +37,8 @@ contract RelationshipModuleSettingTest is BaseTest {
             relType: "TEST_RELATIONSHIP",
             srcAddress: address(1111111),
             srcId: 0,
-            srcType: 0,
             dstAddress: address(2222222),
-            dstId: 0,
-            dstType: 0
+            dstId: 0
         });
         bytes[] memory preHooksData = new bytes[](0);
         bytes[] memory postHooksData = new bytes[](0);

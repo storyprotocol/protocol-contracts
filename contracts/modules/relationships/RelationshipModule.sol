@@ -22,7 +22,6 @@ import { Errors } from "contracts/lib/Errors.sol";
 /// - Addresses
 /// - External NFTs
 /// And combinations of them.
-/// This allows Story Protocol to track attribution, IP remixes, sublicensing...
 /// NOTE: This is an alpha version, a more efficient way of storing and verifying relationships will be implemented in the future.
 contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled {
 
@@ -78,10 +77,6 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
     /// Gets relationship definition for a given relationship id
     function getRelationship(uint256 relationshipId_) external view returns (LibRelationship.Relationship memory) {
         return _relationships[relationshipId_];
-        // TODO: store hash(src) -> hash(dst),
-        // easier to check if a relation exist
-        // we can traverse the graph
-        // if we delete one end, it's easier to propagate
     }
 
     /// Gets relationship id for a given relationship
@@ -136,7 +131,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
     /// @param allowedTypes_ ipOrg related types, if applicable
     /// @return a tuple with the accepted address and the subtype mask for this node of a
     /// relationship type definition
-    function addressConfigFor(
+    function _addressConfigFor(
         LibRelationship.Relatables relatable_,
         address ipOrg_,
         uint8[] memory allowedTypes_
@@ -159,8 +154,8 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
     /// and adds it to the appropriate mapping (protocol or IPOrg)
     /// @param params_ AddRelationshipTypeParams
     function _addRelationshipType(LibRelationship.AddRelationshipTypeParams memory params_) private {
-        (address src, uint256 srcSubtypesMask) = addressConfigFor(params_.allowedElements.src, params_.ipOrg, params_.allowedSrcs);
-        (address dst, uint256 dstSubtypesMask) = addressConfigFor(params_.allowedElements.dst, params_.ipOrg, params_.allowedDsts);
+        (address src, uint256 srcSubtypesMask) = _addressConfigFor(params_.allowedElements.src, params_.ipOrg, params_.allowedSrcs);
+        (address dst, uint256 dstSubtypesMask) = _addressConfigFor(params_.allowedElements.dst, params_.ipOrg, params_.allowedDsts);
         LibRelationship.RelationshipType memory relDef = LibRelationship.RelationshipType({
             src: src,
             srcSubtypesMask: srcSubtypesMask,
@@ -211,8 +206,11 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
                 revert Errors.RelationshipModule_InvalidSrcAddress();
             }
         }
-        if (LibUintArrayMask._isAssetTypeOnMask(relType.srcSubtypesMask, createParams.srcType)) {
-            revert Errors.RelationshipModule_InvalidSrcId();
+        if (relType.srcSubtypesMask != 0) {
+            uint8 srcType = ipOrg_.ipOrgAssetType(createParams.srcId);
+            if (!LibUintArrayMask._isAssetTypeOnMask(relType.srcSubtypesMask, srcType)) {
+                revert Errors.RelationshipModule_InvalidSrcId();
+            }
         }
         // Destination checks
         if (createParams.dstAddress == address(0)) {
@@ -223,8 +221,11 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
                 revert Errors.RelationshipModule_InvalidDstAddress();
             }
         }
-        if (LibUintArrayMask._isAssetTypeOnMask(relType.srcSubtypesMask, createParams.dstType)) {
-            revert Errors.RelationshipModule_InvalidDstId();
+        if (relType.dstSubtypesMask != 0) {
+            uint8 dstType = ipOrg_.ipOrgAssetType(createParams.dstId);
+            if (!LibUintArrayMask._isAssetTypeOnMask(relType.dstSubtypesMask, dstType)) {
+                revert Errors.RelationshipModule_InvalidDstId();
+            }
         }
     }
 

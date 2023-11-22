@@ -21,7 +21,7 @@ contract RegistrationModuleTest is BaseTest {
     event Registered(
         uint256 ipAssetId_,
         string name_,
-        uint64 indexed ipAssetType_,
+        uint8 indexed ipOrgAssetType_,
         address indexed ipOrg_,
         address indexed registrant_,
         bytes32 hash_
@@ -33,7 +33,7 @@ contract RegistrationModuleTest is BaseTest {
         uint256 ipOrgAssetId_,
         address indexed owner_,
         string name_,
-        uint64 indexed ipAssetType_,
+        uint8 indexed ipOrgAssetType_,
         bytes32 hash_,
         string mediaUrl_
     );
@@ -65,7 +65,7 @@ contract RegistrationModuleTest is BaseTest {
             "https://storyprotocol.xyz/",
             "https://storyprotocol.xyz"
         );
-        assertEq(registrationModule.tokenURI(address(ipOrg), 1), "https://storyprotocol.xyz/1");
+        assertEq(registrationModule.tokenURI(address(ipOrg), 1, 0), "https://storyprotocol.xyz/1");
     }
 
     /// @notice Tests the default token URI for IPAs.
@@ -93,7 +93,7 @@ contract RegistrationModuleTest is BaseTest {
             "data:application/json;base64,",
             Base64.encode(bytes(string(abi.encodePacked(part1, part2))))
         ));
-        assertEq(expectedURI, registrationModule.tokenURI(address(ipOrg), 1));
+        assertEq(expectedURI, registrationModule.tokenURI(address(ipOrg), 1, 0));
 
     }
 
@@ -152,27 +152,27 @@ contract RegistrationModuleTest is BaseTest {
         _register(address(ipOrg), cal, "TestIPA", 0, "", mediaUrl);
         assertEq(registry.ipAssetOwner(1), cal);
         assertEq(ipOrg.ownerOf(1), cal);
-        assertEq(mediaUrl, registrationModule.tokenURI(address(ipOrg), 1));
+        assertEq(mediaUrl, registrationModule.tokenURI(address(ipOrg), 1, 0));
     }
 
     /// @dev Helper function that performs registration.
     /// @param ipOrg_ Address of the ipOrg of the IP asset.
     /// @param owner_ Address of the owner of the IP asset.
     /// @param name_ Name of the IP asset.
-    /// @param ipAssetType_ Type of the IP asset.
+    /// @param ipOrgAssetType_ Type of the IP asset.
     /// @param hash_ Content has of the IP Asset.
     function _register(
         address ipOrg_,
         address owner_,
         string memory name_,
-        uint64 ipAssetType_,
+        uint8 ipOrgAssetType_,
         bytes32 hash_,
         string memory mediaUrl_
     ) internal virtual returns (uint256, uint256) {
         Registration.RegisterIPAssetParams memory params = Registration.RegisterIPAssetParams({
             owner: owner_,
             name: name_,
-            ipAssetType: ipAssetType_, 
+            ipOrgAssetType: ipOrgAssetType_, 
             hash: hash_,
             mediaUrl: mediaUrl_
         });

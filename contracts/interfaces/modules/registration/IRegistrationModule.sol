@@ -22,7 +22,7 @@ interface IRegistrationModule {
     /// @param ipOrgAssetId_ The IP Org localized id of the IP asset.
     /// @param owner_ The address of the new IP asset owner.
     /// @param name_ The name of the IP asset being registered.
-    /// @param ipAssetType_ The numerical id of the IP asset type.
+    /// @param ipOrgAssetType_ The numerical id of the IP asset type.
     /// @param hash_ The content hash of the registered IP asset.
     /// @param mediaUrl_ The media URL of the registered IP asset.
     event IPAssetRegistered(
@@ -31,7 +31,7 @@ interface IRegistrationModule {
         uint256 ipOrgAssetId_,
         address indexed owner_,
         string name_,
-        uint64 indexed ipAssetType_,
+        uint8 indexed ipOrgAssetType_,
         bytes32 hash_,
         string mediaUrl_
     );
@@ -62,8 +62,9 @@ interface IRegistrationModule {
     /// @notice Renders metadata of an IP Asset localized for an IP Org.
     /// @param ipOrg_ The address of the IP Org of the IP asset.
     /// @param ipOrgAssetId_ The local id of the IP asset within the IP Org.
+    /// @param ipOrgAssetType_ The IP Org asset type.
     /// @return The token URI associated with the IP Org.
-    function tokenURI(address ipOrg_, uint256 ipOrgAssetId_) external view returns (string memory);
+    function tokenURI(address ipOrg_, uint256 ipOrgAssetId_, uint8 ipOrgAssetType_) external view returns (string memory);
 
     /// @notice Gets the contract URI for an IP Org.
     /// @param ipOrg_ The address of the IP Org.
