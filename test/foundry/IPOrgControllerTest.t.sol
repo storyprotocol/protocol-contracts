@@ -77,6 +77,13 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
         ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", ipAssetTypes));
     }
 
+    function test_ipOrgController_revert_tooManyAssetTypes() public {
+        uint256 maxAssetTypes = registrationModule.MAX_IP_ORG_ASSET_TYPES() + 1;
+        string[] memory ipAssetTypes = new string[](maxAssetTypes);
+        vm.expectRevert(Errors.RegistrationModule_TooManyAssetTypes.selector);
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", ipAssetTypes));
+    }
+
     function test_ipOrg_mint() public {
         string[] memory ipAssetTypes = new string[](2);
         ipAssetTypes[0] = "type1";

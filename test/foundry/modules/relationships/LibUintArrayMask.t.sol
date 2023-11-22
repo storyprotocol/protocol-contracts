@@ -47,13 +47,6 @@ contract LibUintArrayMaskHarnessTest is Test {
         vm.expectRevert(Errors.LibUintArrayMask_EmptyArray.selector);
         checker.convertToMask(ipAssets);
     }
-
-    function test_LibUintArrayMask_revert_UndefinedArrayElement() public {
-        uint8[] memory ipAssets = new uint8[](1);
-        ipAssets[0] = 0;
-        vm.expectRevert(Errors.LibUintArrayMask_UndefinedArrayElement.selector);
-        checker.convertToMask(ipAssets);
-    }
     
 }
 

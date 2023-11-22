@@ -72,6 +72,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         if (result.src == address(0) || result.dst == address(0)) {
             revert Errors.RelationshipModule_RelTypeNotSet(relType_);
         }
+        return result;
     }
 
     /// Gets relationship definition for a given relationship id
@@ -139,7 +140,10 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         if (relatable_ == LibRelationship.Relatables.IPA) {
             return (address(IPA_REGISTRY), 0);
         } else if (relatable_ == LibRelationship.Relatables.IPORG_ENTRY) {
-            return (address(ipOrg_), LibUintArrayMask._convertToMask(allowedTypes_));
+            if (ipOrg_ == address(0)) {
+                revert Errors.RelationshipModule_IpOrgRelatableCannotBeProtocolLevel();
+            }
+            return (ipOrg_, LibUintArrayMask._convertToMask(allowedTypes_));
         } else if (relatable_ == LibRelationship.Relatables.LICENSE) {
             return (address(LICENSE_REGISTRY), 0);
         } else if (relatable_ == LibRelationship.Relatables.ADDRESS) {

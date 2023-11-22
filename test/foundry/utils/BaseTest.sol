@@ -44,7 +44,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     address public collectModuleImpl;
 
     address constant upgrader = address(6969);
-    address constant ipAssetOrgOwner = address(456);
+    address constant ipOrgOwner = address(456);
     address constant relManager = address(9999);
     address constant termSetter = address(444);
 
@@ -131,12 +131,13 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             "tokenURI"
         );
 
-        vm.startPrank(ipAssetOrgOwner);
-        string[] memory ipAssetTypes = new string[](2);
+        vm.startPrank(ipOrgOwner);
+        string[] memory ipAssetTypes = new string[](3);
         ipAssetTypes[0] = "CHARACTER";
         ipAssetTypes[1] = "STORY";
+        ipAssetTypes[2] = "LOCATION";
         ipOrg = IPOrg(spg.registerIpOrg(
-            ipAssetOrgOwner,
+            ipOrgOwner,
             ipAssetOrgParams.name,
             ipAssetOrgParams.symbol,
             ipAssetTypes

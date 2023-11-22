@@ -191,7 +191,6 @@ library Errors {
     ////////////////////////////////////////////////////////////////////////////
 
     error LibUintArrayMask_EmptyArray();
-    error LibUintArrayMask_UndefinedArrayElement();
 
     ////////////////////////////////////////////////////////////////////////////
     //                               IPOrg                                    //
@@ -341,15 +340,33 @@ library Errors {
     /// @notice The relationship destination IP type is not supported.
     error RelationshipModule_UnsupportedRelationshipDst();
 
+    /// @notice Trying an unsupported config action
     error RelationshipModule_InvalidConfigOperation();
-   
+
+    /// @notice Unauthorized caller
     error RelationshipModule_CallerNotIpOrgOwner();
+
+    /// @notice Value not on Relatable enum
     error RelationshipModule_InvalidRelatable();
+
+    /// @notice Getting an invalid relationship type
     error RelationshipModule_RelTypeNotSet(string relType);
+
+    /// @notice Relating invalid src addresss
     error RelationshipModule_InvalidSrcAddress();
+
+    /// @notice Relating invalid dst addresss
     error RelationshipModule_InvalidDstAddress();
+
+    /// @notice Relating unsupported src ipOrg asset type
     error RelationshipModule_InvalidSrcId();
+    
+    /// @notice Relating unsupported dst ipOrg asset type
     error RelationshipModule_InvalidDstId();
+
+    /// @notice For IPORG_ENTRY - IPORG_ENTRY relationships,
+    /// ipOrg address must be set
+    error RelationshipModule_IpOrgRelatableCannotBeProtocolLevel();
 
     ////////////////////////////////////////////////////////////////////////////
     //                                RoyaltyNFT                              //

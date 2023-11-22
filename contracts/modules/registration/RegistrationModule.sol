@@ -40,7 +40,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     mapping(address => mapping(uint256 => string)) public tokenUris;
 
     /// @notice Maximum number of Ip Org asset types.
-    uint8 public constant MAX_IP_ORG_ASSET_TYPES = type(uint8).max;
+    uint256 public constant MAX_IP_ORG_ASSET_TYPES = type(uint8).max;
 
     /// @notice Initializes the registration module.
     constructor(
