@@ -22,7 +22,7 @@ contract LicensingModuleLicensingTest is BaseLicensingTest {
 
     function setUp() public override {
         super.setUp();   
-        rootIpaId = _createIpAsset(ipaOwner, 2, bytes(""));
+        rootIpaId = _createIpAsset(ipaOwner, 1, bytes(""));
     }
 
     function test_LicensingModule_createNonCommercialIpaBoundLicense_licensorIpOrg()
