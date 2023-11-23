@@ -7,7 +7,7 @@ import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC721Events } from "../../../interfaces/IERC721Events.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-import { MockCollectModuleERC721 } from "test/foundry/mocks/MockCollectModuleERC721.sol";
+import { MockCollectModuleERC721 } from "mvp/test/foundry/mocks/MockCollectModuleERC721.sol";
 import { BaseTestUtils } from "test/foundry/utils/BaseTestUtils.sol";
 import { MockERC721Receiver } from "test/foundry/mocks/MockERC721Receiver.sol";
 import { Errors } from "contracts/lib/Errors.sol";

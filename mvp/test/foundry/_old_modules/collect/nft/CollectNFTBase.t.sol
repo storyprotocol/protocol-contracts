@@ -7,7 +7,7 @@ import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.so
 
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
 import { BaseERC721Test } from "./BaseERC721Test.sol";
-import { MockCollectNFT } from "test/foundry/mocks/MockCollectNFT.sol";
+import { MockCollectNFT } from "mvp/test/foundry/mocks/MockCollectNFT.sol";
 import { ERC721Test } from "./ERC721.t.sol";
 
 import { IPAsset } from "contracts/lib/IPAsset.sol";

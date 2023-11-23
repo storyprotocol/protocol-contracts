@@ -11,8 +11,6 @@ import { LicenseRegistry } from "contracts/modules/licensing/LicenseRegistry.sol
 import { AccessControlSingleton } from "contracts/access-control/AccessControlSingleton.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { AccessControlHelper } from "./utils/AccessControlHelper.sol";
-import { MockCollectNFT } from "./mocks/MockCollectNFT.sol";
-import { MockCollectModule } from "./mocks/MockCollectModule.sol";
 import { MockIPOrgController } from "./mocks/MockIPOrgController.sol";
 import { BaseModule } from "contracts/modules/base/BaseModule.sol";
 import { RegistrationModule } from "contracts/modules/registration/RegistrationModule.sol";

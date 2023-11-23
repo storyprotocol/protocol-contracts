@@ -3,7 +3,7 @@ pragma solidity ^0.8.18;
 
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { BaseERC721Test } from "./BaseERC721Test.sol";
-import { MockCollectModuleERC721 } from "test/foundry/mocks/MockCollectModuleERC721.sol";
+import { MockCollectModuleERC721 } from "mvp/test/foundry/mocks/MockCollectModuleERC721.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 
 /// @title ERC-721 Testing Contract

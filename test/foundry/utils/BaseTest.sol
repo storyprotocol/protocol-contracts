@@ -4,8 +4,6 @@ pragma solidity ^0.8.19;
 import 'test/foundry/utils/ProxyHelper.sol';
 import 'test/foundry/utils/BaseTestUtils.sol';
 import 'test/foundry/utils/AccessControlHelper.sol';
-import "test/foundry/mocks/MockCollectNFT.sol";
-import "test/foundry/mocks/MockCollectModule.sol";
 import "contracts/StoryProtocol.sol";
 import "contracts/ip-org/IPOrgController.sol";
 import "contracts/ip-org/IPOrg.sol";
@@ -149,17 +147,21 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     }
 
     function _deployCollectNFTImpl() internal virtual returns (address) {
-        return address(new MockCollectNFT());
+        // TODO: temporarily commented out for alpha
+        // return address(new MockCollectNFT());
+        return address(0);
     }
 
     function _deployCollectModule(address collectNftImpl) internal virtual returns (address) {
-        collectModuleImpl = address(new MockCollectModule(address(registry), collectNftImpl));
-        return _deployUUPSProxy(
-                collectModuleImpl,
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
-                )
-        );
+        // TODO: temporarily commented out for alpha
+        // collectModuleImpl = address(new MockCollectModule(address(registry), collectNftImpl));
+        // return _deployUUPSProxy(
+        //        collectModuleImpl,
+        //        abi.encodeWithSelector(
+        //            bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
+        //        )
+        // );
+        return address(0);
     }
 
     /// @dev Helper function for creating an IP asset for an owner and IP type.

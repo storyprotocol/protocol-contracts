@@ -9,10 +9,10 @@ import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.so
 
 import { BaseCollectModuleTest } from "./BaseCollectModuleTest.sol";
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
-import { MockCollectPaymentModule } from "test/foundry/mocks/MockCollectPaymentModule.sol";
+import { MockCollectPaymentModule } from "mvp/test/foundry/mocks/MockCollectPaymentModule.sol";
 import { MockNativeTokenNonReceiver } from "test/foundry/mocks/MockNativeTokenNonReceiver.sol";
 import { MockThrowingERC20 } from "test/foundry/mocks/MockThrowingERC20.sol";
-import { MockCollectNFT } from "test/foundry/mocks/MockCollectNFT.sol";
+import { MockCollectNFT } from "mvp/test/foundry/mocks/MockCollectNFT.sol";
 import { MockERC20 } from "test/foundry/mocks/MockERC20.sol";
 import { MockWETH } from "test/foundry/mocks/MockWETH.sol";
 
