@@ -26,13 +26,4 @@ library IPAsset {
         bytes32 hash;
         string mediaUrl;
     }
-
-    struct CreateIpAssetParams {
-        uint8 ipOrgAssetType;
-        string name;
-        bytes32 hash;
-        string mediaUrl;
-        bytes ipData;
-    }
-
 }
