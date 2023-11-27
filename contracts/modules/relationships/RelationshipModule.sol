@@ -166,7 +166,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         );
         uint256 length = allowedTypes_.length;
         for (uint256 i = 0; i < length; i++) {
-            if (!regModule.isTypeIndexSupported(ipOrg_, allowedTypes_[i])) {
+            if (!regModule.isValidIpOrgAssetType(ipOrg_, allowedTypes_[i])) {
                 revert Errors.RelationshipModule_UnsupportedIpOrgIndexType();
             }
         }

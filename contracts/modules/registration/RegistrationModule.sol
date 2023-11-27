@@ -141,8 +141,8 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     }
 
     /// @notice returns true if the index for an IP Org asset type is supported.
-    function isTypeIndexSupported(address ipOrg_, uint8 index) public view returns (bool) {
-        return index < ipOrgConfigs[ipOrg_].assetTypes.length;
+    function isValidIpOrgAssetType(address ipOrg_, uint8 assetTypeIndex_) public view returns (bool) {
+        return assetTypeIndex_ < ipOrgConfigs[ipOrg_].assetTypes.length;
     }
 
     /// @notice Gets the current owner of an IP asset.

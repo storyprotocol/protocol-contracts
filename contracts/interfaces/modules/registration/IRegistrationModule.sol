@@ -75,5 +75,5 @@ interface IRegistrationModule {
     function getIpOrgAssetTypes(address ipOrg_) external view returns (string[] memory);
 
     /// @notice Returns true if the index for an IP Org asset type is supported.
-    function isTypeIndexSupported(address ipOrg_, uint8 index) external view returns (bool);
+    function isValidIpOrgAssetType(address ipOrg_, uint8 index) external view returns (bool);
 }
