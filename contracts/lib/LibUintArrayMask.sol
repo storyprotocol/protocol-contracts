@@ -20,7 +20,6 @@ library LibUintArrayMask {
         if (assetTypes_.length == 0) revert Errors.LibUintArrayMask_EmptyArray();
         uint256 mask = 0;
         for (uint256 i = 0; i < assetTypes_.length;) {
-            // if (assetTypes_[i] == UNDEFINED) revert Errors.LibUintArrayMask_UndefinedArrayElement();
             mask |= 1 << (uint256(assetTypes_[i]) & 0xff);
             unchecked {
                 i++;
