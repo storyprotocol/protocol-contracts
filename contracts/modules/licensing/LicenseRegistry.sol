@@ -18,7 +18,7 @@ contract LicenseRegistry is ERC721 {
     event LicenseRegistered(uint256 indexed id);
     event LicenseNftBoundedToIpa(
         uint256 indexed licenseId,
-        uint256 indexed ipaId
+        uint256 indexed ipAssetId
     );
     event LicenseActivated(uint256 indexed licenseId);
     event LicenseRevoked(uint256 indexed licenseId);

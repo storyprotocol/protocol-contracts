@@ -8,33 +8,35 @@ import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 interface IIPOrgController {
 
     /// @notice Emits when a new IP Org is registered.
-    /// @param owner_ The address of the IP Org owner.
-    /// @param ipAssetOrg_ The address of the new IP Org contract.
-    /// @param name_ Descriptive name for the new IP Org contract.
-    /// @param symbol_ A describe symbol for the new IP Org contract.
+    /// @param owner The address of the IP Org owner.
+    /// @param ipAssetOrg The address of the new IP Org contract.
+    /// @param name Descriptive name for the new IP Org contract.
+    /// @param symbol A describe symbol for the new IP Org contract.
+    /// @param ipAssetTypes String descriptors of the IP asset types available.
     event IPOrgRegistered(
-        address owner_,
-        address ipAssetOrg_,
-        string name_,
-        string symbol_
+        address owner,
+        address ipAssetOrg,
+        string name,
+        string symbol,
+        string[] ipAssetTypes
     );
 
     /// @notice Emits when an IP Org is transferred to a new owner.
-    /// @param ipOrg_ The address of the IP Org.
-    /// @param prevOwner_ The address of the previous owner of the IP Org.
-    /// @param newOwner_ The address of the new owner of the IP Org.
+    /// @param ipOrg The address of the IP Org.
+    /// @param prevOwner The address of the previous owner of the IP Org.
+    /// @param newOwner The address of the new owner of the IP Org.
     event IPOrgTransferred(
-        address ipOrg_,
-        address prevOwner_,
-        address newOwner_
+        address ipOrg,
+        address prevOwner,
+        address newOwner
     );
 
     /// @notice Emits when an ownership transfer is initialized for a new owner.
-    /// @param ipOrg_ The address of the IP Org.
-    /// @param pendingOwner_ The pending owner to set for the IP Org.
+    /// @param ipOrg The address of the IP Org.
+    /// @param pendingOwner The pending owner to set for the IP Org.
     event IPOrgPendingOwnerSet(
-        address ipOrg_,
-        address pendingOwner_
+        address ipOrg,
+        address pendingOwner
     );
 
     /// @notice Registers a new IP Org.

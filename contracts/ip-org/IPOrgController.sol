@@ -188,10 +188,11 @@ contract IPOrgController is
         );
 
         emit IPOrgRegistered(
-            msg.sender,
+            owner_,
             ipOrg_,
             name_,
-            symbol_
+            symbol_,
+            ipAssetTypes_
         );
     }
 

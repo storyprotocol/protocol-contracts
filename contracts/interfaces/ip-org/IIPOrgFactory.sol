@@ -7,11 +7,12 @@ import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 interface IIPOrgController is IVersioned {
 
     event IPOrgRegistered(
-        address owner_,
-        address ipAssetOrg_,
-        string name_,
-        string symbol_,
-        string tokenURI_
+        address owner,
+        address ipAssetOrg,
+        string name,
+        string symbol,
+        string tokenURI,
+        string[] ipAssetTypes
     );
 
     function registerIpOrg(IPOrgParams.RegisterIPOrgParams calldata params_) external returns(address);
