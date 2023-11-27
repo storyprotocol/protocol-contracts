@@ -303,4 +303,10 @@ And get your slither output.
 -   [Foundry Documentation](https://book.getfoundry.sh/)
 -   [Yarn](https://yarnpkg.com/getting-started)
 
+## License
+
+The primary license for StoryProtocol is the Business Source License 1.1 (`BUSL-1.1`), see [LICENSE](https://github.com/storyprotocol/protocol-contracts/blob/main/LICENSE). Minus the following exceptions:
+- [Hooks](./contracts/hooks) and [Base Modules](./contracts/modules/base) have an MIT License
+- [Interfaces](./contracts/interfaces) have an MIT license
+
 

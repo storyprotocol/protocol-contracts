@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
 import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
