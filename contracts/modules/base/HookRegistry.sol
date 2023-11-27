@@ -27,7 +27,7 @@ abstract contract HookRegistry {
     uint256 public constant INDEX_NOT_FOUND = type(uint256).max;
     uint256 public constant MAX_HOOKS = 10;
 
-    event HooksRegistered(HookType indexed hType, bytes32 indexed registryKey, address[] hook);
+    event HooksRegistered(HookType indexed hType, bytes32 indexed registryKey, address[] hooks);
     event HooksCleared(HookType indexed hType, bytes32 indexed registryKey);
     
     /// @dev Modifier to check if the caller is the IPOrg owner.
