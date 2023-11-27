@@ -38,9 +38,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     RegistrationModule public registrationModule;
     TermsRepository public termsRepository;
 
-    address public defaultCollectNftImpl;
-    address public collectModuleImpl;
-
     address constant upgrader = address(6969);
     address constant ipOrgOwner = address(456);
     address constant relManager = address(9999);
@@ -117,10 +114,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         );
         moduleRegistry.registerProtocolModule(ModuleRegistryKeys.RELATIONSHIP_MODULE, relationshipModule);
 
-
-        defaultCollectNftImpl = _deployCollectNFTImpl();
-        collectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));
-
         IPOrgParams.RegisterIPOrgParams memory ipAssetOrgParams = IPOrgParams.RegisterIPOrgParams(
             address(registry),
             "IPOrgName",
@@ -144,24 +137,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
 
         vm.stopPrank();
 
-    }
-
-    function _deployCollectNFTImpl() internal virtual returns (address) {
-        // TODO: temporarily commented out for alpha
-        // return address(new MockCollectNFT());
-        return address(0);
-    }
-
-    function _deployCollectModule(address collectNftImpl) internal virtual returns (address) {
-        // TODO: temporarily commented out for alpha
-        // collectModuleImpl = address(new MockCollectModule(address(registry), collectNftImpl));
-        // return _deployUUPSProxy(
-        //        collectModuleImpl,
-        //        abi.encodeWithSelector(
-        //            bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
-        //        )
-        // );
-        return address(0);
     }
 
     /// @dev Helper function for creating an IP asset for an owner and IP type.
