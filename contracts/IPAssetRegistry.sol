@@ -15,7 +15,6 @@ contract IPAssetRegistry is IIPAssetRegistry {
     /// @notice Core attributes that make up an IP Asset.
     struct IPA {
         string name;                 // Human-readable identifier for the IP asset.
-        uint64 ipAssetType;          // Numerical code corresponding to IP type (e.g. patent, copyright, etc.)
         address registrant;          // Address of the initial registrant of the IP asset.
         uint8 status;                // Current status of the IP asset (e.g. active, expired, etc.)
         address ipOrg;               // Address of the governing entity of the IP asset.
@@ -57,13 +56,11 @@ contract IPAssetRegistry is IIPAssetRegistry {
     /// @notice Registers a new IP asset.
     /// @param registrant_ The initial registrant for the IP asset.
     /// @param name_ A name given to describe the IP asset.
-    /// @param ipAssetType_ A numerical code corresponding to IP asset type.
     /// @param hash_ A content hash used for verifyign provenance of the asset.
     function register(
         address ipOrg_,
         address registrant_,
         string memory name_,
-        uint64 ipAssetType_,
         bytes32 hash_
     ) public onlyRegistrationModule returns (uint256 ipAssetId) {
 
@@ -76,7 +73,6 @@ contract IPAssetRegistry is IIPAssetRegistry {
         uint64 registrationDate = uint64(block.timestamp);
         _ipAssets[ipAssetId] = IPA({
             name: name_,
-            ipAssetType: ipAssetType_,
             // For now, let's assume 0 == unset, 1 is OK. TODO: Add status enum and synch with License status
             status: 1, 
             registrant: registrant_,
@@ -87,7 +83,6 @@ contract IPAssetRegistry is IIPAssetRegistry {
         emit Registered(
             ipAssetId,
             name_,
-            ipAssetType_,
             ipOrg_,
             registrant_,
             hash_

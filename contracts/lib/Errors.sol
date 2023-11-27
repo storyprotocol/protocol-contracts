@@ -191,9 +191,6 @@ library Errors {
     ////////////////////////////////////////////////////////////////////////////
 
     error LibUintArrayMask_EmptyArray();
-    error LibUintArrayMask_UndefinedArrayElement();
-    /// @notice IP asset is invalid.
-    error LibUintArrayMask_InvalidType(IPAsset.IPAssetType ipAsset);
 
     ////////////////////////////////////////////////////////////////////////////
     //                               IPOrg                                    //
@@ -204,6 +201,9 @@ library Errors {
 
     /// @notice Licensing is not configured.
     error IPOrg_LicensingNotConfigured();
+
+    /// @notice IP Org wrapper id does not exist.
+    error IPOrg_IdDoesNotExist();
 
     ////////////////////////////////////////////////////////////////////////////
     //                             IPOrgController                            //
@@ -308,6 +308,13 @@ library Errors {
     /// @notice The registration execution action is not valid.
     error RegistrationModule_InvalidExecutionOperation();
 
+    /// @notice IP asset type is not in the list of supported types for
+    /// the IP Org.
+    error RegistrationModule_InvalidIPAssetType();
+
+    /// @notice IPAsset types provided are more than the maximum allowed.
+    error RegistrationModule_TooManyAssetTypes();
+
     ////////////////////////////////////////////////////////////////////////////
     //                            RelationshipModule                          //
     ////////////////////////////////////////////////////////////////////////////
@@ -333,15 +340,36 @@ library Errors {
     /// @notice The relationship destination IP type is not supported.
     error RelationshipModule_UnsupportedRelationshipDst();
 
+    /// @notice Trying an unsupported config action
     error RelationshipModule_InvalidConfigOperation();
-   
+
+    /// @notice Unauthorized caller
     error RelationshipModule_CallerNotIpOrgOwner();
+
+    /// @notice Value not on Relatable enum
     error RelationshipModule_InvalidRelatable();
+
+    /// @notice Getting an invalid relationship type
     error RelationshipModule_RelTypeNotSet(string relType);
+
+    /// @notice Relating invalid src addresss
     error RelationshipModule_InvalidSrcAddress();
+
+    /// @notice Relating invalid dst addresss
     error RelationshipModule_InvalidDstAddress();
+
+    /// @notice Relating unsupported src ipOrg asset type
     error RelationshipModule_InvalidSrcId();
+    
+    /// @notice Relating unsupported dst ipOrg asset type
     error RelationshipModule_InvalidDstId();
+
+    /// @notice For IPORG_ENTRY - IPORG_ENTRY relationships,
+    /// ipOrg address must be set
+    error RelationshipModule_IpOrgRelatableCannotBeProtocolLevel();
+
+    /// @notice Index is not found for the asset types of that IP Org.
+    error RelationshipModule_UnsupportedIpOrgIndexType();
 
     ////////////////////////////////////////////////////////////////////////////
     //                                RoyaltyNFT                              //

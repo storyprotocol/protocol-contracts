@@ -44,10 +44,8 @@ library LibRelationship {
         string relType;
         address srcAddress; 
         uint srcId;
-        uint8 srcType;
         address dstAddress;
         uint dstId;
-        uint8 dstType;
     }
 
     address public constant PROTOCOL_LEVEL_RELATIONSHIP = address(0);

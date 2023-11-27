@@ -24,13 +24,17 @@ interface IIPOrg {
     /// @notice Mints an IP Asset wrapper for the IP Org.
     /// @dev This function is only callable by the IP Org registration module.
     /// @param owner Address of the current owner of the local IP Org asset.
+    /// @param assetType The IP Org asset type.
     /// @return id The local identifier of the minted IP Org wrapped asset.
-    function mint(address owner) external returns (uint256 id);
+    function mint(address owner, uint8 assetType) external returns (uint256 id);
 
     /// @notice Gets the current owner of the IP Org.
     function owner() external view returns (address);
 
     /// @notice Returns contract-level metadata for the IP Org.
     function contractURI() external view returns (string memory);
+
+    /// @notice Returns the Ip Org asset type for a given IP Org asset.
+    function ipOrgAssetType(uint256 id_) external view returns (uint8);
 
 }

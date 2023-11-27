@@ -21,7 +21,6 @@ contract RegistrationModuleTest is BaseTest {
     event Registered(
         uint256 ipAssetId_,
         string name_,
-        uint64 indexed ipAssetType_,
         address indexed ipOrg_,
         address indexed registrant_,
         bytes32 hash_
@@ -33,7 +32,7 @@ contract RegistrationModuleTest is BaseTest {
         uint256 ipOrgAssetId_,
         address indexed owner_,
         string name_,
-        uint64 indexed ipAssetType_,
+        uint8 indexed ipOrgAssetType_,
         bytes32 hash_,
         string mediaUrl_
     );
@@ -46,7 +45,7 @@ contract RegistrationModuleTest is BaseTest {
     /// @param ipAssetOwner The owner address for the new IP asset.
     /// @param ipAssetType The type of the IP asset being created.
     modifier createIpAsset(address ipAssetOwner, uint8 ipAssetType) virtual {
-        ipAssetId = _createIpAsset(ipAssetOwner, ipAssetType, "");
+        (ipAssetId, ) = _createIpAsset(ipAssetOwner, ipAssetType, "");
         _;
     }
 
@@ -65,7 +64,7 @@ contract RegistrationModuleTest is BaseTest {
             "https://storyprotocol.xyz/",
             "https://storyprotocol.xyz"
         );
-        assertEq(registrationModule.tokenURI(address(ipOrg), 1), "https://storyprotocol.xyz/1");
+        assertEq(registrationModule.tokenURI(address(ipOrg), 1, 0), "https://storyprotocol.xyz/1");
     }
 
     /// @notice Tests the default token URI for IPAs.
@@ -83,7 +82,7 @@ contract RegistrationModuleTest is BaseTest {
         ));
 
         string memory part2 = string(abi.encodePacked(
-            '{"trait_type": "IP Asset Type", "value": "0"},',
+            '{"trait_type": "IP Org Asset Type", "value": "CHARACTER"},',
             '{"trait_type": "Status", "value": "1"},',
             '{"trait_type": "Hash", "value": "0x0000000000000000000000000000000000000000000000000000000000000000"},',
             '{"trait_type": "Registration Date", "value": "', Strings.toString(ipa.registrationDate), '"}'
@@ -93,7 +92,7 @@ contract RegistrationModuleTest is BaseTest {
             "data:application/json;base64,",
             Base64.encode(bytes(string(abi.encodePacked(part1, part2))))
         ));
-        assertEq(expectedURI, registrationModule.tokenURI(address(ipOrg), 1));
+        assertEq(expectedURI, registrationModule.tokenURI(address(ipOrg), 1, 0));
 
     }
 
@@ -104,7 +103,6 @@ contract RegistrationModuleTest is BaseTest {
         emit Registered(
             1,
             "TestIPA",
-            0,
             address(ipOrg),
             cal,
             ""
@@ -133,7 +131,6 @@ contract RegistrationModuleTest is BaseTest {
         emit Registered(
             1,
             "TestIPA",
-            0,
             address(ipOrg),
             cal,
             ""
@@ -150,29 +147,29 @@ contract RegistrationModuleTest is BaseTest {
             mediaUrl
         );
         _register(address(ipOrg), cal, "TestIPA", 0, "", mediaUrl);
-        assertEq(registry.ipAssetOwner(1), cal);
-        assertEq(ipOrg.ownerOf(1), cal);
-        assertEq(mediaUrl, registrationModule.tokenURI(address(ipOrg), 1));
+        assertEq(registry.ipAssetOwner(1), cal, "ipa owner");
+        assertEq(ipOrg.ownerOf(1), cal, "iporg owner");
+        assertEq(mediaUrl, registrationModule.tokenURI(address(ipOrg), 1, 0), "media url");
     }
 
     /// @dev Helper function that performs registration.
     /// @param ipOrg_ Address of the ipOrg of the IP asset.
     /// @param owner_ Address of the owner of the IP asset.
     /// @param name_ Name of the IP asset.
-    /// @param ipAssetType_ Type of the IP asset.
+    /// @param ipOrgAssetType_ Type of the IP asset.
     /// @param hash_ Content has of the IP Asset.
     function _register(
         address ipOrg_,
         address owner_,
         string memory name_,
-        uint64 ipAssetType_,
+        uint8 ipOrgAssetType_,
         bytes32 hash_,
         string memory mediaUrl_
     ) internal virtual returns (uint256, uint256) {
         Registration.RegisterIPAssetParams memory params = Registration.RegisterIPAssetParams({
             owner: owner_,
             name: name_,
-            ipAssetType: ipAssetType_, 
+            ipOrgAssetType: ipOrgAssetType_, 
             hash: hash_,
             mediaUrl: mediaUrl_
         });

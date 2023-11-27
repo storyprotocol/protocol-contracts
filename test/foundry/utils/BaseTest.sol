@@ -44,7 +44,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     address public collectModuleImpl;
 
     address constant upgrader = address(6969);
-    address constant ipAssetOrgOwner = address(456);
+    address constant ipOrgOwner = address(456);
     address constant relManager = address(9999);
     address constant termSetter = address(444);
 
@@ -131,11 +131,13 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             "tokenURI"
         );
 
-        vm.startPrank(ipAssetOrgOwner);
-        string[] memory ipAssetTypes = new string[](1);
+        vm.startPrank(ipOrgOwner);
+        string[] memory ipAssetTypes = new string[](3);
         ipAssetTypes[0] = "CHARACTER";
+        ipAssetTypes[1] = "STORY";
+        ipAssetTypes[2] = "LOCATION";
         ipOrg = IPOrg(spg.registerIpOrg(
-            ipAssetOrgOwner,
+            ipOrgOwner,
             ipAssetOrgParams.name,
             ipAssetOrgParams.symbol,
             ipAssetTypes
@@ -165,20 +167,23 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     ///      tested against. The reason this is currently added is that during
     ///      fuzz testing, foundry may plug existing contracts as potential
     ///      owners for IP asset creation.
-    function _createIpAsset(address ipAssetOwner, uint8 ipAssetType, bytes memory collectData) internal isValidReceiver(ipAssetOwner) returns (uint256) {
+    function _createIpAsset(
+        address ipAssetOwner,
+        uint8 ipOrgAssetType,
+        bytes memory collectData
+    ) internal isValidReceiver(ipAssetOwner) returns (uint256 globalId, uint256 localId) {
         // vm.assume(ipAssetType > uint8(type(IPAsset.IPAssetType).min));
         // vm.assume(ipAssetType < uint8(type(IPAsset.IPAssetType).max));
         vm.prank(address(ipAssetOwner));
         Registration.RegisterIPAssetParams memory params = Registration.RegisterIPAssetParams({
             owner: ipAssetOwner,
             name: "TestIPAsset",
-            ipAssetType: 0, 
+            ipOrgAssetType: ipOrgAssetType, 
             hash: "",
             mediaUrl: ""
         });
         bytes[] memory hooks = new bytes[](0);
-        (uint256 globalId, uint256 localId) = spg.registerIPAsset(address(ipOrg), params, hooks, hooks);
-        return globalId;
+        return spg.registerIPAsset(address(ipOrg), params, hooks, hooks);
     }
 
 }

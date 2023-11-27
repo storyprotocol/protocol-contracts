@@ -49,7 +49,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
         for (uint256 i = 0; i < length; ) {
             paymentInfo = paymentInfoSuite[i].info;
             paymentParams = paymentInfoSuite[i].params;
-            ipAssetId = _createIpAsset(alice, 1, abi.encode(paymentInfo));
+            (ipAssetId, ) = _createIpAsset(alice, 1, abi.encode(paymentInfo));
             _;
             i += 1;
         }
@@ -60,7 +60,7 @@ contract CollectPaymentModuleBaseTest is BaseCollectModuleTest {
     /// @param ipAssetOwner The owner address for the new IP asset.
     /// @param ipAssetType The type of the IP asset being created.
     modifier createIpAsset(address ipAssetOwner, uint8 ipAssetType) override {
-        ipAssetId = _createIpAsset(ipAssetOwner, ipAssetType, abi.encode(paymentInfo));
+        (ipAssetId, ) = _createIpAsset(ipAssetOwner, ipAssetType, abi.encode(paymentInfo));
         _;
     }
 

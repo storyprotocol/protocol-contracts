@@ -21,16 +21,19 @@ contract IPOrg is
 {
 
     /// @notice Tracks the last index of the IP asset wrapper.
-    uint256 lastIndex = 0;
+    uint256 public lastIndex;
 
     /// @notice Tracks the total number of IP Assets owned by the IP org.
-    uint256 totalSupply = 0;
+    uint256 public totalSupply;
 
     // Address of the module registry.
     IModuleRegistry public immutable MODULE_REGISTRY;
 
     // Address of the IP Org Controller.
     address public immutable CONTROLLER;
+
+    /// @notice Tracks the IP asset types associated with the each IP asset wrapper.
+    mapping(uint256 => uint8) private _ipOrgAssetTypes;
 
     /// @notice Restricts calls to being through the registration module.
     modifier onlyRegistrationModule() {
@@ -67,7 +70,7 @@ contract IPOrg is
         uint256 tokenId_
     ) public view override returns (string memory) {
         address registrationModule = IModuleRegistry(MODULE_REGISTRY).protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE);
-        return IRegistrationModule(registrationModule).tokenURI(address(this), tokenId_);
+        return IRegistrationModule(registrationModule).tokenURI(address(this), tokenId_, ipOrgAssetType(tokenId_));
     }
 
     /// @notice Retrieves the contract URI for the IP Org collection.
@@ -100,9 +103,10 @@ contract IPOrg is
     }
 
     /// @notice Registers a new IP Asset wrapper for the IP Org.
-    function mint(address owner_) public onlyRegistrationModule returns (uint256 id) {
+    function mint(address owner_, uint8 assetType_) public onlyRegistrationModule returns (uint256 id) {
         totalSupply++;
         id = ++lastIndex;
+        _ipOrgAssetTypes[id] = assetType_;
         _mint(owner_, id);
     }
 
@@ -124,5 +128,15 @@ contract IPOrg is
     ) public override(IIPOrg, ERC721Upgradeable) onlyRegistrationModule {
         _transfer(from_, to_, id_);
     }
+
+    /// Returns the IP Org asset type for a given IP Org asset.
+    /// @dev reverts if id does not exist.
+    function ipOrgAssetType(uint256 id_) public view returns (uint8) {
+        if (!_exists(id_)) {
+            revert Errors.IPOrg_IdDoesNotExist();
+        }
+        return _ipOrgAssetTypes[id_];
+    }
+
 
 }

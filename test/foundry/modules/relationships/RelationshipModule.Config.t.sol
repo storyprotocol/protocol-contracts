@@ -6,6 +6,7 @@ import 'test/foundry/utils/BaseTest.sol';
 import 'contracts/modules/relationships/RelationshipModule.sol';
 import 'contracts/lib/modules/LibRelationship.sol';
 import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { LibUintArrayMask } from "contracts/lib/LibUintArrayMask.sol";
 
 contract RelationshipModuleConfigTest is BaseTest {
 
@@ -43,6 +44,108 @@ contract RelationshipModuleConfigTest is BaseTest {
         assertEq(relType.dstSubtypesMask, 0);
     }
 
+    function test_RelationshipModule_addIpOrgIpOrgRelationships() public {
+        LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
+            src: LibRelationship.Relatables.IPORG_ENTRY,
+            dst: LibRelationship.Relatables.IPORG_ENTRY
+        });
+        uint8[] memory allowedSrcs = new uint8[](2);
+        allowedSrcs[0] = 0;
+        allowedSrcs[1] = 2;
+        uint8[] memory allowedDsts = new uint8[](1);
+        allowedDsts[0] = 1;
+        LibRelationship.AddRelationshipTypeParams memory params = LibRelationship.AddRelationshipTypeParams({
+            relType: "TEST_RELATIONSHIP",
+            ipOrg: address(ipOrg),
+            allowedElements: allowedElements,
+            allowedSrcs: allowedSrcs,
+            allowedDsts: allowedDsts
+        });
+        vm.prank(ipOrgOwner);
+        // Todo test event
+        spg.addRelationshipType(params);
+        LibRelationship.RelationshipType memory relType = relationshipModule.getRelationshipType(
+            address(ipOrg),
+            "TEST_RELATIONSHIP"
+        );
+        assertEq(relType.src, address(ipOrg));
+        assertEq(relType.srcSubtypesMask, LibUintArrayMask._convertToMask(allowedSrcs));
+        assertEq(relType.dst, address(ipOrg));
+        assertEq(relType.dstSubtypesMask, LibUintArrayMask._convertToMask(allowedDsts));
+
+    }
+
+    function test_RelationshipModule_revert_addIpOrgIpOrgRelationships_UnsupportedTypes() public {
+        uint8[] memory allowedSrcs = new uint8[](0);
+        uint8[] memory allowedDsts = new uint8[](0);
+        allowedSrcs = new uint8[](3);
+        allowedSrcs[0] = 1;
+        allowedSrcs[1] = 2;
+        allowedSrcs[2] = 0;
+        allowedDsts = new uint8[](1);
+        allowedDsts[0] = 9;
+
+        LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
+            src: LibRelationship.Relatables.IPORG_ENTRY,
+            dst: LibRelationship.Relatables.IPORG_ENTRY
+        });
+        
+        LibRelationship.AddRelationshipTypeParams memory params = LibRelationship.AddRelationshipTypeParams({
+            relType: "TEST_RELATIONSHIP",
+            ipOrg: address(ipOrg),
+            allowedElements: allowedElements,
+            allowedSrcs: allowedSrcs,
+            allowedDsts: allowedDsts
+        });
+        vm.prank(ipOrgOwner);
+        // Todo test event
+        vm.expectRevert(Errors.RelationshipModule_UnsupportedIpOrgIndexType.selector);
+        spg.addRelationshipType(params);
+    }
+
+    function test_RelationshipModule_revert_RelationshipModule_CallerNotIpOrgOwner() public {
+        LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
+            src: LibRelationship.Relatables.IPORG_ENTRY,
+            dst: LibRelationship.Relatables.IPORG_ENTRY
+        });
+        uint8[] memory allowedSrcs = new uint8[](2);
+        allowedSrcs[0] = 0;
+        allowedSrcs[1] = 2;
+        uint8[] memory allowedDsts = new uint8[](1);
+        allowedDsts[0] = 1;
+        LibRelationship.AddRelationshipTypeParams memory params = LibRelationship.AddRelationshipTypeParams({
+            relType: "TEST_RELATIONSHIP",
+            ipOrg: address(ipOrg),
+            allowedElements: allowedElements,
+            allowedSrcs: allowedSrcs,
+            allowedDsts: allowedDsts
+        });
+        vm.expectRevert(Errors.RelationshipModule_CallerNotIpOrgOwner.selector);
+        spg.addRelationshipType(params);
+    }
+
+    function test_RelationshipModule_revert_ipOrgRelatableCannotBeProtocolLevel() public {
+        LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
+            src: LibRelationship.Relatables.IPORG_ENTRY,
+            dst: LibRelationship.Relatables.IPORG_ENTRY
+        });
+        uint8[] memory allowedSrcs = new uint8[](1);
+        allowedSrcs[0] = 1;
+        uint8[] memory allowedDsts = new uint8[](1);
+        allowedDsts[0] = 0;
+        LibRelationship.AddRelationshipTypeParams memory params = LibRelationship.AddRelationshipTypeParams({
+            relType: "TEST_RELATIONSHIP",
+            ipOrg: LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
+            allowedElements: allowedElements,
+            allowedSrcs: allowedSrcs,
+            allowedDsts: allowedDsts
+        });
+        vm.prank(relCreator);
+        // Todo test event
+        vm.expectRevert(Errors.RelationshipModule_IpOrgRelatableCannotBeProtocolLevel.selector);
+        spg.addRelationshipType(params);
+    }
+
     function test_RelationshipModule_removeProtocolRelationshipType() public {
         LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
             src: LibRelationship.Relatables.ADDRESS,
@@ -70,6 +173,5 @@ contract RelationshipModuleConfigTest is BaseTest {
     }
 
 
-    // function test_RelationshipModule_revert_addRelationshipTypeIpaWithoutAllowedTypes() public {}
 }
 

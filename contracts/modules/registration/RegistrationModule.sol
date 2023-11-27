@@ -15,6 +15,7 @@ import { LibUintArrayMask } from "contracts/lib/LibUintArrayMask.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 
+
 /// @title Registration Module
 /// @notice Handles registration and transferring of IP assets..
 contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled {
@@ -38,6 +39,9 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
 
     /// @notice IP Org asset to its tokenURI.
     mapping(address => mapping(uint256 => string)) public tokenUris;
+
+    /// @notice Maximum number of Ip Org asset types.
+    uint256 public constant MAX_IP_ORG_ASSET_TYPES = type(uint8).max;
 
     /// @notice Initializes the registration module.
     constructor(
@@ -75,7 +79,8 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     /// @notice Renders metadata of an IP Asset localized for an IP Org.
     /// @param ipOrg_ The address of the IP Org of the IP asset.
     /// @param ipOrgAssetId_ The local id of the IP asset within the IP Org.
-    function tokenURI(address ipOrg_, uint256 ipOrgAssetId_) public view returns (string memory) {
+    /// @param ipOrgAssetType_ The IP Org asset type.
+    function tokenURI(address ipOrg_, uint256 ipOrgAssetId_, uint8 ipOrgAssetType_) public view returns (string memory) {
         uint256 id = ipAssetId[ipOrg_][ipOrgAssetId_];
         address owner = IIPOrg(ipOrg_).ownerOf(ipOrgAssetId_);
         if (owner == address(0)) {
@@ -109,7 +114,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
 
         string memory ipAssetAttributes = string(abi.encodePacked(
             '{"trait_type": "Initial Registrant", "value": "', Strings.toHexString(uint160(ipAsset.registrant), 20), '"},',
-            '{"trait_type": "IP Asset Type", "value": "', Strings.toString(ipAsset.ipAssetType), '"},',
+            '{"trait_type": "IP Org Asset Type", "value": "', config.assetTypes[ipOrgAssetType_], '"},',
             '{"trait_type": "Status", "value": "', Strings.toString(ipAsset.status), '"},',
             '{"trait_type": "Hash", "value": "', Strings.toHexString(uint256(ipAsset.hash), 32), '"},',
             '{"trait_type": "Registration Date", "value": "', Strings.toString(ipAsset.registrationDate), '"}'
@@ -130,8 +135,14 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         ));
     }
 
-    function getIPAssetTypes(address ipOrg_) public view returns (string[] memory) {
+    /// @notice Gets the asset types of an IP Org.
+    function getIpOrgAssetTypes(address ipOrg_) public view returns (string[] memory) {
         return ipOrgConfigs[ipOrg_].assetTypes;
+    }
+
+    /// @notice returns true if the index for an IP Org asset type is supported.
+    function isValidIpOrgAssetType(address ipOrg_, uint8 assetTypeIndex_) public view returns (bool) {
+        return assetTypeIndex_ < ipOrgConfigs[ipOrg_].assetTypes.length;
     }
 
     /// @notice Gets the current owner of an IP asset.
@@ -157,6 +168,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
             if (params.owner != caller_) {
                 revert Errors.RegistrationModule_InvalidCaller();
             }
+            _verifyIpOrgAssetType(address(ipOrg_), params.ipOrgAssetType);
         } else {
             revert Errors.RegistrationModule_InvalidExecutionOperation();
         }
@@ -194,7 +206,14 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
             return "";
         } else if (executionType == Registration.REGISTER_IP_ASSET) {
             Registration.RegisterIPAssetParams memory params = abi.decode(executionData, (Registration.RegisterIPAssetParams));
-            (uint256 ipAssetId__, uint256 ipOrgAssetId) = _registerIPAsset(ipOrg_, params.owner, params.name, params.ipAssetType, params.hash, params.mediaUrl);
+            (uint256 ipAssetId__, uint256 ipOrgAssetId) = _registerIPAsset(
+                ipOrg_,
+                params.owner,
+                params.name,
+                params.ipOrgAssetType,
+                params.hash,
+                params.mediaUrl
+            );
             return abi.encode(ipAssetId__, ipOrgAssetId);
         }
         return "";
@@ -204,14 +223,14 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     /// @param ipOrg_ The governing entity of the IP asset being registered.
     /// @param owner_ The initial registrant and owner of the IP asset.
     /// @param name_ A descriptive name for the IP asset being registered.
-    /// @param ipAssetType_ A numerical identifier for the IP asset type.
+    /// @param ipOrgAssetType_ A numerical identifier for the IP asset type.
     /// @param hash_ The content hash of the IP asset being registered.
     /// @param mediaUrl_ The media URL of the IP asset being registered.
     function _registerIPAsset(
         IIPOrg ipOrg_,
         address owner_,
         string memory name_,
-        uint64 ipAssetType_,
+        uint8 ipOrgAssetType_,
         bytes32 hash_,
         string memory mediaUrl_
     ) internal returns (uint256 ipAssetId_, uint256 ipOrgAssetId_) {
@@ -219,10 +238,9 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
             address(ipOrg_),
             owner_,
             name_,
-            ipAssetType_,
             hash_
         );
-        ipOrgAssetId_ = ipOrg_.mint(owner_);
+        ipOrgAssetId_ = ipOrg_.mint(owner_, ipOrgAssetType_);
         ipAssetId[address(ipOrg_)][ipOrgAssetId_] = ipAssetId_;
         IPOrgAsset memory ipOrgAsset = IPOrgAsset(address(ipOrg_), ipOrgAssetId_);
         ipOrgAssets[ipAssetId_] = ipOrgAsset;
@@ -235,7 +253,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
             ipOrgAssetId_,
             owner_,
             name_,
-            ipAssetType_,
+            ipOrgAssetType_,
             hash_,
             mediaUrl_
         );
@@ -267,11 +285,13 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     /// @param fromIpOrg_ The address of the original governing IP Org.
     /// @param fromIpOrgAssetId_ The existing id of the IP asset within the IP Org.
     /// @param toIpOrg_ The address of the new governing IP Org.
+    /// @param toIpOrgType_ The type of the IP asset within the new IP Org.
     /// TODO(leeren) Expose this function to FE once IP Orgs are finalized.
     function _transferIPAssetToIPOrg(
         address fromIpOrg_,
         uint256 fromIpOrgAssetId_,
         address toIpOrg_,
+        uint8 toIpOrgType_,
         address from_,
         address to_
     ) internal returns (uint256 ipAssetId_, uint256 ipOrgAssetId_) {
@@ -286,7 +306,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
             ipAssetId_,
             toIpOrg_
         );
-        ipOrgAssetId_ = IIPOrg(toIpOrg_).mint(owner);
+        ipOrgAssetId_ = IIPOrg(toIpOrg_).mint(owner, toIpOrgType_);
         IPOrgAsset memory ipOrgAsset = IPOrgAsset(toIpOrg_, ipOrgAssetId_);
         ipOrgAssets[id] = ipOrgAsset;
         ipAssetId[address(toIpOrg_)][ipOrgAssetId_] = id;
@@ -295,15 +315,20 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
 
     /// @dev Adds new IP asset types to an IP Org.
     /// @param ipOrg_ The address of the IP Org whose asset types we are adding.
-    /// @param ipAssetTypes_ String descriptors of the asset types being added.
+    /// @param ipOrgTypes_ String descriptors of the asset types being added.
     /// TODO: Add ability to deprecate asset types.
     function _addIPAssetTypes(
         address ipOrg_,
-        string[] memory ipAssetTypes_
+        string[] memory ipOrgTypes_
     ) internal {
+        uint256 assetsLength = ipOrgTypes_.length;
+        if (assetsLength > MAX_IP_ORG_ASSET_TYPES) {
+            revert Errors.RegistrationModule_TooManyAssetTypes();
+        }
         Registration.IPOrgConfig storage ipOrg = ipOrgConfigs[ipOrg_];
-        for (uint i = 0; i < ipAssetTypes_.length; i++) {
-            ipOrg.assetTypes.push(ipAssetTypes_[i]);
+        for (uint i = 0; i < assetsLength; i++) {
+            // TODO: this should be a set, and check empty strings
+            ipOrg.assetTypes.push(ipOrgTypes_[i]);
         }
     }
 
@@ -327,6 +352,13 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     function _verifyConfigCaller(IIPOrg ipOrg_, address caller_) private view {
         if (ipOrg_.owner() != caller_ && address(IP_ORG_CONTROLLER) != caller_) {
             revert Errors.Unauthorized();
+        }
+    }
+
+    function _verifyIpOrgAssetType(address ipOrg_, uint8 ipOrgAssetType_) private view {
+        uint8 length = uint8(ipOrgConfigs[ipOrg_].assetTypes.length);
+        if (ipOrgAssetType_ >= length) {
+            revert Errors.RegistrationModule_InvalidIPAssetType();
         }
     }
 

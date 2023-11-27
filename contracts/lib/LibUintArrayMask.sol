@@ -10,7 +10,7 @@ import { Errors } from "contracts/lib/Errors.sol";
 /// @dev Gives tools to check if the "endpoints" of a relationship are valid, according to the allowed asset types set in the relationship config.
 library LibUintArrayMask {
 
-    uint8 public constant UNDEFINED = 0;
+    // uint8 public constant UNDEFINED = 0;
 
     /// @dev converts an array of types and the allows external flag to a mask, by setting the bits corresponding
     /// to the uint8 equivalent of the IPAsset types to 1.
@@ -20,7 +20,6 @@ library LibUintArrayMask {
         if (assetTypes_.length == 0) revert Errors.LibUintArrayMask_EmptyArray();
         uint256 mask = 0;
         for (uint256 i = 0; i < assetTypes_.length;) {
-            if (assetTypes_[i] == UNDEFINED) revert Errors.LibUintArrayMask_UndefinedArrayElement();
             mask |= 1 << (uint256(assetTypes_[i]) & 0xff);
             unchecked {
                 i++;
