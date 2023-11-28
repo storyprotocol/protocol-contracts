@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSDL-1.1
 pragma solidity ^0.8.13;
 
-import "test/foundry/RoyaltyDistributor.t.sol";
+import "mvp/test/foundry/RoyaltyDistributor.t.sol";
 
 contract RoyaltyDistributorForkTest is RoyaltyDistributorTest {
     function _getSplitMain() internal virtual override returns(ISplitMain) {

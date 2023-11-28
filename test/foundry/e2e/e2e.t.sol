@@ -213,8 +213,8 @@ contract E2ETest is BaseTest {
             memory registerIpAssetParamsCharacter = Registration
                 .RegisterIPAssetParams({
                     owner: ipAssetOwner1,
+                    ipOrgAssetType: 0,
                     name: "Character IPA",
-                    ipAssetType: 0,
                     hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83930000,
                     mediaUrl: "https://arweave.net/chracter"
                 });
@@ -236,8 +236,8 @@ contract E2ETest is BaseTest {
             memory registerIpAssetParamsStory = Registration
                 .RegisterIPAssetParams({
                     owner: ipAssetOwner2,
+                    ipOrgAssetType: 1,
                     name: "Story IPA",
-                    ipAssetType: 1,
                     hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83931111,
                     mediaUrl: "https://arweave.net/story"
                 });
@@ -260,8 +260,8 @@ contract E2ETest is BaseTest {
             memory registerIpAssetParamsOrg2 = Registration
                 .RegisterIPAssetParams({
                     owner: ipAssetOwner3,
+                    ipOrgAssetType: 1,
                     name: "Story IPA Org2",
-                    ipAssetType: 1,
                     hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83933333,
                     mediaUrl: "https://arweave.net/story2"
                 });
@@ -282,10 +282,8 @@ contract E2ETest is BaseTest {
                 relType: "APPEAR_IN",
                 srcAddress: ipOrg1,
                 srcId: 1,
-                srcType: 0,
                 dstAddress: ipOrg1,
-                dstId: 2,
-                dstType: 0
+                dstId: 2
             });
         bytes[] memory preHooksDataRel = new bytes[](0);
         bytes[] memory postHooksDataRel = new bytes[](0);

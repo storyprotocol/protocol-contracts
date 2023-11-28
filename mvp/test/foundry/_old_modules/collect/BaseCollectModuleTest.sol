@@ -7,8 +7,8 @@ import { ICollectNFT } from "contracts/interfaces/modules/collect/ICollectNFT.so
 import { BaseTestUtils } from "test/foundry/utils/BaseTestUtils.sol";
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
 import { CollectNFTBaseTest } from "./nft/CollectNFTBase.t.sol";
-import { MockCollectModule } from "test/foundry/mocks/MockCollectModule.sol";
-import { MockCollectNFT } from "test/foundry/mocks/MockCollectNFT.sol";
+import { MockCollectModule } from "mvp/test/foundry/mocks/MockCollectModule.sol";
+import { MockCollectNFT } from "mvp/test/foundry/mocks/MockCollectNFT.sol";
 
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { Collect } from "contracts/lib/modules/Collect.sol";

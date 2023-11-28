@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "contracts/interfaces/modules/royalties/ISplitMain.sol";
-import "test/foundry/mocks/MockSplit.sol";
+import "./MockSplit.sol";
 import "test/foundry/mocks/MockERC20.sol";
 
 contract MockSplitMain is ISplitMain {

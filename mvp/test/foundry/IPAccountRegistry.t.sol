@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 
 import { Errors } from "contracts/lib/Errors.sol";
 import "contracts/ip-accounts/IPAccountRegistry.sol";
-import "test/foundry/mocks/MockIPAccount.sol";
+import "mvp/test/foundry/mocks/MockIPAccount.sol";
 
 contract RegistryTest is Test {
     IPAccountRegistry public registry;

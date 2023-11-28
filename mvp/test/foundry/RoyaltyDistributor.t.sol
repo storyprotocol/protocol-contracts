@@ -4,13 +4,13 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 
 import "contracts/ip-accounts/IPAccountRegistry.sol";
-import "test/foundry/mocks/MockIPAccount.sol";
+import "mvp/test/foundry/mocks/MockIPAccount.sol";
 import "contracts/modules/royalties/RoyaltyDistributor.sol";
 import "contracts/modules/royalties/RoyaltyNFT.sol";
 import "contracts/interfaces/modules/royalties/ISplitMain.sol";
 import "./mocks/MockSplitMain.sol";
 import "./mocks/MockERC20.sol";
-import "test/foundry/mocks/MockSplitMain.sol";
+import "./mocks/MockSplitMain.sol";
 import "contracts/modules/royalties/policies/MutableRoyaltyProportionPolicy.sol";
 import "contracts/modules/royalties/RoyaltyNFTFactory.sol";
 

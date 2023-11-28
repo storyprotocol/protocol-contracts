@@ -4,8 +4,6 @@ pragma solidity ^0.8.19;
 import 'test/foundry/utils/ProxyHelper.sol';
 import 'test/foundry/utils/BaseTestUtils.sol';
 import 'test/foundry/utils/AccessControlHelper.sol';
-import "test/foundry/mocks/MockCollectNFT.sol";
-import "test/foundry/mocks/MockCollectModule.sol";
 import "contracts/StoryProtocol.sol";
 import "contracts/ip-org/IPOrgController.sol";
 import "contracts/ip-org/IPOrg.sol";
@@ -14,7 +12,6 @@ import "contracts/IPAssetRegistry.sol";
 import "contracts/lib/modules/Registration.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/IPAssetRegistry.sol";
-import "contracts/interfaces/modules/collect/ICollectModule.sol";
 import "contracts/modules/relationships/RelationshipModule.sol";
 import "contracts/modules/licensing/LicenseRegistry.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
@@ -31,7 +28,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     IPOrg public ipOrg;
     IPOrgController public ipOrgController;
     ModuleRegistry public moduleRegistry;
-    ICollectModule public collectModule;
     RelationshipModule public relationshipModule;
     IPAssetRegistry public registry;
     StoryProtocol public spg;
@@ -39,9 +35,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     LicenseRegistry public licenseRegistry;
     RegistrationModule public registrationModule;
     TermsRepository public termsRepository;
-
-    address public defaultCollectNftImpl;
-    address public collectModuleImpl;
 
     address constant upgrader = address(6969);
     address constant ipOrgOwner = address(456);
@@ -119,10 +112,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         );
         moduleRegistry.registerProtocolModule(ModuleRegistryKeys.RELATIONSHIP_MODULE, relationshipModule);
 
-
-        defaultCollectNftImpl = _deployCollectNFTImpl();
-        collectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));
-
         IPOrgParams.RegisterIPOrgParams memory ipAssetOrgParams = IPOrgParams.RegisterIPOrgParams(
             address(registry),
             "IPOrgName",
@@ -146,20 +135,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
 
         vm.stopPrank();
 
-    }
-
-    function _deployCollectNFTImpl() internal virtual returns (address) {
-        return address(new MockCollectNFT());
-    }
-
-    function _deployCollectModule(address collectNftImpl) internal virtual returns (address) {
-        collectModuleImpl = address(new MockCollectModule(address(registry), collectNftImpl));
-        return _deployUUPSProxy(
-                collectModuleImpl,
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
-                )
-        );
     }
 
     /// @dev Helper function for creating an IP asset for an owner and IP type.
