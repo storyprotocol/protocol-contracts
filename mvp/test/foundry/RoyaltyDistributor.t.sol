@@ -10,7 +10,7 @@ import "contracts/modules/royalties/RoyaltyNFT.sol";
 import "contracts/interfaces/modules/royalties/ISplitMain.sol";
 import "./mocks/MockSplitMain.sol";
 import "./mocks/MockERC20.sol";
-import "test/foundry/mocks/MockSplitMain.sol";
+import "./mocks/MockSplitMain.sol";
 import "contracts/modules/royalties/policies/MutableRoyaltyProportionPolicy.sol";
 import "contracts/modules/royalties/RoyaltyNFTFactory.sol";
 

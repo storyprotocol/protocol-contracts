@@ -12,7 +12,6 @@ import "contracts/IPAssetRegistry.sol";
 import "contracts/lib/modules/Registration.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
 import "contracts/IPAssetRegistry.sol";
-import "contracts/interfaces/modules/collect/ICollectModule.sol";
 import "contracts/modules/relationships/RelationshipModule.sol";
 import "contracts/modules/licensing/LicenseRegistry.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
@@ -29,7 +28,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     IPOrg public ipOrg;
     IPOrgController public ipOrgController;
     ModuleRegistry public moduleRegistry;
-    ICollectModule public collectModule;
     RelationshipModule public relationshipModule;
     IPAssetRegistry public registry;
     StoryProtocol public spg;
