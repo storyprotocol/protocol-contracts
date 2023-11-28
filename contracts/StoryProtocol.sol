@@ -14,6 +14,13 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 
+/// @title Story Protocol Gateway Contract
+/// @notice The Story Protocol contract acts as a global gateway for calling all
+///         protocol-standardized IP actions (based on their enrolled modules).
+///         Most functions can be solely executed through this contract, as it will
+///         be actively maintained and upgraded to support all standardized modules.
+///         In the future, for more customized logic, IP Orgs may choose to create 
+///         their own frontend contracts (gateways) for IP interaction.
 contract StoryProtocol is Multicall {
 
     IIPOrgController public immutable IP_ORG_CONTROLLER;

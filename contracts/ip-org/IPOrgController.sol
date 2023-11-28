@@ -17,8 +17,9 @@ import { IPOrg } from "contracts/ip-org/IPOrg.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 
 /// @title IP Org Controller Contract
-/// @custom:version 0.1.0
-/// TODO(leeren): Deprecate upgradeability once IPOrg contracts are finalized.
+/// @notice The IP Org Controller is the protocol-wide factory contract for creating
+///         and tracking IP Orgs. On top of this, it acts as the ownership controller
+///         for IP Orgs, allowing orgs to transfer ownership through a 2-step process.
 contract IPOrgController is
     UUPSUpgradeable,
     AccessControlledUpgradeable,
@@ -26,8 +27,6 @@ contract IPOrgController is
 {
 
     /// @notice Tracks ownership and registration of IPOrgs.
-    /// TODO(leeren): Add tracking for allowlisted callers of each ipOrg.
-    /// TODO(leeren): Add deterministic identifiers for ipOrgs using CREATE2.
     struct IPOrgRecord {
         bool registered;
         address owner;

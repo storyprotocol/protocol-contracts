@@ -13,8 +13,12 @@ import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 
-/// @notice IP Asset Organization
-/// TODO(leeren): Deprecate upgradeability once the IPOrg contracts is finalized.
+/// @title IP Organization Contract
+/// @notice An IP Org represents a collection of IP Assets governed under a single
+///         administrative entity. It serves both as an org-branded NFT wrapper of
+///         the IP Asset group and as a conduit used by the IP registration module
+///         for transferring IP ownership and configuring its IP-related metadata.
+///         Crations of new IP Orgs happen through the IP Org Controller contract.
 contract IPOrg is
     IIPOrg,
     ERC721Upgradeable
@@ -129,8 +133,8 @@ contract IPOrg is
         _transfer(from_, to_, id_);
     }
 
-    /// Returns the IP Org asset type for a given IP Org asset.
-    /// @dev reverts if id does not exist.
+    /// @notice Returns the IP Org asset type for a given IP Org asset.
+    /// @param id_ The identifier of the IP asset within the IP Org.
     function ipOrgAssetType(uint256 id_) public view returns (uint8) {
         if (!_exists(id_)) {
             revert Errors.IPOrg_IdDoesNotExist();

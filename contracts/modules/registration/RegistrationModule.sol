@@ -17,7 +17,10 @@ import { IPAsset } from "contracts/lib/IPAsset.sol";
 
 
 /// @title Registration Module
-/// @notice Handles registration and transferring of IP assets..
+/// @notice The registration module is responsible for registration, transferring, and
+///         metadata management of IP assets. During registration, this module will
+///         create register the IP asset in the global IP asset registry, and then
+///         wrap it as an NFT under its governing IP Org.
 contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled {
 
     using Strings for uint256;
