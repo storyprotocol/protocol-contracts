@@ -9,6 +9,9 @@ import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { IAccessControlled } from "contracts/interfaces/access-control/IAccessControlled.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 
+/// @title Access Controlled Contract (upgradeable variant)
+/// @notice This contract is to be inherited by any upgradeable protocol components that require 
+///         granular roles for execution, as defined by the Access Control Singleton contract.
 abstract contract AccessControlledUpgradeable is UUPSUpgradeable, IAccessControlled {
     using ERC165CheckerUpgradeable for address;
 
@@ -42,6 +45,7 @@ abstract contract AccessControlledUpgradeable is UUPSUpgradeable, IAccessControl
         emit AccessControlUpdated(accessControl_);
     }
 
+    /// @notice Gets the global Access Control Singleton configured for the protocol.
     function getAccessControl() public view returns (address) {
         AccessControlledStorage storage $ = _getAccessControlledUpgradeable();
         return address($.accessControl);
@@ -71,6 +75,7 @@ abstract contract AccessControlledUpgradeable is UUPSUpgradeable, IAccessControl
         return $.accessControl.hasRole(role_, account_);
     }
 
+    /// @dev Helper function to get the EIP-7201 storage slot for the contract.
     function _getAccessControlledUpgradeable()
         private
         pure

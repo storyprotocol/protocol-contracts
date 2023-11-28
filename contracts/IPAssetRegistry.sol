@@ -9,7 +9,12 @@ import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol
 import { Errors } from "contracts/lib/Errors.sol";
 
 /// @title Global IP Asset Registry
-/// @notice The source of truth for IP on Story Protocol.
+/// @notice The global IP Asset Registry (GIPR) acts as the source of truth for IP
+///         attribution in Story Protocol. All IP must be registered through a
+///         protocol-approved registration module, which as part of the process will
+///         create a record in the GIPR. Note that the GIPR only defines the core
+///         attributes related to an IP asset - all other attributes, which will be
+///         specific for a given module, will be queried through the module registry.
 contract IPAssetRegistry is IIPAssetRegistry {
 
     /// @notice Core attributes that make up an IP Asset.

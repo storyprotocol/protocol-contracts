@@ -9,6 +9,9 @@ import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.so
 // solhint-disable-next-line max-line-length
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
+/// @title Access Controlled Contract
+/// @notice This contract is to be inherited by any protocol components that require granular
+///         roles for execution, as defined by the Access Control Singleton contract.
 abstract contract AccessControlled is IAccessControlled {
     using ERC165CheckerUpgradeable for address;
 
@@ -23,6 +26,8 @@ abstract contract AccessControlled is IAccessControlled {
         _;
     }
 
+    /// @notice Instantiates a new Access Controlled contract.
+    /// @param accessControl_ The global Access Control Singleton contract address.
     constructor(address accessControl_) {
         if (!accessControl_.supportsInterface(type(IAccessControl).interfaceId))
             revert Errors.UnsupportedInterface("IAccessControl");
