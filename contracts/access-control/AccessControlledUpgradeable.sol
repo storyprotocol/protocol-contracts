@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+// solhint-disable-next-line max-line-length
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { IAccessControlled } from "contracts/interfaces/access-control/IAccessControlled.sol";

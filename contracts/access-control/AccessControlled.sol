@@ -6,6 +6,7 @@ import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IAccessControlled } from "contracts/interfaces/access-control/IAccessControlled.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
+// solhint-disable-next-line max-line-length
 import { ERC165CheckerUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165CheckerUpgradeable.sol";
 
 /// @title Access Controlled Contract
