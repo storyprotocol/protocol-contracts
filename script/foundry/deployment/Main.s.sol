@@ -235,6 +235,7 @@ import { TermCategories, TermIds } from "contracts/lib/modules/ProtocolLicensing
          accessControlSingleton.grantRole(AccessControl.IPORG_CREATOR_ROLE, admin);
          accessControlSingleton.grantRole(AccessControl.MODULE_REGISTRAR_ROLE, admin);
          accessControlSingleton.grantRole(AccessControl.MODULE_EXECUTOR_ROLE, spg);
+         accessControlSingleton.grantRole(AccessControl.MODULE_EXECUTOR_ROLE, ipOrgController);
 
          // REGISTER MODULES
          ModuleRegistry(moduleRegistry).registerProtocolModule(
