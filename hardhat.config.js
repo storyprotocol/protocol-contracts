@@ -8,6 +8,7 @@ require("solidity-coverage");
 require('@nomiclabs/hardhat-ethers');
 require("@nomiclabs/hardhat-etherscan");
 require('@openzeppelin/hardhat-upgrades');
+require('solidity-docgen');
 
 const createFranchise = require("./script/hardhat/createFranchise.js");
 const createIPAsset = require("./script/hardhat/createIPAsset.js");
@@ -126,5 +127,9 @@ module.exports = {
   },
   mocha: {
     timeout: 20000
+  },
+  docgen: {
+    outputDir: "./docs",
+    pages: "files"
   }
 };
