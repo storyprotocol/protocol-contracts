@@ -8,4 +8,7 @@ interface IAccessControlled {
     /// @param accessControl Address of the protocol-wide Access Control singleton contract.
     event AccessControlUpdated(address indexed accessControl);
 
+    /// @notice Sets AccessControlSingleton instance.
+    /// @param accessControl_ address of the new instance of AccessControlSingleton.
+    function setAccessControl(address accessControl_) external;
 }
