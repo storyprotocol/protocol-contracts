@@ -7,7 +7,6 @@ import { Errors } from "contracts/lib/Errors.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { AccessControlSingleton } from "contracts/access-control/AccessControlSingleton.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract AccessControlSingletonTest is Test, AccessControlHelper {
     function setUp() public {
@@ -48,15 +47,4 @@ contract AccessControlSingletonTest is Test, AccessControlHelper {
         vm.expectRevert(_getRoleErrorMessage(address(this), AccessControl.UPGRADER_ROLE));
         accessControl.upgradeTo(address(0));
     }
-
-    function _getRoleErrorMessage(address sender, bytes32 role) internal pure returns (bytes memory) {
-        return abi.encodePacked(
-            "AccessControl: account ",
-            Strings.toHexString(uint160(sender), 20),
-            " is missing role ",
-            Strings.toHexString(uint256(role), 32)
-        );
-    }
-
-
 }

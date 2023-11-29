@@ -22,15 +22,15 @@ abstract contract AccessControlledUpgradeable is UUPSUpgradeable, IAccessControl
         0x06c308ca3b780cede1217f5877d0c7fbf50796d93f836cb3b60e6457b0cf03b6;
 
     /// @notice Checks if msg.sender has `role`, reverts if not.
-    /// @param role_ the role to be tested, defined in Roles.sol and set in AccessManager instance.
+    /// @param role_ the role to be tested, defined in Roles.sol and set in AccessControlSingleton instance.
     modifier onlyRole(bytes32 role_) {
-        if (!hasRole(role_, msg.sender)) {
+        if (!_hasRole(role_, msg.sender)) {
             revert Errors.MissingRole(role_, msg.sender);
         }
         _;
     }
 
-    /// @notice Sets AccessManager instance. Restricted to PROTOCOL_ADMIN_ROLE
+    /// @notice Sets AccessControlSingleton instance. Restricted to PROTOCOL_ADMIN_ROLE
     /// @param accessControl_ address of the new instance of AccessControlSingleton.
     function setAccessControl(
         address accessControl_
@@ -48,7 +48,7 @@ abstract contract AccessControlledUpgradeable is UUPSUpgradeable, IAccessControl
     }
 
     /// @notice Initializer method, access point to initialize inheritance tree.
-    /// @param accessControl_ address of AccessManager.
+    /// @param accessControl_ address of AccessControlSingleton.
     function __AccessControlledUpgradeable_init(
         address accessControl_
     ) internal initializer {
@@ -60,10 +60,10 @@ abstract contract AccessControlledUpgradeable is UUPSUpgradeable, IAccessControl
     }
 
     /// @notice Checks if `account has `role` assigned.
-    /// @param role_ the role to be tested, defined in Roles.sol and set in AccessManager instance.
+    /// @param role_ the role to be tested, defined in Roles.sol and set in AccessControlSingleton instance.
     /// @param account_ the address to be tested for the role.
     /// @return return true if account has role, false otherwise.
-    function hasRole(
+    function _hasRole(
         bytes32 role_,
         address account_
     ) internal view returns (bool) {

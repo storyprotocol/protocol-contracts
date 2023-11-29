@@ -118,7 +118,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
     /// @param caller_ initiator of the configuration
     function _verifyConfigCaller(IIPOrg ipOrg_, address caller_) private view {
         if (address(ipOrg_) == LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP) {
-            if (!hasRole(AccessControl.RELATIONSHIP_MANAGER_ROLE, caller_)) {
+            if (!_hasRole(AccessControl.RELATIONSHIP_MANAGER_ROLE, caller_)) {
                 revert Errors.MissingRole(AccessControl.RELATIONSHIP_MANAGER_ROLE, caller_);
             }
         } else {
