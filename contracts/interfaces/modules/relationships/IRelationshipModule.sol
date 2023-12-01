@@ -9,7 +9,7 @@ interface IRelationshipModule {
     /// Emitted with a new Relationship Type definitions is created
     event RelationshipTypeSet(
         // Short string naming the type
-        string indexed relType,
+        string relType,
         // Zero for protocol-wide, or address of the IPOrg
         address indexed ipOrg,
         // Allowed src address, zero address if empty, all F for all addresses are OK
@@ -29,7 +29,7 @@ interface IRelationshipModule {
     /// Emitted when a Relationship Type definition is removed
     event RelationshipTypeUnset(
         // Short string naming the type
-        string indexed relType,
+        string relType,
         // Zero for protocol-wide, or address of the IPOrg
         address ipOrg
     );
@@ -39,7 +39,7 @@ interface IRelationshipModule {
         // Sequential Relationship ID
         uint256 indexed relationshipId,
         // Short string naming the type
-        string indexed relType,
+        string relType,
         // Source contract or EOA
         address srcAddress,
         // Source item ID
