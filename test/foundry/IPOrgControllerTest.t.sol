@@ -26,6 +26,16 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
     event BeaconUpgraded(address indexed beacon);
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
 
+    event IPOrgRegistered(
+        address owner,
+        address ipAssetOrg,
+        string name,
+        string symbol,
+        string[] ipAssetTypes
+    );
+    event IPOrgTransferred(address ipOrg, address prevOwner, address newOwner);
+    event IPOrgPendingOwnerSet(address ipOrg, address pendingOwner);
+
     RegistrationModule public registrationModule;
     LicenseRegistry public licenseRegistry;
     IPAssetRegistry public registry;
@@ -35,6 +45,10 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
 
     uint256 internal ipOrgOwnerPk = 0xa11ce;
     address payable internal ipOrgOwner = payable(vm.addr(ipOrgOwnerPk));
+
+    address internal prevIpOrgOwner = vm.addr(0xbeef);
+    address internal fakePrevIpOrgOwner = vm.addr(0xdead);
+    address internal newIpOrgOwner = vm.addr(0xb0b);
 
     function setUp() public {
         _setupAccessControl();
@@ -67,12 +81,16 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
         _grantRole(vm, AccessControl.MODULE_REGISTRAR_ROLE, address(this));
         moduleRegistry.registerProtocolModule(ModuleRegistryKeys.REGISTRATION_MODULE, registrationModule);
 
+        vm.label(prevIpOrgOwner, "Prev IP Org Owner");
+        vm.label(newIpOrgOwner, "New IP Org Owner");
+        vm.label(fakePrevIpOrgOwner, "Fake Prev IP Org Owner");
     }
 
     function test_ipOrgController_registerIpOrg() public {
         vm.prank(ipOrgOwner);
         string[] memory ipAssetTypes = new string[](0);
         ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", ipAssetTypes));
+        assertTrue(ipOrgController.isIpOrg(address(ipOrg)));
     }
 
     function test_ipOrgController_revert_tooManyAssetTypes() public {
@@ -80,6 +98,13 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
         string[] memory ipAssetTypes = new string[](maxAssetTypes);
         vm.expectRevert(Errors.RegistrationModule_TooManyAssetTypes.selector);
         ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", ipAssetTypes));
+    }
+
+    function test_ipOrgController_revert_registerIpOrgZeroAddress() public {
+        vm.expectRevert(Errors.ZeroAddress.selector);
+        vm.prank(ipOrgOwner);
+        string[] memory ipAssetTypes = new string[](0);
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(address(0), "name", "symbol", ipAssetTypes));
     }
 
     function test_ipOrg_mint() public {
@@ -129,5 +154,96 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
         ipOrg.burn(ipAssetId);
     }
 
-    
+    function test_ipOrg_transferOwner() public {
+        vm.prank(ipOrgOwner);
+        string[] memory ipAssetTypes = new string[](0);
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", ipAssetTypes));
+        
+        vm.expectEmit(address(ipOrgController));
+        emit IPOrgPendingOwnerSet(address(ipOrg), newIpOrgOwner);
+        vm.prank(msg.sender);
+        ipOrgController.transferOwner(address(ipOrg), newIpOrgOwner);
+
+        assertEq(ipOrgController.ownerOf(address(ipOrg)), msg.sender);
+        assertEq(ipOrgController.pendingOwnerOf(address(ipOrg)), newIpOrgOwner);
+    }
+
+    function test_ipOrg_revert_transferOwnerInvalidIPOrgOwner() public {
+        vm.prank(ipOrgOwner);
+        string[] memory ipAssetTypes = new string[](0);
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(prevIpOrgOwner, "name", "symbol", ipAssetTypes));
+        
+        vm.expectRevert(Errors.IPOrgController_InvalidIPOrgOwner.selector);
+        vm.prank(fakePrevIpOrgOwner);
+        ipOrgController.transferOwner(address(ipOrg), newIpOrgOwner);
+    }
+
+    function test_ipOrg_revert_transferOwnerInvalidNewIPOrgOwner() public {
+        vm.prank(ipOrgOwner);
+        string[] memory ipAssetTypes = new string[](0);
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(prevIpOrgOwner, "name", "symbol", ipAssetTypes));
+        
+        vm.expectRevert(Errors.IPOrgController_InvalidNewIPOrgOwner.selector);
+        vm.prank(prevIpOrgOwner);
+        ipOrgController.transferOwner(address(ipOrg), address(0));
+    }
+
+    function test_ipOrg_cancelOwnerTransfer() public {
+        vm.prank(ipOrgOwner);
+        string[] memory ipAssetTypes = new string[](0);
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(prevIpOrgOwner, "name", "symbol", ipAssetTypes));
+        
+        vm.expectEmit(address(ipOrgController));
+        emit IPOrgPendingOwnerSet(address(ipOrg), newIpOrgOwner);
+        vm.prank(prevIpOrgOwner);
+        ipOrgController.transferOwner(address(ipOrg), newIpOrgOwner);
+
+        vm.expectEmit(address(ipOrgController));
+        emit IPOrgPendingOwnerSet(address(ipOrg), address(0));
+        vm.prank(prevIpOrgOwner);
+        ipOrgController.cancelOwnerTransfer(address(ipOrg));
+    }
+
+    function test_ipOrg_revert_cancelOwnerTransferInvalidIPOrgOwner() public {
+        vm.prank(ipOrgOwner);
+        string[] memory ipAssetTypes = new string[](0);
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(prevIpOrgOwner, "name", "symbol", ipAssetTypes));
+        
+        vm.expectEmit(address(ipOrgController));
+        emit IPOrgPendingOwnerSet(address(ipOrg), newIpOrgOwner);
+        vm.prank(prevIpOrgOwner);
+        ipOrgController.transferOwner(address(ipOrg), newIpOrgOwner);
+
+        vm.expectRevert(Errors.IPOrgController_InvalidIPOrgOwner.selector);
+        vm.prank(fakePrevIpOrgOwner);
+        ipOrgController.cancelOwnerTransfer(address(ipOrg));
+    }
+
+    function test_ipOrg_revert_cancelOwnerTransferInvalidNewIPOrgOwner() public {
+        vm.prank(ipOrgOwner);
+        string[] memory ipAssetTypes = new string[](0);
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(prevIpOrgOwner, "name", "symbol", ipAssetTypes));
+
+        vm.expectRevert(Errors.IPOrgController_OwnerTransferUninitialized.selector);
+        vm.prank(prevIpOrgOwner);
+        ipOrgController.cancelOwnerTransfer(address(ipOrg));
+    }
+
+    function test_ipOrg_acceptOwnerTransfer() public {
+        vm.prank(ipOrgOwner);
+        string[] memory ipAssetTypes = new string[](0);
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(prevIpOrgOwner, "name", "symbol", ipAssetTypes));
+        
+        vm.expectEmit(address(ipOrgController));
+        emit IPOrgPendingOwnerSet(address(ipOrg), newIpOrgOwner);
+        vm.prank(prevIpOrgOwner);
+        ipOrgController.transferOwner(address(ipOrg), newIpOrgOwner);
+
+        vm.expectEmit(address(ipOrgController));
+        emit IPOrgPendingOwnerSet(address(ipOrg), address(0));
+        vm.expectEmit(address(ipOrgController));
+        emit IPOrgTransferred(address(ipOrg), prevIpOrgOwner, newIpOrgOwner);
+        vm.prank(newIpOrgOwner);
+        ipOrgController.acceptOwnerTransfer(address(ipOrg));
+    }
 }
