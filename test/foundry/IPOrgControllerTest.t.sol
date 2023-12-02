@@ -246,4 +246,19 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
         vm.prank(newIpOrgOwner);
         ipOrgController.acceptOwnerTransfer(address(ipOrg));
     }
+
+    function test_ipOrg_revert_acceptOwnerTransferInvalidIPOrgOwner() public {
+        vm.prank(ipOrgOwner);
+        string[] memory ipAssetTypes = new string[](0);
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(prevIpOrgOwner, "name", "symbol", ipAssetTypes));
+        
+        vm.expectEmit(address(ipOrgController));
+        emit IPOrgPendingOwnerSet(address(ipOrg), newIpOrgOwner);
+        vm.prank(prevIpOrgOwner);
+        ipOrgController.transferOwner(address(ipOrg), newIpOrgOwner);
+
+        vm.expectRevert(Errors.IPOrgController_InvalidIPOrgOwner.selector);
+        vm.prank(prevIpOrgOwner);
+        ipOrgController.acceptOwnerTransfer(address(ipOrg));
+    }
 }
