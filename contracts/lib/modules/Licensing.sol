@@ -102,9 +102,17 @@ library Licensing {
     struct LicensingConfig {
         string frameworkId;
         ParamValue[] params;
+        LicensorConfig licensor;
+    }
+
+    enum LicensorConfig {
+        Unset,
+        IpOrgAlways,
+        ParentLicenseeOrIPAOwner
     }
     
     uint256 constant MAX_PARAM_TAGS = 150;
+    bytes32 constant USER_SETEABLE_CONFIG = keccak256("USER_SETEABLE_CONFIG");
     
     /// Input for IpOrg legal terms configuration in LicensingModule (for now, the only option)
     bytes32 constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");

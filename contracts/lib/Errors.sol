@@ -271,6 +271,8 @@ library Errors {
     error LicensingModule_CantFindParentLicenseOrRelatedIpa();
     error LicensingModule_InvalidLicenseeType();
     error LicensingModule_InvalidLicensorType();
+    error LicensingModule_InvalidLicensorConfig();
+    error LicensingModule_InvalidParamValues();
     
 
     ////////////////////////////////////////////////////////////////////////////

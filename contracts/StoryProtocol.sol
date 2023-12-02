@@ -205,16 +205,16 @@ contract StoryProtocol is Multicall {
 
     /// Allows an IPOrg to configure its licensing framework (collection of commercial and non-commercial terms)
     /// @param ipOrg_ the ipOrg address
-    /// @param framework_ licensing term id array, and matching term data array to configure them
+    /// @param config_ the licensing framework config
     function configureIpOrgLicensing(
-        address ipOrg_,
-        Licensing.FrameworkConfig calldata framework_
+         address ipOrg_,
+        Licensing.LicensingConfig calldata config_
     ) external {
         MODULE_REGISTRY.configure(
             IIPOrg(ipOrg_),
             msg.sender,
             ModuleRegistryKeys.LICENSING_MODULE,
-            abi.encode(Licensing.LICENSING_FRAMEWORK_CONFIG, abi.encode(framework_))
+            abi.encode(Licensing.LICENSING_FRAMEWORK_CONFIG, abi.encode(config_))
         );
     }
     
@@ -225,31 +225,31 @@ contract StoryProtocol is Multicall {
     /// @param preHooksData_ Hooks data to embed with the registration pre-call.
     /// @param postHooksData_ Hooks data to embed with the registration post-call.
     /// @return id of the created license
-    function createLicenseNft(
-        address ipOrg_,
-        Licensing.LicenseCreation calldata params_,
-        address licensee_,
-        bytes[] calldata preHooksData_,
-        bytes[] calldata postHooksData_
-    ) external returns (uint256) {
-        bytes memory params = abi.encode(
-            params_,
-            Licensing.LicenseeType.LNFTHolder,
-            abi.encode(licensee_)
-        );
-        bytes memory result = MODULE_REGISTRY.execute(
-            IIPOrg(ipOrg_),
-            msg.sender,
-            ModuleRegistryKeys.LICENSING_MODULE,
-            abi.encode(
-                Licensing.CREATE_LICENSE,
-                params
-            ),
-            preHooksData_,
-            postHooksData_
-        );
-        return abi.decode(result, (uint256));
-    }
+    // function createLicenseNft(
+    //     address ipOrg_,
+    //     Licensing.LicenseCreation calldata params_,
+    //     address licensee_,
+    //     bytes[] calldata preHooksData_,
+    //     bytes[] calldata postHooksData_
+    // ) external returns (uint256) {
+    //     bytes memory params = abi.encode(
+    //         params_,
+    //         Licensing.LicenseeType.LNFTHolder,
+    //         abi.encode(licensee_)
+    //     );
+    //     bytes memory result = MODULE_REGISTRY.execute(
+    //         IIPOrg(ipOrg_),
+    //         msg.sender,
+    //         ModuleRegistryKeys.LICENSING_MODULE,
+    //         abi.encode(
+    //             Licensing.CREATE_LICENSE,
+    //             params
+    //         ),
+    //         preHooksData_,
+    //         postHooksData_
+    //     );
+    //     return abi.decode(result, (uint256));
+    // }
 
     /// Creates a License bound to a certain IPA. It's not an NFT, the licensee will be the owner of the IPA.
     /// @param ipOrg_ the ipOrg address
@@ -258,65 +258,65 @@ contract StoryProtocol is Multicall {
     /// @param preHooksData_ Hooks data to embed with the registration pre-call.
     /// @param postHooksData_ Hooks data to embed with the registration post-call.
     /// @return id of the created license
-    function createIpaBoundLicense(
-        address ipOrg_,
-        Licensing.LicenseCreation calldata params_,
-        uint256 ipaId_,
-        bytes[] calldata preHooksData_,
-        bytes[] calldata postHooksData_
-    ) external returns (uint256) {
-        bytes memory params = abi.encode(
-            params_,
-            Licensing.LicenseeType.BoundToIpa,
-            abi.encode(ipaId_)
-        );
-        bytes memory result = MODULE_REGISTRY.execute(
-            IIPOrg(ipOrg_),
-            msg.sender,
-            ModuleRegistryKeys.LICENSING_MODULE,
-            abi.encode(
-                Licensing.CREATE_LICENSE,
-                params
-            ),
-            preHooksData_,
-            postHooksData_
-        );
-        return abi.decode(result, (uint256));
-    }
+    // function createIpaBoundLicense(
+    //     address ipOrg_,
+    //     Licensing.LicenseCreation calldata params_,
+    //     uint256 ipaId_,
+    //     bytes[] calldata preHooksData_,
+    //     bytes[] calldata postHooksData_
+    // ) external returns (uint256) {
+    //     bytes memory params = abi.encode(
+    //         params_,
+    //         Licensing.LicenseeType.BoundToIpa,
+    //         abi.encode(ipaId_)
+    //     );
+    //     bytes memory result = MODULE_REGISTRY.execute(
+    //         IIPOrg(ipOrg_),
+    //         msg.sender,
+    //         ModuleRegistryKeys.LICENSING_MODULE,
+    //         abi.encode(
+    //             Licensing.CREATE_LICENSE,
+    //             params
+    //         ),
+    //         preHooksData_,
+    //         postHooksData_
+    //     );
+    //     return abi.decode(result, (uint256));
+    // }
 
-    function activateLicense(
-        address ipOrg_,
-        uint256 licenseId_
-    ) external {
-        MODULE_REGISTRY.execute(
-            IIPOrg(ipOrg_),
-            msg.sender,
-            ModuleRegistryKeys.LICENSING_MODULE,
-            abi.encode(
-                Licensing.ACTIVATE_LICENSE,
-                abi.encode(licenseId_)
-            ),
-            new bytes[](0),
-            new bytes[](0)
-        );
-    }
+    // function activateLicense(
+    //     address ipOrg_,
+    //     uint256 licenseId_
+    // ) external {
+    //     MODULE_REGISTRY.execute(
+    //         IIPOrg(ipOrg_),
+    //         msg.sender,
+    //         ModuleRegistryKeys.LICENSING_MODULE,
+    //         abi.encode(
+    //             Licensing.ACTIVATE_LICENSE,
+    //             abi.encode(licenseId_)
+    //         ),
+    //         new bytes[](0),
+    //         new bytes[](0)
+    //     );
+    // }
 
-    function bindLnftToIpa(
-        address ipOrg_,
-        uint256 licenseId_,
-        uint256 ipaId_
-    ) external {
-        MODULE_REGISTRY.execute(
-            IIPOrg(ipOrg_),
-            msg.sender,
-            ModuleRegistryKeys.LICENSING_MODULE,
-            abi.encode(
-                Licensing.BOND_LNFT_TO_IPA,
-                abi.encode(licenseId_, ipaId_)
-            ),
-            new bytes[](0),
-            new bytes[](0)
-        );
-    }
+    // function bindLnftToIpa(
+    //     address ipOrg_,
+    //     uint256 licenseId_,
+    //     uint256 ipaId_
+    // ) external {
+    //     MODULE_REGISTRY.execute(
+    //         IIPOrg(ipOrg_),
+    //         msg.sender,
+    //         ModuleRegistryKeys.LICENSING_MODULE,
+    //         abi.encode(
+    //             Licensing.BOND_LNFT_TO_IPA,
+    //             abi.encode(licenseId_, ipaId_)
+    //         ),
+    //         new bytes[](0),
+    //         new bytes[](0)
+    //     );
+    // }
     
 }

@@ -18,8 +18,13 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
 
     event FrameworkAdded(
         string frameworkId,
-        string textUrl,
-        Licensing.ParamDefinition[] params
+        string textUrl
+    );
+
+    event ParamDefinitionAdded(
+        string frameworkId,
+        ShortString tag,
+        Licensing.ParameterType paramType
     );
 
     mapping(string => Licensing.FrameworkStorage) private _frameworks;
@@ -29,8 +34,7 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
     function addFramework(
         Licensing.SetFramework calldata input_
     ) external onlyRole(AccessControl.LICENSING_MANAGER) {
-        Licensing.FrameworkStorage storage framework = _frameworks[input_.id];
-        if (framework.paramTags.length() > 0) {
+        if (_frameworks[input_.id].paramTags.length() > 0) {
             revert Errors.LicensingFrameworkRepo_FrameworkAlreadyAdded();
         }
         uint256 numParams = input_.paramDefs.length;
@@ -38,29 +42,42 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
             revert Errors.LicensingFrameworkRepo_TooManyParams();
         }
         for (uint256 i = 0; i < numParams; i++) {
-            ShortString tag = input_.paramDefs[i].tag;
-            if (framework.paramTags.contains(tag)) {
-                revert Errors.LicensingFrameworkRepo_DuplicateParamType();
-            }
-            framework.paramTags.add(tag);
-            framework.paramTypes[tag] = input_.paramDefs[i].paramType;
+            _addParameter(input_.id, input_.paramDefs[i]);
         }
-        framework.textUrl = input_.textUrl;
-        emit FrameworkAdded(input_.id, input_.textUrl, input_.paramDefs);
+        _frameworks[input_.id].textUrl = input_.textUrl;
+        emit FrameworkAdded(input_.id, input_.textUrl);
     }
 
-    function validateConfig(Licensing.LicensingConfig calldata config_) external view returns(bool) {
-        Licensing.FrameworkStorage storage framework = _frameworks[config_.frameworkId];
-        uint256 numParams = config_.params.length;
+    function _addParameter(
+        string calldata frameworkId_,
+        Licensing.ParamDefinition calldata paramDef_
+    ) internal {
+        Licensing.FrameworkStorage storage framework = _frameworks[frameworkId_];
+        ShortString tag = paramDef_.tag;
+        if (framework.paramTags.contains(tag)) {
+            revert Errors.LicensingFrameworkRepo_DuplicateParamType();
+        }
+        framework.paramTags.add(tag);
+        framework.paramTypes[tag] = paramDef_.paramType;
+        emit ParamDefinitionAdded(frameworkId_, tag, paramDef_.paramType);
+    } 
+
+
+    function validateParamValues(
+        string calldata frameworkId_,
+        Licensing.ParamValue[] calldata params_
+    ) external view returns(bool) {
+        Licensing.FrameworkStorage storage framework = _frameworks[frameworkId_];
+        uint256 numParams = params_.length;
         if (numParams == 0 || numParams > Licensing.MAX_PARAM_TAGS) {
             return false;
         }
         for (uint256 i = 0; i < numParams; i++) {
-            ShortString tag = config_.params[i].tag;
+            ShortString tag = params_[i].tag;
             if (!framework.paramTags.contains(tag)) {
                 return false;
             }
-            if (!validateParamValue(framework.paramTypes[tag], config_.params[i].value)) {
+            if (!validateParamValue(framework.paramTypes[tag], params_[i].value)) {
                 return false;
             }
         }
@@ -105,7 +122,7 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
         return true;
     }
 
-    function getTextUrl(
+    function getLicenseTextUrl(
         string calldata frameworkId_
     ) external view returns (string memory) {
         return _frameworks[frameworkId_].textUrl;
