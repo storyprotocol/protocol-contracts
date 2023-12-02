@@ -17,6 +17,23 @@ contract ModuleRegistryTest is Test, AccessControlHelper {
     event RequestPending(address indexed sender);
     event RequestCompleted(address indexed sender);
 
+    event ModuleAdded(
+        address indexed ipOrg,
+        string moduleKey,
+        address indexed module
+    );
+    event ModuleRemoved(
+        address indexed ipOrg,
+        string moduleKey,
+        address indexed module
+    );
+    event ModuleConfigured(
+        address indexed ipOrg,
+        string moduleKey,
+        address indexed caller,
+        bytes params
+    );
+
     function setUp() public {
         _setupAccessControl();
         _grantRole(vm, AccessControl.MODULE_REGISTRAR_ROLE, admin);
@@ -31,8 +48,12 @@ contract ModuleRegistryTest is Test, AccessControlHelper {
             IPOrgController(address(0x123))
         );
         MockBaseModule module = new MockBaseModule(admin, moduleConstruction);
+        
+        vm.expectEmit(address(registry));
+        emit ModuleAdded(registry.PROTOCOL_LEVEL(), "test", address(module));
         vm.prank(admin);
         registry.registerProtocolModule("test", module);
+
         assertEq(address(registry.moduleForKey("test")), address(module));
     }
     
@@ -45,10 +66,17 @@ contract ModuleRegistryTest is Test, AccessControlHelper {
         );
         MockBaseModule module = new MockBaseModule(admin, moduleConstruction);
         vm.startPrank(admin);
+
+        vm.expectEmit(address(registry));
+        emit ModuleAdded(registry.PROTOCOL_LEVEL(), "test", address(module));
         registry.registerProtocolModule("test", module);
         assertEq(address(registry.moduleForKey("test")), address(module));
+
+        vm.expectEmit(address(registry));
+        emit ModuleRemoved(registry.PROTOCOL_LEVEL(), "test", address(module));
         registry.removeProtocolModule("test");
         assertEq(address(registry.moduleForKey("test")), address(0));
+
         vm.stopPrank();
     }
 }
