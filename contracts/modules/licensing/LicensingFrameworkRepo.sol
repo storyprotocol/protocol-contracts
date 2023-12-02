@@ -144,4 +144,10 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
     ) external view returns (uint256) {
         return _frameworks[frameworkId_].paramTags.length();
     }
+
+    function getParameterTags(
+        string calldata frameworkId_
+    ) external view returns (ShortString[] memory) {
+        return _frameworks[frameworkId_].paramTags.values();
+    }
 }

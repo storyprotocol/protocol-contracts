@@ -19,7 +19,7 @@ import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 /// @title Collect Module Base Implementation
 /// @notice This is the Story Protocol base collect module that SHOULD be
 ///         extended when creating collect modules for franchise IP assets.
-///         A collect module allows users to bind enrolled IP assets to NFTs
+///         A collect module allows users to link enrolled IP assets to NFTs
 ///         that may be minted according to franchise configured collect rules.
 /// TODO: Add ipAssetOrg-wide module settings (currently it is granular at the individual IP asset level).
 abstract contract CollectModuleBase is AccessControlledUpgradeable, ICollectModule {

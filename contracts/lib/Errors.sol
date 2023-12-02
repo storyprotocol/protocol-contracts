@@ -279,15 +279,15 @@ library Errors {
     //                            LicenseRegistry                             //
     ////////////////////////////////////////////////////////////////////////////
 
-    error LicenseRegistry_ZeroIpaRegistryAddress();
     error LicenseRegistry_UnknownLicenseId();
     error LicenseRegistry_NotLicenseNFT();
     error LicenseRegistry_InvalidIpa();
-    error LicenseRegistry_ZeroModuleRegistryAddress();
     error LicenseRegistry_CallerNotLicensingModule();
     error LicenseRegistry_CallerNotRevoker();
-    error LicenseRegistry_LicenseNotPending();
+    error LicenseRegistry_LicenseNotInactive();
     error LicenseRegistry_InvalidLicenseStatus();
+    error LicenseRegistry_ParentLicenseNotActive();
+    error LicenseRegistry_IPANotActive();
     
     ////////////////////////////////////////////////////////////////////////////
     //                            RegistrationModule                          //

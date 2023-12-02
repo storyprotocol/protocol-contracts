@@ -31,6 +31,6 @@ library AccessControl {
     bytes32 constant HOOK_CALLER_ROLE = keccak256("HOOK_CALLER_ROLE");
 
     // Role to set legal terms in TermsRepository
-    bytes32 constant TERMS_SETTER_ROLE = keccak256("TERMS_SETTER_ROLE");
+    bytes32 constant LICENSING_MANAGER = keccak256("LICENSING_MANAGER");
 
 }

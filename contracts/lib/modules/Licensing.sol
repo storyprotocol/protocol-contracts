@@ -11,8 +11,24 @@ library Licensing {
 
     /// @notice Struct that holds the data for a license
     struct License {
-        /// States the commercial nature of the license. All terms will follow.
-        bool isCommercial;
+        /// License status. // TODO: IPA status should follow
+        LicenseStatus status;
+        /// address granting the license
+        address licensor;
+        address licensee;
+        /// address that could make a license invalid
+        address revoker;
+        /// address of the ip org that produced the terms
+        address ipOrg;
+        /// If the licensee is bound to an IPA, this is the IPA id. 0 otherwise
+        uint256 ipaId;
+        /// The id of the parent license. 0 if this this is tied to the first IPA of an IPOrg
+        uint256 parentLicenseId;        
+        ShortString frameworkId;
+        ParamValue[] params;
+    }
+
+    struct LicenseStorage {
         /// License status. // TODO: IPA status should follow
         LicenseStatus status;
         /// address granting the license
@@ -25,18 +41,16 @@ library Licensing {
         uint256 ipaId;
         /// The id of the parent license. 0 if this this is tied to the first IPA of an IPOrg
         uint256 parentLicenseId;
-        /// The ids of the Licensing Terms that make up the license.
-        /// The terms definitions are in TermsRepository contract
-        ShortString[] termIds;
-        /// The data configuring each term. May be empty bytes. May be passed to the term hook
-        bytes[] termsData;
+        ShortString frameworkId;
+        mapping(ShortString => bytes) paramValues;
     }
 
     enum LicenseStatus {
         Unset,
         Active,
+        Inactive,
         Revoked,
-        Pending
+        Used
     }
 
     /// User facing parameters for creating a license
@@ -50,12 +64,12 @@ library Licensing {
 
     /// Input to add a License the LicenseRegistry 
     struct RegistryAddition {
-        /// States the commercial nature of the license. All terms will follow.
-        bool isCommercial;
         /// Only Active or Pending will be accepted here
         LicenseStatus status;
         /// address granting the license
         address licensor;
+        /// The address that will own the license NFT
+        address licensee;
         /// address that could make a license invalid
         address revoker;
         /// address of the ip org that produced the terms
@@ -63,9 +77,11 @@ library Licensing {
         /// The id of the parent license. 0 if this this is tied to the first IPA of an IPOrg
         uint256 parentLicenseId;
         /// The ids of the Licensing Terms that make up the license.
-        ShortString[] termIds;
-        /// The data configuring each term. May be empty bytes. May be passed to the term hook
-        bytes[] termsData;
+        ParamValue[] params;
+        /// If the licensee is bound to an IPA, this is the IPA id. 0 otherwise
+        uint256 ipaId;
+        /// Framework id
+        ShortString frameworkId;
     }
     
 
@@ -118,5 +134,5 @@ library Licensing {
     bytes32 constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");
     bytes32 constant CREATE_LICENSE = keccak256("CREATE_LICENSE");
     bytes32 constant ACTIVATE_LICENSE = keccak256("ACTIVATE_LICENSE");
-    bytes32 constant BOND_LNFT_TO_IPA = keccak256("BOND_LNFT_TO_IPA");
+    bytes32 constant LINK_LNFT_TO_IPA = keccak256("LINK_LNFT_TO_IPA");
 }

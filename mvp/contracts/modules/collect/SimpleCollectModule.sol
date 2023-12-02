@@ -6,7 +6,7 @@ import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { CollectModuleBase } from "contracts/modules/collect/CollectModuleBase.sol";
 
 /// @title Simple Collect Module
-/// @notice This simple collect module binds IP assets to mintable NFTs.
+/// @notice This simple collect module links IP assets to mintable NFTs.
 contract SimpleCollectModule is CollectModuleBase {
 
     /// @notice Initializes a mock collect module.

@@ -6,7 +6,6 @@ import "contracts/modules/relationships/RelationshipModule.sol";
 import "contracts/lib/modules/LibRelationship.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
-import { TermCategories, TermIds } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";

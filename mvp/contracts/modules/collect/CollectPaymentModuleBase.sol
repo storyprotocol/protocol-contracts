@@ -11,7 +11,7 @@ import { Errors } from "contracts/lib/Errors.sol";
 
 /// @title Collect Payment Module Base
 /// @notice This is the Story Protocol base payment collect module, which allows
-///         binding enrolled IP assets to NFTs that can be minted for a specific
+///         linking enrolled IP assets to NFTs that can be minted for a specific
 ///         fee according to registry configured payment rules.
 /// TODO: Add IP Asset Collection wide collect payment module settings.
 abstract contract CollectPaymentModuleBase is CollectModuleBase, ICollectPaymentModule {

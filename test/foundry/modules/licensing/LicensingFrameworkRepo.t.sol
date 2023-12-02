@@ -42,7 +42,7 @@ contract LicensingFrameworkRepoTest is Test, AccessControlHelper {
         });
         vm.prank(admin);
         repo.addFramework(framework);
-        assertEq("text_url", repo.getTextUrl("test_id"));
+        assertEq("text_url", repo.getLicenseTextUrl("test_id"));
         assertEq(2, repo.getTotalParameters("test_id"));
         Licensing.ParamDefinition memory param1 = repo.getParamDefinitionAt("test_id", 0);
         assertTrue(ShortStringOps._equal("TEST_TAG_1".toShortString(), param1.tag));
@@ -145,10 +145,7 @@ contract LicensingFrameworkRepoTest is Test, AccessControlHelper {
             tag: "TEST_TAG_2".toShortString(),
             value: abi.encode(123213123)
         });
-        Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
-            frameworkId: "test_id",
-            params: values
-        });
-        assertTrue(repo.validateConfig(config));
+        assertTrue(repo.validateParamValues("test_id", values));
     }
+    
 }

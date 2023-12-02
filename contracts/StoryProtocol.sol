@@ -301,7 +301,7 @@ contract StoryProtocol is Multicall {
     //     );
     // }
 
-    // function bindLnftToIpa(
+    // function linkLnftToIpa(
     //     address ipOrg_,
     //     uint256 licenseId_,
     //     uint256 ipaId_
@@ -311,7 +311,7 @@ contract StoryProtocol is Multicall {
     //         msg.sender,
     //         ModuleRegistryKeys.LICENSING_MODULE,
     //         abi.encode(
-    //             Licensing.BOND_LNFT_TO_IPA,
+    //             Licensing.LINK_LNFT_TO_IPA,
     //             abi.encode(licenseId_, ipaId_)
     //         ),
     //         new bytes[](0),

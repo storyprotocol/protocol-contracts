@@ -10,7 +10,7 @@ import { LicensingFrameworkRepo } from "./LicensingFrameworkRepo.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
-import { TermIds } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
+// import { TermIds } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 
 
@@ -21,6 +21,7 @@ import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 /// - Enables license holders to create derivative licenses and sublicenses
 /// Thanks to the authors of ERC-5218 for the inspiration (see https://eips.ethereum.org/EIPS/eip-5218)
 contract LicensingModule is BaseModule {
+    
     using ShortStrings for *;
     using FixedSet for FixedSet.ShortStringSet;
 
@@ -60,37 +61,37 @@ contract LicensingModule is BaseModule {
     function getDefaultValueForParam(address ipOrg_, string calldata paramTag_) external view returns (bytes memory) {
         return _ipOrgParamValues[ipOrg_][paramTag_.toShortString()];
     }
-
+    
     ////////////////////////////////////////////////////////////////////////////
     //                          Create License                                //
     ////////////////////////////////////////////////////////////////////////////
 
     /// Module entrypoing to verify execution call
-    /*
+    
     function _verifyExecution(
         IIPOrg ipOrg_,
         address caller_,
         bytes calldata params_
     ) internal virtual override {
         // At least non commercial terms must be set
-        if (getTotalIpOrgTerms(false, address(ipOrg_)) == 0) {
-            revert Errors.LicensingModule_IpOrgNotConfigured();
-        }
-        (bytes32 action, bytes memory params) = abi.decode(
-            params_,
-            (bytes32, bytes)
-        );
-        if (action == Licensing.CREATE_LICENSE) {
-            _verifyCreateLicense(ipOrg_, caller_, params);
-        } else if (action == Licensing.ACTIVATE_LICENSE) {
-            _verifyActivateLicense(ipOrg_, caller_, params);
-        } else if (action == Licensing.BOND_LNFT_TO_IPA) {
-            _verifyBondNftToIpa(ipOrg_, caller_, params);
-        } else {
-            revert Errors.LicensingModule_InvalidAction();
-        }
+        // if (_licensorConfig[address(ipOrg_)] == Licensing.LicensorConfig.Unset) {
+        //     revert Errors.LicensingModule_IpOrgNotConfigured();
+        // }
+        // (bytes32 action, bytes memory params) = abi.decode(
+        //     params_,
+        //     (bytes32, bytes)
+        // );
+        // if (action == Licensing.CREATE_LICENSE) {
+        //     _verifyCreateLicense(ipOrg_, caller_, params);
+        // } else if (action == Licensing.ACTIVATE_LICENSE) {
+        //     _verifyActivateLicense(ipOrg_, caller_, params);
+        // } else if (action == Licensing.LINK_LNFT_TO_IPA) {
+        //     _verifyLinkNftToIpa(ipOrg_, caller_, params);
+        // } else {
+        //     revert Errors.LicensingModule_InvalidAction();
+        // }
     }
-
+    /*
     function _verifyCreateLicense(
         IIPOrg ipOrg_,
         address caller_,
@@ -104,19 +105,10 @@ contract LicensingModule is BaseModule {
                 params_,
                 (Licensing.LicenseCreation, Licensing.LicenseeType, bytes)
             );
-        // ------ Commercial status checks ------
-        if (!ipOrgAllowsCommercial(address(ipOrg_)) && lParams.isCommercial) {
-            revert Errors.LicensingModule_CommercialLicenseNotAllowed();
-        }
-        // ------ Misconfiguration ------
-        if (licenseeType == Licensing.LicenseeType.Unset) {
-            revert Errors.LicensingModule_InvalidLicenseeType();
-        }
+        
         // ------ Derivative license checks ------
         if (lParams.parentLicenseId != 0) {
-            if (!LICENSE_REGISTRY.isLicenseActive(lParams.parentLicenseId)) {
-                revert Errors.LicensingModule_ParentLicenseNotActive();
-            }
+   
             // If no share alike, only the parent licensee can create a derivative license
             if (
                 !_shareAlike[
@@ -132,6 +124,7 @@ contract LicensingModule is BaseModule {
             }
         }
     }
+
 
     function _verifyActivateLicense(
         IIPOrg ipOrg_,
@@ -153,7 +146,7 @@ contract LicensingModule is BaseModule {
         }
     }
 
-    function _verifyBondNftToIpa(
+    function _verifyLinkNftToIpa(
         IIPOrg ipOrg_,
         address caller_,
         bytes memory params_
@@ -172,33 +165,33 @@ contract LicensingModule is BaseModule {
             revert Errors.LicensingModule_InvalidIpa();
         }
     }
-
+    */
     /// Module entrypoint to create licenses
     function _performAction(
         IIPOrg ipOrg_,
         address caller_,
         bytes calldata params_
     ) internal virtual override returns (bytes memory result) {
-        (bytes32 action, bytes memory actionParams) = abi.decode(
-            params_,
-            (bytes32, bytes)
-        );
-        if (action == Licensing.CREATE_LICENSE) {
-            return _createLicense(ipOrg_, caller_, actionParams);
-        } else if (action == Licensing.ACTIVATE_LICENSE) {
-            return _activateLicense(ipOrg_, caller_, actionParams);
-        } else if (action == Licensing.BOND_LNFT_TO_IPA) {
-            (uint256 licenseId, uint256 ipaId) = abi.decode(
-                actionParams,
-                (uint256, uint256)
-            );
-            LICENSE_REGISTRY.bindLnftToIpa(licenseId, ipaId);
-            return bytes("");
-        } else {
-            revert Errors.LicensingModule_InvalidAction();
-        }
+        // (bytes32 action, bytes memory actionParams) = abi.decode(
+        //     params_,
+        //     (bytes32, bytes)
+        // );
+        // if (action == Licensing.CREATE_LICENSE) {
+        //     return _createLicense(ipOrg_, caller_, actionParams);
+        // } else if (action == Licensing.ACTIVATE_LICENSE) {
+        //     return _activateLicense(ipOrg_, caller_, actionParams);
+        // } else if (action == Licensing.LINK_LNFT_TO_IPA) {
+        //     (uint256 licenseId, uint256 ipaId) = abi.decode(
+        //         actionParams,
+        //         (uint256, uint256)
+        //     );
+        //     LICENSE_REGISTRY.linkLnftToIpa(licenseId, ipaId);
+        //     return bytes("");
+        // } else {
+        //     revert Errors.LicensingModule_InvalidAction();
+        // }
     }
-
+    /*
     function _createLicense(
         IIPOrg ipOrg_,
         address caller_,
@@ -406,4 +399,5 @@ contract LicensingModule is BaseModule {
     ) internal view virtual override returns (bytes32) {
         return keccak256("TODO");
     }
+    
 }
