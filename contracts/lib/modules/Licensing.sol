@@ -21,8 +21,6 @@ library Licensing {
         address revoker;
         /// address of the ip org that produced the terms
         address ipOrg;
-        /// Defines how to find the address of the licensee
-        LicenseeType licenseeType;
         /// If the licensee is bound to an IPA, this is the IPA id. 0 otherwise
         uint256 ipaId;
         /// The id of the parent license. 0 if this this is tied to the first IPA of an IPOrg
@@ -69,59 +67,44 @@ library Licensing {
         /// The data configuring each term. May be empty bytes. May be passed to the term hook
         bytes[] termsData;
     }
+    
 
-    enum LicenseeType {
-        // Empty value
-        Unset,
-        // The licensee is the owner of the IPA
-        BoundToIpa,
-        // The licensee is the owner of the NFT. ipaId will be 0 in the license
-        LNFTHolder
+    enum ParameterType {
+        Bool,
+        Number,
+        Address,
+        String,
+        MultipleChoice // ShortString set, meanings provided by the framework
     }
 
-    /// Defines commercial status on a licensing term
-    enum CommercialStatus {
-        /// Empty value
-        Unset,
-        /// Term can only be used for commercial licenses
-        Commercial,
-        /// Term can only be used for non commercial licenses
-        NonCommercial,
-        /// Term could be used for both commercial and non commercial licenses
-        Both
+    struct FrameworkStorage {
+        string textUrl;
+        FixedSet.ShortStringSet paramTags;
+        mapping(ShortString => ParameterType) paramTypes;
     }
 
-    /// Data needed to create a Licensing Term. A collection of terms can be used to render
-    /// a license text
-    struct LicensingTerm {
-        /// Defines commercial status on a licensing term
-        CommercialStatus comStatus;
-        /// URL where the term text can be found. If the destination is not available of changes
-        /// Licenses created with this term will be candidates for revocation
-        string url;
-        /// Hash of the license text
-        string hash;
-        /// Hashing algorithm used
-        string algorithm;
-        /// If the Licensing term is enforceable on chain, this is the hook that will be called
-        IHook hook;
-        // Some terms just need to decode bytes data, not a full blown hook.
-        // ITermDecoder decoder; // TODO: For now the LicensingModule knows how to decode the data per term id
+    struct SetFramework {
+        string id;
+        string textUrl;
+        ParamDefinition[] paramDefs;
     }
 
-    /// Defines a collection of termIds and their config data. Must be same length
-    /// @dev: we cannot use this in structs that are going to be saved
-    /// to storage, like License
-    struct TermsConfig {
-        ShortString[] termIds;
-        bytes[] termData;
+    struct ParamDefinition {
+        ShortString tag;
+        ParameterType paramType;
     }
 
-    /// Input for IpOrg legal terms configuration in LicensingModule
-    struct FrameworkConfig {
-        TermsConfig comTermsConfig;
-        TermsConfig nonComTermsConfig;
+    struct ParamValue {
+        ShortString tag;
+        bytes value;
     }
+    
+    struct LicensingConfig {
+        string frameworkId;
+        ParamValue[] params;
+    }
+    
+    uint256 constant MAX_PARAM_TAGS = 150;
     
     /// Input for IpOrg legal terms configuration in LicensingModule (for now, the only option)
     bytes32 constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");

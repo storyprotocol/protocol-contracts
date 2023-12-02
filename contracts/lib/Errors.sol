@@ -241,16 +241,14 @@ library Errors {
     error LibDuration_ZeroTTL();
 
     ////////////////////////////////////////////////////////////////////////////
-    //                            TermsRegistry                               //
+    //                       LicensingFrameworkRepo                           //
     ////////////////////////////////////////////////////////////////////////////
-
-    error TermsRegistry_UnsupportedTermCategory();
-    error TermsRegistry_UnsupportedTerm();
-    error TermsRegistry_TermAlreadyExists();
-    error TermsRegistry_CommercialStatusUnset();
+    error LicensingFrameworkRepo_FrameworkAlreadyAdded();
+    error LicensingFrameworkRepo_DuplicateParamType();
+    error LicensingFrameworkRepo_TooManyParams();
 
     ////////////////////////////////////////////////////////////////////////////
-    //                        LicensingModule                            //
+    //                        LicensingModule                                 //
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice The franchise does not exist.
@@ -262,6 +260,7 @@ library Errors {
     error LicensingModule_CommercialLicenseNotAllowed();
     error LicensingModule_NonCommercialTermsRequired();
     error LicensingModule_IpOrgNotConfigured();
+    error LicensingModule_IpOrgAlreadyConfigured();
     error LicensingModule_ipOrgTermNotFound();
     error LicensingModule_ShareAlikeDisabled();
     error LicensingModule_InvalidAction();
@@ -272,6 +271,8 @@ library Errors {
     error LicensingModule_CantFindParentLicenseOrRelatedIpa();
     error LicensingModule_InvalidLicenseeType();
     error LicensingModule_InvalidLicensorType();
+    
+
     ////////////////////////////////////////////////////////////////////////////
     //                            LicenseRegistry                             //
     ////////////////////////////////////////////////////////////////////////////
