@@ -1,3 +1,4 @@
+/* solhint-disable contract-name-camelcase, func-name-mixedcase */
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
@@ -9,7 +10,8 @@ import { RelationshipModule } from "contracts/modules/relationships/Relationship
 import { LicensingModule } from "contracts/modules/licensing/LicensingModule.sol";
 import { TokenGatedHook } from "contracts/hooks/TokenGatedHook.sol";
 import { HookRegistry } from "contracts/modules/base/HookRegistry.sol";
-import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
+import { HookResult, IHook } from "contracts/interfaces/hooks/base/IHook.sol";
+import { Hook } from "contracts/lib/hooks/Hook.sol";
 import { TokenGated } from "contracts/lib/hooks/TokenGated.sol";
 import { MockERC721 } from "test/foundry/mocks/MockERC721.sol";
 import { TermsRepository } from "contracts/modules/licensing/TermsRepository.sol";
@@ -20,8 +22,10 @@ import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { TermsData } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
 import { Registration } from "contracts/lib/modules/Registration.sol";
+import { IE2ETest } from "test/foundry/interfaces/IE2ETest.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-contract E2ETest is BaseTest {
+contract E2ETest is IE2ETest, BaseTest {
     using ShortStrings for string;
 
     address public tokenGatedHook;
@@ -66,7 +70,10 @@ contract E2ETest is BaseTest {
     }
 
     function test_e2e() public {
-        // ip org owner create IP Org
+        //
+        // IPOrg owner create IPOrgs
+        //
+
         string[] memory ipAssetTypes = new string[](2);
         ipAssetTypes[0] = "CHARACTER";
         ipAssetTypes[1] = "STORY";
@@ -83,22 +90,68 @@ contract E2ETest is BaseTest {
             ipAssetTypes
         );
 
-        // ip org owner configure modules
+        vm.label(ipOrg1, "IPOrg_1");
+        vm.label(ipOrg2, "IPOrg_2");
+
+        string[] memory ipAssetTypesMore1 = new string[](1);
+        string[] memory ipAssetTypesMore2 = new string[](1);
+        ipAssetTypesMore1[0] = "MOVIE";
+        ipAssetTypesMore2[0] = "MUSIC";
+
+        // TODO: check for event `ModuleConfigured`
+        vm.prank(ipOrgOwner1);
+        spg.addIPAssetTypes(ipOrg1, ipAssetTypesMore1);
+
+        // TODO: check for event `ModuleConfigured`
+        vm.prank(ipOrgOwner2);
+        spg.addIPAssetTypes(ipOrg2, ipAssetTypesMore2);
+
+        //
+        // IPOrg owner configure modules
+        //
+
+        vm.expectEmit(address(registrationModule));
+        emit MetadataUpdated(
+            address(ipOrg1),
+            "http://iporg1.baseuri.url",
+            "http://iporg1.contracturi.url"
+        );
         vm.prank(ipOrgOwner1);
         spg.setMetadata(
             ipOrg1,
             "http://iporg1.baseuri.url",
             "http://iporg1.contracturi.url"
         );
+        assertEq(
+            registrationModule.contractURI(address(ipOrg1)),
+            "http://iporg1.contracturi.url"
+        );
+        // TODO: tokenURI check
+        // assertEq(registrationModule.tokenURI(address(ipOrg), 1, 0), "");
 
+        vm.expectEmit(address(registrationModule));
+        emit MetadataUpdated(
+            address(ipOrg2),
+            "http://iporg2.baseuri.url",
+            "http://iporg2.contracturi.url"
+        );
         vm.prank(ipOrgOwner2);
         spg.setMetadata(
             ipOrg2,
             "http://iporg2.baseuri.url",
             "http://iporg2.contracturi.url"
         );
+        assertEq(
+            registrationModule.contractURI(address(ipOrg2)),
+            "http://iporg2.contracturi.url"
+        );
+        // TODO: tokenURI check
+        // assertEq(registrationModule.tokenURI(address(ipOrg), 1, 0), "");
 
-        // ip org 1 owner register hooks to RegistrationModule
+        //
+        // IPOrg 1 owner register hooks to RegistrationModule
+        //
+
         address[] memory hooks = new address[](1);
         hooks[0] = tokenGatedHook;
 
@@ -107,6 +160,14 @@ contract E2ETest is BaseTest {
         });
         bytes[] memory hooksConfig = new bytes[](1);
         hooksConfig[0] = abi.encode(tokenGatedConfig);
+
+        vm.expectEmit(address(registrationModule));
+        emit HooksRegistered(
+            HookRegistry.HookType.PreAction,
+            // from _generateRegistryKey(ipOrg_) => registryKey
+            keccak256(abi.encode(address(ipOrg1), "REGISTRATION")),
+            hooks
+        );
         vm.prank(ipOrgOwner1);
         RegistrationModule(registrationModule).registerHooks(
             HookRegistry.HookType.PreAction,
@@ -118,40 +179,74 @@ contract E2ETest is BaseTest {
         // configure license terms
         vm.startPrank(admin);
         Licensing.CommercialStatus comStatus = Licensing.CommercialStatus.Both;
+
+        vm.expectEmit(address(termsRepository));
+        emit TermCategoryAdded(TermCategories.SHARE_ALIKE);
         termsRepository.addCategory(TermCategories.SHARE_ALIKE);
         Licensing.LicensingTerm memory term = _getTerm(
             TermIds.NFT_SHARE_ALIKE,
             comStatus
         );
+
+        vm.expectEmit(address(termsRepository));
+        emit TermAdded(TermCategories.SHARE_ALIKE, TermIds.NFT_SHARE_ALIKE);
         termsRepository.addTerm(
             TermCategories.SHARE_ALIKE,
             TermIds.NFT_SHARE_ALIKE,
             term
         );
 
+        vm.expectEmit(address(termsRepository));
+        emit TermCategoryAdded(TermCategories.LICENSOR);
         termsRepository.addCategory(TermCategories.LICENSOR);
         term = _getTerm(TermIds.LICENSOR_APPROVAL, comStatus);
+
+        vm.expectEmit(address(termsRepository));
+        emit TermAdded(TermCategories.LICENSOR, TermIds.LICENSOR_APPROVAL);
         termsRepository.addTerm(
             TermCategories.LICENSOR,
             TermIds.LICENSOR_APPROVAL,
             term
         );
 
+        vm.expectEmit(true, true, true, true);
+        emit TermCategoryAdded(TermCategories.CATEGORIZATION);
         termsRepository.addCategory(TermCategories.CATEGORIZATION);
         term = _getTerm(TermIds.FORMAT_CATEGORY, comStatus);
+        vm.expectEmit(true, true, true, true);
+        emit TermAdded(TermCategories.CATEGORIZATION, TermIds.FORMAT_CATEGORY);
         termsRepository.addTerm(
             TermCategories.CATEGORIZATION,
             TermIds.FORMAT_CATEGORY,
             term
         );
 
+        vm.expectEmit(true, true, true, true);
+        emit TermCategoryAdded(TermCategories.ACTIVATION);
         termsRepository.addCategory(TermCategories.ACTIVATION);
         term = _getTerm(TermIds.LICENSOR_IPORG_OR_PARENT, comStatus);
+        vm.expectEmit(true, true, true, true);
+        emit TermAdded(
+            TermCategories.ACTIVATION,
+            TermIds.LICENSOR_IPORG_OR_PARENT
+        );
         termsRepository.addTerm(
             TermCategories.ACTIVATION,
             TermIds.LICENSOR_IPORG_OR_PARENT,
             term
         );
+
+        // assertTrue(
+        //     Strings.equal(
+        //         termsRepository.getTerm(TermIds.LICENSOR_IPORG_OR_PARENT).url,
+        //         ""
+        //     )
+        // );
+
+        // vm.expectEmit(address(termsRepository));
+        // emit TermCategoryRemoved(TermCategories.ACTIVATION);
+        // termsRepository.removeCategory(TermCategories.ACTIVATION);
+
         vm.stopPrank();
         // protocol admin add relationship type
         LibRelationship.RelatedElements memory allowedElements = LibRelationship
@@ -169,6 +264,7 @@ contract E2ETest is BaseTest {
                 allowedSrcs: allowedSrcs,
                 allowedDsts: allowedDsts
             });
+        // TODO: event check for `addRelationshipType` (event `RelationshipTypeSet`)
         vm.prank(ipOrgOwner1);
         spg.addRelationshipType(relTypeParams);
 
@@ -203,6 +299,7 @@ contract E2ETest is BaseTest {
                 nonComTermsConfig: nonComTermsConfig
             });
 
+        // TODO: event check for `configureIpOrgLicensing` (event `IpOrgTermsSet` emitted twice)
         vm.prank(ipOrgOwner1);
         spg.configureIpOrgLicensing(ipOrg1, frameworkConfig);
 
@@ -216,12 +313,21 @@ contract E2ETest is BaseTest {
                     ipOrgAssetType: 0,
                     name: "Character IPA",
                     hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83930000,
-                    mediaUrl: "https://arweave.net/chracter"
+                    mediaUrl: "https://arweave.net/character"
                 });
         TokenGated.Params memory tokenGatedHookDataCharacter = TokenGated
             .Params({ tokenOwner: ipAssetOwner1 });
         bytes[] memory preHooksDataCharacter = new bytes[](1);
         preHooksDataCharacter[0] = abi.encode(tokenGatedHookDataCharacter);
+
+        // TODO: Solve "Stack too deep" for emitting this event
+        // vm.expectEmit(address(tokenGatedHook));
+        // emit SyncHookExecuted(
+        //     address(tokenGatedHook),
+        //     HookResult.Completed,
+        //     _getExecutionContext(hooksConfig[0], abi.encode("")),
+        //     ""
+        // );
         vm.prank(ipAssetOwner1);
         (ipAssetId, ipOrgAssetId) = spg.registerIPAsset(
             ipOrg1,
@@ -317,6 +423,28 @@ contract E2ETest is BaseTest {
         Licensing.License memory license = licenseRegistry.getLicense(lId);
         assertFalse(license.isCommercial, "commercial");
         assertEq(license.ipaId, 1);
+
+        bytes[] memory hooksTransferIPAsset = new bytes[](1);
+        hooksTransferIPAsset[0] = abi.encode(ipAssetOwner1);
+
+        vm.expectEmit(address(registrationModule));
+        emit IPAssetTransferred(
+            1,
+            address(ipOrg1),
+            1,
+            ipAssetOwner1,
+            ipAssetOwner2
+        );
+        vm.prank(ipAssetOwner1);
+        spg.transferIPAsset(
+            ipOrg1,
+            ipAssetOwner1,
+            ipAssetOwner2,
+            1,
+            // BaseModule_HooksParamsLengthMismatc
+            hooksTransferIPAsset,
+            new bytes[](0)
+        );
     }
 
     function _getTerm(
@@ -332,4 +460,15 @@ contract E2ETest is BaseTest {
                 hook: IHook(address(0))
             });
     }
+
+    // function _getExecutionContext(
+    //     bytes memory hookConfig_,
+    //     bytes memory hookParams_
+    // ) internal pure returns (bytes memory) {
+    //     Hook.ExecutionContext memory context = Hook.ExecutionContext({
+    //         config: hookConfig_,
+    //         params: hookParams_
+    //     });
+    //     return abi.encode(context);
+    // }
 }
