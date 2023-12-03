@@ -204,6 +204,13 @@ or
 forge test
 ```
 
+## Coverage
+
+```
+make coverage
+```
+Open `index.html` in `coverage/` folder.
+
 # Deploying to a network
 
 ## Setup
