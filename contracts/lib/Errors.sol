@@ -40,7 +40,6 @@ library Errors {
 
     error BaseModule_HooksParamsLengthMismatch(uint8 hookType);
     error BaseModule_ZeroIpaRegistry();
-    error BaseModule_ZeroModuleRegistry();
     error BaseModule_ZeroLicenseRegistry();
     error BaseModule_OnlyModuleRegistry();
 
@@ -60,6 +59,8 @@ library Errors {
     error HookRegistry_HooksConfigLengthMismatch();
     /// @notice This error is thrown when the provided index is out of bounds of the hooks array.
     error HookRegistry_IndexOutOfBounds(uint256 hooksIndex);
+    error HookRegistry_ZeroModuleRegistry();
+
 
     ////////////////////////////////////////////////////////////////////////////
     //                      BaseRelationshipProcessor                         //
@@ -74,6 +75,7 @@ library Errors {
 
     error ModuleRegistry_ModuleNotRegistered(string moduleName);
     error ModuleRegistry_CallerNotOrgOwner();
+    error ModuleRegistry_HookNotRegistered(string hookKey);
 
     ////////////////////////////////////////////////////////////////////////////
     //                                 CollectModule                          //
@@ -402,6 +404,11 @@ library Errors {
 
     /// @notice The address is not the owner of the token.
     error TokenGatedHook_NotTokenOwner(address tokenAddress, address ownerAddress);
+
+    error Hook_AsyncHookError(bytes32 requestId, string reason);
+    
+    /// @notice Invalid Hook configuration.
+    error Hook_InvalidHookConfig(string reason);
 
     ////////////////////////////////////////////////////////////////////////////
     //                       LicensorApprovalHook                             //

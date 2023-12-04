@@ -19,6 +19,8 @@ import { LicenseRegistry } from "contracts/modules/licensing/LicenseRegistry.sol
 /// @dev This contract should NOT have state in storage, in order to have upgradeable or non-upgradeable
 /// modules.
 abstract contract BaseModule is IModule, HookRegistry {
+    using Hook for IHook;
+
     struct ModuleConstruction {
         IPAssetRegistry ipaRegistry;
         ModuleRegistry moduleRegistry;
@@ -27,7 +29,6 @@ abstract contract BaseModule is IModule, HookRegistry {
     }
 
     IPAssetRegistry public immutable IPA_REGISTRY;
-    ModuleRegistry public immutable MODULE_REGISTRY;
     LicenseRegistry public immutable LICENSE_REGISTRY;
     IPOrgController public immutable IP_ORG_CONTROLLER;
 
@@ -38,15 +39,13 @@ abstract contract BaseModule is IModule, HookRegistry {
         _;
     }
 
-    constructor(ModuleConstruction memory params_) {
+    constructor(
+        ModuleConstruction memory params_
+    ) HookRegistry(params_.moduleRegistry) {
         if (address(params_.ipaRegistry) == address(0)) {
             revert Errors.BaseModule_ZeroIpaRegistry();
         }
         IPA_REGISTRY = params_.ipaRegistry;
-        if (address(params_.moduleRegistry) == address(0)) {
-            revert Errors.BaseModule_ZeroModuleRegistry();
-        }
-        MODULE_REGISTRY = params_.moduleRegistry;
         if (address(params_.licenseRegistry) == address(0)) {
             revert Errors.BaseModule_ZeroLicenseRegistry();
         }
@@ -57,7 +56,7 @@ abstract contract BaseModule is IModule, HookRegistry {
     /// Main execution entrypoint. It will verify params, execute pre action hooks, perform the action,
     /// execute post action hooks and emit the RequestCompleted event, plus returning the result.
     /// It's up to the module to decode and encode params appropriately.
-    /// @param ipOrg_ address of the IPOrg or zero address 
+    /// @param ipOrg_ address of the IPOrg or zero address
     /// @param caller_ address requesting the execution
     /// @param moduleParams_ encoded params for module action
     /// @param preHookParams_ encoded params for pre action hooks
@@ -82,10 +81,14 @@ abstract contract BaseModule is IModule, HookRegistry {
     }
 
     /// Configuration entrypoint. It's up to the module to decode params appropriately.
-    /// @param ipOrg_ address of the IPOrg or zero address 
+    /// @param ipOrg_ address of the IPOrg or zero address
     /// @param caller_ address requesting the execution
     /// @param params_ encoded configuration params
-    function configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) onlyModuleRegistry external returns (bytes memory) {
+    function configure(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes calldata params_
+    ) external onlyModuleRegistry returns (bytes memory) {
         return _configure(ipOrg_, caller_, params_);
     }
 
@@ -93,7 +96,7 @@ abstract contract BaseModule is IModule, HookRegistry {
         bytes[] calldata params_,
         HookRegistry.HookType hType_,
         bytes32 registryKey_
-    ) virtual internal returns (bool) {
+    ) internal virtual returns (bool) {
         address[] memory hooks = _hooksForType(hType_, registryKey_);
         bytes[] memory hooksConfig = _hooksConfigForType(hType_, registryKey_);
         uint256 hooksLength = hooks.length;
@@ -110,13 +113,13 @@ abstract contract BaseModule is IModule, HookRegistry {
 
     /// @dev Executes a hook.
     /// This function should be overridden in derived contracts if they need to support Async hooks.
-    /// @param hook The address of the hook.
+    /// @param hook_ The address of the hook.
     /// @param hookConfig_ The configuration of the hook.
     /// @param hookParams_ The parameters of the hook.
     /// @return True if the hook execution is completed, false otherwise.
     function _executeHook(
         HookRegistry.HookType,
-        address hook,
+        address hook_,
         bytes memory hookConfig_,
         bytes memory hookParams_
     ) internal virtual returns (bool) {
@@ -124,20 +127,54 @@ abstract contract BaseModule is IModule, HookRegistry {
             config: hookConfig_,
             params: hookParams_
         });
+        // check hook type, if async, call executeAsync, otherwise call executeSync
         HookResult result;
-        (result,) = IHook(hook).executeSync(abi.encode(context));
+        if (IHook(hook_).canSupportSyncCall()) {
+            (result, ) = IHook(hook_).executeSync(abi.encode(context));
+        } else {
+            result = _executeAsyncHook(hook_, context);
+        }
         return result == HookResult.Completed;
     }
 
-    function _configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory);
-    function _verifyExecution(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal {}
-    function _performAction(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory result) {}
-    
+    function _configure(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes calldata params_
+    ) internal virtual returns (bytes memory);
+
+    function _verifyExecution(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes calldata params_
+    ) internal virtual {}
+
+    function _performAction(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes calldata params_
+    ) internal virtual returns (bytes memory result) {}
+
     /// @dev Generates a registry key based on module execution parameters.
     /// This function should be overridden in derived contracts to provide the actual logic for generating the registry key.
     /// @param ipOrg_ The address of the IPOrg.
     /// @param caller_ The address requesting the execution.
     /// @param params_ The encoded parameters for module action.
     /// @return The generated registry key.
-    function _hookRegistryKey(IIPOrg ipOrg_, address caller_, bytes calldata params_) internal view virtual returns(bytes32);
+    function _hookRegistryKey(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes calldata params_
+    ) internal view virtual returns (bytes32);
+
+    function _executeAsyncHook(
+        address hook_,
+        Hook.ExecutionContext memory context_
+    ) internal virtual returns (HookResult result) {
+        bytes32 requestId;
+        (result, , requestId) = IHook(hook_).executeAsync(
+            abi.encode(context_),
+            address(this)
+        );
+    }
 }

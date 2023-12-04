@@ -22,7 +22,7 @@ contract HookRegistryTest is BaseTest {
         super.setUp();
 
         vm.prank(admin);
-        hookRegistry = new MockHookRegistry();
+        hookRegistry = new MockHookRegistry(moduleRegistry);
     }
 
     function test_hookRegistry_registerPreHooks() public {

@@ -55,7 +55,7 @@ contract BaseModuleTest is BaseTest {
 
     function test_baseModule_revert_constructorModuleRegistryIsZero() public {
         vm.prank(admin);
-        vm.expectRevert(Errors.BaseModule_ZeroModuleRegistry.selector);
+        vm.expectRevert(Errors.HookRegistry_ZeroModuleRegistry.selector);
         module = new MockBaseModule(
             admin,
             BaseModule.ModuleConstruction(
