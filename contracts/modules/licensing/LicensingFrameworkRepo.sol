@@ -33,7 +33,8 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
     function addFramework(
         Licensing.SetFramework calldata input_
     ) external onlyRole(AccessControl.LICENSING_MANAGER) {
-        if (_frameworks[input_.id].paramTags.length() > 0) {
+        Licensing.FrameworkStorage storage framework = _frameworks[input_.id];
+        if (framework.paramTags.length() > 0) {
             revert Errors.LicensingFrameworkRepo_FrameworkAlreadyAdded();
         }
         uint256 numParams = input_.paramDefs.length;
@@ -43,7 +44,7 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
         for (uint256 i = 0; i < numParams; i++) {
             _addParameter(input_.id, input_.paramDefs[i]);
         }
-        _frameworks[input_.id].textUrl = input_.textUrl;
+        framework.textUrl = input_.textUrl;
         emit FrameworkAdded(input_.id, input_.textUrl);
     }
 
@@ -58,6 +59,7 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
         }
         framework.paramTags.add(tag);
         framework.paramTypes[tag] = paramDef_.paramType;
+        framework.paramDefs.push(paramDef_);
         emit ParamDefinitionAdded(frameworkId_, tag, paramDef_.paramType);
     }
 
@@ -76,50 +78,14 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
             if (!framework.paramTags.contains(tag)) {
                 return false;
             }
-            if (!validateParamValue(framework.paramTypes[tag], params_[i].value)) {
+            if (!Licensing.validateParamValue(framework.paramTypes[tag], params_[i].value)) {
                 return false;
             }
         }
         return true;
     }
 
-    function validateParamValue(Licensing.ParameterType pType, bytes calldata value) view public returns(bool) {
-        // An empty value signals the parameter is untagged, to trigger default values in the
-        // license agreement text
-        if (keccak256(value) == keccak256("")) {
-            return false;
-        }
-        if (pType == Licensing.ParameterType.Bool) {
-            abi.decode(value, (bool));
-        } else if (pType == Licensing.ParameterType.Number) {
-            if (abi.decode(value, (uint256)) == 0) {
-                return false;
-            }
-        } else if (pType == Licensing.ParameterType.Address) {
-            // Not supporting address(0) as a valid value
-            if (abi.decode(value, (address)) == address(0)) {
-                return false;
-            }
-        } else if (pType == Licensing.ParameterType.String) {
-            abi.decode(value, (string));
-            // Empty value is checked above
-            // WARNING: Do proper string validation off chain.
-            if (
-                keccak256(value) == keccak256(abi.encode(" ")) ||
-                keccak256(value) == keccak256(abi.encode(""))
-            ) {
-                return false;
-            }
-        } else if (pType == Licensing.ParameterType.MultipleChoice) {
-            ShortString[] memory ssValue = abi.decode(value, (ShortString[]));
-            // No choice is not a valid value, if you need this have a value called
-            // "None" or something
-            if (ssValue.length == 0) {
-                return false;
-            }
-        }
-        return true;
-    }
+    
 
     function getLicenseTextUrl(
         string calldata frameworkId_
@@ -150,21 +116,9 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
         return _frameworks[frameworkId_].paramTags.values();
     }
 
-    // function getParameterDefs(
-    //     string calldata frameworkId_
-    // ) external view returns (ParamDefinition[] memory defs) {
-    //     Licensing.FrameworkStorage storage framework = _frameworks[
-    //         frameworkId_
-    //     ];
-    //     uint256 length = framework.paramTags.length();
-    //     for (uint256 i; i < length; i++) {
-    //         defs.push(
-    //             ParamDefinition({
-    //                 tag: framework.paramTags[i],
-    //                 paramType: framework.paramTypes[framework.paramTags[i]]
-    //             })
-    //         )
-    //     }
-    //     return defs;
-    // }
+    function getParameterDefs(
+        string calldata frameworkId_
+    ) external view returns (Licensing.ParamDefinition[] memory) {
+        return _frameworks[frameworkId_].paramDefs;
+    }
 }

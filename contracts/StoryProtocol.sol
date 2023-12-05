@@ -225,64 +225,28 @@ contract StoryProtocol is Multicall {
     /// @param preHooksData_ Hooks data to embed with the registration pre-call.
     /// @param postHooksData_ Hooks data to embed with the registration post-call.
     /// @return id of the created license
-    // function createLicenseNft(
-    //     address ipOrg_,
-    //     Licensing.LicenseCreation calldata params_,
-    //     address licensee_,
-    //     bytes[] calldata preHooksData_,
-    //     bytes[] calldata postHooksData_
-    // ) external returns (uint256) {
-    //     bytes memory params = abi.encode(
-    //         params_,
-    //         Licensing.LicenseeType.LNFTHolder,
-    //         abi.encode(licensee_)
-    //     );
-    //     bytes memory result = MODULE_REGISTRY.execute(
-    //         IIPOrg(ipOrg_),
-    //         msg.sender,
-    //         ModuleRegistryKeys.LICENSING_MODULE,
-    //         abi.encode(
-    //             Licensing.CREATE_LICENSE,
-    //             params
-    //         ),
-    //         preHooksData_,
-    //         postHooksData_
-    //     );
-    //     return abi.decode(result, (uint256));
-    // }
+    function createLicense(
+        address ipOrg_,
+        Licensing.LicenseCreation calldata params_,
+        address licensee_,
+        bytes[] calldata preHooksData_,
+        bytes[] calldata postHooksData_
+    ) external returns (uint256) {
+        bytes memory params = abi.encode(params_);
+        bytes memory result = MODULE_REGISTRY.execute(
+            IIPOrg(ipOrg_),
+            msg.sender,
+            ModuleRegistryKeys.LICENSING_MODULE,
+            abi.encode(
+                Licensing.CREATE_LICENSE,
+                params
+            ),
+            preHooksData_,
+            postHooksData_
+        );
+        return abi.decode(result, (uint256));
+    }
 
-    /// Creates a License bound to a certain IPA. It's not an NFT, the licensee will be the owner of the IPA.
-    /// @param ipOrg_ the ipOrg address
-    /// @param params_ LicenseCreation params
-    /// @param ipaId_ id of the bound IPA
-    /// @param preHooksData_ Hooks data to embed with the registration pre-call.
-    /// @param postHooksData_ Hooks data to embed with the registration post-call.
-    /// @return id of the created license
-    // function createIpaBoundLicense(
-    //     address ipOrg_,
-    //     Licensing.LicenseCreation calldata params_,
-    //     uint256 ipaId_,
-    //     bytes[] calldata preHooksData_,
-    //     bytes[] calldata postHooksData_
-    // ) external returns (uint256) {
-    //     bytes memory params = abi.encode(
-    //         params_,
-    //         Licensing.LicenseeType.BoundToIpa,
-    //         abi.encode(ipaId_)
-    //     );
-    //     bytes memory result = MODULE_REGISTRY.execute(
-    //         IIPOrg(ipOrg_),
-    //         msg.sender,
-    //         ModuleRegistryKeys.LICENSING_MODULE,
-    //         abi.encode(
-    //             Licensing.CREATE_LICENSE,
-    //             params
-    //         ),
-    //         preHooksData_,
-    //         postHooksData_
-    //     );
-    //     return abi.decode(result, (uint256));
-    // }
 
     // function activateLicense(
     //     address ipOrg_,
