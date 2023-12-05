@@ -270,7 +270,8 @@ library Errors {
     error LicensingModule_InvalidLicensorType();
     error LicensingModule_InvalidLicensorConfig();
     error LicensingModule_InvalidParamValues();
-    
+    error LicensingModule_ReciprocalCannotSetParams();
+    error LicensingModule_ParamSetByIpOrg();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            LicenseRegistry                             //
@@ -279,10 +280,13 @@ library Errors {
     error LicenseRegistry_UnknownLicenseId();
     error LicenseRegistry_CallerNotLicensingModule();
     error LicenseRegistry_CallerNotRevoker();
+    error LicenseRegistry_CallerNotLicensingModuleOrLicensee();
+    error LicenseRegistry_CallerNotLicensor();
     error LicenseRegistry_LicenseNotPendingApproval();
     error LicenseRegistry_InvalidLicenseStatus();
     error LicenseRegistry_ParentLicenseNotActive();
     error LicenseRegistry_IPANotActive();
+    error LicenseRegistry_LicenseNotActive();
     
     ////////////////////////////////////////////////////////////////////////////
     //                            RegistrationModule                          //

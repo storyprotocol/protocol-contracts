@@ -8,45 +8,6 @@ import { ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 /// @title Licensing Module Library
 /// Structs needed by the Licensing Modules and registries
 library Licensing {
-
-    /// @notice Struct that holds the data for a license
-    struct License {
-        /// License status. // TODO: IPA status should follow
-        LicenseStatus status;
-        /// address granting the license
-        address licensor;
-        address licensee;
-        /// address that could make a license invalid
-        address revoker;
-        /// address of the ip org that produced the terms
-        address ipOrg;
-        string frameworkId;
-        /// If the licensee is bound to an IPA, this is the IPA id. 0 otherwise
-        uint256 ipaId;
-        /// The id of the parent license. 0 if this this is tied to the first IPA of an IPOrg
-        uint256 parentLicenseId;      
-        // ParamDefinition[] paramDefs;
-        // bytes[] paramValues;
-    }
-
-    struct LicenseStorage {
-        /// License status. // TODO: IPA status should follow
-        LicenseStatus status;
-        /// address granting the license
-        address licensor;
-        /// address that could make a license invalid
-        address revoker;
-        /// address of the ip org that produced the terms
-        address ipOrg;
-        ShortString frameworkId;
-        /// If the licensee is bound to an IPA, this is the IPA id. 0 otherwise
-        uint256 ipaId;
-        /// The id of the parent license. 0 if this this is tied to the first IPA of an IPOrg
-        uint256 parentLicenseId;
-        // ShortString[] paramTags;
-        // mapping(ShortString => bytes) paramValues;
-    }
-
     enum LicenseStatus {
         Unset,
         Active,
@@ -55,7 +16,86 @@ library Licensing {
         Used
     }
 
-    function statusToString(LicenseStatus status_) internal pure returns (string memory) {
+    enum ParameterType {
+        Bool,
+        Number,
+        Address,
+        String,
+        MultipleChoice // ShortString set
+    }
+
+    enum LicensorConfig {
+        Unset,
+        IpOrgOwnerAlways,
+        ParentIpaOrIpOrgOwners
+    }
+
+    struct License {
+        /// License status. // TODO: IPA status should follow
+        LicenseStatus status;
+        bool isReciprocal;
+        bool derivativeNeedsApproval;
+        address revoker;
+        /// address granting the license
+        address licensor;
+        /// address of the ip org that produced the terms
+        address ipOrg;
+        ShortString frameworkId;
+        /// If the licensee is bound to an IPA, this is the IPA id. 0 otherwise
+        uint256 ipaId;
+        /// The id of the parent license. 0 if this this is tied to the first IPA of an IPOrg
+        uint256 parentLicenseId;
+        ParamValue[] params;
+    }
+
+    struct LicenseCreation {
+        ParamValue[] params;
+        uint256 parentLicenseId;
+        uint256 ipaId;
+    }
+
+    struct ParamDefinition {
+        ShortString tag;
+        ParameterType paramType;
+    }
+
+    struct ParamValue {
+        ShortString tag;
+        bytes value;
+    }
+
+    struct FrameworkStorage {
+        string textUrl;
+        FixedSet.ShortStringSet paramTags;
+        mapping(ShortString => ParameterType) paramTypes;
+        ParamDefinition[] paramDefs;
+    }
+
+    struct SetFramework {
+        string id;
+        string textUrl;
+        ParamDefinition[] paramDefs;
+    }
+
+    struct LicensingConfig {
+        string frameworkId;
+        ParamValue[] params;
+        LicensorConfig licensor;
+    }
+
+    uint256 constant MAX_PARAM_TAGS = 150;
+    bytes32 constant USER_SETEABLE_CONFIG = keccak256("USER_SETEABLE_CONFIG");
+
+    /// Input for IpOrg legal terms configuration in LicensingModule (for now, the only option)
+    bytes32 constant LICENSING_FRAMEWORK_CONFIG =
+        keccak256("LICENSING_FRAMEWORK_CONFIG");
+    bytes32 constant CREATE_LICENSE = keccak256("CREATE_LICENSE");
+    bytes32 constant ACTIVATE_LICENSE = keccak256("ACTIVATE_LICENSE");
+    bytes32 constant LINK_LNFT_TO_IPA = keccak256("LINK_LNFT_TO_IPA");
+
+    function statusToString(
+        LicenseStatus status_
+    ) internal pure returns (string memory) {
         if (status_ == LicenseStatus.Unset) {
             return "Unset";
         } else if (status_ == LicenseStatus.Active) {
@@ -70,86 +110,45 @@ library Licensing {
         return "Unknown";
     }
 
-    /// User facing parameters for creating a license
-    struct LicenseCreation {
-        bool isCommercial;
-        uint256 parentLicenseId;
-        // TODO: How do we do per user configured terms?
-        // ShortString[] extraTermIds;
-        // bytes[] extraTermsData;
+    function validateParamValue(
+        Licensing.ParameterType pType,
+        bytes calldata value
+    ) public view returns (bool) {
+        // An empty value signals the parameter is untagged, to trigger default values in the
+        // license agreement text
+        if (keccak256(value) == keccak256("")) {
+            return false;
+        }
+        if (pType == Licensing.ParameterType.Bool) {
+            abi.decode(value, (bool));
+        } else if (pType == Licensing.ParameterType.Number) {
+            if (abi.decode(value, (uint256)) == 0) {
+                return false;
+            }
+        } else if (pType == Licensing.ParameterType.Address) {
+            // Not supporting address(0) as a valid value
+            if (abi.decode(value, (address)) == address(0)) {
+                return false;
+            }
+        } else if (pType == Licensing.ParameterType.String) {
+            abi.decode(value, (string));
+            // Empty value is checked above
+            // WARNING: Do proper string validation off chain.
+            if (
+                keccak256(value) == keccak256(abi.encode(" ")) ||
+                keccak256(value) == keccak256(abi.encode(""))
+            ) {
+                return false;
+            }
+        } else if (pType == Licensing.ParameterType.MultipleChoice) {
+            ShortString[] memory s = abi.decode(value, (ShortString[]));
+            // No choice is not a valid value, if you need this have a value called
+            // "None" or something
+            if (s.length == 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
-    /// Input to add a License the LicenseRegistry 
-    struct RegistryAddition {
-        /// Only Active or Pending will be accepted here
-        LicenseStatus status;
-        /// address granting the license
-        address licensor;
-        /// The address that will own the license NFT
-        address licensee;
-        /// address that could make a license invalid
-        address revoker;
-        /// address of the ip org that produced the terms
-        address ipOrg;
-        /// The id of the parent license. 0 if this this is tied to the first IPA of an IPOrg
-        uint256 parentLicenseId;
-        /// The ids of the Licensing Terms that make up the license.
-        ParamValue[] params;
-        /// If the licensee is bound to an IPA, this is the IPA id. 0 otherwise
-        uint256 ipaId;
-        /// Framework id
-        ShortString frameworkId;
-    }
-    
-
-    enum ParameterType {
-        Bool,
-        Number,
-        Address,
-        String,
-        MultipleChoice // ShortString set, meanings provided by the framework
-    }
-
-    struct FrameworkStorage {
-        string textUrl;
-        FixedSet.ShortStringSet paramTags;
-        mapping(ShortString => ParameterType) paramTypes;
-    }
-
-    struct SetFramework {
-        string id;
-        string textUrl;
-        ParamDefinition[] paramDefs;
-    }
-
-    struct ParamDefinition {
-        ShortString tag;
-        ParameterType paramType;
-    }
-
-    struct ParamValue {
-        ShortString tag;
-        bytes value;
-    }
-    
-    struct LicensingConfig {
-        string frameworkId;
-        ParamValue[] params;
-        LicensorConfig licensor;
-    }
-
-    enum LicensorConfig {
-        Unset,
-        IpOrgAlways,
-        ParentLicenseeOrIPAOwner
-    }
-    
-    uint256 constant MAX_PARAM_TAGS = 150;
-    bytes32 constant USER_SETEABLE_CONFIG = keccak256("USER_SETEABLE_CONFIG");
-    
-    /// Input for IpOrg legal terms configuration in LicensingModule (for now, the only option)
-    bytes32 constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");
-    bytes32 constant CREATE_LICENSE = keccak256("CREATE_LICENSE");
-    bytes32 constant ACTIVATE_LICENSE = keccak256("ACTIVATE_LICENSE");
-    bytes32 constant LINK_LNFT_TO_IPA = keccak256("LINK_LNFT_TO_IPA");
 }
