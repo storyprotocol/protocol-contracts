@@ -248,39 +248,39 @@ contract StoryProtocol is Multicall {
     }
 
 
-    // function activateLicense(
-    //     address ipOrg_,
-    //     uint256 licenseId_
-    // ) external {
-    //     MODULE_REGISTRY.execute(
-    //         IIPOrg(ipOrg_),
-    //         msg.sender,
-    //         ModuleRegistryKeys.LICENSING_MODULE,
-    //         abi.encode(
-    //             Licensing.ACTIVATE_LICENSE,
-    //             abi.encode(licenseId_)
-    //         ),
-    //         new bytes[](0),
-    //         new bytes[](0)
-    //     );
-    // }
+    function activateLicense(
+        address ipOrg_,
+        uint256 licenseId_
+    ) external {
+        MODULE_REGISTRY.execute(
+            IIPOrg(ipOrg_),
+            msg.sender,
+            ModuleRegistryKeys.LICENSING_MODULE,
+            abi.encode(
+                Licensing.ACTIVATE_LICENSE,
+                abi.encode(licenseId_)
+            ),
+            new bytes[](0),
+            new bytes[](0)
+        );
+    }
 
-    // function linkLnftToIpa(
-    //     address ipOrg_,
-    //     uint256 licenseId_,
-    //     uint256 ipaId_
-    // ) external {
-    //     MODULE_REGISTRY.execute(
-    //         IIPOrg(ipOrg_),
-    //         msg.sender,
-    //         ModuleRegistryKeys.LICENSING_MODULE,
-    //         abi.encode(
-    //             Licensing.LINK_LNFT_TO_IPA,
-    //             abi.encode(licenseId_, ipaId_)
-    //         ),
-    //         new bytes[](0),
-    //         new bytes[](0)
-    //     );
-    // }
+    function linkLnftToIpa(
+        address ipOrg_,
+        uint256 licenseId_,
+        uint256 ipaId_
+    ) external {
+        MODULE_REGISTRY.execute(
+            IIPOrg(ipOrg_),
+            msg.sender,
+            ModuleRegistryKeys.LICENSING_MODULE,
+            abi.encode(
+                Licensing.LINK_LNFT_TO_IPA,
+                abi.encode(licenseId_, ipaId_)
+            ),
+            new bytes[](0),
+            new bytes[](0)
+        );
+    }
     
 }

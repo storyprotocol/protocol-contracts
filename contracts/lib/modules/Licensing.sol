@@ -27,10 +27,10 @@ library Licensing {
     enum LicensorConfig {
         Unset,
         IpOrgOwnerAlways,
-        ParentIpaOrIpOrgOwners
+        ParentOrIpaOrIpOrgOwners
     }
 
-    struct License {
+    struct LicenseData {
         /// License status. // TODO: IPA status should follow
         LicenseStatus status;
         bool isReciprocal;
@@ -45,7 +45,6 @@ library Licensing {
         uint256 ipaId;
         /// The id of the parent license. 0 if this this is tied to the first IPA of an IPOrg
         uint256 parentLicenseId;
-        ParamValue[] params;
     }
 
     struct LicenseCreation {
@@ -92,6 +91,7 @@ library Licensing {
     bytes32 constant CREATE_LICENSE = keccak256("CREATE_LICENSE");
     bytes32 constant ACTIVATE_LICENSE = keccak256("ACTIVATE_LICENSE");
     bytes32 constant LINK_LNFT_TO_IPA = keccak256("LINK_LNFT_TO_IPA");
+    address constant ALPHA_REVOKER = 0x130c1977A3C73Db51DE55B705A1D924aA78467c5;
 
     function statusToString(
         LicenseStatus status_
@@ -110,10 +110,10 @@ library Licensing {
         return "Unknown";
     }
 
-    function validateParamValue(
+    function _validateParamValue(
         Licensing.ParameterType pType,
-        bytes calldata value
-    ) public view returns (bool) {
+        bytes memory value
+    ) internal pure returns (bool) {
         // An empty value signals the parameter is untagged, to trigger default values in the
         // license agreement text
         if (keccak256(value) == keccak256("")) {

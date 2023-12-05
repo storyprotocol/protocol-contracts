@@ -272,6 +272,8 @@ library Errors {
     error LicensingModule_InvalidParamValues();
     error LicensingModule_ReciprocalCannotSetParams();
     error LicensingModule_ParamSetByIpOrg();
+    error LicensingModule_InvalidInputValue();
+    error LicensingModule_IpOrgFrameworkNotSet();
 
     ////////////////////////////////////////////////////////////////////////////
     //                            LicenseRegistry                             //

@@ -29,8 +29,9 @@ contract LicenseRegistry is ERC721 {
     event LicenseActivated(uint256 indexed licenseId);
     event LicenseRevoked(uint256 indexed licenseId);
 
-    /// license Id => License
-    mapping(uint256 => Licensing.License) private _licenses;
+    /// license Id => LicenseData
+    mapping(uint256 => Licensing.LicenseData) private _licenses;
+    mapping(uint256 => Licensing.ParamValue[]) private _licenseParams;
     /// counter for license Ids
     uint256 private _licenseCount;
 
@@ -55,8 +56,7 @@ contract LicenseRegistry is ERC721 {
             !MODULE_REGISTRY.isModule(
                 ModuleRegistryKeys.LICENSING_MODULE,
                 msg.sender
-            ) ||
-            msg.sender != ownerOf(licenseId_)
+            ) || msg.sender != ownerOf(licenseId_)
         ) {
             revert Errors.LicenseRegistry_CallerNotLicensingModuleOrLicensee();
         }
@@ -101,16 +101,20 @@ contract LicenseRegistry is ERC721 {
         );
     }
 
-
     /// Creates a tradeable License NFT.
     /// If the license is to create an IPA in the future, when registering, this license will be
     /// bound to the IPA.
-    /// @param newLicense_ RegistryAddition params
-    function addLicense(Licensing.License memory newLicense_, address licensee_) 
+    /// @param newLicense_ LicenseData params
+    function addLicense(
+        Licensing.LicenseData memory newLicense_,
+        address licensee_,
+        Licensing.ParamValue[] memory values_
+    )
         external
         onlyLicensingModule
         onlyActiveOrPending(newLicense_.status)
-        returns (uint256) {
+        returns (uint256)
+    {
         // NOTE: check for parent ipa validity is done in
         // the licensing module
         _licenses[++_licenseCount] = newLicense_;
@@ -119,15 +123,37 @@ contract LicenseRegistry is ERC721 {
         if (newLicense_.ipaId != 0) {
             _linkNftToIpa(newLicense_.ipaId, _licenseCount);
         }
+        uint256 length = values_.length;
+        Licensing.ParamValue[] storage params = _licenseParams[_licenseCount];
+        for (uint256 i; i < length; i++) {
+            params.push(values_[i]);
+        }
         return _licenseCount;
     }
 
+    function addReciprocalLicense(
+        uint256 parentLicenseId_,
+        address licensor_,
+        address licensee_,
+        uint256 ipaId_
+    )
+        external
+        onlyLicensingModule
+        returns (uint256) {
+        if (!isLicenseActive(parentLicenseId_)) {
+            revert Errors.LicenseRegistry_ParentLicenseNotActive();
+        }
+        Licensing.LicenseData storage parent = _licenses[parentLicenseId_];
+        _licenses[++_licenseCount] = parent;
+        _licenseParams[_licenseCount] = _licenseParams[parentLicenseId_];
+        emit LicenseRegistered(_licenseCount);
+    }
 
     /// Gets License struct for input id
-    function getLicense(
+    function getLicenseData(
         uint256 id_
-    ) public view returns (Licensing.License memory) {
-        Licensing.License storage license = _licenses[id_];
+    ) public view returns (Licensing.LicenseData memory) {
+        Licensing.LicenseData storage license = _licenses[id_];
         if (license.status == Licensing.LicenseStatus.Unset) {
             revert Errors.LicenseRegistry_UnknownLicenseId();
         }
@@ -171,7 +197,7 @@ contract LicenseRegistry is ERC721 {
     }
 
     function getParams(uint256 id_) external view returns (Licensing.ParamValue[] memory) {
-        return _licenses[id_].params;
+        return _licenseParams[id_];
     }
 
     /// Links the license to an IPA
@@ -199,7 +225,10 @@ contract LicenseRegistry is ERC721 {
 
     /// Called by the licensing module to activate a license, after all the activation terms pass
     /// @param licenseId_ id of the license
-    function activateLicense(uint256 licenseId_, address caller_) external onlyLicensingModule {
+    function activateLicense(
+        uint256 licenseId_,
+        address caller_
+    ) external onlyLicensingModule {
         _activateLicense(licenseId_, caller_);
     }
 
@@ -219,13 +248,18 @@ contract LicenseRegistry is ERC721 {
         emit LicenseRevoked(licenseId_);
     }
 
-    function tokenURI(uint256 tokenId) external view virtual override returns (string memory) {
+    function tokenURI(
+        uint256 tokenId
+    ) public view virtual override returns (string memory) {
         // TODO
         return "";
     }
 
-    function _linkNftToIpa(uint256 licenseId_, uint256 ipaId_) private onlyActive(licenseId_) {
-        if(IPA_REGISTRY.status(ipaId_) != 1) {
+    function _linkNftToIpa(
+        uint256 licenseId_,
+        uint256 ipaId_
+    ) private onlyActive(licenseId_) {
+        if (IPA_REGISTRY.status(ipaId_) != 1) {
             revert Errors.LicenseRegistry_IPANotActive();
         }
         _licenses[licenseId_].ipaId = ipaId_;
@@ -234,7 +268,7 @@ contract LicenseRegistry is ERC721 {
     }
 
     function _activateLicense(uint256 licenseId_, address caller_) private {
-        Licensing.License storage license = _licenses[licenseId_];
+        Licensing.LicenseData storage license = _licenses[licenseId_];
         if (caller_ != license.licensor) {
             revert Errors.LicenseRegistry_CallerNotLicensor();
         }
@@ -248,5 +282,4 @@ contract LicenseRegistry is ERC721 {
         // TODO: change IPA status
         emit LicenseActivated(licenseId_);
     }
-
 }

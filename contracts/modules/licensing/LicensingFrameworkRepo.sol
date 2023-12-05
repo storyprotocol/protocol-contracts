@@ -78,7 +78,7 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
             if (!framework.paramTags.contains(tag)) {
                 return false;
             }
-            if (!Licensing.validateParamValue(framework.paramTypes[tag], params_[i].value)) {
+            if (!Licensing._validateParamValue(framework.paramTypes[tag], params_[i].value)) {
                 return false;
             }
         }

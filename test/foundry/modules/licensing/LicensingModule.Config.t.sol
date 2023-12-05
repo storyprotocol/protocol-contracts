@@ -41,7 +41,7 @@ contract LicensingModuleConfigTest is BaseTest {
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: "test_framework",
             params: new Licensing.ParamValue[](0),
-            licensor: Licensing.LicensorConfig.IpOrgAlways
+            licensor: Licensing.LicensorConfig.IpOrgOwnerAlways
         });
         vm.expectRevert(Errors.LicensingModule_CallerNotIpOrgOwner.selector);
         spg.configureIpOrgLicensing(
@@ -71,7 +71,7 @@ contract LicensingModuleConfigTest is BaseTest {
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: "test_framework",
             params: new Licensing.ParamValue[](0),
-            licensor: Licensing.LicensorConfig.IpOrgAlways
+            licensor: Licensing.LicensorConfig.IpOrgOwnerAlways
         });
         vm.prank(ipOrg.owner());
         vm.expectRevert(Errors.LicensingModule_InvalidParamValues.selector);
@@ -102,7 +102,7 @@ contract LicensingModuleConfigTest is BaseTest {
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: "test_framework",
             params: params,
-            licensor: Licensing.LicensorConfig.IpOrgAlways
+            licensor: Licensing.LicensorConfig.IpOrgOwnerAlways
         });
         vm.prank(ipOrg.owner());
         spg.configureIpOrgLicensing(
@@ -111,7 +111,7 @@ contract LicensingModuleConfigTest is BaseTest {
         );
         assertEq(
             uint8(licensingModule.getIpOrgLicensorConfig(address(ipOrg))),
-            uint8(Licensing.LicensorConfig.IpOrgAlways)
+            uint8(Licensing.LicensorConfig.IpOrgOwnerAlways)
         );
         assertEq(
             licensingModule.getDefaultValueForParam(address(ipOrg), "TEST_TAG_1"),
@@ -139,7 +139,7 @@ contract LicensingModuleConfigTest is BaseTest {
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: "test_framework",
             params: params,
-            licensor: Licensing.LicensorConfig.IpOrgAlways
+            licensor: Licensing.LicensorConfig.IpOrgOwnerAlways
         });
         vm.prank(ipOrg.owner());
         vm.expectRevert(Errors.LicensingModule_IpOrgFrameworkAlreadySet.selector);
