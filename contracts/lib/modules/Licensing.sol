@@ -20,12 +20,13 @@ library Licensing {
         address revoker;
         /// address of the ip org that produced the terms
         address ipOrg;
+        string frameworkId;
         /// If the licensee is bound to an IPA, this is the IPA id. 0 otherwise
         uint256 ipaId;
         /// The id of the parent license. 0 if this this is tied to the first IPA of an IPOrg
-        uint256 parentLicenseId;        
-        ShortString frameworkId;
-        ParamValue[] params;
+        uint256 parentLicenseId;      
+        // ParamDefinition[] paramDefs;
+        // bytes[] paramValues;
     }
 
     struct LicenseStorage {
@@ -37,20 +38,36 @@ library Licensing {
         address revoker;
         /// address of the ip org that produced the terms
         address ipOrg;
+        ShortString frameworkId;
         /// If the licensee is bound to an IPA, this is the IPA id. 0 otherwise
         uint256 ipaId;
         /// The id of the parent license. 0 if this this is tied to the first IPA of an IPOrg
         uint256 parentLicenseId;
-        ShortString frameworkId;
-        mapping(ShortString => bytes) paramValues;
+        // ShortString[] paramTags;
+        // mapping(ShortString => bytes) paramValues;
     }
 
     enum LicenseStatus {
         Unset,
         Active,
-        Inactive,
+        PendingLicensorApproval,
         Revoked,
         Used
+    }
+
+    function statusToString(LicenseStatus status_) internal pure returns (string memory) {
+        if (status_ == LicenseStatus.Unset) {
+            return "Unset";
+        } else if (status_ == LicenseStatus.Active) {
+            return "Active";
+        } else if (status_ == LicenseStatus.PendingLicensorApproval) {
+            return "Pending Licensor Approval";
+        } else if (status_ == LicenseStatus.Revoked) {
+            return "Revoked";
+        } else if (status_ == LicenseStatus.Used) {
+            return "Used";
+        }
+        return "Unknown";
     }
 
     /// User facing parameters for creating a license

@@ -11,7 +11,6 @@ import { AccessControlled } from "contracts/access-control/AccessControlled.sol"
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
 
-
 contract LicensingFrameworkRepo is AccessControlled, Multicall {
     using FixedSet for FixedSet.ShortStringSet;
     using ShortStrings for *;
@@ -60,7 +59,7 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
         framework.paramTags.add(tag);
         framework.paramTypes[tag] = paramDef_.paramType;
         emit ParamDefinitionAdded(frameworkId_, tag, paramDef_.paramType);
-    } 
+    }
 
 
     function validateParamValues(
@@ -103,8 +102,8 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
             }
         } else if (pType == Licensing.ParameterType.String) {
             abi.decode(value, (string));
-            // Empty string is checked above
-            // Do proper string validation off chain, Solidity is not great at it
+            // Empty value is checked above
+            // WARNING: Do proper string validation off chain.
             if (
                 keccak256(value) == keccak256(abi.encode(" ")) ||
                 keccak256(value) == keccak256(abi.encode(""))
@@ -150,4 +149,22 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
     ) external view returns (ShortString[] memory) {
         return _frameworks[frameworkId_].paramTags.values();
     }
+
+    // function getParameterDefs(
+    //     string calldata frameworkId_
+    // ) external view returns (ParamDefinition[] memory defs) {
+    //     Licensing.FrameworkStorage storage framework = _frameworks[
+    //         frameworkId_
+    //     ];
+    //     uint256 length = framework.paramTags.length();
+    //     for (uint256 i; i < length; i++) {
+    //         defs.push(
+    //             ParamDefinition({
+    //                 tag: framework.paramTags[i],
+    //                 paramType: framework.paramTypes[framework.paramTags[i]]
+    //             })
+    //         )
+    //     }
+    //     return defs;
+    // }
 }

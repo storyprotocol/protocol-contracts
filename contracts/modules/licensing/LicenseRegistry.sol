@@ -4,10 +4,11 @@ pragma solidity ^0.8.19;
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { Errors } from "contracts/lib/Errors.sol";
-import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
-import { ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
+import { LicensingFrameworkRepo } from "contracts/modules/licensing/LicensingFrameworkRepo.sol";
+import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 
@@ -17,6 +18,8 @@ import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 /// It should not be upgradeable, so once a license is registered, it will be there forever.
 /// Licenses can be made invalid by the revoker, according to the terms of the license.
 contract LicenseRegistry is ERC721 {
+    using ShortStrings for *;
+
     // TODO: Figure out data needed for indexing
     event LicenseRegistered(uint256 indexed id);
     event LicenseNftBoundedToIpa(
@@ -47,20 +50,49 @@ contract LicenseRegistry is ERC721 {
         _;
     }
 
-    modifier onlyActiveOrInactive(Licensing.LicenseStatus status_) {
+    modifier onlyLicensingModuleOrLicensee(uint256 licenseId_) {
+        if (
+            !MODULE_REGISTRY.isModule(
+                ModuleRegistryKeys.LICENSING_MODULE,
+                msg.sender
+            ) ||
+            msg.sender != ownerOf(licenseId_)
+        ) {
+            revert Errors.LicenseRegistry_CallerNotLicensingModuleOrLicensee();
+        }
+        _;
+    }
+
+    modifier onlyActiveOrPending(Licensing.LicenseStatus status_) {
         if (
             status_ != Licensing.LicenseStatus.Active &&
-            status_ != Licensing.LicenseStatus.Inactive
+            status_ != Licensing.LicenseStatus.PendingLicensorApproval
         ) {
             revert Errors.LicenseRegistry_InvalidLicenseStatus();
         }
         _;
     }
 
+    modifier onlyActiveParent(uint256 parentLicenseId_) {
+        if (parentLicenseId_ != 0) {
+            if (!isLicenseActive(parentLicenseId_)) {
+                revert Errors.LicenseRegistry_ParentLicenseNotActive();
+            }
+        }
+        _;
+    }
+
+    modifier onlyActive(uint256 licenseId_) {
+        if (!isLicenseActive(licenseId_)) {
+            revert Errors.LicenseRegistry_LicenseNotActive();
+        }
+        _;
+    }
+
     constructor(
         address ipaRegistry_,
-        address moduleRegistry_
-        address 
+        address moduleRegistry_,
+        address licensingFrameworkRepo_
     ) ERC721("Story Protocol License NFT", "LNFT") {
         if (ipaRegistry_ == address(0)) {
             revert Errors.ZeroAddress();
@@ -86,14 +118,9 @@ contract LicenseRegistry is ERC721 {
     function addLicense(Licensing.RegistryAddition memory regAddition_) 
         external
         onlyLicensingModule
-        onlyActiveOrInactive(regAddition_.status)
-        returns (uint256)
-    {
-        if (regAddition_.parentLicenseId != 0) {
-            if (!isLicenseActive(regAddition_.parentLicenseId)) {
-                revert Errors.LicenseRegistry_ParentLicenseNotActive();
-            }
-        }
+        onlyActiveOrPending(regAddition_.status)
+        onlyActiveParent(regAddition_.parentLicenseId)
+        returns (uint256) {
 
         ++_licenseCount;
         _licenses[_licenseCount].status = regAddition_.status;
@@ -103,11 +130,11 @@ contract LicenseRegistry is ERC721 {
         _licenses[_licenseCount].parentLicenseId = regAddition_.parentLicenseId;
         _licenses[_licenseCount].ipaId = regAddition_.ipaId;
         _licenses[_licenseCount].frameworkId = regAddition_.frameworkId;
-        uint256 paramCount = regAddition_.params.length;
-        for (uint256 i = 0; i < paramCount; i++) {
-            Licensing.ParamValue memory param = regAddition_.params[i];
-            _licenses[_licenseCount].paramValues[param.tag] = param.value;
-        }
+        // uint256 paramCount = regAddition_.params.length;
+        // for (uint256 i = 0; i < paramCount; i++) {
+        //     Licensing.ParamValue memory param = regAddition_.params[i];
+        //     _licenses[_licenseCount].paramValues[param.tag] = param.value;
+        // }
 
         emit LicenseRegistered(_licenseCount);
         _mint(regAddition_.licensee, _licenseCount);
@@ -117,34 +144,35 @@ contract LicenseRegistry is ERC721 {
         return _licenseCount;
     }
 
+
     /// Gets License struct for input id
     function getLicense(
         uint256 id_
-    ) external view returns (Licensing.License memory result) {
-        Licensing.LicenseStorage storage license_ = _licenses[id_];
-        result.status = license_.status;
-        result.licensor = license_.licensor;
-        result.licensee = ownerOf(id_);
-        result.revoker = license_.revoker;
-        result.ipOrg = license_.ipOrg;
-        result.ipaId = license_.ipaId;
-        result.parentLicenseId = license_.parentLicenseId;
-        result.frameworkId = license_.frameworkId;
-        
-        ShortString[] memory frameworkTags = LICENSING_FRAMEWORK_REPO
-            .getParameterTags(license_.frameworkId);
-        uint256 paramCount = frameworkTags.length;
-        result.params = new Licensing.ParamValue[](paramCount);
-
-        for (uint256 i = 0; i < paramCount; i++) {
-            ShortString tag = frameworkTags[i];
-            result.params[i] = Licensing.ParamValue({
-                tag: tag,
-                value: license_.paramValues[tag]
-            });
+    ) public view returns (Licensing.License memory result) {
+        Licensing.LicenseStorage storage storedLicense = _licenses[id_];
+        result.status = storedLicense.status;
+        if (storedLicense.status == Licensing.LicenseStatus.Unset) {
+            revert Errors.LicenseRegistry_UnknownLicenseId();
         }
+        result.licensor = storedLicense.licensor;
+        result.licensee = ownerOf(id_);
+        result.revoker = storedLicense.revoker;
+        result.ipOrg = storedLicense.ipOrg;
+        result.ipaId = storedLicense.ipaId;
+        result.parentLicenseId = storedLicense.parentLicenseId;
+        result.frameworkId = storedLicense.frameworkId.toString();
+        // ParamDefinition[] paramDefs memory = LICENSING_FRAMEWORK_REPO.getParameterDefs(
+        //     storedLicense.frameworkId
+        // );
+        // uint256 paramCount = paramDefs.length;
+        
+        // bytes[] memory paramValues = new bytes[](paramCount).
+        // for (uint256 i = 0; i < paramCount; i++) {
+        //     paramValues.push(storedLicense.paramValues[paramDefs[i].tag]);
+        // }
+        // result.paramDefs = paramDefs;
+        // result.paramValues = paramValues;
         return result;
-
     }
 
     /// Gets the address granting a license, by id
@@ -175,13 +203,13 @@ contract LicenseRegistry is ERC721 {
         return _licenses[id_].parentLicenseId;
     }
 
-    function getValueForParamTag(uint256 id_, ShortString memory tag_)
-        external
-        view
-        returns (bytes memory)
-    {
-        return _licenses[id_].paramValues[tag_];
-    }
+    // function getValueForParamTag(uint256 id_, ShortString tag_)
+    //     external
+    //     view
+    //     returns (bytes memory)
+    // {
+    //     return _licenses[id_].paramValues[tag_];
+    // }
 
     /// Links the license to an IPA
     /// @param licenseId_ id of the license NFT
@@ -189,14 +217,8 @@ contract LicenseRegistry is ERC721 {
     function linkLnftToIpa(
         uint256 licenseId_,
         uint256 ipaId_
-    ) public onlyLicensingModule {
-        if(IPA_REGISTRY.status(ipaId_) != 1) {
-            revert Errors.LicenseRegistry_IPANotActive();
-        }
-        Licensing.License memory license_ = _licenses[licenseId_];        
-        _licenses[licenseId_].ipaId = ipaId_;
-        _licenses[licenseId_].status = Licensing.LicenseStatus.Used;
-        emit LicenseNftBoundedToIpa(licenseId_, ipaId_);
+    ) public onlyLicensingModuleOrLicensee(licenseId_) {
+        _linkNftToIpa(licenseId_, ipaId_);
     }
 
     /// Checks if a license is active. If an ancestor is not active, the license is not active
@@ -214,13 +236,12 @@ contract LicenseRegistry is ERC721 {
 
     /// Called by the licensing module to activate a license, after all the activation terms pass
     /// @param licenseId_ id of the license
-    function activateLicense(uint256 licenseId_) external onlyLicensingModule {
-        if (_licenses[licenseId_].status != Licensing.LicenseStatus.Inactive) {
-            revert Errors.LicenseRegistry_LicenseNotInactive();
-        }
-        _licenses[licenseId_].status = Licensing.LicenseStatus.Active;
-        // TODO: change IPA status
-        emit LicenseActivated(licenseId_);
+    function activateLicense(uint256 licenseId_, address caller_) external onlyLicensingModule {
+        _activateLicense(licenseId_, caller_);
+    }
+
+    function activateLicense(uint256 licenseId_) external {
+        _activateLicense(licenseId_, msg.sender);
     }
 
     /// Revokes a license, making it incactive. Only the revoker can do this.
@@ -235,50 +256,33 @@ contract LicenseRegistry is ERC721 {
         emit LicenseRevoked(licenseId_);
     }
 
-    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        
+    function tokenURI(uint256 tokenId) external view virtual override returns (string memory) {
+        // TODO
+        return "";
+    }
 
-        Licensing.License memory license = getLicense(tokenId);
-
-        Registration.IPOrgConfig memory config = ipOrgConfigs[ipOrg_];
-        if (bytes(config.baseURI).length != 0) {
-            return string(abi.encodePacked(config.baseURI, Strings.toString(id)));
+    function _linkNftToIpa(uint256 licenseId_, uint256 ipaId_) private onlyActive(licenseId_) {
+        if(IPA_REGISTRY.status(ipaId_) != 1) {
+            revert Errors.LicenseRegistry_IPANotActive();
         }
+        _licenses[licenseId_].ipaId = ipaId_;
+        _licenses[licenseId_].status = Licensing.LicenseStatus.Used;
+        emit LicenseNftBoundedToIpa(licenseId_, ipaId_);
+    }
 
-        IPAssetRegistry.IPA memory ipAsset = IPA_REGISTRY.ipAsset(id);
-
-        // Construct the base JSON metadata with custom name format
-        string memory baseJson = string(abi.encodePacked(
-            '{"name": "Global IP Asset #', Strings.toString(id),
-            '", "description": "IP Org Asset Registration Details", "attributes": [',
-            '{"trait_type": "Name", "value": "', ipAsset.name, '"},'
-        ));
-
-        string memory ipOrgAttributes = string(abi.encodePacked(
-            '{"trait_type": "IP Org", "value": "', Strings.toHexString(uint160(ipAsset.ipOrg), 20), '"},',
-            '{"trait_type": "Current IP Owner", "value": "', Strings.toHexString(uint160(owner), 20), '"},'
-        ));
-
-        string memory ipAssetAttributes = string(abi.encodePacked(
-            '{"trait_type": "Initial Registrant", "value": "', Strings.toHexString(uint160(ipAsset.registrant), 20), '"},',
-            '{"trait_type": "IP Org Asset Type", "value": "', config.assetTypes[ipOrgAssetType_], '"},',
-            '{"trait_type": "Status", "value": "', Strings.toString(ipAsset.status), '"},',
-            '{"trait_type": "Hash", "value": "', Strings.toHexString(uint256(ipAsset.hash), 32), '"},',
-            '{"trait_type": "Registration Date", "value": "', Strings.toString(ipAsset.registrationDate), '"}'
-        ));
-
-        return string(abi.encodePacked(
-            "data:application/json;base64,",
-            Base64.encode(
-                bytes(
-                    string(abi.encodePacked(
-                        baseJson,
-                        ipOrgAttributes,
-                        ipAssetAttributes,
-                        ']}'
-                    )
-                )
-            ))
-        ));
+    function _activateLicense(uint256 licenseId_, address caller_) private {
+        Licensing.LicenseStorage storage license = _licenses[licenseId_];
+        if (caller_ != license.licensor) {
+            revert Errors.LicenseRegistry_CallerNotLicensor();
+        }
+        if (license.status != Licensing.LicenseStatus.PendingLicensorApproval) {
+            revert Errors.LicenseRegistry_LicenseNotPendingApproval();
+        }
+        if (!isLicenseActive(license.parentLicenseId)) {
+            revert Errors.LicenseRegistry_ParentLicenseNotActive();
+        }
+        license.status = Licensing.LicenseStatus.Active;
+        // TODO: change IPA status
+        emit LicenseActivated(licenseId_);
     }
 }

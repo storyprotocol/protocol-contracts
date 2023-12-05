@@ -74,24 +74,18 @@ contract LicensingModule is BaseModule {
         bytes calldata params_
     ) internal virtual override {
         // At least non commercial terms must be set
-        // if (_licensorConfig[address(ipOrg_)] == Licensing.LicensorConfig.Unset) {
-        //     revert Errors.LicensingModule_IpOrgNotConfigured();
-        // }
-        // (bytes32 action, bytes memory params) = abi.decode(
-        //     params_,
-        //     (bytes32, bytes)
-        // );
-        // if (action == Licensing.CREATE_LICENSE) {
-        //     _verifyCreateLicense(ipOrg_, caller_, params);
-        // } else if (action == Licensing.ACTIVATE_LICENSE) {
-        //     _verifyActivateLicense(ipOrg_, caller_, params);
-        // } else if (action == Licensing.LINK_LNFT_TO_IPA) {
-        //     _verifyLinkNftToIpa(ipOrg_, caller_, params);
-        // } else {
-        //     revert Errors.LicensingModule_InvalidAction();
-        // }
+        
+        (bytes32 action, bytes memory params) = abi.decode(
+            params_,
+            (bytes32, bytes)
+        );
+        if (action == Licensing.CREATE_LICENSE) {
+            _verifyCreateLicense(ipOrg_, caller_, params);
+        } else if (action != Licensing.ACTIVATE_LICENSE && action != Licensing.LINK_LNFT_TO_IPA) {
+            revert Errors.LicensingModule_InvalidAction();
+        }
     }
-    /*
+    
     function _verifyCreateLicense(
         IIPOrg ipOrg_,
         address caller_,
@@ -99,7 +93,6 @@ contract LicensingModule is BaseModule {
     ) private view {
         (
             Licensing.LicenseCreation memory lParams,
-            Licensing.LicenseeType licenseeType,
             bytes memory data
         ) = abi.decode(
                 params_,
@@ -124,74 +117,35 @@ contract LicensingModule is BaseModule {
             }
         }
     }
-
-
-    function _verifyActivateLicense(
-        IIPOrg ipOrg_,
-        address caller_,
-        bytes memory params_
-    ) private view {
-        uint256 licenseId = abi.decode(params_, (uint256));
-        Licensing.License memory license = LICENSE_REGISTRY.getLicense(
-            licenseId
-        );
-        if (caller_ != license.licensor) {
-            revert Errors.LicensingModule_CallerNotLicensor();
-        }
-        if (
-            license.parentLicenseId != 0 &&
-            !LICENSE_REGISTRY.isLicenseActive(license.parentLicenseId)
-        ) {
-            revert Errors.LicensingModule_ParentLicenseNotActive();
-        }
-    }
-
-    function _verifyLinkNftToIpa(
-        IIPOrg ipOrg_,
-        address caller_,
-        bytes memory params_
-    ) private view {
-        (uint256 licenseId, uint256 ipaId) = abi.decode(
-            params_,
-            (uint256, uint256)
-        );
-        if (caller_ != LICENSE_REGISTRY.ownerOf(licenseId)) {
-            revert Errors.LicensingModule_CallerNotLicenseOwner();
-        }
-        if (!LICENSE_REGISTRY.isLicenseActive(licenseId)) {
-            revert Errors.LicensingModule_ParentLicenseNotActive();
-        }
-        if (IPA_REGISTRY.status(ipaId) == 0) {
-            revert Errors.LicensingModule_InvalidIpa();
-        }
-    }
-    */
+    
     /// Module entrypoint to create licenses
     function _performAction(
         IIPOrg ipOrg_,
         address caller_,
         bytes calldata params_
     ) internal virtual override returns (bytes memory result) {
-        // (bytes32 action, bytes memory actionParams) = abi.decode(
-        //     params_,
-        //     (bytes32, bytes)
-        // );
-        // if (action == Licensing.CREATE_LICENSE) {
-        //     return _createLicense(ipOrg_, caller_, actionParams);
-        // } else if (action == Licensing.ACTIVATE_LICENSE) {
-        //     return _activateLicense(ipOrg_, caller_, actionParams);
-        // } else if (action == Licensing.LINK_LNFT_TO_IPA) {
-        //     (uint256 licenseId, uint256 ipaId) = abi.decode(
-        //         actionParams,
-        //         (uint256, uint256)
-        //     );
-        //     LICENSE_REGISTRY.linkLnftToIpa(licenseId, ipaId);
-        //     return bytes("");
-        // } else {
-        //     revert Errors.LicensingModule_InvalidAction();
-        // }
+        (bytes32 action, bytes memory actionParams) = abi.decode(
+            params_,
+            (bytes32, bytes)
+        );
+        if (action == Licensing.CREATE_LICENSE) {
+            return _createLicense(ipOrg_, caller_, actionParams);
+        } else if (action == Licensing.ACTIVATE_LICENSE) {
+            uint256 licenseId = abi.decode(actionParams, (uint256));
+            LICENSE_REGISTRY.activateLicense(licenseId, caller_);
+            return bytes("");
+        } else if (action == Licensing.LINK_LNFT_TO_IPA) {
+            (uint256 licenseId, uint256 ipaId) = abi.decode(
+                actionParams,
+                (uint256, uint256)
+            );
+            LICENSE_REGISTRY.linkLnftToIpa(licenseId, ipaId);
+            return bytes("");
+        } else {
+            revert Errors.LicensingModule_InvalidAction();
+        }
     }
-    /*
+
     function _createLicense(
         IIPOrg ipOrg_,
         address caller_,
@@ -267,12 +221,13 @@ contract LicensingModule is BaseModule {
         bytes memory params_
     ) private returns (bytes memory result) {
         uint256 licenseId = abi.decode(params_, (uint256));
+        
         Licensing.License memory license = LICENSE_REGISTRY.getLicense(
             licenseId
         );
         // For now, we just support activating license with an explicit approval from
         // Licensor. TODO: support more activation terms
-        LICENSE_REGISTRY.activateLicense(licenseId);
+        
     }
 
     /// Gets the licensor address for this IPA.
@@ -309,7 +264,7 @@ contract LicensingModule is BaseModule {
         // For now, ipOrgOwner
         return IIPOrg(ipOrg).owner();
     }
-    */
+    
 
     ////////////////////////////////////////////////////////////////////////////
     //                              Config                                    //

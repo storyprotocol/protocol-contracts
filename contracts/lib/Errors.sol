@@ -19,9 +19,6 @@ library Errors {
     /// @notice The provided role does not exist for the given account.
     error MissingRole(bytes32 role, address account);
 
-    /// @notice The provided identifier does not exist.
-    error NonExistentID(uint256 id);
-
     /// @notice The caller is not authorized to perform the call.
     error Unauthorized();
 
@@ -280,11 +277,9 @@ library Errors {
     ////////////////////////////////////////////////////////////////////////////
 
     error LicenseRegistry_UnknownLicenseId();
-    error LicenseRegistry_NotLicenseNFT();
-    error LicenseRegistry_InvalidIpa();
     error LicenseRegistry_CallerNotLicensingModule();
     error LicenseRegistry_CallerNotRevoker();
-    error LicenseRegistry_LicenseNotInactive();
+    error LicenseRegistry_LicenseNotPendingApproval();
     error LicenseRegistry_InvalidLicenseStatus();
     error LicenseRegistry_ParentLicenseNotActive();
     error LicenseRegistry_IPANotActive();
