@@ -12,11 +12,13 @@ import { Errors } from "contracts/lib/Errors.sol";
 library PIPLicensingTerms {
     using ShortStrings for *;
 
+    string constant FRAMEWORK_ID = "SPIPL-1.0";
+
     string constant CHANNELS_OF_DISTRIBUTION = "Channels-Of-Distribution";
     string constant ATTRIBUTION = "Attribution";
     string constant DERIVATIVES_WITH_ATTRIBUTION = "Derivatives-With-Attribution";
     string constant DERIVATIVES_WITH_APPROVAL = "Derivatives-With-Approval";
-    string constant DERIVATIVES_WITH_RECIPROCAL_LICENSE = "Derivatives-With-Reciprocal-License";
+    string constant DERIVATIVES_WITH_RECIPROCAL_LICENSE = "Derivatives-Reciprocal-License";
 
     // On beta version
     // string constant CONTENT_STANDARDS = "Content-Standards";

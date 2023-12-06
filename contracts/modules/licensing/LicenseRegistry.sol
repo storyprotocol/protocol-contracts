@@ -145,8 +145,12 @@ contract LicenseRegistry is ERC721 {
         }
         Licensing.LicenseData storage parent = _licenses[parentLicenseId_];
         _licenses[++_licenseCount] = parent;
+        _licenses[_licenseCount].licensor = licensor_;
+        _licenses[_licenseCount].ipaId = ipaId_;
         _licenseParams[_licenseCount] = _licenseParams[parentLicenseId_];
+        _mint(licensee_, _licenseCount);
         emit LicenseRegistered(_licenseCount);
+        return _licenseCount;
     }
 
     /// Gets License struct for input id

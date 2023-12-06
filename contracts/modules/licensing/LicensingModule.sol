@@ -73,7 +73,6 @@ contract LicensingModule is BaseModule {
     ////////////////////////////////////////////////////////////////////////////
 
     /// Module entrypoing to verify execution call
-
     function _verifyExecution(
         IIPOrg ipOrg_,
         address caller_,

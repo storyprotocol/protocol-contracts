@@ -221,14 +221,12 @@ contract StoryProtocol is Multicall {
     /// Creates a tradeable License NFT in License Registry.
     /// @param ipOrg_ the ipOrg address
     /// @param params_ LicenseCreation params
-    /// @param licensee_ address of the licensee (and owner of the NFT)
     /// @param preHooksData_ Hooks data to embed with the registration pre-call.
     /// @param postHooksData_ Hooks data to embed with the registration post-call.
     /// @return id of the created license
     function createLicense(
         address ipOrg_,
         Licensing.LicenseCreation calldata params_,
-        address licensee_,
         bytes[] calldata preHooksData_,
         bytes[] calldata postHooksData_
     ) external returns (uint256) {

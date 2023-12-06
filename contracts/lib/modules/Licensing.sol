@@ -83,7 +83,6 @@ library Licensing {
     }
 
     uint256 constant MAX_PARAM_TAGS = 150;
-    bytes32 constant USER_SETEABLE_CONFIG = keccak256("USER_SETEABLE_CONFIG");
 
     /// Input for IpOrg legal terms configuration in LicensingModule (for now, the only option)
     bytes32 constant LICENSING_FRAMEWORK_CONFIG =
@@ -93,7 +92,7 @@ library Licensing {
     bytes32 constant LINK_LNFT_TO_IPA = keccak256("LINK_LNFT_TO_IPA");
     address constant ALPHA_REVOKER = 0x130c1977A3C73Db51DE55B705A1D924aA78467c5;
 
-    function statusToString(
+    function _statusToString(
         LicenseStatus status_
     ) internal pure returns (string memory) {
         if (status_ == LicenseStatus.Unset) {
@@ -115,9 +114,9 @@ library Licensing {
         bytes memory value
     ) internal pure returns (bool) {
         // An empty value signals the parameter is untagged, to trigger default values in the
-        // license agreement text
+        // license agreement text, but that's valid
         if (keccak256(value) == keccak256("")) {
-            return false;
+            return true;
         }
         if (pType == Licensing.ParameterType.Bool) {
             abi.decode(value, (bool));
@@ -132,7 +131,6 @@ library Licensing {
             }
         } else if (pType == Licensing.ParameterType.String) {
             abi.decode(value, (string));
-            // Empty value is checked above
             // WARNING: Do proper string validation off chain.
             if (
                 keccak256(value) == keccak256(abi.encode(" ")) ||

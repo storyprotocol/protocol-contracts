@@ -10,6 +10,7 @@ import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { AccessControlled } from "contracts/access-control/AccessControlled.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
+import "forge-std/console2.sol";
 
 contract LicensingFrameworkRepo is AccessControlled, Multicall {
     using FixedSet for FixedSet.ShortStringSet;
@@ -75,6 +76,7 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
         }
         for (uint256 i = 0; i < numParams; i++) {
             ShortString tag = params_[i].tag;
+            console2.log(tag.toString());
             if (!framework.paramTags.contains(tag)) {
                 return false;
             }
@@ -84,8 +86,6 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
         }
         return true;
     }
-
-    
 
     function getLicenseTextUrl(
         string calldata frameworkId_
