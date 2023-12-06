@@ -39,6 +39,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     address constant ipOrgOwner = address(456);
     address constant relManager = address(9999);
     address constant licensingManager = address(333);
+    address constant defaultRevoker = address(555);
 
     function setUp() virtual override(BaseTestUtils) public {
         super.setUp();
@@ -87,7 +88,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
                 licenseRegistry: licenseRegistry,
                 ipOrgController: ipOrgController
             }),
-            address(licensingFrameworkRepo)
+            address(licensingFrameworkRepo),
+            defaultRevoker
         );
         moduleRegistry.registerProtocolModule(ModuleRegistryKeys.LICENSING_MODULE, licensingModule);
 

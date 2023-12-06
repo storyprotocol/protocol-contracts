@@ -89,7 +89,6 @@ library Licensing {
     bytes32 constant CREATE_LICENSE = keccak256("CREATE_LICENSE");
     bytes32 constant ACTIVATE_LICENSE = keccak256("ACTIVATE_LICENSE");
     bytes32 constant LINK_LNFT_TO_IPA = keccak256("LINK_LNFT_TO_IPA");
-    address constant ALPHA_REVOKER = 0x130c1977A3C73Db51DE55B705A1D924aA78467c5;
 
     function _statusToString(
         LicenseStatus status_

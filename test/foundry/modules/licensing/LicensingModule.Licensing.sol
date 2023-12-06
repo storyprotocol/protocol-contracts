@@ -95,7 +95,7 @@ contract LicensingModuleLicensingTest is BaseTest {
         assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.Active));
         assertEq(license.isReciprocal, true, "isReciprocal");
         assertEq(license.derivativeNeedsApproval, true, "derivativeNeedsApproval");
-        assertEq(license.revoker, Licensing.ALPHA_REVOKER);
+        assertEq(license.revoker, licensingModule.DEFAULT_REVOKER());
         assertEq(license.licensor, ipOrg.owner());
         assertEq(license.ipOrg, address(ipOrg));
         assertEq(license.frameworkId.toString(), PIPLicensingTerms.FRAMEWORK_ID);
@@ -133,7 +133,7 @@ contract LicensingModuleLicensingTest is BaseTest {
         assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.PendingLicensorApproval));
         assertEq(license.isReciprocal, true, "isReciprocal");
         assertEq(license.derivativeNeedsApproval, true, "derivativeNeedsApproval");
-        assertEq(license.revoker, Licensing.ALPHA_REVOKER);
+        assertEq(license.revoker, licensingModule.DEFAULT_REVOKER());
         assertEq(license.licensor, ipOrg.owner());
         assertEq(license.ipOrg, address(ipOrg));
         assertEq(license.frameworkId.toString(), PIPLicensingTerms.FRAMEWORK_ID);

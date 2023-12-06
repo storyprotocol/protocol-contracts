@@ -13,8 +13,6 @@ import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { PIPLicensingTerms } from "contracts/lib/modules/PIPLicensingTerms.sol";
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 
-import "forge-std/console2.sol";
-
 /// @title Licensing module
 /// @notice Story Protocol module that:
 /// - Enables each IP Org to select a licensing framework fron LicensingFrameworkRepo
@@ -46,15 +44,21 @@ contract LicensingModule is BaseModule {
     mapping(address => string) private _ipOrgFrameworkIds;
 
     LicensingFrameworkRepo public immutable LICENSING_FRAMEWORK_REPO;
+    address public immutable DEFAULT_REVOKER;
 
     constructor(
         ModuleConstruction memory params_,
-        address licFrameworkRepo_
+        address licFrameworkRepo_,
+        address defaultRevoker_
     ) BaseModule(params_) {
         if (licFrameworkRepo_ == address(0)) {
             revert Errors.ZeroAddress();
         }
         LICENSING_FRAMEWORK_REPO = LicensingFrameworkRepo(licFrameworkRepo_);
+        if (defaultRevoker_ == address(0)) {
+            revert Errors.ZeroAddress();
+        }
+        DEFAULT_REVOKER = defaultRevoker_;
     }
 
     function getIpOrgLicensorConfig(
@@ -245,7 +249,7 @@ contract LicensingModule is BaseModule {
             status: Licensing.LicenseStatus.Active,
             isReciprocal: isReciprocal,
             derivativeNeedsApproval: derivativeNeedsApproval,
-            revoker: Licensing.ALPHA_REVOKER,
+            revoker: DEFAULT_REVOKER,
             licensor: licensor_,
             ipOrg: ipOrg_,
             frameworkId: frameworkId_.toShortString(),
