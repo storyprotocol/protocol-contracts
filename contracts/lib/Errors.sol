@@ -19,9 +19,6 @@ library Errors {
     /// @notice The provided role does not exist for the given account.
     error MissingRole(bytes32 role, address account);
 
-    /// @notice The provided identifier does not exist.
-    error NonExistentID(uint256 id);
-
     /// @notice The caller is not authorized to perform the call.
     error Unauthorized();
 
@@ -241,16 +238,14 @@ library Errors {
     error LibDuration_ZeroTTL();
 
     ////////////////////////////////////////////////////////////////////////////
-    //                            TermsRegistry                               //
+    //                       LicensingFrameworkRepo                           //
     ////////////////////////////////////////////////////////////////////////////
-
-    error TermsRegistry_UnsupportedTermCategory();
-    error TermsRegistry_UnsupportedTerm();
-    error TermsRegistry_TermAlreadyExists();
-    error TermsRegistry_CommercialStatusUnset();
+    error LicensingFrameworkRepo_FrameworkAlreadyAdded();
+    error LicensingFrameworkRepo_DuplicateParamType();
+    error LicensingFrameworkRepo_TooManyParams();
 
     ////////////////////////////////////////////////////////////////////////////
-    //                        LicensingModule                            //
+    //                        LicensingModule                                 //
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice The franchise does not exist.
@@ -262,6 +257,7 @@ library Errors {
     error LicensingModule_CommercialLicenseNotAllowed();
     error LicensingModule_NonCommercialTermsRequired();
     error LicensingModule_IpOrgNotConfigured();
+    error LicensingModule_IpOrgAlreadyConfigured();
     error LicensingModule_ipOrgTermNotFound();
     error LicensingModule_ShareAlikeDisabled();
     error LicensingModule_InvalidAction();
@@ -272,19 +268,28 @@ library Errors {
     error LicensingModule_CantFindParentLicenseOrRelatedIpa();
     error LicensingModule_InvalidLicenseeType();
     error LicensingModule_InvalidLicensorType();
+    error LicensingModule_InvalidLicensorConfig();
+    error LicensingModule_InvalidParamValues();
+    error LicensingModule_ReciprocalCannotSetParams();
+    error LicensingModule_ParamSetByIpOrg();
+    error LicensingModule_InvalidInputValue();
+    error LicensingModule_IpOrgFrameworkNotSet();
+
     ////////////////////////////////////////////////////////////////////////////
     //                            LicenseRegistry                             //
     ////////////////////////////////////////////////////////////////////////////
 
-    error LicenseRegistry_ZeroIpaRegistryAddress();
     error LicenseRegistry_UnknownLicenseId();
-    error LicenseRegistry_NotLicenseNFT();
-    error LicenseRegistry_InvalidIpa();
-    error LicenseRegistry_ZeroModuleRegistryAddress();
     error LicenseRegistry_CallerNotLicensingModule();
     error LicenseRegistry_CallerNotRevoker();
-    error LicenseRegistry_LicenseNotPending();
+    error LicenseRegistry_CallerNotLicensingModuleOrLicensee();
+    error LicenseRegistry_CallerNotLicensor();
+    error LicenseRegistry_LicenseNotPendingApproval();
     error LicenseRegistry_InvalidLicenseStatus();
+    error LicenseRegistry_ParentLicenseNotActive();
+    error LicenseRegistry_IPANotActive();
+    error LicenseRegistry_LicenseNotActive();
+    error LicenseRegistry_LicenseAlreadyLinkedToIpa();
     
     ////////////////////////////////////////////////////////////////////////////
     //                            RegistrationModule                          //

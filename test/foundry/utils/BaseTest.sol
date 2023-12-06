@@ -16,11 +16,10 @@ import "contracts/modules/relationships/RelationshipModule.sol";
 import "contracts/modules/licensing/LicenseRegistry.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
-import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { RegistrationModule } from "contracts/modules/registration/RegistrationModule.sol";
-import { TermsRepository } from "contracts/modules/licensing/TermsRepository.sol";
+import { LicensingFrameworkRepo } from "contracts/modules/licensing/LicensingFrameworkRepo.sol";
 
 contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     using ShortStrings for *;
@@ -31,15 +30,16 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     RelationshipModule public relationshipModule;
     IPAssetRegistry public registry;
     StoryProtocol public spg;
+    LicensingFrameworkRepo public licensingFrameworkRepo;
     LicensingModule public licensingModule;
     LicenseRegistry public licenseRegistry;
     RegistrationModule public registrationModule;
-    TermsRepository public termsRepository;
 
     address constant upgrader = address(6969);
     address constant ipOrgOwner = address(456);
     address constant relManager = address(9999);
-    address constant termSetter = address(444);
+    address constant licensingManager = address(333);
+    address constant defaultRevoker = address(555);
 
     function setUp() virtual override(BaseTestUtils) public {
         super.setUp();
@@ -73,10 +73,14 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         _grantRole(vm, AccessControl.MODULE_REGISTRAR_ROLE, address(this));
 
         // Create Licensing contracts
-        termsRepository = new TermsRepository(address(accessControl));
-        _grantRole(vm, AccessControl.TERMS_SETTER_ROLE, termSetter);
+        licensingFrameworkRepo = new LicensingFrameworkRepo(address(accessControl));
+        _grantRole(vm, AccessControl.LICENSING_MANAGER, licensingManager);
 
-        licenseRegistry = new LicenseRegistry(address(registry), address(moduleRegistry));
+        licenseRegistry = new LicenseRegistry(
+            address(registry),
+            address(moduleRegistry),
+            address(licensingFrameworkRepo)
+        );
         licensingModule = new LicensingModule(
             BaseModule.ModuleConstruction({
                 ipaRegistry: registry,
@@ -84,7 +88,8 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
                 licenseRegistry: licenseRegistry,
                 ipOrgController: ipOrgController
             }),
-            address(termsRepository)
+            address(licensingFrameworkRepo),
+            defaultRevoker
         );
         moduleRegistry.registerProtocolModule(ModuleRegistryKeys.LICENSING_MODULE, licensingModule);
 

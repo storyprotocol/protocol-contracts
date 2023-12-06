@@ -7,47 +7,47 @@ import { Registration } from "contracts/lib/modules/Registration.sol";
 interface IRegistrationModule {
 
     /// @notice Emits when an IPOrg updates metadata associated with its IPA.
-    /// @param ipOrg_ The address of the IP Org whose metadata was updated.
-    /// @param baseURI_ The base token URI to be used for token metadata.
-    /// @param contractURI_ The contract URI to be used for contract metadata.
+    /// @param ipOrg The address of the IP Org whose metadata was updated.
+    /// @param baseURI The base token URI to be used for token metadata.
+    /// @param contractURI The contract URI to be used for contract metadata.
     event MetadataUpdated(
-        address indexed ipOrg_,
-        string baseURI_,
-        string contractURI_
+        address indexed ipOrg,
+        string baseURI,
+        string contractURI
     );
 
     /// @notice Emits when a new IP asset is registered.
-    /// @param ipAssetId_ The identifier of the newly registered IP asset.
-    /// @param ipOrg_ The address of the IP Org of the IP asset.
-    /// @param ipOrgAssetId_ The IP Org localized id of the IP asset.
-    /// @param owner_ The address of the new IP asset owner.
-    /// @param name_ The name of the IP asset being registered.
-    /// @param ipOrgAssetType_ The numerical id of the IP asset type.
-    /// @param hash_ The content hash of the registered IP asset.
-    /// @param mediaUrl_ The media URL of the registered IP asset.
+    /// @param ipAssetId The identifier of the newly registered IP asset.
+    /// @param ipOrg The address of the IP Org of the IP asset.
+    /// @param ipOrgAssetId The IP Org localized id of the IP asset.
+    /// @param owner The address of the new IP asset owner.
+    /// @param name The name of the IP asset being registered.
+    /// @param ipOrgAssetType The numerical id of the IP asset type.
+    /// @param hash The content hash of the registered IP asset.
+    /// @param mediaUrl The media URL of the registered IP asset.
     event IPAssetRegistered(
-        uint256 ipAssetId_,
-        address indexed ipOrg_,
-        uint256 ipOrgAssetId_,
-        address indexed owner_,
-        string name_,
-        uint8 indexed ipOrgAssetType_,
-        bytes32 hash_,
-        string mediaUrl_
+        uint256 ipAssetId,
+        address indexed ipOrg,
+        uint256 ipOrgAssetId,
+        address indexed owner,
+        string name,
+        uint8 indexed ipOrgAssetType,
+        bytes32 hash,
+        string mediaUrl
     );
 
     /// @notice Emits when an IP asset is transferred to a new owner.
-    /// @param ipAssetId_ The identifier of the IP asset being transferred.
-    /// @param ipOrg_ The address of the IP Org which administers the IP asset.
-    /// @param ipOrgAssetId_ The local id of the wrapped IP within the IP Org.
-    /// @param prevOwner_ The address of the previous owner of the IP asset.
-    /// @param newOwner_ The address of the new owner of the IP asset.
+    /// @param ipAssetId The identifier of the IP asset being transferred.
+    /// @param ipOrg The address of the IP Org which administers the IP asset.
+    /// @param ipOrgAssetId The local id of the wrapped IP within the IP Org.
+    /// @param prevOwner The address of the previous owner of the IP asset.
+    /// @param newOwner The address of the new owner of the IP asset.
     event IPAssetTransferred(
-        uint256 indexed ipAssetId_,
-        address indexed ipOrg_,
-        uint256 ipOrgAssetId_,
-        address prevOwner_,
-        address newOwner_
+        uint256 indexed ipAssetId,
+        address indexed ipOrg,
+        uint256 ipOrgAssetId,
+        address prevOwner,
+        address newOwner
     );
 
     /// @notice Returns the current owner of an IP asset.

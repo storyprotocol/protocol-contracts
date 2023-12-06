@@ -4,32 +4,42 @@ pragma solidity ^0.8.19;
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { Errors } from "contracts/lib/Errors.sol";
-import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
+import { LicensingFrameworkRepo } from "contracts/modules/licensing/LicensingFrameworkRepo.sol";
+import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 
 /// @title LicenseRegistry
 /// @notice This contract is the source of truth for all licenses that are registered in the protocol.
-/// It will only be called by licensing modules.
-/// It should not be upgradeable, so once a license is registered, it will be there forever.
+/// It will only be written by licensing modules.
+/// It should not be upgradeable, so once a license is registered, it will be there forever regardless of 
+/// the ipOrg potentially chaning the licensing framework or Story Protocol doing upgrades.
 /// Licenses can be made invalid by the revoker, according to the terms of the license.
 contract LicenseRegistry is ERC721 {
+    using ShortStrings for *;
+
     // TODO: Figure out data needed for indexing
     event LicenseRegistered(uint256 indexed id);
-    event LicenseNftBoundedToIpa(
+    event LicenseNftLinkedToIpa(
         uint256 indexed licenseId,
         uint256 indexed ipAssetId
     );
     event LicenseActivated(uint256 indexed licenseId);
     event LicenseRevoked(uint256 indexed licenseId);
 
-    /// license Id => License
-    mapping(uint256 => Licensing.License) private _licenses;
+    /// license Id => LicenseData
+    mapping(uint256 => Licensing.LicenseData) private _licenses;
+
+    mapping(uint256 => Licensing.ParamValue[]) private _licenseParams;
     /// counter for license Ids
     uint256 private _licenseCount;
 
     IPAssetRegistry public immutable IPA_REGISTRY;
     ModuleRegistry public immutable MODULE_REGISTRY;
+    LicensingFrameworkRepo public immutable LICENSING_FRAMEWORK_REPO;
 
     modifier onlyLicensingModule() {
         if (
@@ -43,109 +53,128 @@ contract LicenseRegistry is ERC721 {
         _;
     }
 
+    modifier onlyLicensingModuleOrLicensee(uint256 licenseId_) {
+        if (
+            !MODULE_REGISTRY.isModule(
+                ModuleRegistryKeys.LICENSING_MODULE,
+                msg.sender
+            ) || msg.sender != ownerOf(licenseId_)
+        ) {
+            revert Errors.LicenseRegistry_CallerNotLicensingModuleOrLicensee();
+        }
+        _;
+    }
+
     modifier onlyActiveOrPending(Licensing.LicenseStatus status_) {
         if (
             status_ != Licensing.LicenseStatus.Active &&
-            status_ != Licensing.LicenseStatus.Pending
+            status_ != Licensing.LicenseStatus.PendingLicensorApproval
         ) {
             revert Errors.LicenseRegistry_InvalidLicenseStatus();
         }
         _;
     }
 
+    modifier onlyActive(uint256 licenseId_) {
+        if (!isLicenseActive(licenseId_)) {
+            revert Errors.LicenseRegistry_LicenseNotActive();
+        }
+        _;
+    }
+
     constructor(
         address ipaRegistry_,
-        address moduleRegistry_
+        address moduleRegistry_,
+        address licensingFrameworkRepo_
     ) ERC721("Story Protocol License NFT", "LNFT") {
         if (ipaRegistry_ == address(0)) {
-            revert Errors.LicenseRegistry_ZeroIpaRegistryAddress();
+            revert Errors.ZeroAddress();
         }
         IPA_REGISTRY = IPAssetRegistry(ipaRegistry_);
         if (moduleRegistry_ == address(0)) {
-            revert Errors.LicenseRegistry_ZeroModuleRegistryAddress();
+            revert Errors.ZeroAddress();
         }
         MODULE_REGISTRY = ModuleRegistry(moduleRegistry_);
+        if (licensingFrameworkRepo_ == address(0)) {
+            revert Errors.ZeroAddress();
+        }
+        LICENSING_FRAMEWORK_REPO = LicensingFrameworkRepo(
+            licensingFrameworkRepo_
+        );
     }
 
-    /// Creates a License bound to a certain IPA
-    /// @param params_ RegistryAddition params
-    /// @param ipaId_ id of the bound IPA
-    /// @return id of the created license
-    function addBoundToIpaLicense(
-        Licensing.RegistryAddition memory params_,
+    /// Creates a tradeable License NFT.
+    /// @param newLicense_ LicenseData params
+    /// @param licensee_ address of the licensee
+    /// @param values_ array of ParamValue structs
+    /// @return licenseId_ id of the license NFT
+    function addLicense(
+        Licensing.LicenseData memory newLicense_,
+        address licensee_,
+        Licensing.ParamValue[] memory values_
+    )
+        external
+        onlyLicensingModule
+        onlyActiveOrPending(newLicense_.status)
+        returns (uint256)
+    {
+        // NOTE: check for parent ipa validity is done in
+        // the licensing module
+        uint256 licenseId = ++_licenseCount;
+        _licenses[licenseId] = newLicense_;
+        emit LicenseRegistered(licenseId);
+        _mint(licensee_, licenseId);
+        uint256 length = values_.length;
+        Licensing.ParamValue[] storage params = _licenseParams[licenseId];
+        for (uint256 i; i < length; i++) {
+            params.push(values_[i]);
+        }
+        return licenseId;
+    }
+
+    /// Create a Derivate License that is reciprocal (all params are inherited
+    /// from parent license)
+    /// @param parentLicenseId_ id of the parent license
+    /// @param licensor_ address of the licensor
+    /// @param licensee_ address of the licensee
+    /// @param ipaId_ id of the IPA
+    /// @return licenseId_ id of the license NFT
+    function addReciprocalLicense(
+        uint256 parentLicenseId_,
+        address licensor_,
+        address licensee_,
         uint256 ipaId_
     )
         external
         onlyLicensingModule
-        onlyActiveOrPending(params_.status)
-        returns (uint256)
-    {
-        if (IPA_REGISTRY.status(ipaId_) == 0) {
-            revert Errors.LicenseRegistry_InvalidIpa();
+        returns (uint256) {
+        if (!isLicenseActive(parentLicenseId_)) {
+            revert Errors.LicenseRegistry_ParentLicenseNotActive();
         }
-        return
-            _addLicense(
-                Licensing.License({
-                    isCommercial: params_.isCommercial,
-                    status: params_.status,
-                    licenseeType: Licensing.LicenseeType.BoundToIpa,
-                    licensor: params_.licensor,
-                    revoker: params_.revoker,
-                    ipOrg: params_.ipOrg,
-                    termIds: params_.termIds,
-                    termsData: params_.termsData,
-                    ipaId: ipaId_,
-                    parentLicenseId: params_.parentLicenseId
-                })
-            );
-    }
-
-    /// Creates a tradeable License NFT.
-    /// If the license is to create an IPA in the future, when registering, this license will be
-    /// bound to the IPA.
-    /// @param params_ RegistryAddition params
-    /// @param licensee_ address of the licensee (and owner of the NFT)
-    function addTradeableLicense(
-        Licensing.RegistryAddition memory params_,
-        address licensee_
-    ) 
-        external
-        onlyLicensingModule
-        onlyActiveOrPending(params_.status)
-        returns (uint256)
-    {
-        _addLicense(
-            Licensing.License({
-                isCommercial: params_.isCommercial,
-                status: params_.status,
-                licenseeType: Licensing.LicenseeType.LNFTHolder,
-                licensor: params_.licensor,
-                revoker: params_.revoker,
-                ipOrg: params_.ipOrg,
-                termIds: params_.termIds,
-                termsData: params_.termsData,
-                ipaId: 0,
-                parentLicenseId: params_.parentLicenseId
-            })
-        );
-        _mint(licensee_, _licenseCount);
-        return _licenseCount;
-    }
-
-    function _addLicense(
-        Licensing.License memory license_
-    ) private returns (uint256) {
-        // Note: Valid parent license must be checked in Licensing module
-        _licenses[++_licenseCount] = license_;
-        emit LicenseRegistered(_licenseCount);
-        return _licenseCount;
+        Licensing.LicenseData storage parent = _licenses[parentLicenseId_];
+        uint256 licenseId = ++_licenseCount;
+        _licenses[licenseId] = parent;
+        _licenses[licenseId].parentLicenseId = parentLicenseId_;
+        _licenses[licenseId].licensor = licensor_;
+        _licenses[licenseId].ipaId = ipaId_;
+        if (parent.derivativeNeedsApproval) {
+            _licenses[licenseId].status = Licensing.LicenseStatus.PendingLicensorApproval;
+        }
+        _licenseParams[licenseId] = _licenseParams[parentLicenseId_];
+        _mint(licensee_, licenseId);
+        emit LicenseRegistered(licenseId);
+        return licenseId;
     }
 
     /// Gets License struct for input id
-    function getLicense(
+    function getLicenseData(
         uint256 id_
-    ) external view returns (Licensing.License memory) {
-        return _licenses[id_];
+    ) public view returns (Licensing.LicenseData memory) {
+        Licensing.LicenseData storage license = _licenses[id_];
+        if (license.status == Licensing.LicenseStatus.Unset) {
+            revert Errors.LicenseRegistry_UnknownLicenseId();
+        }
+        return license;
     }
 
     /// Gets the address granting a license, by id
@@ -157,40 +186,58 @@ contract LicenseRegistry is ERC721 {
     /// @param id_ of the license
     /// @return licensee address, NFT owner if the license is tradeable, or IPA owner if bound to IPA
     function getLicensee(uint256 id_) external view returns (address) {
-        Licensing.License storage license = _licenses[id_];
-        if (license.licenseeType == Licensing.LicenseeType.Unset) {
-            revert Errors.LicenseRegistry_UnknownLicenseId();
-        } else if (license.licenseeType == Licensing.LicenseeType.BoundToIpa) {
-            return IPA_REGISTRY.ipAssetOwner(license.ipaId);
-        } else {
-            return ownerOf(id_);
-        }
+        return ownerOf(id_);
     }
 
-    /// Burns a license NFT and binds the license to an IPA
+    function getRevoker(uint256 id_) external view returns (address) {
+        return _licenses[id_].revoker;
+    }
+
+    function getIPOrg(uint256 id_) external view returns (address) {
+        return _licenses[id_].ipOrg;
+    }
+
+    function getIpaId(uint256 id_) external view returns (uint256) {
+        return _licenses[id_].ipaId;
+    }
+
+    function getParentLicenseId(uint256 id_) external view returns (uint256) {
+        return _licenses[id_].parentLicenseId;
+    }
+
+    function isReciprocal(uint256 id_) external view returns (bool) {
+        return _licenses[id_].isReciprocal;
+    }
+
+    function derivativeNeedsApproval(uint256 id_) external view returns (bool) {
+        return _licenses[id_].derivativeNeedsApproval;
+    }
+
+    function getParams(uint256 id_) external view returns (Licensing.ParamValue[] memory) {
+        return _licenseParams[id_];
+    }
+
+    /// Links the license to an IPA
     /// @param licenseId_ id of the license NFT
     /// @param ipaId_ id of the IPA
-    function bindLnftToIpa(
+    function linkLnftToIpa(
         uint256 licenseId_,
         uint256 ipaId_
-    ) external onlyLicensingModule {
-        Licensing.License memory license_ = _licenses[licenseId_];
-        if (license_.licenseeType != Licensing.LicenseeType.LNFTHolder) {
-            revert Errors.LicenseRegistry_NotLicenseNFT();
-        }
-        _licenses[licenseId_].licenseeType = Licensing.LicenseeType.BoundToIpa;
-        _licenses[licenseId_].ipaId = ipaId_;
-        _burn(licenseId_);
-        emit LicenseNftBoundedToIpa(licenseId_, ipaId_);
+    ) public onlyLicensingModuleOrLicensee(licenseId_) {
+        _linkNftToIpa(licenseId_, ipaId_);
     }
 
     /// Checks if a license is active. If an ancestor is not active, the license is not active
-    /// NOTE: this method needs to be optimized, or moved to a merkle tree/scalability solution
+    /// NOTE: this method is for alpha/illustration purposes.
+    // It's implementation will require a scalability solution
     function isLicenseActive(uint256 licenseId_) public view returns (bool) {
-        // NOTE: should IPA status check this?
         if (licenseId_ == 0) return false;
         while (licenseId_ != 0) {
-            if (_licenses[licenseId_].status != Licensing.LicenseStatus.Active)
+            if (
+                _licenses[licenseId_].status == Licensing.LicenseStatus.PendingLicensorApproval ||
+                _licenses[licenseId_].status == Licensing.LicenseStatus.Unset ||
+                _licenses[licenseId_].status == Licensing.LicenseStatus.Revoked
+            )
                 return false;
             licenseId_ = _licenses[licenseId_].parentLicenseId;
         }
@@ -199,13 +246,15 @@ contract LicenseRegistry is ERC721 {
 
     /// Called by the licensing module to activate a license, after all the activation terms pass
     /// @param licenseId_ id of the license
-    function activateLicense(uint256 licenseId_) external onlyLicensingModule {
-        if (_licenses[licenseId_].status != Licensing.LicenseStatus.Pending) {
-            revert Errors.LicenseRegistry_LicenseNotPending();
-        }
-        _licenses[licenseId_].status = Licensing.LicenseStatus.Active;
-        // TODO: change IPA status
-        emit LicenseActivated(licenseId_);
+    function activateLicense(
+        uint256 licenseId_,
+        address caller_
+    ) external onlyLicensingModule {
+        _activateLicense(licenseId_, caller_);
+    }
+
+    function activateLicense(uint256 licenseId_) external {
+        _activateLicense(licenseId_, msg.sender);
     }
 
     /// Revokes a license, making it incactive. Only the revoker can do this.
@@ -218,5 +267,40 @@ contract LicenseRegistry is ERC721 {
         _licenses[licenseId_].status = Licensing.LicenseStatus.Revoked;
         // TODO: change IPA status
         emit LicenseRevoked(licenseId_);
+    }
+
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        // TODO
+        return "";
+    }
+
+    function _linkNftToIpa(
+        uint256 licenseId_,
+        uint256 ipaId_
+    ) private onlyActive(licenseId_) {
+        if (IPA_REGISTRY.status(ipaId_) != 1) {
+            revert Errors.LicenseRegistry_IPANotActive();
+        }
+        if (_licenses[licenseId_].ipaId != 0) {
+            revert Errors.LicenseRegistry_LicenseAlreadyLinkedToIpa();
+        }
+        _licenses[licenseId_].ipaId = ipaId_;
+        emit LicenseNftLinkedToIpa(licenseId_, ipaId_);
+    }
+
+    function _activateLicense(uint256 licenseId_, address caller_) private {
+        Licensing.LicenseData storage license = _licenses[licenseId_];
+        if (caller_ != license.licensor) {
+            revert Errors.LicenseRegistry_CallerNotLicensor();
+        }
+        if (license.status != Licensing.LicenseStatus.PendingLicensorApproval) {
+            revert Errors.LicenseRegistry_LicenseNotPendingApproval();
+        }
+        if (!isLicenseActive(license.parentLicenseId)) {
+            revert Errors.LicenseRegistry_ParentLicenseNotActive();
+        }
+        license.status = Licensing.LicenseStatus.Active;
+        // TODO: change IPA status
+        emit LicenseActivated(licenseId_);
     }
 }

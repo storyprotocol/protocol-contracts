@@ -15,6 +15,7 @@ import { MockIPOrgController } from "./mocks/MockIPOrgController.sol";
 import { BaseModule } from "contracts/modules/base/BaseModule.sol";
 import { RegistrationModule } from "contracts/modules/registration/RegistrationModule.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
+import { LicensingFrameworkRepo } from "contracts/modules/licensing/LicensingFrameworkRepo.sol";
 import 'test/foundry/utils/ProxyHelper.sol';
 import "forge-std/Test.sol";
 
@@ -41,6 +42,7 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
     IPAssetRegistry public registry;
     IPOrgController public ipOrgController;
     ModuleRegistry public moduleRegistry;
+    LicensingFrameworkRepo public licensingFrameworkRepo;
     IPOrg public ipOrg;
 
     uint256 internal ipOrgOwnerPk = 0xa11ce;
@@ -66,9 +68,14 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
                 )
             )
         );
-        _grantRole(vm, AccessControl.MODULE_EXECUTOR_ROLE, address(address(ipOrgController)));
+        _grantRole(vm, AccessControl.MODULE_EXECUTOR_ROLE, address(ipOrgController));
 
-        licenseRegistry = new LicenseRegistry(address(registry), address(moduleRegistry));
+        licensingFrameworkRepo = new LicensingFrameworkRepo(address(accessControl));
+        licenseRegistry = new LicenseRegistry(
+            address(registry),
+            address(moduleRegistry),
+            address(licensingFrameworkRepo)
+        );
         registrationModule = new RegistrationModule(
             BaseModule.ModuleConstruction({
                 ipaRegistry: registry,

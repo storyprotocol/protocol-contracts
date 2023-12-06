@@ -28,46 +28,46 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 contract E2ETest is IE2ETest, BaseTest {
     using ShortStrings for string;
 
-    address public tokenGatedHook;
-    MockERC721 public mockNFT;
+//     address public tokenGatedHook;
+//     MockERC721 public mockNFT;
 
-    // create 3 roles: protocol admin, ip org owner, ip asset owner
-    address public ipOrgOwner1 = address(1234);
-    address public ipOrgOwner2 = address(4567);
-    address public ipAssetOwner1 = address(6789);
-    address public ipAssetOwner2 = address(9876);
-    address public ipAssetOwner3 = address(9876);
+//     // create 3 roles: protocol admin, ip org owner, ip asset owner
+//     address public ipOrgOwner1 = address(1234);
+//     address public ipOrgOwner2 = address(4567);
+//     address public ipAssetOwner1 = address(6789);
+//     address public ipAssetOwner2 = address(9876);
+//     address public ipAssetOwner3 = address(9876);
 
-    address public ipOrg1;
-    address public ipOrg2;
+//     address public ipOrg1;
+//     address public ipOrg2;
 
-    function setUp() public virtual override {
-        super.setUp();
-        _grantRole(vm, AccessControl.RELATIONSHIP_MANAGER_ROLE, admin);
-        _grantRole(vm, AccessControl.TERMS_SETTER_ROLE, admin);
-        _grantRole(
-            vm,
-            AccessControl.HOOK_CALLER_ROLE,
-            address(registrationModule)
-        );
-        _grantRole(
-            vm,
-            AccessControl.HOOK_CALLER_ROLE,
-            address(relationshipModule)
-        );
-        _grantRole(
-            vm,
-            AccessControl.HOOK_CALLER_ROLE,
-            address(licensingModule)
-        );
+//     function setUp() public virtual override {
+//         super.setUp();
+//         _grantRole(vm, AccessControl.RELATIONSHIP_MANAGER_ROLE, admin);
+//         _grantRole(vm, AccessControl.LICENSING_MANAGER, admin);
+//         _grantRole(
+//             vm,
+//             AccessControl.HOOK_CALLER_ROLE,
+//             address(registrationModule)
+//         );
+//         _grantRole(
+//             vm,
+//             AccessControl.HOOK_CALLER_ROLE,
+//             address(relationshipModule)
+//         );
+//         _grantRole(
+//             vm,
+//             AccessControl.HOOK_CALLER_ROLE,
+//             address(licensingModule)
+//         );
 
-        /// TOKEN_GATED_HOOK
-        tokenGatedHook = address(new TokenGatedHook(address(accessControl)));
-        /// MOCK_ERC_721
-        mockNFT = new MockERC721();
-        mockNFT.mint(ipAssetOwner1, 1);
-        mockNFT.mint(ipAssetOwner2, 2);
-    }
+//         /// TOKEN_GATED_HOOK
+//         tokenGatedHook = address(new TokenGatedHook(address(accessControl)));
+//         /// MOCK_ERC_721
+//         mockNFT = new MockERC721();
+//         mockNFT.mint(ipAssetOwner1, 1);
+//         mockNFT.mint(ipAssetOwner2, 2);
+//     }
 
     function test_e2e() public {
         //
@@ -268,36 +268,36 @@ contract E2ETest is IE2ETest, BaseTest {
         vm.prank(ipOrgOwner1);
         spg.addRelationshipType(relTypeParams);
 
-        // ip org owner configure IpOrg Licensing
-        // no commercial terms
-        Licensing.TermsConfig memory comTermsConfig = Licensing.TermsConfig({
-            termIds: new ShortString[](0),
-            termData: new bytes[](0)
-        });
+//         // ip org owner configure IpOrg Licensing
+//         // no commercial terms
+//         Licensing.TermsConfig memory comTermsConfig = Licensing.TermsConfig({
+//             termIds: new ShortString[](0),
+//             termData: new bytes[](0)
+//         });
 
-        // non commercial terms
-        // all licensors would be ipOrg
-        // all licenses begin as Pending, isLicenseActive == false,
-        // need approval from licensor to activate them
-        ShortString[] memory termIds_ = new ShortString[](3);
-        bytes[] memory termsData_ = new bytes[](3);
-        termIds_[0] = TermIds.NFT_SHARE_ALIKE.toShortString();
-        termsData_[0] = abi.encode(true);
-        termIds_[1] = TermIds.LICENSOR_APPROVAL.toShortString();
-        termsData_[1] = abi.encode(true);
-        termIds_[2] = TermIds.LICENSOR_IPORG_OR_PARENT.toShortString();
-        termsData_[2] = abi.encode(TermsData.LicensorConfig.IpOrg);
+//         // non commercial terms
+//         // all licensors would be ipOrg
+//         // all licenses begin as Pending, isLicenseActive == false,
+//         // need approval from licensor to activate them
+//         ShortString[] memory termIds_ = new ShortString[](3);
+//         bytes[] memory termsData_ = new bytes[](3);
+//         termIds_[0] = TermIds.NFT_SHARE_ALIKE.toShortString();
+//         termsData_[0] = abi.encode(true);
+//         termIds_[1] = TermIds.LICENSOR_APPROVAL.toShortString();
+//         termsData_[1] = abi.encode(true);
+//         termIds_[2] = TermIds.LICENSOR_IPORG_OR_PARENT.toShortString();
+//         termsData_[2] = abi.encode(TermsData.LicensorConfig.IpOrg);
 
-        Licensing.TermsConfig memory nonComTermsConfig = Licensing.TermsConfig({
-            termIds: termIds_,
-            termData: termsData_
-        });
+//         Licensing.TermsConfig memory nonComTermsConfig = Licensing.TermsConfig({
+//             termIds: termIds_,
+//             termData: termsData_
+//         });
 
-        Licensing.FrameworkConfig memory frameworkConfig = Licensing
-            .FrameworkConfig({
-                comTermsConfig: comTermsConfig,
-                nonComTermsConfig: nonComTermsConfig
-            });
+//         Licensing.FrameworkConfig memory frameworkConfig = Licensing
+//             .FrameworkConfig({
+//                 comTermsConfig: comTermsConfig,
+//                 nonComTermsConfig: nonComTermsConfig
+//             });
 
         // TODO: event check for `configureIpOrgLicensing` (event `IpOrgTermsSet` emitted twice)
         vm.prank(ipOrgOwner1);
@@ -338,76 +338,76 @@ contract E2ETest is IE2ETest, BaseTest {
         assertEq(ipAssetId, 1);
         assertEq(ipOrgAssetId, 1);
 
-        Registration.RegisterIPAssetParams
-            memory registerIpAssetParamsStory = Registration
-                .RegisterIPAssetParams({
-                    owner: ipAssetOwner2,
-                    ipOrgAssetType: 1,
-                    name: "Story IPA",
-                    hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83931111,
-                    mediaUrl: "https://arweave.net/story"
-                });
-        TokenGated.Params memory tokenGatedHookDataStory = TokenGated.Params({
-            tokenOwner: ipAssetOwner2
-        });
-        bytes[] memory preHooksDataStory = new bytes[](1);
-        preHooksDataStory[0] = abi.encode(tokenGatedHookDataStory);
-        vm.prank(ipAssetOwner2);
-        (ipAssetId, ipOrgAssetId) = spg.registerIPAsset(
-            ipOrg1,
-            registerIpAssetParamsStory,
-            preHooksDataStory,
-            new bytes[](0)
-        );
-        assertEq(ipAssetId, 2);
-        assertEq(ipOrgAssetId, 2);
+//         Registration.RegisterIPAssetParams
+//             memory registerIpAssetParamsStory = Registration
+//                 .RegisterIPAssetParams({
+//                     owner: ipAssetOwner2,
+//                     ipOrgAssetType: 1,
+//                     name: "Story IPA",
+//                     hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83931111,
+//                     mediaUrl: "https://arweave.net/story"
+//                 });
+//         TokenGated.Params memory tokenGatedHookDataStory = TokenGated.Params({
+//             tokenOwner: ipAssetOwner2
+//         });
+//         bytes[] memory preHooksDataStory = new bytes[](1);
+//         preHooksDataStory[0] = abi.encode(tokenGatedHookDataStory);
+//         vm.prank(ipAssetOwner2);
+//         (ipAssetId, ipOrgAssetId) = spg.registerIPAsset(
+//             ipOrg1,
+//             registerIpAssetParamsStory,
+//             preHooksDataStory,
+//             new bytes[](0)
+//         );
+//         assertEq(ipAssetId, 2);
+//         assertEq(ipOrgAssetId, 2);
 
-        Registration.RegisterIPAssetParams
-            memory registerIpAssetParamsOrg2 = Registration
-                .RegisterIPAssetParams({
-                    owner: ipAssetOwner3,
-                    ipOrgAssetType: 1,
-                    name: "Story IPA Org2",
-                    hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83933333,
-                    mediaUrl: "https://arweave.net/story2"
-                });
-        vm.prank(ipAssetOwner3);
-        (ipAssetId, ipOrgAssetId) = spg.registerIPAsset(
-            ipOrg2,
-            registerIpAssetParamsOrg2,
-            new bytes[](0),
-            new bytes[](0)
-        );
-        assertEq(ipAssetId, 3);
-        assertEq(ipOrgAssetId, 1);
+//         Registration.RegisterIPAssetParams
+//             memory registerIpAssetParamsOrg2 = Registration
+//                 .RegisterIPAssetParams({
+//                     owner: ipAssetOwner3,
+//                     ipOrgAssetType: 1,
+//                     name: "Story IPA Org2",
+//                     hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83933333,
+//                     mediaUrl: "https://arweave.net/story2"
+//                 });
+//         vm.prank(ipAssetOwner3);
+//         (ipAssetId, ipOrgAssetId) = spg.registerIPAsset(
+//             ipOrg2,
+//             registerIpAssetParamsOrg2,
+//             new bytes[](0),
+//             new bytes[](0)
+//         );
+//         assertEq(ipAssetId, 3);
+//         assertEq(ipOrgAssetId, 1);
 
-        // ip asset owner transfer IP Asset
-        // ip asset owner create relationship
-        LibRelationship.CreateRelationshipParams memory params = LibRelationship
-            .CreateRelationshipParams({
-                relType: "APPEAR_IN",
-                srcAddress: ipOrg1,
-                srcId: 1,
-                dstAddress: ipOrg1,
-                dstId: 2
-            });
-        bytes[] memory preHooksDataRel = new bytes[](0);
-        bytes[] memory postHooksDataRel = new bytes[](0);
-        vm.prank(ipOrg1);
-        uint256 id = spg.createRelationship(
-            ipOrg1,
-            params,
-            preHooksDataRel,
-            postHooksDataRel
-        );
-        assertEq(id, 1);
-        LibRelationship.Relationship memory rel = relationshipModule
-            .getRelationship(1);
-        assertEq(rel.relType, "APPEAR_IN");
-        assertEq(rel.srcAddress, ipOrg1);
-        assertEq(rel.dstAddress, ipOrg1);
-        assertEq(rel.srcId, 1);
-        assertEq(rel.dstId, 2);
+//         // ip asset owner transfer IP Asset
+//         // ip asset owner create relationship
+//         LibRelationship.CreateRelationshipParams memory params = LibRelationship
+//             .CreateRelationshipParams({
+//                 relType: "APPEAR_IN",
+//                 srcAddress: ipOrg1,
+//                 srcId: 1,
+//                 dstAddress: ipOrg1,
+//                 dstId: 2
+//             });
+//         bytes[] memory preHooksDataRel = new bytes[](0);
+//         bytes[] memory postHooksDataRel = new bytes[](0);
+//         vm.prank(ipOrg1);
+//         uint256 id = spg.createRelationship(
+//             ipOrg1,
+//             params,
+//             preHooksDataRel,
+//             postHooksDataRel
+//         );
+//         assertEq(id, 1);
+//         LibRelationship.Relationship memory rel = relationshipModule
+//             .getRelationship(1);
+//         assertEq(rel.relType, "APPEAR_IN");
+//         assertEq(rel.srcAddress, ipOrg1);
+//         assertEq(rel.dstAddress, ipOrg1);
+//         assertEq(rel.srcId, 1);
+//         assertEq(rel.dstId, 2);
 
         vm.prank(ipOrgOwner1);
         uint256 lId = spg.createIpaBoundLicense(

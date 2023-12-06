@@ -5,7 +5,7 @@ import { Collect } from "contracts/lib/modules/Collect.sol";
 
 /// @title Collect Module Interface
 /// @notice The collect module enables IP assets to be minted as NFTs mirroring
-///         their binding IP assets in a franchise-configurable format.
+///         their linking IP assets in a franchise-configurable format.
 interface ICollectModule {
 
     /// @dev Emits when a Collect action is invoked.
