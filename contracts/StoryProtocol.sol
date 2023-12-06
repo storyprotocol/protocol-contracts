@@ -156,6 +156,7 @@ contract StoryProtocol is Multicall {
     //                            Relationships                               //
     ////////////////////////////////////////////////////////////////////////////
 
+
     function addRelationshipType(
         LibRelationship.AddRelationshipTypeParams calldata params_
     ) external {
@@ -245,7 +246,9 @@ contract StoryProtocol is Multicall {
         return abi.decode(result, (uint256));
     }
 
-
+    /// Activates a license that's Pending Approval
+    /// @param ipOrg_ the ipOrg address
+    /// @param licenseId_ the license id
     function activateLicense(
         address ipOrg_,
         uint256 licenseId_
@@ -263,6 +266,10 @@ contract StoryProtocol is Multicall {
         );
     }
 
+    /// Associates a license with an IPA
+    /// @param ipOrg_ the ipOrg address
+    /// @param licenseId_ the license id
+    /// @param ipaId_ the ipa id
     function linkLnftToIpa(
         address ipOrg_,
         uint256 licenseId_,
@@ -280,5 +287,4 @@ contract StoryProtocol is Multicall {
             new bytes[](0)
         );
     }
-    
 }

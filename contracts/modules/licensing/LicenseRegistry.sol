@@ -14,8 +14,9 @@ import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 
 /// @title LicenseRegistry
 /// @notice This contract is the source of truth for all licenses that are registered in the protocol.
-/// It will only be called by licensing modules.
-/// It should not be upgradeable, so once a license is registered, it will be there forever.
+/// It will only be written by licensing modules.
+/// It should not be upgradeable, so once a license is registered, it will be there forever regardless of 
+/// the ipOrg potentially chaning the licensing framework or Story Protocol doing upgrades.
 /// Licenses can be made invalid by the revoker, according to the terms of the license.
 contract LicenseRegistry is ERC721 {
     using ShortStrings for *;
@@ -31,6 +32,7 @@ contract LicenseRegistry is ERC721 {
 
     /// license Id => LicenseData
     mapping(uint256 => Licensing.LicenseData) private _licenses;
+
     mapping(uint256 => Licensing.ParamValue[]) private _licenseParams;
     /// counter for license Ids
     uint256 private _licenseCount;
@@ -102,9 +104,10 @@ contract LicenseRegistry is ERC721 {
     }
 
     /// Creates a tradeable License NFT.
-    /// If the license is to create an IPA in the future, when registering, this license will be
-    /// bound to the IPA.
     /// @param newLicense_ LicenseData params
+    /// @param licensee_ address of the licensee
+    /// @param values_ array of ParamValue structs
+    /// @return licenseId_ id of the license NFT
     function addLicense(
         Licensing.LicenseData memory newLicense_,
         address licensee_,
@@ -129,6 +132,13 @@ contract LicenseRegistry is ERC721 {
         return licenseId;
     }
 
+    /// Create a Derivate License that is reciprocal (all params are inherited
+    /// from parent license)
+    /// @param parentLicenseId_ id of the parent license
+    /// @param licensor_ address of the licensor
+    /// @param licensee_ address of the licensee
+    /// @param ipaId_ id of the IPA
+    /// @return licenseId_ id of the license NFT
     function addReciprocalLicense(
         uint256 parentLicenseId_,
         address licensor_,
