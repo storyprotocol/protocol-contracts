@@ -32,7 +32,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
     StoryProtocol public spg;
     LicensingFrameworkRepo public licensingFrameworkRepo;
     LicensingModule public licensingModule;
-    LicenseRegistry public licenseRegistry = LicenseRegistry(address(0x123));
+    LicenseRegistry public licenseRegistry;
     RegistrationModule public registrationModule;
 
     address constant upgrader = address(6969);
@@ -75,7 +75,11 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         licensingFrameworkRepo = new LicensingFrameworkRepo(address(accessControl));
         _grantRole(vm, AccessControl.LICENSING_MANAGER, licensingManager);
 
-        // licenseRegistry = new LicenseRegistry(address(registry), address(moduleRegistry));
+        licenseRegistry = new LicenseRegistry(
+            address(registry),
+            address(moduleRegistry),
+            address(licensingFrameworkRepo)
+        );
         licensingModule = new LicensingModule(
             BaseModule.ModuleConstruction({
                 ipaRegistry: registry,

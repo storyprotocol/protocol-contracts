@@ -13,7 +13,6 @@ import { PIPLicensingTerms } from "contracts/lib/modules/PIPLicensingTerms.sol";
 contract LicensingModuleLicensingTest is BaseTest {
     using ShortStrings for *;
 
-    address lnftOwner = address(0x13334);
     address ipaOwner = address(0x13336);
     Licensing.ParamValue[] params;
 
@@ -29,7 +28,7 @@ contract LicensingModuleLicensingTest is BaseTest {
         }));
         params.push(Licensing.ParamValue({
             tag: PIPLicensingTerms.ATTRIBUTION.toShortString(),
-            value: abi.encode("")// unset
+            value: ""// unset
         }));
         params.push(Licensing.ParamValue({
             tag: PIPLicensingTerms.DERIVATIVES_WITH_ATTRIBUTION.toShortString(),
@@ -85,6 +84,7 @@ contract LicensingModuleLicensingTest is BaseTest {
             parentLicenseId: 0,
             ipaId: ipaId
         });
+        vm.prank(ipOrg.owner());
         uint256 licenseId = spg.createLicense(
             address(ipOrg),
             creation,
@@ -92,25 +92,25 @@ contract LicensingModuleLicensingTest is BaseTest {
             new bytes[](0)
         );
         Licensing.LicenseData memory license = licenseRegistry.getLicenseData(licenseId);
-        assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.PendingLicensorApproval));
-        assertEq(license.isReciprocal, true);
-        assertEq(license.derivativeNeedsApproval, true);
+        assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.Used));
+        assertEq(license.isReciprocal, true, "isReciprocal");
+        assertEq(license.derivativeNeedsApproval, true, "derivativeNeedsApproval");
         assertEq(license.revoker, Licensing.ALPHA_REVOKER);
         assertEq(license.licensor, ipOrg.owner());
         assertEq(license.ipOrg, address(ipOrg));
         assertEq(license.frameworkId.toString(), PIPLicensingTerms.FRAMEWORK_ID);
         assertEq(license.ipaId, ipaId);
         assertEq(license.parentLicenseId, 0);
-        _assertParams(licenseId);
-
-    }
-    
-
-    function _assertParams(uint256 licenseId) private view {
         Licensing.ParamValue[] memory lParams = licenseRegistry.getParams(licenseId);
-        for(uint256 i = 0; i < lParams.length; i++) {
-            console2.log(lParams[i].tag.toString());
-        }
+        assertEq(lParams[0].tag.toString(), params[0].tag.toString(), "channel of distribution");
+        assertEq(lParams[0].value, params[0].value);
+        assertEq(lParams[1].tag.toString(), params[1].tag.toString(), "attribution");
+        assertEq(lParams[1].value, inputParams[0].value); // Set by user
+        assertEq(lParams[2].tag.toString(), params[2].tag.toString(), "derivatives with attribution");
+        assertEq(lParams[2].value, params[2].value);
+        assertEq(lParams[3].tag.toString(), params[3].tag.toString(), "derivatives with approval");
+        assertEq(lParams[3].value, params[3].value);
     }
+
 
 }

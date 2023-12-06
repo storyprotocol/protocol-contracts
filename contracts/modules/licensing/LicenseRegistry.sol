@@ -12,6 +12,8 @@ import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortSt
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 
+import "forge-std/console2.sol";
+
 /// @title LicenseRegistry
 /// @notice This contract is the source of truth for all licenses that are registered in the protocol.
 /// It will only be called by licensing modules.
@@ -117,18 +119,24 @@ contract LicenseRegistry is ERC721 {
     {
         // NOTE: check for parent ipa validity is done in
         // the licensing module
-        _licenses[++_licenseCount] = newLicense_;
-        emit LicenseRegistered(_licenseCount);
-        _mint(licensee_, _licenseCount);
+        // console2.log("addLicense ------->");
+        // console2.log("old license count", _licenseCount);
+        uint256 licenseId = ++_licenseCount;
+        // console2.log("licenseId", licenseId);
+        _licenses[licenseId] = newLicense_;
+        emit LicenseRegistered(licenseId);
+        _mint(licensee_, licenseId);
         if (newLicense_.ipaId != 0) {
-            _linkNftToIpa(newLicense_.ipaId, _licenseCount);
+            _linkNftToIpa(newLicense_.ipaId, licenseId);
         }
         uint256 length = values_.length;
-        Licensing.ParamValue[] storage params = _licenseParams[_licenseCount];
+        Licensing.ParamValue[] storage params = _licenseParams[licenseId];
         for (uint256 i; i < length; i++) {
+            // console2.log("param", values_[i].tag.toString());
+            // console2.logBytes(values_[i].value);
             params.push(values_[i]);
         }
-        return _licenseCount;
+        return licenseId;
     }
 
     function addReciprocalLicense(
@@ -144,13 +152,14 @@ contract LicenseRegistry is ERC721 {
             revert Errors.LicenseRegistry_ParentLicenseNotActive();
         }
         Licensing.LicenseData storage parent = _licenses[parentLicenseId_];
-        _licenses[++_licenseCount] = parent;
-        _licenses[_licenseCount].licensor = licensor_;
-        _licenses[_licenseCount].ipaId = ipaId_;
-        _licenseParams[_licenseCount] = _licenseParams[parentLicenseId_];
-        _mint(licensee_, _licenseCount);
-        emit LicenseRegistered(_licenseCount);
-        return _licenseCount;
+        uint256 licenseId = ++_licenseCount;
+        _licenses[licenseId] = parent;
+        _licenses[licenseId].licensor = licensor_;
+        _licenses[licenseId].ipaId = ipaId_;
+        _licenseParams[licenseId] = _licenseParams[parentLicenseId_];
+        _mint(licensee_, licenseId);
+        emit LicenseRegistered(licenseId);
+        return licenseId;
     }
 
     /// Gets License struct for input id
@@ -220,7 +229,11 @@ contract LicenseRegistry is ERC721 {
     function isLicenseActive(uint256 licenseId_) public view returns (bool) {
         if (licenseId_ == 0) return false;
         while (licenseId_ != 0) {
-            if (_licenses[licenseId_].status != Licensing.LicenseStatus.Active)
+            if (
+                _licenses[licenseId_].status == Licensing.LicenseStatus.PendingLicensorApproval ||
+                _licenses[licenseId_].status == Licensing.LicenseStatus.Unset ||
+                _licenses[licenseId_].status == Licensing.LicenseStatus.Revoked
+            )
                 return false;
             licenseId_ = _licenses[licenseId_].parentLicenseId;
         }

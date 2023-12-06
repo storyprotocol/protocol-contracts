@@ -13,6 +13,7 @@ import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { PIPLicensingTerms } from "contracts/lib/modules/PIPLicensingTerms.sol";
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 
+
 /// @title Licensing module
 /// @notice Story Protocol module that:
 /// - Enables each IP Org to select a licensing framework fron LicensingFrameworkRepo
@@ -179,64 +180,66 @@ contract LicensingModule is BaseModule {
         Licensing.LicenseCreation memory input,
         string memory frameworkId_
     ) private returns (uint256) {
-        
         uint256 inputLength = input.params.length;
-        
         // Get all param tags from framework
-        Licensing.ParamDefinition[] memory supportedParams = LICENSING_FRAMEWORK_REPO.getParameterDefs(
-            frameworkId_
-        );
+        Licensing.ParamDefinition[]
+            memory supportedParams = LICENSING_FRAMEWORK_REPO.getParameterDefs(
+                frameworkId_
+            );
         uint256 supportedLength = supportedParams.length;
-        Licensing.ParamValue[] memory licenseParams = new Licensing.ParamValue[](supportedLength);
+
+        Licensing.ParamValue[]
+            memory licenseParams = new Licensing.ParamValue[](supportedLength);
         bool isReciprocal;
         bool derivativeNeedsApproval;
-        mapping(ShortString => bytes) storage _defaultValues = _ipOrgParamValues[ipOrg_];
-        
+        mapping(ShortString => bytes)
+            storage _defaultValues = _ipOrgParamValues[ipOrg_];
+
         // First, get ipOrg defaults
         for (uint256 i = 0; i < supportedLength; i++) {
             // For every supported parameter
-            // Get the default value
             Licensing.ParamDefinition memory paramDef = supportedParams[i];
+            // Get the default value set by ipOrg
             bytes memory defaultValue = _defaultValues[paramDef.tag];
-            bytes memory resultValue;
+            // Find if user has provided a value for this param
+            bytes memory inputValue;
             for (uint256 j = 0; j < inputLength; j++) {
-                // For every user input parameter
                 Licensing.ParamValue memory inputParam = input.params[j];
-                if (!ShortStringOps._equal(inputParam.tag, paramDef.tag)) {
-                    continue;
-                } else {
-                    if (inputParam.value.length > 0) {
-                        // If user has set it, but ipOrg has too, revert
-                        if (defaultValue.length > 0) {
-                            revert Errors.LicensingModule_ParamSetByIpOrg();
-                        }
-                        // If user has set it and ipOrg has not, user value selected
-                        if (!Licensing._validateParamValue(paramDef.paramType, inputParam.value)) {
-                            // hoping to catch some bad encoding
-                            revert Errors.LicensingModule_InvalidInputValue();
-                        }
-                        resultValue = inputParam.value;
-                    } else if (defaultValue.length > 0) {
-                        // If user has not set it, but ipOrg has, use ipOrg value
-                        resultValue = defaultValue;
-                    }
+                if (ShortStringOps._equal(inputParam.tag, paramDef.tag)) {
+                    inputValue = inputParam.value;
+                    break;
                 }
             }
-            // Set value in license
+            // Decide which value to use
+            bytes memory resultValue = _decideUserOrDefault(
+                inputValue,
+                defaultValue,
+                paramDef.paramType
+            );
+
+            // Set value in license params
             licenseParams[i] = Licensing.ParamValue(paramDef.tag, resultValue);
-            if (ShortStringOps._equal(
-                paramDef.tag,
-                PIPLicensingTerms.DERIVATIVES_WITH_RECIPROCAL_LICENSE
-            )) {
+            if (keccak256(resultValue) == keccak256("")) {
+                continue;
+            }
+            // If param is not empty, check for Derivative license flags
+            if (
+                ShortStringOps._equal(
+                    paramDef.tag,
+                    PIPLicensingTerms.DERIVATIVES_WITH_RECIPROCAL_LICENSE
+                )
+            ) {
                 isReciprocal = abi.decode(resultValue, (bool));
-            } else if (ShortStringOps._equal(
-                paramDef.tag,
-                PIPLicensingTerms.DERIVATIVES_WITH_APPROVAL
-            )) {
+            } else if (
+                ShortStringOps._equal(
+                    paramDef.tag,
+                    PIPLicensingTerms.DERIVATIVES_WITH_APPROVAL
+                )
+            ) {
                 derivativeNeedsApproval = abi.decode(resultValue, (bool));
             }
         }
-
+        // Create license
         Licensing.LicenseData memory newLicense = Licensing.LicenseData({
             status: Licensing.LicenseStatus.Active,
             isReciprocal: isReciprocal,
@@ -249,6 +252,27 @@ contract LicensingModule is BaseModule {
             parentLicenseId: input.parentLicenseId
         });
         return LICENSE_REGISTRY.addLicense(newLicense, caller_, licenseParams);
+    }
+
+    function _decideUserOrDefault(
+        bytes memory inputValue,
+        bytes memory defaultValue,
+        Licensing.ParameterType paramType
+    ) private pure returns (bytes memory) {
+        if (inputValue.length > 0) {
+            // If user has set it, but ipOrg has too, revert
+            if (defaultValue.length > 0) {
+                revert Errors.LicensingModule_ParamSetByIpOrg();
+            }
+            // If user has set it and ipOrg has not, user value selected
+            if (!Licensing._validateParamValue(paramType, inputValue)) {
+                // hoping to catch some bad encoding
+                revert Errors.LicensingModule_InvalidInputValue();
+            }
+            return inputValue;
+        } else {
+            return defaultValue;
+        }
     }
 
     /// Gets the licensor address for this IPA.
@@ -340,6 +364,7 @@ contract LicensingModule is BaseModule {
         }
 
         _licensorConfig[ipOrgAddress] = config.licensor;
+        _ipOrgFrameworkIds[ipOrgAddress] = config.frameworkId;
 
         mapping(ShortString => bytes) storage paramValues = _ipOrgParamValues[
             ipOrgAddress

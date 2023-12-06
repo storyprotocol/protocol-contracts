@@ -120,6 +120,7 @@ library Licensing {
         }
         if (pType == Licensing.ParameterType.Bool) {
             abi.decode(value, (bool));
+            return true;
         } else if (pType == Licensing.ParameterType.Number) {
             if (abi.decode(value, (uint256)) == 0) {
                 return false;
