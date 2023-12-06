@@ -3,214 +3,167 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "test/foundry/utils/BaseTest.sol";
-import "contracts/modules/relationships/RelationshipModule.sol";
-import "contracts/lib/modules/LibRelationship.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
-import { TermCategories, TermIds } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
-import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
-import { BaseLicensingTest, LicTestConfig } from "./BaseLicensingTest.sol";
+import { BaseTest } from "test/foundry/utils/BaseTest.sol";
+import { Errors } from "contracts/lib/Errors.sol";
+import { PIPLicensingTerms } from "contracts/lib/modules/PIPLicensingTerms.sol";
 
-contract LicensingModuleLicensingTest is BaseLicensingTest {
+contract LicensingModuleLicensingTest is BaseTest {
     using ShortStrings for *;
 
-    address lnftOwner = address(0x13334);
-    address ipaOwner2 = address(0x13336);
+    address ipaOwner = address(0x13336);
+    Licensing.ParamValue[] params;
 
-    uint256 rootIpaId;
+    uint256 ipaId;
+
+    modifier withFrameworkConfig(bool derivativesWithApproval, bool reciprocal, Licensing.LicensorConfig licensorConfig) {
+        ShortString[] memory channels = new ShortString[](2);
+        channels[0] = "test1".toShortString();
+        channels[1] = "test2".toShortString();
+        params.push(Licensing.ParamValue({
+            tag: PIPLicensingTerms.CHANNELS_OF_DISTRIBUTION.toShortString(),
+            value: abi.encode(channels)
+        }));
+        params.push(Licensing.ParamValue({
+            tag: PIPLicensingTerms.ATTRIBUTION.toShortString(),
+            value: ""// unset
+        }));
+        params.push(Licensing.ParamValue({
+            tag: PIPLicensingTerms.DERIVATIVES_WITH_ATTRIBUTION.toShortString(),
+            value: abi.encode(true)
+        }));
+        params.push(Licensing.ParamValue({
+            tag: PIPLicensingTerms.DERIVATIVES_WITH_APPROVAL.toShortString(),
+            value: abi.encode(derivativesWithApproval)
+        }));
+        params.push(Licensing.ParamValue({
+            tag: PIPLicensingTerms.DERIVATIVES_WITH_RECIPROCAL_LICENSE.toShortString(),
+            value: abi.encode(reciprocal)
+        }));
+       
+        Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
+            frameworkId: PIPLicensingTerms.FRAMEWORK_ID,
+            params: params,
+            licensor: licensorConfig
+        });
+        vm.prank(ipOrg.owner());
+        spg.configureIpOrgLicensing(
+            address(ipOrg),
+            config
+        );
+        _;
+    }
 
     function setUp() public override {
         super.setUp();
-        (rootIpaId, ) = _createIpAsset(ipaOwner, 1, bytes(""));
-    }
+        (ipaId, ) = _createIpAsset(ipaOwner, 1, bytes(""));
 
-    function test_LicensingModule_createNonCommercialIpaBoundLicense_licensorIpOrg()
-        public
-        withNonCommFramework(LicTestConfig({
-            shareAlike: true,
-            licConfig: TermsData.LicensorConfig.IpOrg,
-            needsActivation: false
-        }))
-    {
-        vm.prank(ipOrg.owner());
-        uint256 lId = spg.createIpaBoundLicense(
-            address(ipOrg),
-            Licensing.LicenseCreation({
-                parentLicenseId: 0,
-                isCommercial: false
-            }),
-            rootIpaId,
-            new bytes[](0),
-            new bytes[](0)
-        );
-        Licensing.License memory license = licenseRegistry.getLicense(lId);
-        assertFalse(license.isCommercial, "commercial");
-        assertEq(license.revoker, ipOrg.owner(), "revoker is iporg");
-        assertEq(license.licensor, ipOrg.owner(), "licensor is owner is iporg");
-        assertEq(licenseRegistry.isLicenseActive(lId), true, "license is active");
-        assertEq(licenseRegistry.getLicensee(lId), ipaOwner, "licensee is ipa owner");
-        assertTerms(license);
-        assertEq(license.ipaId, rootIpaId);
-    }
-
-    function test_LicensingModule_createCommercialLicense_licensorPrevious()
-        public
-        withCommFramework(LicTestConfig({
-            shareAlike: true,
-            licConfig: TermsData.LicensorConfig.ParentLicensee,
-            needsActivation: false
-        }))
-    {
-        vm.prank(ipOrg.owner());
-        uint256 lId = spg.createIpaBoundLicense(
-            address(ipOrg),
-            Licensing.LicenseCreation({
-                parentLicenseId: 0,
-                isCommercial: true
-            }),
-            rootIpaId,
-            new bytes[](0),
-            new bytes[](0)
-        );
-        Licensing.License memory license = licenseRegistry.getLicense(lId);
-        assertTrue(license.isCommercial, "is commercial");
-        assertEq(license.licensor,  ipaOwner, "licensor is ipaOwner");
-
-        uint256 lId2 = spg.createLicenseNft(
-            address(ipOrg),
-            Licensing.LicenseCreation({
-                parentLicenseId: lId,
-                isCommercial: true
-            }),
-            lnftOwner,
-            new bytes[](0),
-            new bytes[](0)
-        );
-        Licensing.License memory license2 = licenseRegistry.getLicense(lId2);
-        assertEq(license2.licensor,  licenseRegistry.getLicensee(lId), "licensor is parent licensee");
-        assertEq(license2.parentLicenseId, lId, "parent is first license");
-        assertEq(license2.ipaId, 0, "no ipa id");
-        assertEq(licenseRegistry.getLicensee(lId2), lnftOwner, "licensee is lnft owner");
-
-    }
-
-
-    function test_LicensingModule_terms_revert_shareAlikeOff_LicensorApproval_ActivateAndBound()
-        public
-        withNonCommFramework(LicTestConfig({
-            shareAlike: false,
-            licConfig: TermsData.LicensorConfig.ParentLicensee,
-            needsActivation: true
-        }))
-    {
-        
-        // First derivative should work
-        console2.log("First derivative should work");
-        vm.startPrank(ipaOwner);
-        uint256 lid1 = spg.createIpaBoundLicense(
-            address(ipOrg),
-            Licensing.LicenseCreation({
-                parentLicenseId: 0,
-                isCommercial: false
-            }),
-            1,
-            new bytes[](0),
-            new bytes[](0)
-        );
-        assertEq(lid1, 1);
-        assertEq(licenseRegistry.isLicenseActive(lid1), false);
-        spg.activateLicense(address(ipOrg), lid1);
-        assertEq(licenseRegistry.isLicenseActive(lid1), true);
-        vm.stopPrank();
-
-        // Second derivative should fail
-        console2.log("Second derivative should fail");
-        vm.startPrank(ipaOwner2);
-        vm.expectRevert(Errors.LicensingModule_ShareAlikeDisabled.selector);
-        uint256 lid2 = spg.createIpaBoundLicense(
-            address(ipOrg),
-            Licensing.LicenseCreation({
-                parentLicenseId: lid1,
-                isCommercial: false
-            }),
-            1,
-            new bytes[](0),
-            new bytes[](0)
-        );
-        vm.stopPrank();
-
-        // But original ipa owner can emit a license 
-        console2.log("But original ipa owner can emit a license");
-        vm.prank(ipaOwner);
-        lid2 = spg.createLicenseNft(
-            address(ipOrg),
-            Licensing.LicenseCreation({
-                parentLicenseId: lid1,
-                isCommercial: false
-            }),
-            ipaOwner,
-            new bytes[](0),
-            new bytes[](0)
-        );
-        // License is not active
-        console2.log("License is not active");
-        Licensing.License memory license2 = licenseRegistry.getLicense(lid2);
-        assertEq(uint8(license2.status), uint8(Licensing.LicenseStatus.Pending));
-        assertFalse(licenseRegistry.isLicenseActive(lid2));
-        assertEq(licenseRegistry.ownerOf(lid2), ipaOwner);
-        assertEq(licenseRegistry.getLicensee(lid2), ipaOwner);
-        assertEq(uint8(license2.licenseeType), uint8(Licensing.LicenseeType.LNFTHolder));
-
-        // transfer license to other guy
-        console2.log("transfer license to other guy");
-        vm.prank(ipaOwner);
-        licenseRegistry.transferFrom(ipaOwner, ipaOwner2, lid2);
-        assertEq(licenseRegistry.ownerOf(lid2), ipaOwner2);
-        assertEq(licenseRegistry.getLicensee(lid2), ipaOwner2);
-        // Fail to bound if not active
-        console2.log("Fail to bound if not active");
-        vm.expectRevert();
-        spg.bindLnftToIpa(
-            address(ipOrg),
-            lid2,
-            1
-        );
-        // have other guy activate license
-        console2.log("licensee fails to activate license");
-        vm.expectRevert(Errors.LicensingModule_CallerNotLicensor.selector);
-        vm.prank(ipaOwner2);
-        spg.activateLicense(address(ipOrg), lid2);
-
-        // Licensor must activate
-        console2.log("Licensor must activate");
-        vm.prank(ipaOwner);
-        spg.activateLicense(address(ipOrg), lid2);
-
-        license2 = licenseRegistry.getLicense(lid2);
-        assertEq(uint8(license2.status), uint8(Licensing.LicenseStatus.Active));
-        assertTrue(licenseRegistry.isLicenseActive(lid2));
-        
-        // Bond if active
-        console2.log("Bond if active");
-        vm.prank(ipaOwner2);
-        spg.bindLnftToIpa(
-            address(ipOrg),
-            lid2,
-            1
-        );
-        license2 = licenseRegistry.getLicense(lid2);
-        assertEq(uint8(license2.licenseeType), uint8(Licensing.LicenseeType.BoundToIpa));
-        vm.expectRevert("ERC721: invalid token ID");
-        assertEq(licenseRegistry.ownerOf(lid2), address(0));
-        // This looks weird because:
-        // IpOwner2 is owner of the lnft
-        // Bounds to ipa1, owned by ipaOwner
-        // Licenseee type is bound to ipa
-        // So ipaOwner is the licensee
-        // In a normal case, ipaOwner2 would bound to an ipa he owns
-        assertEq(licenseRegistry.getLicensee(lid2), ipaOwner);
+        Licensing.ParamDefinition[] memory paramDefs = PIPLicensingTerms._getParamDefs();
+        Licensing.SetFramework memory framework = Licensing.SetFramework({
+            id: PIPLicensingTerms.FRAMEWORK_ID,
+            textUrl: "text_url",
+            paramDefs: paramDefs
+        });
+        vm.prank(licensingManager);
+        licensingFrameworkRepo.addFramework(framework);
     }
     
+    function test_LicensingModule_createLicense_noParent_ipa_userSetsParam()
+    withFrameworkConfig(true, true, Licensing.LicensorConfig.IpOrgOwnerAlways)
+    public returns (uint256) {
+        Licensing.ParamValue[] memory inputParams = new Licensing.ParamValue[](1);
+        inputParams[0] = Licensing.ParamValue({
+            tag: PIPLicensingTerms.ATTRIBUTION.toShortString(),
+            value: abi.encode(true)
+        });
+
+        Licensing.LicenseCreation memory creation = Licensing.LicenseCreation({
+            params: inputParams,
+            parentLicenseId: 0,
+            ipaId: ipaId
+        });
+        vm.prank(ipOrg.owner());
+        uint256 licenseId = spg.createLicense(
+            address(ipOrg),
+            creation,
+            new bytes[](0),
+            new bytes[](0)
+        );
+        Licensing.LicenseData memory license = licenseRegistry.getLicenseData(licenseId);
+        assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.Active));
+        assertEq(license.isReciprocal, true, "isReciprocal");
+        assertEq(license.derivativeNeedsApproval, true, "derivativeNeedsApproval");
+        assertEq(license.revoker, licensingModule.DEFAULT_REVOKER());
+        assertEq(license.licensor, ipOrg.owner());
+        assertEq(license.ipOrg, address(ipOrg));
+        assertEq(license.frameworkId.toString(), PIPLicensingTerms.FRAMEWORK_ID);
+        assertEq(license.ipaId, ipaId);
+        assertEq(license.parentLicenseId, 0);
+        Licensing.ParamValue[] memory lParams = licenseRegistry.getParams(licenseId);
+        assertEq(lParams[0].tag.toString(), params[0].tag.toString(), "channel of distribution");
+        assertEq(lParams[0].value, params[0].value);
+        assertEq(lParams[1].tag.toString(), params[1].tag.toString(), "attribution");
+        assertEq(lParams[1].value, inputParams[0].value); // Set by user
+        assertEq(lParams[2].tag.toString(), params[2].tag.toString(), "derivatives with attribution");
+        assertEq(lParams[2].value, params[2].value);
+        assertEq(lParams[3].tag.toString(), params[3].tag.toString(), "derivatives with approval");
+        assertEq(lParams[3].value, params[3].value);
+        return licenseId;
+    }
+
+    function test_LicensingModule_createLicense_parent_noIpa_reciprocal()
+    public returns (uint256) {
+        uint256 parentLicenseId = test_LicensingModule_createLicense_noParent_ipa_userSetsParam();
+        Licensing.LicenseCreation memory creation = Licensing.LicenseCreation({
+            params: new Licensing.ParamValue[](0),
+            parentLicenseId: parentLicenseId,
+            ipaId: 0
+        });
+        vm.prank(ipOrg.owner());
+        uint256 licenseId = spg.createLicense(
+            address(ipOrg),
+            creation,
+            new bytes[](0),
+            new bytes[](0)
+        );
+        assertEq(licenseId, 2);
+        Licensing.LicenseData memory license = licenseRegistry.getLicenseData(licenseId);
+        assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.PendingLicensorApproval));
+        assertEq(license.isReciprocal, true, "isReciprocal");
+        assertEq(license.derivativeNeedsApproval, true, "derivativeNeedsApproval");
+        assertEq(license.revoker, licensingModule.DEFAULT_REVOKER());
+        assertEq(license.licensor, ipOrg.owner());
+        assertEq(license.ipOrg, address(ipOrg));
+        assertEq(license.frameworkId.toString(), PIPLicensingTerms.FRAMEWORK_ID);
+        assertEq(license.ipaId, 0, "ipaId");
+        assertEq(license.parentLicenseId, parentLicenseId);
+        Licensing.ParamValue[] memory parentParams = licenseRegistry.getParams(parentLicenseId);
+        Licensing.ParamValue[] memory childParams = licenseRegistry.getParams(licenseId);
+        assertEq(parentParams[0].tag.toString(), childParams[0].tag.toString(), "channel of distribution");
+        assertEq(parentParams[0].value, childParams[0].value, "channel of distribution");
+        assertEq(parentParams[1].tag.toString(), childParams[1].tag.toString(), "attribution");
+        assertEq(parentParams[1].value, childParams[1].value, "attribution");
+        assertEq(parentParams[2].tag.toString(), childParams[2].tag.toString(), "derivatives with attribution");
+        assertEq(parentParams[2].value, childParams[2].value, "derivatives with attribution");
+        assertEq(parentParams[3].tag.toString(), childParams[3].tag.toString(), "derivatives with approval");
+        assertEq(parentParams[3].value, childParams[3].value, "derivatives with approval");
+        return licenseId;
+    }
+
+    function test_LicensingModule_activateLicense()
+    public returns (uint256) {
+        uint256 licenseId = test_LicensingModule_createLicense_parent_noIpa_reciprocal();
+        vm.prank(ipOrg.owner());
+        spg.activateLicense(
+            address(ipOrg),
+            licenseId
+        );
+        Licensing.LicenseData memory license = licenseRegistry.getLicenseData(licenseId);
+        assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.Active));
+        return licenseId;
+
+    }
 
 }
