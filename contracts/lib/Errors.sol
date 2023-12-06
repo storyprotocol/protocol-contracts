@@ -289,6 +289,7 @@ library Errors {
     error LicenseRegistry_ParentLicenseNotActive();
     error LicenseRegistry_IPANotActive();
     error LicenseRegistry_LicenseNotActive();
+    error LicenseRegistry_LicenseAlreadyLinkedToIpa();
     
     ////////////////////////////////////////////////////////////////////////////
     //                            RegistrationModule                          //

@@ -12,8 +12,7 @@ library Licensing {
         Unset,
         Active,
         PendingLicensorApproval,
-        Revoked,
-        Used
+        Revoked
     }
 
     enum ParameterType {
@@ -103,8 +102,6 @@ library Licensing {
             return "Pending Licensor Approval";
         } else if (status_ == LicenseStatus.Revoked) {
             return "Revoked";
-        } else if (status_ == LicenseStatus.Used) {
-            return "Used";
         }
         return "Unknown";
     }

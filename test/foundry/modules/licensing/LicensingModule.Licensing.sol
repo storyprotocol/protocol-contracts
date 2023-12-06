@@ -72,7 +72,7 @@ contract LicensingModuleLicensingTest is BaseTest {
     
     function test_LicensingModule_createLicense_noParent_ipa_userSetsParam()
     withFrameworkConfig(true, true, Licensing.LicensorConfig.IpOrgOwnerAlways)
-    public {
+    public returns (uint256) {
         Licensing.ParamValue[] memory inputParams = new Licensing.ParamValue[](1);
         inputParams[0] = Licensing.ParamValue({
             tag: PIPLicensingTerms.ATTRIBUTION.toShortString(),
@@ -92,7 +92,7 @@ contract LicensingModuleLicensingTest is BaseTest {
             new bytes[](0)
         );
         Licensing.LicenseData memory license = licenseRegistry.getLicenseData(licenseId);
-        assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.Used));
+        assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.Active));
         assertEq(license.isReciprocal, true, "isReciprocal");
         assertEq(license.derivativeNeedsApproval, true, "derivativeNeedsApproval");
         assertEq(license.revoker, Licensing.ALPHA_REVOKER);
@@ -110,7 +110,60 @@ contract LicensingModuleLicensingTest is BaseTest {
         assertEq(lParams[2].value, params[2].value);
         assertEq(lParams[3].tag.toString(), params[3].tag.toString(), "derivatives with approval");
         assertEq(lParams[3].value, params[3].value);
+        return licenseId;
     }
 
+    function test_LicensingModule_createLicense_parent_noIpa_reciprocal()
+    public returns (uint256) {
+        uint256 parentLicenseId = test_LicensingModule_createLicense_noParent_ipa_userSetsParam();
+        Licensing.LicenseCreation memory creation = Licensing.LicenseCreation({
+            params: new Licensing.ParamValue[](0),
+            parentLicenseId: parentLicenseId,
+            ipaId: 0
+        });
+        vm.prank(ipOrg.owner());
+        uint256 licenseId = spg.createLicense(
+            address(ipOrg),
+            creation,
+            new bytes[](0),
+            new bytes[](0)
+        );
+        assertEq(licenseId, 2);
+        Licensing.LicenseData memory license = licenseRegistry.getLicenseData(licenseId);
+        assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.PendingLicensorApproval));
+        assertEq(license.isReciprocal, true, "isReciprocal");
+        assertEq(license.derivativeNeedsApproval, true, "derivativeNeedsApproval");
+        assertEq(license.revoker, Licensing.ALPHA_REVOKER);
+        assertEq(license.licensor, ipOrg.owner());
+        assertEq(license.ipOrg, address(ipOrg));
+        assertEq(license.frameworkId.toString(), PIPLicensingTerms.FRAMEWORK_ID);
+        assertEq(license.ipaId, 0, "ipaId");
+        assertEq(license.parentLicenseId, parentLicenseId);
+        Licensing.ParamValue[] memory parentParams = licenseRegistry.getParams(parentLicenseId);
+        Licensing.ParamValue[] memory childParams = licenseRegistry.getParams(licenseId);
+        assertEq(parentParams[0].tag.toString(), childParams[0].tag.toString(), "channel of distribution");
+        assertEq(parentParams[0].value, childParams[0].value, "channel of distribution");
+        assertEq(parentParams[1].tag.toString(), childParams[1].tag.toString(), "attribution");
+        assertEq(parentParams[1].value, childParams[1].value, "attribution");
+        assertEq(parentParams[2].tag.toString(), childParams[2].tag.toString(), "derivatives with attribution");
+        assertEq(parentParams[2].value, childParams[2].value, "derivatives with attribution");
+        assertEq(parentParams[3].tag.toString(), childParams[3].tag.toString(), "derivatives with approval");
+        assertEq(parentParams[3].value, childParams[3].value, "derivatives with approval");
+        return licenseId;
+    }
+
+    function test_LicensingModule_activateLicense()
+    public returns (uint256) {
+        uint256 licenseId = test_LicensingModule_createLicense_parent_noIpa_reciprocal();
+        vm.prank(ipOrg.owner());
+        spg.activateLicense(
+            address(ipOrg),
+            licenseId
+        );
+        Licensing.LicenseData memory license = licenseRegistry.getLicenseData(licenseId);
+        assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.Active));
+        return licenseId;
+
+    }
 
 }

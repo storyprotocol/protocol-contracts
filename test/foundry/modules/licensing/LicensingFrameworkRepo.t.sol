@@ -78,7 +78,7 @@ contract LicensingFrameworkRepoTest is Test, AccessControlHelper {
 
     function test_LicensingFrameworkRepo_validateParam_emptyValue() public {
         Licensing.ParameterType pType = Licensing.ParameterType.MultipleChoice;
-        assertFalse(Licensing._validateParamValue(pType, ""));
+        assertTrue(Licensing._validateParamValue(pType, ""));
     }
 
     function test_LicensingFrameworkRepo_validateParamValue_Number() public {

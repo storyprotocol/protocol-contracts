@@ -13,6 +13,7 @@ import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { PIPLicensingTerms } from "contracts/lib/modules/PIPLicensingTerms.sol";
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 
+import "forge-std/console2.sol";
 
 /// @title Licensing module
 /// @notice Story Protocol module that:

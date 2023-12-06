@@ -12,8 +12,6 @@ import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortSt
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 
-import "forge-std/console2.sol";
-
 /// @title LicenseRegistry
 /// @notice This contract is the source of truth for all licenses that are registered in the protocol.
 /// It will only be called by licensing modules.
@@ -24,7 +22,7 @@ contract LicenseRegistry is ERC721 {
 
     // TODO: Figure out data needed for indexing
     event LicenseRegistered(uint256 indexed id);
-    event LicenseNftBoundedToIpa(
+    event LicenseNftLinkedToIpa(
         uint256 indexed licenseId,
         uint256 indexed ipAssetId
     );
@@ -119,21 +117,13 @@ contract LicenseRegistry is ERC721 {
     {
         // NOTE: check for parent ipa validity is done in
         // the licensing module
-        // console2.log("addLicense ------->");
-        // console2.log("old license count", _licenseCount);
         uint256 licenseId = ++_licenseCount;
-        // console2.log("licenseId", licenseId);
         _licenses[licenseId] = newLicense_;
         emit LicenseRegistered(licenseId);
         _mint(licensee_, licenseId);
-        if (newLicense_.ipaId != 0) {
-            _linkNftToIpa(newLicense_.ipaId, licenseId);
-        }
         uint256 length = values_.length;
         Licensing.ParamValue[] storage params = _licenseParams[licenseId];
         for (uint256 i; i < length; i++) {
-            // console2.log("param", values_[i].tag.toString());
-            // console2.logBytes(values_[i].value);
             params.push(values_[i]);
         }
         return licenseId;
@@ -154,8 +144,12 @@ contract LicenseRegistry is ERC721 {
         Licensing.LicenseData storage parent = _licenses[parentLicenseId_];
         uint256 licenseId = ++_licenseCount;
         _licenses[licenseId] = parent;
+        _licenses[licenseId].parentLicenseId = parentLicenseId_;
         _licenses[licenseId].licensor = licensor_;
         _licenses[licenseId].ipaId = ipaId_;
+        if (parent.derivativeNeedsApproval) {
+            _licenses[licenseId].status = Licensing.LicenseStatus.PendingLicensorApproval;
+        }
         _licenseParams[licenseId] = _licenseParams[parentLicenseId_];
         _mint(licensee_, licenseId);
         emit LicenseRegistered(licenseId);
@@ -279,9 +273,11 @@ contract LicenseRegistry is ERC721 {
         if (IPA_REGISTRY.status(ipaId_) != 1) {
             revert Errors.LicenseRegistry_IPANotActive();
         }
+        if (_licenses[licenseId_].ipaId != 0) {
+            revert Errors.LicenseRegistry_LicenseAlreadyLinkedToIpa();
+        }
         _licenses[licenseId_].ipaId = ipaId_;
-        _licenses[licenseId_].status = Licensing.LicenseStatus.Used;
-        emit LicenseNftBoundedToIpa(licenseId_, ipaId_);
+        emit LicenseNftLinkedToIpa(licenseId_, ipaId_);
     }
 
     function _activateLicense(uint256 licenseId_, address caller_) private {
