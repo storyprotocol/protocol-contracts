@@ -69,10 +69,32 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
 
     }
 
+    // function test_isIpOrg() public {
+    //     vm.prank(ipOrgOwner);
+    //     bool isOrg = ipOrgController.isIpOrg(msg.sender);
+    // }
+
+    function test_ipOrgController_pendingOwnerOf() public {
+        vm.prank(ipOrgOwner);
+        ipOrgController.pendingOwnerOf(msg.sender); 
+    }
+
+    function test_ipOrgController_transferOwner() public {
+        vm.prank(ipOrgOwner);
+        address newOwner = address(0xabc123);
+        ipOrgController.transferOwner(msg.sender, newOwner);
+    }
+
     function test_ipOrgController_registerIpOrg() public {
         vm.prank(ipOrgOwner);
         string[] memory ipAssetTypes = new string[](0);
         ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", ipAssetTypes));
+    }
+
+    function test_ipOrgController_revert_zeroAddress() public {
+        string[] memory ipAssetTypes = new string[](0);
+        vm.expectRevert();
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(address(0), "name", "symbol", ipAssetTypes));
     }
 
     function test_ipOrgController_revert_tooManyAssetTypes() public {
