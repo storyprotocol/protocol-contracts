@@ -208,7 +208,7 @@ contract StoryProtocol is Multicall {
     /// @param ipOrg_ the ipOrg address
     /// @param config_ the licensing framework config
     function configureIpOrgLicensing(
-         address ipOrg_,
+        address ipOrg_,
         Licensing.LicensingConfig calldata config_
     ) external {
         MODULE_REGISTRY.configure(

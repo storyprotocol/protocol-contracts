@@ -269,9 +269,7 @@ contract LicenseRegistry is ERC721 {
         emit LicenseRevoked(licenseId_);
     }
 
-    function tokenURI(
-        uint256 tokenId
-    ) public view virtual override returns (string memory) {
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         // TODO
         return "";
     }
