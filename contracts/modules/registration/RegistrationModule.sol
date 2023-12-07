@@ -11,7 +11,6 @@ import { AccessControlled } from "contracts/access-control/AccessControlled.sol"
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
 import { Registration } from "contracts/lib/modules/Registration.sol";
-import { LibUintArrayMask } from "contracts/lib/LibUintArrayMask.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 

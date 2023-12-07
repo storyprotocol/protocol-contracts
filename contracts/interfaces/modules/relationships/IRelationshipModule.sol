@@ -16,13 +16,13 @@ interface IRelationshipModule {
         address src,
         // Allowed items for src
         LibRelationship.Relatables srcRelatable,
-        // Mask of allowed subtypes for src (see LibUintArrayMask)
+        // Mask of allowed subtypes for src (see BitMask)
         uint256 srcSubtypesMask,
         // Allowed dst address, zero address if empty, all F for all addresses are OK
         address dst,
         // Allowed items for dst
         LibRelationship.Relatables dstRelatable,
-        // Mask of allowed subtypes for dst (see LibUintArrayMask)
+        // Mask of allowed subtypes for dst (see BitMask)
         uint256 dstSubtypesMask
     );
 

@@ -4,32 +4,32 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 
 import { Errors } from "contracts/lib/Errors.sol";
-import { LibUintArrayMask } from "contracts/lib/LibUintArrayMask.sol";
+import { BitMask } from "contracts/lib/BitMask.sol";
 import { IPOrgController } from "contracts/ip-org/IPOrgController.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { MockERC721 } from "test/foundry/mocks/MockERC721.sol";
 
-contract LibUintArrayMaskHarness {
+contract BitMaskHarness {
 
     function convertToMask(uint8[] calldata assetTypes) pure external returns (uint256) {
-        return LibUintArrayMask._convertToMask(assetTypes);
+        return BitMask._convertToMask(assetTypes);
     }
 
-    function isAssetTypeOnMask(uint256 mask, uint8 assetType) pure external returns (bool) {
-        return LibUintArrayMask._isAssetTypeOnMask(mask, assetType);
+    function isSet(uint256 mask, uint8 assetType) pure external returns (bool) {
+        return BitMask._isSet(mask, assetType);
     }
 
 }
 
-contract LibUintArrayMaskHarnessTest is Test {
+contract BitMaskTest is Test {
 
-    LibUintArrayMaskHarness public checker;
+    BitMaskHarness public checker;
 
     function setUp() public {
-        checker = new LibUintArrayMaskHarness();
+        checker = new BitMaskHarness();
     }
 
-    function test_LibUintArrayMask_convertToMask() public {
+    function test_BitMask_convertToMask() public {
         for (uint8 i = 1; i <= 254; i++) {
             uint8[] memory assetTypes = new uint8[](i);
             uint256 resultMask;
@@ -42,38 +42,26 @@ contract LibUintArrayMaskHarnessTest is Test {
         }
     }
 
-    function test_LibUintArrayMask_revert_EmptyArray() public {
+    function test_BitMask_revert_EmptyArray() public {
         uint8[] memory ipAssets = new uint8[](0);
-        vm.expectRevert(Errors.LibUintArrayMask_EmptyArray.selector);
+        vm.expectRevert(Errors.EmptyArray.selector);
         checker.convertToMask(ipAssets);
     }
-    
-}
 
-contract LibIPAssetMaskChecksTest is Test {
-
-    LibUintArrayMaskHarness public checker;
-
-    error InvalidIPAssetArray();
-
-    function setUp() public {
-        checker = new LibUintArrayMaskHarness();
-    }
-
-    function test_LibUintArrayMask_isAssetTypeOnMaskTrue() public {
+    function test_BitMask_isSetOnMaskTrue() public {
         uint256 mask = 0;
         for (uint8 i = 1; i <= uint8(254); i++) {
             mask |= 1 << (uint256(i) & 0xff);
         }
         for (uint8 i = 1; i <= uint8(254); i++) {
-            assertTrue(checker.isAssetTypeOnMask(mask, i));
+            assertTrue(checker.isSet(mask, i));
         }
     }
 
-    function test_LibUintArrayMask_isAssetTypeOnMaskFalse() public {
+    function test_BitMask_isSetOnMaskFalse() public {
         uint256 zeroMask;
         for (uint8 i = 1; i <= uint8(254); i++) {
-            assertFalse(checker.isAssetTypeOnMask(zeroMask, i));
+            assertFalse(checker.isSet(zeroMask, i));
         }
     }
     
