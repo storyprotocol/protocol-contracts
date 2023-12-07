@@ -70,7 +70,7 @@ contract LicensingModuleConfigTest is BaseTest {
     function test_LicensingModule_configIpOrg_revert_paramsNotValid() public {
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: "test_framework",
-            params: new Licensing.ParamValue[](0),
+            params: new Licensing.ParamValue[](100),
             licensor: Licensing.LicensorConfig.IpOrgOwnerAlways
         });
         vm.prank(ipOrg.owner());

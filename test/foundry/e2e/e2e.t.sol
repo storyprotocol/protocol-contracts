@@ -10,12 +10,14 @@ import { StoryProtocol } from "contracts/StoryProtocol.sol";
 import { RelationshipModule } from "contracts/modules/relationships/RelationshipModule.sol";
 import { LicensingModule } from "contracts/modules/licensing/LicensingModule.sol";
 import { TokenGatedHook } from "contracts/hooks/TokenGatedHook.sol";
+import { PolygonTokenHook } from "contracts/hooks/PolygonTokenHook.sol";
+import { MockPolygonTokenClient } from "test/foundry/mocks/MockPolygonTokenClient.sol";
 import { HookRegistry } from "contracts/modules/base/HookRegistry.sol";
 import { HookResult, IHook } from "contracts/interfaces/hooks/base/IHook.sol";
-import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
-import { BaseModule } from "contracts/modules/base/BaseModule.sol";
 import { Hook } from "contracts/lib/hooks/Hook.sol";
 import { TokenGated } from "contracts/lib/hooks/TokenGated.sol";
+import { PolygonToken } from "contracts/lib/hooks/PolygonToken.sol";
+import { MockERC20 } from "test/foundry/mocks/MockERC20.sol";
 import { MockERC721 } from "test/foundry/mocks/MockERC721.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
@@ -26,12 +28,15 @@ import { IE2ETest } from "test/foundry/interfaces/IE2ETest.sol";
 import { PIPLicensingTerms } from "contracts/lib/modules/PIPLicensingTerms.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 
 contract E2ETest is IE2ETest, BaseTest {
     using ShortStrings for *;
 
     address internal tokenGatedHook;
+    address public polygonTokenHook;
     MockERC721 internal mockNFT;
+    MockERC20 internal mockERC20;
 
     address internal ipOrgOwner1 = address(1234);
     address internal ipOrgOwner2 = address(4567);
@@ -95,12 +100,30 @@ contract E2ETest is IE2ETest, BaseTest {
         );
 
         /// TOKEN_GATED_HOOK
-        tokenGatedHook = address(new TokenGatedHook(address(accessControl)));
+        bytes memory tokenGatedHookCode = abi.encodePacked(
+            type(TokenGatedHook).creationCode, abi.encode(address(accessControl)));
+        tokenGatedHook = _deployHook(tokenGatedHookCode, Hook.SYNC_FLAG, 0);
+        moduleRegistry.registerProtocolHook("TokenGatedHook", IHook(tokenGatedHook));
 
-        /// MOCK_ERC_721
+        /// POLYGON_TOKEN_HOOK
+        MockPolygonTokenClient mockPolygonTokenClient = new MockPolygonTokenClient();
+        bytes memory polygonTokenHookCode = abi.encodePacked(
+            type(PolygonTokenHook).creationCode,
+            abi.encode(address(accessControl), mockPolygonTokenClient, address(this))
+        );
+        polygonTokenHook = _deployHook(polygonTokenHookCode, Hook.ASYNC_FLAG, 0);
+        moduleRegistry.registerProtocolHook("PolygonTokenHook", IHook(polygonTokenHook));
+
+        /// MOCK_ERC721, for regular token-gated hook
         mockNFT = new MockERC721();
         mockNFT.mint(ipAssetOwner1, 1);
         mockNFT.mint(ipAssetOwner2, 2);
+
+        /// MOCK_ERC20, for Polygon token hook
+        mockERC20 = new MockERC20("MockERC20", "MERC20", 18);
+        mockERC20.mint(2000);
+        mockERC20.transfer(ipAssetOwner1, 1000);
+        mockERC20.transfer(ipAssetOwner2, 1000);
 
         /// Setups
         _setUp_LicensingFramework();
@@ -269,20 +292,28 @@ contract E2ETest is IE2ETest, BaseTest {
         /// =========================================
         ///
 
-        // Add token gated hook
-        address[] memory hooks = new address[](1);
-        hooks[0] = tokenGatedHook;
-
+        // Add token gated hook & polygon token gated hook
         // Specify the configuration for the token gated hook, ie. which token to use
-        bytes[] memory hooksConfig = new bytes[](1);
+        address[] memory hooks = new address[](2);
+        hooks[0] = tokenGatedHook;
+        hooks[1] = polygonTokenHook;
+
         TokenGated.Config memory tokenGatedConfig = TokenGated.Config({
             tokenAddress: address(mockNFT)
         });
+        PolygonToken.Config memory polygonTokenConfig = PolygonToken.Config({
+            tokenAddress: address(mockNFT),
+            balanceThreshold: 1
+        });
+        bytes[] memory hooksConfig = new bytes[](2);
         hooksConfig[0] = abi.encode(tokenGatedConfig);
+        hooksConfig[1] = abi.encode(polygonTokenConfig);
 
         vm.expectEmit(address(registrationModule));
         emit HooksRegistered(
             HookRegistry.HookType.PreAction,
+            // from _generateRegistryKey(ipOrg_) => registryKey
+            // keccak256(abi.encode(address(ipOrg1), Registration.REGISTER_IP_ASSET, "REGISTRATION")),
             keccak256(abi.encode(ipOrg1, "REGISTRATION")),
             hooks
         );
@@ -292,8 +323,15 @@ contract E2ETest is IE2ETest, BaseTest {
             HookRegistry.HookType.PreAction,
             IIPOrg(ipOrg1),
             hooks,
-            hooksConfig
+            hooksConfig,
+            abi.encode(Registration.REGISTER_IP_ASSET)
         );
+        // RegistrationModule(registrationModule).registerHooks(
+        //     HookRegistry.HookType.PreAction,
+        //     IIPOrg(ipOrg1),
+        //     hooks,
+        //     hooksConfig
+        // );
 
         ///
         /// =========================================
@@ -699,8 +737,11 @@ contract E2ETest is IE2ETest, BaseTest {
 
         TokenGated.Params memory tokenGatedHookDataCharacter = TokenGated
             .Params({ tokenOwner: ipAssetOwner1 });
-        preHooksDataCharacter = new bytes[](1);
+        PolygonToken.Params memory polygonTokenDataCharacter = PolygonToken
+            .Params({ tokenOwnerAddress: ipAssetOwner1 });
+        preHooksDataCharacter = new bytes[](2);
         preHooksDataCharacter[0] = abi.encode(tokenGatedHookDataCharacter);
+        preHooksDataCharacter[1] = abi.encode(polygonTokenDataCharacter);
 
         // TODO: Solve "Stack too deep" for emitting this event
         // vm.expectEmit(address(tokenGatedHook));
@@ -714,9 +755,17 @@ contract E2ETest is IE2ETest, BaseTest {
         (ipAssetId_1, ipOrg1_AssetId_1) = spg.registerIPAsset(
             ipOrg1,
             registerIpAssetParams,
-            preHooksDataCharacter,
+            preHooksDataCharacter, // pre-hook TokenGated & PolygonToken
             new bytes[](0)
         );
+
+        // Asset ID 1 has Polygon Token hook as pre-hook action for
+        // IPA Registration. So we mock the callback from Polygon Token hook.
+        bytes32 requestIdStory = keccak256(
+            abi.encodePacked(polygonTokenHook, uint256(1))
+        );
+        PolygonTokenHook(polygonTokenHook).handleCallback(requestIdStory, 1);
+
         assertEq(ipAssetId_1, 1, "ipAssetId_1 should be 1");
         assertEq(ipOrg1_AssetId_1, 1, "ipOrg1_AssetId_1 should be 1");
         assertEq(
@@ -751,7 +800,7 @@ contract E2ETest is IE2ETest, BaseTest {
         (ipAssetId_2, ipOrg1_AssetId_2) = spg.registerIPAsset(
             ipOrg1,
             registerIpAssetParams,
-            preHooksDataStory,
+            preHooksDataStory, // pre-hook TokenGated
             new bytes[](0)
         );
         assertEq(ipAssetId_2, 2, "ipAssetId_2 should be 2");
@@ -790,8 +839,8 @@ contract E2ETest is IE2ETest, BaseTest {
         (ipAssetId_3, ipOrg2_AssetId_1) = spg.registerIPAsset(
             ipOrg2,
             registerIpAssetParams,
-            new bytes[](0),
-            new bytes[](0)
+            new bytes[](0), // no pre-hook
+            new bytes[](0) // no post-hook
         );
         assertEq(ipAssetId_3, 3, "ipAssetId_3 should be 3");
         assertEq(ipOrg2_AssetId_1, 1, "ipOrg2_AssetId_1 should be 1");
@@ -822,8 +871,8 @@ contract E2ETest is IE2ETest, BaseTest {
         (ipAssetId_4, ipOrg2_AssetId_2) = spg.registerIPAsset(
             ipOrg2,
             registerIpAssetParams,
-            new bytes[](0),
-            new bytes[](0)
+            new bytes[](0), // no pre-hook
+            new bytes[](0) // no post-hook
         );
         assertEq(ipAssetId_4, 4, "ipAssetId_4 should be 4");
         assertEq(ipOrg2_AssetId_2, 2, "ipOrg2_AssetId_2 should be 2");
@@ -850,8 +899,8 @@ contract E2ETest is IE2ETest, BaseTest {
         (ipAssetId_5, ipOrg3_AssetId_1) = spg.registerIPAsset(
             ipOrg3,
             registerIpAssetParams,
-            new bytes[](0),
-            new bytes[](0)
+            new bytes[](0), // no pre-hook
+            new bytes[](0) // no post-hook
         );
         assertEq(ipAssetId_5, 5, "ipAssetId_5 should be 5");
         assertEq(ipOrg3_AssetId_1, 1, "ipOrg3_AssetId_1 should be 1");
