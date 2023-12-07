@@ -40,7 +40,7 @@ contract MockAsyncHook is AsyncBaseHook {
         // Simply return the input parameters
         return (
             abi.encode(hookConfig_, hookParams_),
-            bytes32(uint256(keccak256(hookParams_)))
+            getRequestId(hookParams_)
         );
     }
 
@@ -53,8 +53,22 @@ contract MockAsyncHook is AsyncBaseHook {
         bytes32 requestId_,
         bytes calldata callbackData_
     ) external {
-        // Call the _handleCallback function with the input parameters
-        _handleCallback(requestId_, callbackData_);
+        _handleCallback(requestId_, getProcessedCallbackData(callbackData_));
+    }
+
+    function getRequestId(
+        bytes memory hookParams_
+    ) public pure returns (bytes32) {
+        return bytes32(uint256(keccak256(hookParams_)));
+    }
+
+    function getProcessedCallbackData(bytes calldata callbackData_) public pure returns (bytes memory result) {
+        string memory callbackData = abi.decode(callbackData_, (string));
+        if (keccak256(abi.encodePacked("PASS")) == keccak256(abi.encodePacked(callbackData))) {
+            result = abi.encode(true, callbackData);
+        } else {
+            result = abi.encode(false, callbackData);
+        }
     }
 
     function _validateConfig(bytes memory) internal view override {}

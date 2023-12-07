@@ -6,6 +6,7 @@ import "forge-std/Test.sol";
 import "contracts/modules/base/BaseModule.sol";
 import "test/foundry/utils/AccessControlHelper.sol";
 import "test/foundry/mocks/MockBaseModule.sol";
+import "test/foundry/mocks/MockBaseHook.sol";
 import "contracts/ip-org/IPOrgController.sol";
 import "contracts/lib/Errors.sol";
 import "contracts/modules/ModuleRegistry.sol";
@@ -48,7 +49,7 @@ contract ModuleRegistryTest is Test, AccessControlHelper {
             IPOrgController(address(0x123))
         );
         MockBaseModule module = new MockBaseModule(admin, moduleConstruction);
-        
+
         vm.expectEmit(address(registry));
         emit ModuleAdded(registry.PROTOCOL_LEVEL(), "test", address(module));
         vm.prank(admin);
@@ -64,7 +65,7 @@ contract ModuleRegistryTest is Test, AccessControlHelper {
 
         assertEq(address(registry.moduleForKey("test")), address(0));
     }
-    
+
     function test_moduleRegistry_removeProtocolModule() public {
         BaseModule.ModuleConstruction memory moduleConstruction = BaseModule.ModuleConstruction(
             IPAssetRegistry(address(0x123)),
@@ -113,5 +114,24 @@ contract ModuleRegistryTest is Test, AccessControlHelper {
             "unregistered_module_key",
             encodedParams
         );
+    }
+
+    function test_moduleRegistry_addProtocolHook() public {
+        MockBaseHook hook = new MockBaseHook(address(accessControl));
+        vm.prank(admin);
+        registry.registerProtocolHook("test", hook);
+        assertEq(address(registry.hookForKey("test")), address(hook));
+        assertEq(registry.isRegisteredHook(hook), true);
+    }
+
+    function test_moduleRegistry_removeProtocolHook() public {
+        MockBaseHook hook = new MockBaseHook(address(accessControl));
+        vm.startPrank(admin);
+        registry.registerProtocolHook("test", hook);
+        assertEq(address(registry.hookForKey("test")), address(hook));
+        registry.removeProtocolHook("test");
+        assertEq(address(registry.hookForKey("test")), address(0));
+        assertEq(registry.isRegisteredHook(hook), false);
+        vm.stopPrank();
     }
 }

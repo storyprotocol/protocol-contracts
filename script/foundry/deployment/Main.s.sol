@@ -19,6 +19,7 @@ import "contracts/modules/relationships/RelationshipModule.sol";
 import "contracts/lib/modules/ModuleRegistryKeys.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
 import "contracts/hooks/TokenGatedHook.sol";
+import "contracts/hooks/PolygonTokenHook.sol";
 import "contracts/modules/base/HookRegistry.sol";
 import "contracts/interfaces/hooks/base/IHook.sol";
 import { TokenGated } from "contracts/lib/hooks/TokenGated.sol";
@@ -28,6 +29,10 @@ import "contracts/modules/licensing/LicensingFrameworkRepo.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
 import "contracts/lib/modules/Licensing.sol";
 import "contracts/lib/modules/PIPLicensingTerms.sol";
+import { PolygonToken } from "contracts/lib/hooks/PolygonToken.sol";
+import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
+import { Hook } from "contracts/lib/hooks/Hook.sol";
+
 
 contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
     using StringUtil for uint256;
@@ -43,6 +48,7 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
     address relationshipModule;
     address licensingModule;
     address tokenGatedHook;
+    address polygonTokenHook;
     address mockNFT;
     address licensingFrameworkRepo;
 
@@ -227,11 +233,30 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         contractKey = "TokenGatedHook";
 
         console.log(string.concat("Deploying ", contractKey, "..."));
-        newAddress = address(new TokenGatedHook(accessControl));
+        bytes memory tokenGatedHookCode = abi.encodePacked(
+            type(TokenGatedHook).creationCode, abi.encode(address(accessControl)));
+        newAddress = _deployHook(tokenGatedHookCode, Hook.SYNC_FLAG, 0);
         _writeAddress(contractKey, newAddress);
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
         tokenGatedHook = newAddress;
+
+        /// POLYGON_TOKEN_HOOK
+        contractKey = "PolygonTokenHook";
+
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        bytes memory polygonTokenHookCode = abi.encodePacked(
+            type(PolygonTokenHook).creationCode,
+            abi.encode(
+                address(accessControl),
+                vm.envAddress("POLYGON_TOKEN_ORACLE_CLIENT"),
+                vm.envAddress("POLYGON_TOKEN_ORACLE_COORDINATOR")
+            ));
+        newAddress = _deployHook(polygonTokenHookCode, Hook.ASYNC_FLAG, 0);
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+
+        polygonTokenHook = newAddress;
 
         /// MOCK_ERC_721
         contractKey = "MockERC721";
@@ -304,20 +329,29 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
             ipAssetTypes
         );
 
-        // REGISTER TOKEN_GATED_HOOK
-        address[] memory hooks = new address[](1);
+        // REGISTER TOKEN_GATED_HOOK and POLYGON_TOKEN_HOOK
+        ModuleRegistry(moduleRegistry).registerProtocolHook("TOKEN_GATED_HOOK", IHook(tokenGatedHook));
+        ModuleRegistry(moduleRegistry).registerProtocolHook("POLYGON_TOKEN_HOOK", IHook(polygonTokenHook));
+        address[] memory hooks = new address[](2);
         hooks[0] = tokenGatedHook;
+        hooks[1] = polygonTokenHook;
 
         TokenGated.Config memory tokenGatedConfig = TokenGated.Config({
             tokenAddress: mockNFT
         });
-        bytes[] memory hooksConfig = new bytes[](1);
+        PolygonToken.Config memory polygonTokenConfig = PolygonToken.Config({
+            tokenAddress: mockNFT,
+            balanceThreshold: 1
+        });
+        bytes[] memory hooksConfig = new bytes[](2);
         hooksConfig[0] = abi.encode(tokenGatedConfig);
+        hooksConfig[1] = abi.encode(polygonTokenConfig);
         RegistrationModule(registrationModule).registerHooks(
             HookRegistry.HookType.PreAction,
             IIPOrg(ipOrg),
             hooks,
-            hooksConfig
+            hooksConfig,
+            abi.encode(Registration.REGISTER_IP_ASSET)
         );
 
         // CONFIG LICENSING MODULE
@@ -331,5 +365,23 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
         _writeDeployment();
         _endBroadcast();
+    }
+
+    function _deployHook(bytes memory code_, uint256 hookTypeFlag_, uint256 seed_) internal returns (address hookAddr) {
+        uint256 randomNumber = uint256(keccak256(abi.encodePacked(seed_)));
+        for (uint256 i = 0; i < 1500; i++) {
+            bytes32 salt = bytes32(randomNumber + i);
+            bytes32 bytecodeHash = keccak256(code_);
+            address expectedAddress = Create2.computeAddress(salt, bytecodeHash);
+            uint160 prefix = hookTypeFlag_ == Hook.SYNC_FLAG ? 0x02 : 0x01;
+            if (_doesAddressStartWith(expectedAddress, prefix)) {
+                hookAddr = Create2.deploy(0, salt, code_);
+                return hookAddr;
+            }
+        }
+    }
+
+    function _doesAddressStartWith(address address_,uint160 prefix_) private pure returns (bool) {
+        return uint160(address_) >> (160 - 2) == prefix_;
     }
 }

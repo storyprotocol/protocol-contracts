@@ -123,6 +123,10 @@ contract StoryProtocol is Multicall {
             preHooksData_,
             postHooksData_
         );
+        // If the result is empty, then the registration module is pending for async hook execution.
+        if (result.length == 0) {
+            return (0, 0);
+        }
         return abi.decode(result, (uint256, uint256));
     }
 
