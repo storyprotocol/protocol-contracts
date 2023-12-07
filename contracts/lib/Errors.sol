@@ -184,10 +184,10 @@ library Errors {
     error IPAccountRegistry_InitializationFailed();
 
     ////////////////////////////////////////////////////////////////////////////
-    //                         LibUintArrayMask                               //
+    //                         UintArrayMask                               //
     ////////////////////////////////////////////////////////////////////////////
 
-    error LibUintArrayMask_EmptyArray();
+    error UintArrayMask_EmptyArray();
 
     ////////////////////////////////////////////////////////////////////////////
     //                               IPOrg                                    //
@@ -269,7 +269,9 @@ library Errors {
     error LicensingModule_InvalidLicenseeType();
     error LicensingModule_InvalidLicensorType();
     error LicensingModule_InvalidLicensorConfig();
-    error LicensingModule_InvalidParamValues();
+    error LicensingModule_InvalidParamValue();
+    error LicensingModule_InvalidParamsLength();
+    error LicensingModule_DuplicateParam();
     error LicensingModule_ReciprocalCannotSetParams();
     error LicensingModule_ParamSetByIpOrg();
     error LicensingModule_InvalidInputValue();

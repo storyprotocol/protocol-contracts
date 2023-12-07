@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
+import { BitMask } from "contracts/lib/BitMask.sol";
 
 /// @title Licensing Module Library
 /// Structs needed by the Licensing Modules and registries
@@ -20,18 +21,21 @@ library Licensing {
         Number,
         Address,
         String,
-        MultipleChoice // ShortString set
+        StringSet,
+        // uint256 bitmask representing indexes in choices array. ParamDefinition will have the available choices array.
+        MultipleChoice 
     }
 
     enum LicensorConfig {
         Unset,
         IpOrgOwnerAlways,
-        ParentOrIpaOrIpOrgOwners
+        Source
     }
 
     struct LicenseData {
         /// License status. // TODO: IPA status should follow
         LicenseStatus status;
+        bool derivativesAllowed;
         bool isReciprocal;
         bool derivativeNeedsApproval;
         address revoker;
@@ -53,8 +57,14 @@ library Licensing {
     }
 
     struct ParamDefinition {
+        /// The parameter id
         ShortString tag;
+        /// The type of the parameter, used to decode the value
         ParameterType paramType;
+        /// Encoded according to paramType, might be empty.
+        bytes defaultValue;
+        /// If MultipleChoice, String[] of the available choices. Empty bytes otherwise.
+        bytes availableChoices;
     }
 
     struct ParamValue {
@@ -65,7 +75,6 @@ library Licensing {
     struct FrameworkStorage {
         string textUrl;
         FixedSet.ShortStringSet paramTags;
-        mapping(ShortString => ParameterType) paramTypes;
         ParamDefinition[] paramDefs;
     }
 
@@ -105,41 +114,66 @@ library Licensing {
         return "Unknown";
     }
 
+    function _decodeMultipleChoice(
+        bytes memory value,
+        bytes memory availableChoices
+    ) internal pure returns (ShortString[] memory) {
+        uint8[] memory indexes = BitMask._getSetIndexes(abi.decode(value, (uint256)));
+        ShortString[] memory choices = abi.decode(availableChoices, (ShortString[]));
+        ShortString[] memory result = new ShortString[](indexes.length);
+        for (uint256 i = 0; i < indexes.length; i++) {
+            result[i] = choices[indexes[i]];
+        }
+        return result;
+    }
+
+    function _encodeMultipleChoice(
+        uint8[] memory choiceIndexes_
+    ) internal pure returns (bytes memory value) {
+        uint256 mask = BitMask._convertToMask(choiceIndexes_);
+        return abi.encode(mask);
+    }
+
     function _validateParamValue(
-        Licensing.ParameterType pType,
-        bytes memory value
+        ParamDefinition memory paramDef_,
+        bytes memory value_
     ) internal pure returns (bool) {
         // An empty value signals the parameter is untagged, to trigger default values in the
         // license agreement text, but that's valid
-        if (keccak256(value) == keccak256("")) {
+        if (keccak256(value_) == keccak256("")) {
             return true;
         }
-        if (pType == Licensing.ParameterType.Bool) {
-            abi.decode(value, (bool));
+        if (paramDef_.paramType == Licensing.ParameterType.Bool) {
+            abi.decode(value_, (bool));
             return true;
-        } else if (pType == Licensing.ParameterType.Number) {
-            if (abi.decode(value, (uint256)) == 0) {
+        } else if (paramDef_.paramType == Licensing.ParameterType.Number) {
+            if (abi.decode(value_, (uint256)) == 0) {
                 return false;
             }
-        } else if (pType == Licensing.ParameterType.Address) {
+        } else if (paramDef_.paramType == Licensing.ParameterType.Address) {
             // Not supporting address(0) as a valid value
-            if (abi.decode(value, (address)) == address(0)) {
+            if (abi.decode(value_, (address)) == address(0)) {
                 return false;
             }
-        } else if (pType == Licensing.ParameterType.String) {
-            abi.decode(value, (string));
+        } else if (paramDef_.paramType == Licensing.ParameterType.String) {
+            abi.decode(value_, (string));
             // WARNING: Do proper string validation off chain.
             if (
-                keccak256(value) == keccak256(abi.encode(" ")) ||
-                keccak256(value) == keccak256(abi.encode(""))
+                keccak256(value_) == keccak256(abi.encode(" ")) ||
+                keccak256(value_) == keccak256(abi.encode(""))
             ) {
                 return false;
             }
-        } else if (pType == Licensing.ParameterType.MultipleChoice) {
-            ShortString[] memory s = abi.decode(value, (ShortString[]));
-            // No choice is not a valid value, if you need this have a value called
-            // "None" or something
-            if (s.length == 0) {
+        } else if (paramDef_.paramType == Licensing.ParameterType.StringSet) {
+            // WARNING: Do proper string validation off chain.
+            string[] memory result = abi.decode(value_, (string[]));
+            if (result.length == 0) {
+                return false;
+            }
+        } else if (paramDef_.paramType == Licensing.ParameterType.MultipleChoice) {
+            abi.decode(value_, (uint256));
+            ShortString[] memory available = abi.decode(paramDef_.availableChoices, (ShortString[]));
+            if (available.length == 0) {
                 return false;
             }
         }

@@ -18,7 +18,12 @@ contract LicensingModuleLicensingTest is BaseTest {
 
     uint256 ipaId;
 
-    modifier withFrameworkConfig(bool derivativesWithApproval, bool reciprocal, Licensing.LicensorConfig licensorConfig) {
+    modifier withFrameworkConfig(
+        bool allowsDerivatives,
+        bool derivativesWithApproval,
+        bool reciprocal,
+        Licensing.LicensorConfig licensorConfig
+    ) {
         ShortString[] memory channels = new ShortString[](2);
         channels[0] = "test1".toShortString();
         channels[1] = "test2".toShortString();
@@ -31,8 +36,8 @@ contract LicensingModuleLicensingTest is BaseTest {
             value: ""// unset
         }));
         params.push(Licensing.ParamValue({
-            tag: PIPLicensingTerms.DERIVATIVES_WITH_ATTRIBUTION.toShortString(),
-            value: abi.encode(true)
+            tag: PIPLicensingTerms.DERIVATIVES_ALLOWED.toShortString(),
+            value: abi.encode(allowsDerivatives)
         }));
         params.push(Licensing.ParamValue({
             tag: PIPLicensingTerms.DERIVATIVES_WITH_APPROVAL.toShortString(),

@@ -13,56 +13,86 @@ library PIPLicensingTerms {
     using ShortStrings for *;
 
     string constant FRAMEWORK_ID = "SPIPL-1.0";
-
+    ////////////////////////////////////////////////////////////////////////////
+    //                               Parameters                               //
+    ////////////////////////////////////////////////////////////////////////////
     string constant CHANNELS_OF_DISTRIBUTION = "Channels-Of-Distribution";
     string constant ATTRIBUTION = "Attribution";
-    string constant DERIVATIVES_WITH_ATTRIBUTION = "Derivatives-With-Attribution";
-    string constant DERIVATIVES_WITH_APPROVAL = "Derivatives-With-Approval";
-    string constant DERIVATIVES_WITH_RECIPROCAL_LICENSE = "Derivatives-Reciprocal-License";
-
+    string constant DERIVATIVES_ALLOWED = "Derivatives-Allowed";
+    string constant DERIVATIVES_ALLOWED_OPTIONS = "Derivatives-Allowed-Options";
+    
+    ////////////////////////////////////////////////////////////////////////////
+    //                       Derivative Options                               //
+    ////////////////////////////////////////////////////////////////////////////
+    string constant ALLOWED_WITH_APPROVAL = "Allowed-With-Approval";
+    uint8 constant ALLOWED_WITH_APPROVAL_INDEX = 0;
+    string constant ALLOWED_WITH_RECIPROCAL_LICENSE = "Allowed-Reciprocal-License";
+    uint8 constant ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX = 1;
+    string constant ALLOWED_WITH_ATTRIBUTION = "Allowed-With-Attribution";
+    uint8 constant ALLOWED_WITH_ATTRIBUTION_INDEX = 2;
+    
     // On beta version
+    // Parameters:
     // string constant CONTENT_STANDARDS = "Content-Standards";
     // string constant DERIVATIVES = "Derivatives";
-    // string constant TERRITORY = "TERRITORY";
-    // string constant REVOCABLE = "REVOCABLE";
-    // string constant COMMERCIAL_USE = "COMMERCIAL_USE";
-    // string constant GROSS_REVENUES = "GROSS_REVENUES";
-    // string constant LICENSE_FEE = "LICENSE_FEE";
-    // string constant SUBLICENSABLE = "SUBLICENSABLE";
-    // string constant TRANSFERABLE = "TRANSFERABLE";
-    // string constant CURRENCY = "CURRENCY";
-    // string constant PAYMENT_ADDRESS = "PAYMENT_ADDRESS";
-    // string constant GOVERNING_LAW = "GOVERNING_LAW";
-    // string constant EXPIRATION = "EXPIRATION";
+    // string constant TERRITORY = "Territory";
+    // string constant REVOCABLE = "Revocable";
+    // string constant COMMERCIAL_USE = "Commercial-Use";
+    // string constant GROSS_REVENUES = "Gross-Revenues";
+    // string constant LICENSE_FEE = "License-Fee";
+    // string constant SUBLICENSABLE = "Sublicensable";
+    // string constant TRANSFERABLE = "Transferable";
+    // string constant CURRENCY = "Currency";
+    // string constant PAYMENT_ADDRESS = "Payment-Address";
+    // string constant GOVERNING_LAW = "Governing-Law";
+    // string constant EXPIRATION = "Expiration";
     // string constant ALTERNATIVE_DISPUTE_RESOLUTION =
-    //    "ALTERNATIVE_DISPUTE_RESOLUTION";
+    //    "Alternative-Dispute-Resolution";
+    // Derivative options:
+    // string constant ALLOWED_WITH_REVENUE_SHARE = "Allowed-With-Revenue-Share";
+    // string constant ALLOWED_WITH_REVENUE_CEILING = "Allowed-With-Revenue-Ceiling";
+    // string constant DERIVATIVES_ALLOWED_TAG_AMOUNT = "Derivatives-Allowed-Tag-Amount";
+
+
+    function _getDerivativeChoices() internal pure returns (ShortString[] memory) {
+        ShortString[] memory choices = new ShortString[](3);
+        choices[0] = ALLOWED_WITH_APPROVAL.toShortString();
+        choices[1] = ALLOWED_WITH_RECIPROCAL_LICENSE.toShortString();
+        choices[2] = ALLOWED_WITH_ATTRIBUTION.toShortString();
+        return choices;
+    }
 
     function _getParamDefs()
         internal
         pure
         returns (Licensing.ParamDefinition[] memory paramDefs)
     {
-        paramDefs = new Licensing.ParamDefinition[](5);
+        paramDefs = new Licensing.ParamDefinition[](4);
         paramDefs[0] = Licensing.ParamDefinition(
             CHANNELS_OF_DISTRIBUTION.toShortString(),
-            Licensing.ParameterType.MultipleChoice
+            Licensing.ParameterType.StringSet,
+            "",
+            ""
         );
         paramDefs[1] = Licensing.ParamDefinition(
             ATTRIBUTION.toShortString(),
-            Licensing.ParameterType.Bool
+            Licensing.ParameterType.Bool,
+            abi.encode(false),
+            ""
         );
         paramDefs[2] = Licensing.ParamDefinition(
-            DERIVATIVES_WITH_ATTRIBUTION.toShortString(),
-            Licensing.ParameterType.Bool
+            DERIVATIVES_ALLOWED.toShortString(),
+            Licensing.ParameterType.MultipleChoice,
+            abi.encode(false),
+            ""
         );
-        paramDefs[3] = Licensing.ParamDefinition(
-            DERIVATIVES_WITH_APPROVAL.toShortString(),
-            Licensing.ParameterType.Bool
+        paramDefs[2] = Licensing.ParamDefinition(
+            DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
+            Licensing.ParameterType.MultipleChoice,
+            "", // Since this is dependent on the above, default is unset
+            abi.encode(_getDerivativeChoices())
         );
-        paramDefs[4] = Licensing.ParamDefinition(
-            DERIVATIVES_WITH_RECIPROCAL_LICENSE.toShortString(),
-            Licensing.ParameterType.Bool
-        );
+
     }
 
 }
