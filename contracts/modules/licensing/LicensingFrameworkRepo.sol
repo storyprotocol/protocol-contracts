@@ -71,7 +71,7 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
     ) external view returns(bool) {
         Licensing.FrameworkStorage storage framework = _frameworks[frameworkId_];
         uint256 numParams = params_.length;
-        if (numParams == 0 || numParams > Licensing.MAX_PARAM_TAGS) {
+        if (numParams > Licensing.MAX_PARAM_TAGS) {
             return false;
         }
         for (uint256 i = 0; i < numParams; i++) {
