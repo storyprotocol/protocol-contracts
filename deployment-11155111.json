@@ -1,18 +1,18 @@
 {
   "main": {
-    "AccessControlSingleton-Impl": "0x736E0127c4A610dC337612eD6722f1c2D0FC8160",
-    "AccessControlSingleton-Proxy": "0x73bb978Ad2E51fb49F3F222D96E7f2376C8b69aC",
-    "IPAssetRegistry": "0x3Cf13760B2415210c2B4EE30fc134be86a27ade1",
-    "IPOrgController-Impl": "0xf73D01CB098Ec5117d0BC34faaee9178aCf48248",
-    "IPOrgController-Proxy": "0x3FDfEaFc527309b01ec2E612bc52b2A940883d4f",
-    "LicenseRegistry": "0x8792868838a391B90A283b62A7CAD34c81ce0ED2",
-    "LicensingFrameworkRepo": "0x6C5ffB2A4f29A46C6Aca6d29D7CCc9b30dE40fE0",
-    "LicensingModule": "0xbF09A5DA9b1C29FFED16e24E3B82ea49B5117011",
-    "MockERC721": "0x1dE24F9D36870Fe1Dcc0ef2B9D4B54b869E35331",
-    "ModuleRegistry": "0x967290607aAdFf7A71FDEa9197100c813B124867",
-    "RegistrationModule": "0x847080FaBec201eFE61C5e8C250D2Bfc10b78566",
-    "RelationshipModule": "0x4401222Fd0B72efDfAa6879843fD9Fb9aEaa6ecD",
-    "StoryProtocol": "0x8E124a757BB3AeC07a2b6c84303254FFb6717f92",
-    "TokenGatedHook": "0x3558C4A409eb48E14336bfd60B35d1a2BDF6f32f"
+    "AccessControlSingleton-Impl": "0x006e6eCe64afAeBb8E289eFc7E2398249441d0a7",
+    "AccessControlSingleton-Proxy": "0x3Cf70fb1B00E28D6AA74F2d2d84Fac1CBa6740b3",
+    "IPAssetRegistry": "0xE7A77Fc0Dc677ef5dB296547A844fBd642635506",
+    "IPOrgController-Impl": "0xf9102d48c2585d8bdE09a5f633fDd58485366C7f",
+    "IPOrgController-Proxy": "0x8766B4F2eA35c734f9Ac0F88743e657Dd9769d76",
+    "LicenseRegistry": "0x5b99C26E10c07Ca79C8933693Dda767239cA7656",
+    "LicensingFrameworkRepo": "0xBd81b7E70ba5efC11d17e0fd33E2B01D2885DD2F",
+    "LicensingModule": "0xA0Cf52A453746d5d25ca470202Dbe5F0863DE21A",
+    "MockERC721": "0xC47c9A59550c2C14cE37D1C9626F588723b3b6A4",
+    "ModuleRegistry": "0xD01dCA67Df558e6727A5f38B40ea98349244421a",
+    "RegistrationModule": "0xCA10f175F7A4dbcb1eB2b73cf482a746F1C317fd",
+    "RelationshipModule": "0xfad4d5d951793c5a03ebe5E28064cAae272A4720",
+    "StoryProtocol": "0x61b73A0e471C5b975a3D78A5904f4b140324f719",
+    "TokenGatedHook": "0xfd6E7611a61510438F8764C7ba2eaDC4cBDF1735"
   }
 }
