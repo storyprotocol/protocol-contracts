@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: UNLICENSED
+// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
@@ -63,9 +64,11 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         HookType hType_,
         IIPOrg ipOrg_,
         address[] calldata hooks_,
-        bytes[] calldata hooksConfig_
+        bytes[] calldata hooksConfig_,
+        bytes calldata registerParams_
     ) external onlyIpOrgOwner(ipOrg_) {
-        bytes32 registryKey = _generateRegistryKey(ipOrg_);
+        bytes32 executionType_ = abi.decode(registerParams_, (bytes32));
+        bytes32 registryKey = _generateRegistryKey(ipOrg_, executionType_);
         registerHooks(hType_, ipOrg_, registryKey, hooks_, hooksConfig_);
     }
 
@@ -201,7 +204,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     /// @notice Registers an IP Asset.
     /// @param params_ encoded RegisterIPAParams for module action
     /// @return encoded registry and IP Org id of the IP asset.
-    function _performAction(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual override internal returns (bytes memory) {
+    function _performAction(IIPOrg ipOrg_, address caller_, bytes memory params_) virtual override internal returns (bytes memory) {
         (bytes32 executionType, bytes memory executionData) = abi.decode(params_, (bytes32, bytes));
         if (executionType == Registration.TRANSFER_IP_ASSET) {
             (address from, address to, uint256 id) = abi.decode(executionData, (address, address, uint256));
@@ -343,7 +346,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         string memory baseURI_,
         string memory contractURI_
     ) internal {
-        Registration.IPOrgConfig storage config =  ipOrgConfigs[ipOrg_];
+        Registration.IPOrgConfig storage config = ipOrgConfigs[ipOrg_];
         config.baseURI = baseURI_;
         config.contractURI = contractURI_;
         emit MetadataUpdated(ipOrg_, baseURI_, contractURI_);
@@ -367,12 +370,19 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     function _hookRegistryKey(
         IIPOrg ipOrg_,
         address,
-        bytes calldata
-    ) internal view virtual override returns(bytes32) {
-        return _generateRegistryKey(ipOrg_);
+        bytes calldata moduleParams_
+    ) internal view virtual override returns (bytes32) {
+        (bytes32 executionType, ) = abi.decode(moduleParams_, (bytes32, bytes));
+        return _generateRegistryKey(ipOrg_, executionType);
     }
 
-    function _generateRegistryKey(IIPOrg ipOrg_) private pure returns(bytes32) {
-        return keccak256(abi.encode(address(ipOrg_), "REGISTRATION"));
+    function _generateRegistryKey(
+        IIPOrg ipOrg_,
+        bytes32 executionType_
+    ) private pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(address(ipOrg_), executionType_, "REGISTRATION")
+            );
     }
 }

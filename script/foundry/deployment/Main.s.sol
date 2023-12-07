@@ -1,298 +1,396 @@
-// // SPDX-License-Identifier: MIT
-// pragma solidity ^0.8.18;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.18;
 
-// import "forge-std/Script.sol";
-// import "test/foundry/utils/ProxyHelper.sol";
-// import "script/foundry/utils/StringUtil.sol";
-// import "script/foundry/utils/BroadcastManager.s.sol";
-// import "script/foundry/utils/JsonDeploymentHandler.s.sol";
-// import "contracts/ip-org/IPOrg.sol";
-// import "contracts/ip-org/IPOrgController.sol";
-// import "contracts/access-control/AccessControlSingleton.sol";
-// import { AccessControl } from "contracts/lib/AccessControl.sol";
-// import "contracts/modules/ModuleRegistry.sol";
-// import "contracts/IPAssetRegistry.sol";
-// import "contracts/modules/registration/RegistrationModule.sol";
-// import "contracts/StoryProtocol.sol";
-// import "contracts/modules/base/BaseModule.sol";
-// import "contracts/modules/licensing/LicenseRegistry.sol";
-// import "contracts/modules/relationships/RelationshipModule.sol";
-// import "contracts/lib/modules/ModuleRegistryKeys.sol";
-// import "contracts/modules/licensing/LicensingModule.sol";
-// import "contracts/hooks/TokenGatedHook.sol";
-// import "contracts/modules/base/HookRegistry.sol";
-// import "contracts/interfaces/hooks/base/IHook.sol";
-// import { TokenGated } from "contracts/lib/hooks/TokenGated.sol";
-// import "test/foundry/mocks/MockERC721.sol";
-// import "contracts/modules/licensing/TermsRepository.sol";
-// import { Licensing } from "contracts/lib/modules/Licensing.sol";
-// import { TermCategories, TermIds } from "contracts/lib/modules/ProtocolLicensingTerms.sol";
-
-//  contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
-
-//      using StringUtil for uint256;
-//      using stdJson for string;
-
-//      address accessControl;
-//      address ipOrgController;
-//      address moduleRegistry;
-//      address ipAssetRegistry;
-//      address spg;
-//      address licenseRegistry;
-//      address registrationModule;
-//      address relationshipModule;
-//      address licensingModule;
-//      address tokenGatedHook;
-//      address mockNFT;
-//      address termsRepository;
+import "forge-std/Script.sol";
+import "test/foundry/utils/ProxyHelper.sol";
+import "script/foundry/utils/StringUtil.sol";
+import "script/foundry/utils/BroadcastManager.s.sol";
+import "script/foundry/utils/JsonDeploymentHandler.s.sol";
+import "contracts/ip-org/IPOrg.sol";
+import "contracts/ip-org/IPOrgController.sol";
+import "contracts/access-control/AccessControlSingleton.sol";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
+import "contracts/modules/ModuleRegistry.sol";
+import "contracts/IPAssetRegistry.sol";
+import "contracts/modules/registration/RegistrationModule.sol";
+import "contracts/StoryProtocol.sol";
+import "contracts/modules/base/BaseModule.sol";
+import "contracts/modules/relationships/RelationshipModule.sol";
+import "contracts/lib/modules/ModuleRegistryKeys.sol";
+import "contracts/modules/licensing/LicensingModule.sol";
+import "contracts/hooks/TokenGatedHook.sol";
+import "contracts/hooks/PolygonTokenHook.sol";
+import "contracts/modules/base/HookRegistry.sol";
+import "contracts/interfaces/hooks/base/IHook.sol";
+import { TokenGated } from "contracts/lib/hooks/TokenGated.sol";
+import "test/foundry/mocks/MockERC721.sol";
+import "contracts/modules/licensing/LicenseRegistry.sol";
+import "contracts/modules/licensing/LicensingFrameworkRepo.sol";
+import "contracts/modules/licensing/LicensingModule.sol";
+import "contracts/lib/modules/Licensing.sol";
+import "contracts/lib/modules/PIPLicensingTerms.sol";
+import { PolygonToken } from "contracts/lib/hooks/PolygonToken.sol";
+import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
+import { Hook } from "contracts/lib/hooks/Hook.sol";
+import "script/foundry/utils/HooksFactory.sol";
 
 
-//      constructor() JsonDeploymentHandler("main") {
-//      }
+contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
+    using StringUtil for uint256;
+    using stdJson for string;
 
-//      /// @dev To use, run the following command (e.g. for Sepolia):
-//      /// forge script script/Main.s.sol:Main --rpc-url $SEPOLIA_RPC_URL --broadcast --verify -vvvv
-    
-//      function run() public {
-//          _beginBroadcast();
-//          string memory contractKey;
-//          address newAddress;
-        
-//          /// ACCESS CONTROL SINGLETON
-//          contractKey = "AccessControlSingleton-Impl";
+    address accessControl;
+    address ipOrgController;
+    address moduleRegistry;
+    address ipAssetRegistry;
+    address spg;
+    address licenseRegistry;
+    address registrationModule;
+    address relationshipModule;
+    address licensingModule;
+    address tokenGatedHook;
+    address polygonTokenHook;
+    address mockNFT;
+    address licensingFrameworkRepo;
+    address hooksFactory;
 
-//          console.log(string.concat("Deploying ", contractKey, "..."));
-//          newAddress = address(new AccessControlSingleton());
-//          _writeAddress(contractKey, newAddress);
-//          console.log(string.concat(contractKey, " deployed to:"), newAddress);
-        
+    constructor() JsonDeploymentHandler("main") {}
 
-//          contractKey = "AccessControlSingleton-Proxy";
+    /// @dev To use, run the following command (e.g. for Sepolia):
+    /// forge script script/foundry/deployment/Main.s.sol:Main --rpc-url $SEPOLIA_RPC_URL --broadcast --verify -vvvv
 
-//          console.log(string.concat("Deploying ", contractKey, "..."));
-//          newAddress = _deployUUPSProxy(
-//              newAddress,
-//              abi.encodeWithSelector(
-//                  bytes4(keccak256(bytes("initialize(address)"))), admin
-//              )
-//          );
-//          _writeAddress(contractKey, newAddress);
-//          console.log(string.concat(contractKey, " deployed to:"), newAddress);
+    function run() public {
+        _beginBroadcast();
+        string memory contractKey;
+        address newAddress;
 
-//          accessControl = newAddress;
+        /// ACCESS CONTROL SINGLETON
+        contractKey = "AccessControlSingleton-Impl";
 
-//          /// MODULE_REGISTRY
-//          contractKey = "ModuleRegistry";
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new AccessControlSingleton());
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-//          console.log(string.concat("Deploying ", contractKey, "..."));
-//          newAddress = address(new ModuleRegistry(accessControl));
-//          _writeAddress(contractKey, newAddress);
-//          console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        contractKey = "AccessControlSingleton-Proxy";
 
-//          moduleRegistry = newAddress;
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = _deployUUPSProxy(
+            newAddress,
+            abi.encodeWithSelector(
+                bytes4(keccak256(bytes("initialize(address)"))),
+                admin
+            )
+        );
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-//          /// IP_ASSET_REGISTRY
-//          contractKey = "IPAssetRegistry";
+        accessControl = newAddress;
 
-//          console.log(string.concat("Deploying ", contractKey, "..."));
-//          newAddress = address(new IPAssetRegistry(moduleRegistry));
-//          _writeAddress(contractKey, newAddress);
-//          console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        /// LICENSING_FRAMEWORK_REPO
+        contractKey = "LicensingFrameworkRepo";
 
-//          ipAssetRegistry = newAddress;
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new LicensingFrameworkRepo(accessControl));
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-//          /// LICENSE_REGISTRY
-//          contractKey = "LicenseRegistry";
+        licensingFrameworkRepo = newAddress;
 
-//          console.log(string.concat("Deploying ", contractKey, "..."));
-//          newAddress = address(new LicenseRegistry(ipAssetRegistry, moduleRegistry));
-//          _writeAddress(contractKey, newAddress);
-//          console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        /// MODULE_REGISTRY
+        contractKey = "ModuleRegistry";
 
-//          licenseRegistry = newAddress;
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new ModuleRegistry(accessControl));
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-//          /// IP_ORG_FACTORY REGISTRY
-//          contractKey = "IPOrgController-Impl";
+        moduleRegistry = newAddress;
 
-//          console.log(string.concat("Deploying ", contractKey, "..."));
-//          newAddress = address(new IPOrgController(moduleRegistry));
-//          _writeAddress(contractKey, newAddress);
-//          console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        /// IP_ASSET_REGISTRY
+        contractKey = "IPAssetRegistry";
 
-//          contractKey = "IPOrgController-Proxy";
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new IPAssetRegistry(moduleRegistry));
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-//          console.log(string.concat("Deploying ", contractKey, "..."));
-//          newAddress = _deployUUPSProxy(
-//              newAddress,
-//              abi.encodeWithSelector(
-//                  bytes4(keccak256(bytes("initialize(address)"))), accessControl
-//              )
-//          );
-//          _writeAddress(contractKey, newAddress);
-//          console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        ipAssetRegistry = newAddress;
 
-//          ipOrgController = newAddress;
+        /// LICENSE_REGISTRY
+        contractKey = "LicenseRegistry";
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(
+            new LicenseRegistry(
+                ipAssetRegistry,
+                moduleRegistry,
+                licensingFrameworkRepo
+            )
+        );
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-//          /// SPG
-//          contractKey = "StoryProtocol";
+        licenseRegistry = newAddress;
 
-//          console.log(string.concat("Deploying ", contractKey, "..."));
-//          newAddress = address(new StoryProtocol(IIPOrgController(ipOrgController), ModuleRegistry(moduleRegistry)));
-//          _writeAddress(contractKey, newAddress);
-//          console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        /// IP_ORG_FACTORY REGISTRY
+        contractKey = "IPOrgController-Impl";
 
-//          spg = newAddress;
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new IPOrgController(moduleRegistry));
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
+        contractKey = "IPOrgController-Proxy";
 
-//          /// REGISTRATION_MODULE
-//          contractKey = "RegistrationModule";
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = _deployUUPSProxy(
+            newAddress,
+            abi.encodeWithSelector(
+                bytes4(keccak256(bytes("initialize(address)"))),
+                accessControl
+            )
+        );
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-//          console.log(string.concat("Deploying ", contractKey, "..."));
-//          newAddress = address(new RegistrationModule(BaseModule.ModuleConstruction({
-//              ipaRegistry: IPAssetRegistry(ipAssetRegistry),
-//              moduleRegistry: ModuleRegistry(moduleRegistry),
-//              licenseRegistry: LicenseRegistry(licenseRegistry),
-//              ipOrgController: IPOrgController(ipOrgController)
-//          }), accessControl));
-//          _writeAddress(contractKey, newAddress);
-//          console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        ipOrgController = newAddress;
 
-//          registrationModule = newAddress;
+        /// SPG
+        contractKey = "StoryProtocol";
 
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(
+            new StoryProtocol(
+                IIPOrgController(ipOrgController),
+                ModuleRegistry(moduleRegistry)
+            )
+        );
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-//          /// RELATIONSHIP_MODULE
-//          contractKey = "RelationshipModule";
+        spg = newAddress;
 
-//          console.log(string.concat("Deploying ", contractKey, "..."));
-//          newAddress = address(new RelationshipModule(BaseModule.ModuleConstruction({
-//              ipaRegistry: IPAssetRegistry(ipAssetRegistry),
-//              moduleRegistry: ModuleRegistry(moduleRegistry),
-//              licenseRegistry: LicenseRegistry(licenseRegistry),
-//              ipOrgController: IPOrgController(ipOrgController)
-//          }), accessControl));
-//          _writeAddress(contractKey, newAddress);
-//          console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        /// REGISTRATION_MODULE
+        contractKey = "RegistrationModule";
 
-//          relationshipModule = newAddress;
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(
+            new RegistrationModule(
+                BaseModule.ModuleConstruction({
+                    ipaRegistry: IPAssetRegistry(ipAssetRegistry),
+                    moduleRegistry: ModuleRegistry(moduleRegistry),
+                    licenseRegistry: LicenseRegistry(licenseRegistry),
+                    ipOrgController: IPOrgController(ipOrgController)
+                }),
+                accessControl
+            )
+        );
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-//          /// TERMS_REPOSITORY
-//          contractKey = "TermsRepository";
+        registrationModule = newAddress;
 
-//          console.log(string.concat("Deploying ", contractKey, "..."));
-//          newAddress = address(new TermsRepository(accessControl));
-//          _writeAddress(contractKey, newAddress);
-//          console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        /// RELATIONSHIP_MODULE
+        contractKey = "RelationshipModule";
 
-//          termsRepository = newAddress;
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(
+            new RelationshipModule(
+                BaseModule.ModuleConstruction({
+                    ipaRegistry: IPAssetRegistry(ipAssetRegistry),
+                    moduleRegistry: ModuleRegistry(moduleRegistry),
+                    licenseRegistry: LicenseRegistry(licenseRegistry),
+                    ipOrgController: IPOrgController(ipOrgController)
+                }),
+                accessControl
+            )
+        );
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-//          /// LICENSE_MODULE
-//          contractKey = "LicensingModule";
+        relationshipModule = newAddress;
 
-//          console.log(string.concat("Deploying ", contractKey, "..."));
-//          newAddress = address(new LicensingModule(BaseModule.ModuleConstruction({
-//              ipaRegistry: IPAssetRegistry(ipAssetRegistry),
-//              moduleRegistry: ModuleRegistry(moduleRegistry),
-//              licenseRegistry: LicenseRegistry(licenseRegistry),
-//              ipOrgController: IPOrgController(ipOrgController)
-//          }), termsRepository) );
-//          _writeAddress(contractKey, newAddress);
-//          console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        /// LICENSE_MODULE
+        contractKey = "LicensingModule";
 
-//          licensingModule = newAddress;
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(
+            new LicensingModule(
+                BaseModule.ModuleConstruction({
+                    ipaRegistry: IPAssetRegistry(ipAssetRegistry),
+                    moduleRegistry: ModuleRegistry(moduleRegistry),
+                    licenseRegistry: LicenseRegistry(licenseRegistry),
+                    ipOrgController: IPOrgController(ipOrgController)
+                }),
+                licensingFrameworkRepo,
+                admin
+            )
+        );
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
+        licensingModule = newAddress;
 
-//          /// TOKEN_GATED_HOOK
-//          contractKey = "TokenGatedHook";
+        /// HOOKS_FACTORY
+        contractKey = "HooksFactory";
 
-//          console.log(string.concat("Deploying ", contractKey, "..."));
-//          newAddress = address(new TokenGatedHook(accessControl));
-//          _writeAddress(contractKey, newAddress);
-//          console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new HooksFactory());
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-//          tokenGatedHook = newAddress;
+        hooksFactory = newAddress;
 
-//          /// MOCK_ERC_721
-//          contractKey = "MockERC721";
+        /// TOKEN_GATED_HOOK
+        contractKey = "TokenGatedHook";
 
-//          console.log(string.concat("Deploying ", contractKey, "..."));
-//          newAddress = address(new MockERC721());
-//          _writeAddress(contractKey, newAddress);
-//          console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        bytes memory tokenGatedHookCode = abi.encodePacked(
+            type(TokenGatedHook).creationCode, abi.encode(address(accessControl)));
+        newAddress = HooksFactory(hooksFactory).deploy(tokenGatedHookCode, Hook.SYNC_FLAG, block.timestamp);
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-//          mockNFT = newAddress;
+        tokenGatedHook = newAddress;
 
+        /// POLYGON_TOKEN_HOOK
+        contractKey = "PolygonTokenHook";
 
-//          /////////////////////////////////////////////////////////////////////////////////////////////////////
-//          //                                      CONFIGURATION                                              //
-//          /////////////////////////////////////////////////////////////////////////////////////////////////////
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        bytes memory polygonTokenHookCode = abi.encodePacked(
+            type(PolygonTokenHook).creationCode,
+            abi.encode(
+                address(accessControl),
+                vm.envAddress("POLYGON_TOKEN_ORACLE_CLIENT"),
+                vm.envAddress("POLYGON_TOKEN_ORACLE_COORDINATOR")
+            ));
+        newAddress = HooksFactory(hooksFactory).deploy(polygonTokenHookCode, Hook.ASYNC_FLAG, block.timestamp);
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-//          /// GRANT ROLEs
-//          AccessControlSingleton accessControlSingleton = AccessControlSingleton(accessControl);
-//          accessControlSingleton.grantRole(AccessControl.UPGRADER_ROLE, admin);
-//          accessControlSingleton.grantRole(AccessControl.RELATIONSHIP_MANAGER_ROLE, admin);
-//          accessControlSingleton.grantRole(AccessControl.LICENSING_MANAGER_ROLE, admin);
-//          accessControlSingleton.grantRole(AccessControl.LICENSING_MANAGER, admin);
-//          accessControlSingleton.grantRole(AccessControl.IPORG_CREATOR_ROLE, admin);
-//          accessControlSingleton.grantRole(AccessControl.MODULE_REGISTRAR_ROLE, admin);
-//          accessControlSingleton.grantRole(AccessControl.MODULE_EXECUTOR_ROLE, spg);
-//          accessControlSingleton.grantRole(AccessControl.MODULE_EXECUTOR_ROLE, ipOrgController);
+        polygonTokenHook = newAddress;
 
-//          // REGISTER MODULES
-//          ModuleRegistry(moduleRegistry).registerProtocolModule(
-//              ModuleRegistryKeys.REGISTRATION_MODULE, BaseModule(registrationModule));
-//          ModuleRegistry(moduleRegistry).registerProtocolModule(
-//              ModuleRegistryKeys.RELATIONSHIP_MODULE, BaseModule(relationshipModule));
-//          ModuleRegistry(moduleRegistry).registerProtocolModule(
-//              ModuleRegistryKeys.LICENSING_MODULE, BaseModule(licensingModule));
-//          string[] memory ipAssetTypes = new string[](2);
-//          ipAssetTypes[0] = "STORY";
-//          ipAssetTypes[1] = "CHARACTER";
-//          address ipOrg = StoryProtocol(spg).registerIpOrg(admin, "Sample IP Org", "SIPO", ipAssetTypes);
+        /// MOCK_ERC_721
+        contractKey = "MockERC721";
 
-//          // REGISTER TOKEN_GATED_HOOK
-//          address[] memory hooks = new address[](1);
-//          hooks[0] = tokenGatedHook;
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new MockERC721());
+        _writeAddress(contractKey, newAddress);
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
-//          TokenGated.Config memory tokenGatedConfig = TokenGated.Config({
-//             tokenAddress: mockNFT
-//          });
-//          bytes[] memory hooksConfig = new bytes[](1);
-//          hooksConfig[0] = abi.encode(tokenGatedConfig);
-//          RegistrationModule(registrationModule).registerHooks(HookRegistry.HookType.PreAction, IIPOrg(ipOrg), hooks, hooksConfig);
+        mockNFT = newAddress;
 
-//          // CONFIG LICENSING MODULE
-//          Licensing.CommercialStatus comStatus = Licensing.CommercialStatus.Both;
-//          TermsRepository(termsRepository).addCategory(TermCategories.SHARE_ALIKE);
-//          Licensing.LicensingTerm memory term = _getTerm(TermIds.NFT_SHARE_ALIKE, comStatus);
-//          TermsRepository(termsRepository).addTerm(TermCategories.SHARE_ALIKE, TermIds.NFT_SHARE_ALIKE, term);
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
+        //                                      CONFIGURATION                                              //
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//          TermsRepository(termsRepository).addCategory(TermCategories.LICENSOR);
-//          term = _getTerm(TermIds.LICENSOR_APPROVAL, comStatus);
-//          TermsRepository(termsRepository).addTerm(TermCategories.LICENSOR, TermIds.LICENSOR_APPROVAL, term);
+        /// GRANT ROLEs
+        AccessControlSingleton accessControlSingleton = AccessControlSingleton(
+            accessControl
+        );
+        accessControlSingleton.grantRole(AccessControl.UPGRADER_ROLE, admin);
+        accessControlSingleton.grantRole(
+            AccessControl.RELATIONSHIP_MANAGER_ROLE,
+            admin
+        );
+        accessControlSingleton.grantRole(
+            AccessControl.LICENSING_MANAGER_ROLE,
+            admin
+        );
+        accessControlSingleton.grantRole(
+            AccessControl.LICENSING_MANAGER,
+            admin
+        );
+        accessControlSingleton.grantRole(
+            AccessControl.IPORG_CREATOR_ROLE,
+            admin
+        );
+        accessControlSingleton.grantRole(
+            AccessControl.MODULE_REGISTRAR_ROLE,
+            admin
+        );
+        accessControlSingleton.grantRole(
+            AccessControl.MODULE_EXECUTOR_ROLE,
+            spg
+        );
+        accessControlSingleton.grantRole(
+            AccessControl.MODULE_EXECUTOR_ROLE,
+            ipOrgController
+        );
+        accessControlSingleton.grantRole(
+            AccessControl.HOOK_CALLER_ROLE,
+            moduleRegistry
+        );
+        accessControlSingleton.grantRole(
+            AccessControl.HOOK_CALLER_ROLE,
+            registrationModule
+        );
+        accessControlSingleton.grantRole(
+            AccessControl.HOOK_CALLER_ROLE,
+            relationshipModule
+        );
+        accessControlSingleton.grantRole(
+            AccessControl.HOOK_CALLER_ROLE,
+            licensingModule
+        );
 
-//          TermsRepository(termsRepository).addCategory(TermCategories.CATEGORIZATION);
-//          term = _getTerm(TermIds.FORMAT_CATEGORY, comStatus);
-//          TermsRepository(termsRepository).addTerm(TermCategories.CATEGORIZATION, TermIds.FORMAT_CATEGORY, term);
+        // REGISTER MODULES
+        ModuleRegistry(moduleRegistry).registerProtocolModule(
+            ModuleRegistryKeys.REGISTRATION_MODULE,
+            BaseModule(registrationModule)
+        );
+        ModuleRegistry(moduleRegistry).registerProtocolModule(
+            ModuleRegistryKeys.RELATIONSHIP_MODULE,
+            BaseModule(relationshipModule)
+        );
+        ModuleRegistry(moduleRegistry).registerProtocolModule(
+            ModuleRegistryKeys.LICENSING_MODULE,
+            BaseModule(licensingModule)
+        );
+        string[] memory ipAssetTypes = new string[](2);
+        ipAssetTypes[0] = "STORY";
+        ipAssetTypes[1] = "CHARACTER";
+        address ipOrg = StoryProtocol(spg).registerIpOrg(
+            admin,
+            "Sample IP Org",
+            "SIPO",
+            ipAssetTypes
+        );
 
-//          TermsRepository(termsRepository).addCategory(TermCategories.ACTIVATION);
-//          term = _getTerm(TermIds.LICENSOR_IPORG_OR_PARENT, comStatus);
-//          TermsRepository(termsRepository).addTerm(TermCategories.ACTIVATION, TermIds.LICENSOR_IPORG_OR_PARENT, term);
+        // REGISTER TOKEN_GATED_HOOK and POLYGON_TOKEN_HOOK
+        ModuleRegistry(moduleRegistry).registerProtocolHook("TOKEN_GATED_HOOK", IHook(tokenGatedHook));
+        ModuleRegistry(moduleRegistry).registerProtocolHook("POLYGON_TOKEN_HOOK", IHook(polygonTokenHook));
+        address[] memory hooks = new address[](2);
+        hooks[0] = tokenGatedHook;
+        hooks[1] = polygonTokenHook;
 
+        TokenGated.Config memory tokenGatedConfig = TokenGated.Config({
+            tokenAddress: mockNFT
+        });
+        PolygonToken.Config memory polygonTokenConfig = PolygonToken.Config({
+            tokenAddress: mockNFT,
+            balanceThreshold: 1
+        });
+        bytes[] memory hooksConfig = new bytes[](2);
+        hooksConfig[0] = abi.encode(tokenGatedConfig);
+        hooksConfig[1] = abi.encode(polygonTokenConfig);
+        RegistrationModule(registrationModule).registerHooks(
+            HookRegistry.HookType.PreAction,
+            IIPOrg(ipOrg),
+            hooks,
+            hooksConfig,
+            abi.encode(Registration.REGISTER_IP_ASSET)
+        );
 
-//          _writeDeployment();
-//          _endBroadcast();
-//      }
+        // CONFIG LICENSING MODULE
+        Licensing.ParamDefinition[] memory paramDefs = PIPLicensingTerms._getParamDefs();
+        Licensing.SetFramework memory framework = Licensing.SetFramework({
+            id: PIPLicensingTerms.FRAMEWORK_ID,
+            textUrl: vm.envString("PIPL_URL"),
+            paramDefs: paramDefs
+        });
+        LicensingFrameworkRepo(licensingFrameworkRepo).addFramework(framework);
 
-//      function _getTerm(
-//          string memory termId,
-//          Licensing.CommercialStatus comStatus_
-//      ) internal pure returns (Licensing.LicensingTerm memory) {
-//          return Licensing.LicensingTerm({
-//              comStatus: comStatus_,
-//              url: string(abi.encodePacked("https://", termId,".com")),
-//              hash: "qwertyu",
-//              algorithm: "sha256",
-//              hook: IHook(address(0))
-//          });
-//      }
-//  }
+        _writeDeployment();
+        _endBroadcast();
+    }
+}

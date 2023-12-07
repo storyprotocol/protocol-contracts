@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: UNLICENSED
+// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
@@ -91,7 +92,7 @@ contract LicensingModule is BaseModule {
     function _performAction(
         IIPOrg ipOrg_,
         address caller_,
-        bytes calldata params_
+        bytes memory params_
     ) internal virtual override returns (bytes memory result) {
         (bytes32 action, bytes memory actionParams) = abi.decode(
             params_,

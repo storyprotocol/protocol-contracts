@@ -12,7 +12,11 @@ import { MockBaseModule } from  "test/foundry/mocks/MockBaseModule.sol";
 import { MockIPOrg } from "test/foundry/mocks/MockIPOrg.sol";
 import { Errors } from  "contracts/lib/Errors.sol";
 import { MockSyncHook } from "test/foundry/mocks/MockSyncHook.sol";
+import { MockAsyncHook } from "test/foundry/mocks/MockAsyncHook.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
+import { Hook } from "contracts/lib/hooks/Hook.sol";
+import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 
 
 contract BaseModuleTest is BaseTest {
@@ -23,6 +27,7 @@ contract BaseModuleTest is BaseTest {
 
     event RequestPending(address indexed sender);
     event RequestCompleted(address indexed sender);
+    event RequestFailed(address indexed sender, string reason);
 
     function setUp() public override {
         super.setUp();
@@ -55,7 +60,7 @@ contract BaseModuleTest is BaseTest {
 
     function test_baseModule_revert_constructorModuleRegistryIsZero() public {
         vm.prank(admin);
-        vm.expectRevert(Errors.BaseModule_ZeroModuleRegistry.selector);
+        vm.expectRevert(Errors.HookRegistry_ZeroModuleRegistry.selector);
         module = new MockBaseModule(
             admin,
             BaseModule.ModuleConstruction(
@@ -132,6 +137,33 @@ contract BaseModuleTest is BaseTest {
         module.execute(mockIpOrg, address(123), params, new bytes[](0), new bytes[](1));
         vm.stopPrank();
     }
+    function test_baseModule_executeWithAsyncHooks() public {
+        bytes memory configParams = abi.encode(uint256(123));
+        vm.prank(address(moduleRegistry));
+        module.configure(mockIpOrg, address(123), configParams);
+
+        (MockAsyncHook asyncHook, bytes32 requestId) = _executeModuleWithAsyncHook();
+        // simulate external service callback
+        vm.startPrank(admin);
+        vm.expectEmit(true, true, true, true);
+        emit RequestCompleted(address(123));
+        asyncHook.handleCallback(requestId, abi.encode("PASS"));
+        vm.stopPrank();
+    }
+
+    function test_baseModule_executeWithAsyncHooksFail() public {
+        bytes memory configParams = abi.encode(uint256(123));
+        vm.prank(address(moduleRegistry));
+        module.configure(mockIpOrg, address(123), configParams);
+
+        (MockAsyncHook asyncHook, bytes32 requestId) = _executeModuleWithAsyncHook();
+        // simulate external service callback
+        vm.startPrank(admin);
+        vm.expectEmit(true, true, true, true);
+        emit RequestFailed(address(123), "EXPECTED_FAILURE");
+        asyncHook.handleCallback(requestId, abi.encode("EXPECTED_FAILURE"));
+        vm.stopPrank();
+    }
 
     function test_baseModule_executeWithHooks() public {
         bytes memory configParams = abi.encode(uint256(123));
@@ -139,8 +171,8 @@ contract BaseModuleTest is BaseTest {
         module.configure(mockIpOrg, address(123), configParams);
         // register hooks
         address[] memory hooks = new address[](2);
-        hooks[0] = address(new MockSyncHook(address(accessControl)));
-        hooks[1] = address(new MockSyncHook(address(accessControl)));
+        hooks[0] = address(_deploySyncHook(1));
+        hooks[1] = address(_deploySyncHook(2));
         bytes[] memory hooksConfig = new bytes[](2);
         hooksConfig[0] = abi.encode("Hook1Config");
         hooksConfig[1] = abi.encode("Hook2Config");
@@ -186,10 +218,10 @@ contract BaseModuleTest is BaseTest {
         vm.prank(address(moduleRegistry));
         module.configure(mockIpOrg, address(123), configParams);
         // register hooks
-        MockSyncHook failedHook = new MockSyncHook(address(accessControl));
+        MockSyncHook failedHook = _deploySyncHook(1);
         failedHook.setShouldExecuteSuccess(false);
         address[] memory hooks = new address[](2);
-        hooks[0] = address(new MockSyncHook(address(accessControl)));
+        hooks[0] = address(_deploySyncHook(2));
         hooks[1] = address(failedHook);
         bytes[] memory hooksConfig = new bytes[](2);
         hooksConfig[0] = abi.encode("Hook1Config");
@@ -230,4 +262,72 @@ contract BaseModuleTest is BaseTest {
         vm.stopPrank();
     }
 
+    function _deploySyncHook(uint256 seed_) internal returns (MockSyncHook result) {
+        bytes memory code = abi.encodePacked(
+            type(MockSyncHook).creationCode, abi.encode(address(accessControl)));
+        result = MockSyncHook(_deployHook(code, Hook.SYNC_FLAG, seed_));
+        moduleRegistry.registerProtocolHook(string(abi.encodePacked("SyncHook-", seed_)), result);
+    }
+
+    function _deployAsyncHook(uint256 seed_) internal returns (MockAsyncHook result) {
+        bytes memory code = abi.encodePacked(
+            type(MockAsyncHook).creationCode, abi.encode(address(accessControl), admin));
+        result = MockAsyncHook(_deployHook(code, Hook.ASYNC_FLAG, seed_));
+        moduleRegistry.registerProtocolHook(string(abi.encodePacked("AsyncHook-", seed_)), result);
+    }
+
+    function _executeModuleWithAsyncHook() internal returns (MockAsyncHook asyncHook, bytes32 requestId) {
+        // register both async and sync hooks
+        address[] memory preHooks = new address[](2);
+        preHooks[0] = address(_deployAsyncHook(1));
+        preHooks[1] = address(_deploySyncHook(2));
+        bytes[] memory preHooksConfig = new bytes[](2);
+        preHooksConfig[0] = abi.encode("AsyncHookConfig");
+        preHooksConfig[1] = abi.encode("SyncHookConfig");
+
+        address[] memory postHooks = new address[](2);
+        postHooks[0] = address(_deploySyncHook(3));
+        postHooks[1] = address(_deploySyncHook(4));
+        bytes[] memory postHooksConfig = new bytes[](2);
+        postHooksConfig[0] = abi.encode("SyncHookConfig");
+        postHooksConfig[1] = abi.encode("SyncHookConfig");
+        // used to generate registryKey. could be relation type, etc.
+        string memory hookRegistryRelatedInfo = "HookRegistryRelatedInfo";
+        vm.startPrank(admin);
+        module.registerHooks(
+            HookRegistry.HookType.PreAction,
+            mockIpOrg,
+            hookRegistryRelatedInfo,
+            preHooks,
+            preHooksConfig
+        );
+        module.registerHooks(
+            HookRegistry.HookType.PostAction,
+            mockIpOrg,
+            hookRegistryRelatedInfo,
+            postHooks,
+            postHooksConfig
+        );
+        vm.stopPrank();
+        // execute module
+        vm.startPrank(address(moduleRegistry));
+        MockBaseModule.ModuleExecutionParams memory executionParamsStruct = MockBaseModule.ModuleExecutionParams({
+            paramA: 123,
+            paramC: 456,
+            someHookRegisteringRelatedInfo: hookRegistryRelatedInfo
+        });
+        bytes memory executionParams = abi.encode(executionParamsStruct);
+        bytes[] memory preHooksParams = new bytes[](2);
+        preHooksParams[0] = abi.encode("AsyncHookParams");
+        preHooksParams[1] = abi.encode("SyncHookParams");
+        bytes[] memory postHooksParams = new bytes[](2);
+        postHooksParams[0] = abi.encode("AsyncHookParams");
+        postHooksParams[1] = abi.encode("SyncHookParams");
+        vm.expectEmit(true, true, true, true);
+        emit RequestPending(address(123));
+        module.execute(mockIpOrg, address(123), executionParams, preHooksParams, postHooksParams);
+        vm.stopPrank();
+        asyncHook = MockAsyncHook(preHooks[0]);
+        requestId = asyncHook.getRequestId(preHooksParams[0]);
+    }
 }

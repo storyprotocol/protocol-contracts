@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import { Errors } from "contracts/lib/Errors.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
+import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
 
 /// @title HookRegistry
 /// @notice This contract is an abstract contract that manages the registration of hooks.
@@ -12,6 +13,7 @@ import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 /// The HookRegistry supports multiple arrays of hooks, each associated with a different configuration, separated by a `registryKey`
 /// Each module can define its own approach to generate its unique registryKey.
 abstract contract HookRegistry {
+    ModuleRegistry public immutable MODULE_REGISTRY;
 
     enum HookType {
         PreAction,
@@ -29,7 +31,7 @@ abstract contract HookRegistry {
 
     event HooksRegistered(HookType indexed hType, bytes32 indexed registryKey, address[] hooks);
     event HooksCleared(HookType indexed hType, bytes32 indexed registryKey);
-    
+
     /// @dev Modifier to check if the caller is the IPOrg owner.
     /// Reverts if the caller is not the IP Org owner.
     modifier onlyIpOrgOwner(IIPOrg ipOrg_) {
@@ -40,6 +42,13 @@ abstract contract HookRegistry {
         if (msg.sender != ipOrg_.owner())
             revert Errors.HookRegistry_CallerNotIPOrgOwner();
         _;
+    }
+
+    constructor(ModuleRegistry moduleRegistry_) {
+        if (address(moduleRegistry_) == address(0)) {
+            revert Errors.HookRegistry_ZeroModuleRegistry();
+        }
+        MODULE_REGISTRY = moduleRegistry_;
     }
 
     /// @dev Registers hooks for a specific type and registry key.
@@ -137,12 +146,12 @@ abstract contract HookRegistry {
     ) external view returns (uint256) {
         return _hooksConfigForType(hookType_, registryKey_).length;
     }
-    
+
     /// @dev Clears all hooks for a specific type and registry key.
     /// Emits a HooksCleared event.
     /// Can only be called by the IP Org owner.
     /// @param hookType_ The type of the hooks to clear.
-    /// @param registryKey_ The registry key for the hooks.    
+    /// @param registryKey_ The registry key for the hooks.
     function clearHooks(
         HookType hookType_,
         IIPOrg ipOrg_,
@@ -226,6 +235,10 @@ abstract contract HookRegistry {
                 }
                 if (i > 0 && newHooks_[i] == newHooks_[i - 1]) {
                     revert Errors.HookRegistry_RegisteringDuplicatedHook();
+                }
+                // only whitelisted hooks can be registered
+                if (!MODULE_REGISTRY.isRegisteredHook(IHook(newHooks_[i]))) {
+                    revert Errors.HookRegistry_RegisteringNonWhitelistedHook(newHooks_[i]);
                 }
                 IHook(newHooks_[i]).validateConfig(newHooksConfig_[i]);
                 hooks_.push(newHooks_[i]);

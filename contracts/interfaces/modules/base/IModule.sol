@@ -7,11 +7,12 @@ import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 /// @title IModule
 /// @notice Interface for a Story Protocol Module, building block of the protocol functionality.
 interface IModule {
-
     /// The execution of the module is pending, and will need to be executed again.
     event RequestPending(address indexed sender);
     /// Module execution completed successfully.
     event RequestCompleted(address indexed sender);
+    /// Module execution failed.
+    event RequestFailed(address indexed sender, string reason);
 
     /// @notice Main execution entrypoint.
     /// @dev It will verify params, execute pre action hooks, perform the action,
@@ -43,5 +44,4 @@ interface IModule {
         address caller_,
         bytes calldata params_
     ) external returns (bytes memory result);
-
 }

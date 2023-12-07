@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: UNLICENSED
+// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
@@ -70,7 +71,7 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
     ) external view returns(bool) {
         Licensing.FrameworkStorage storage framework = _frameworks[frameworkId_];
         uint256 numParams = params_.length;
-        if (numParams == 0 || numParams > Licensing.MAX_PARAM_TAGS) {
+        if (numParams > Licensing.MAX_PARAM_TAGS) {
             return false;
         }
         for (uint256 i = 0; i < numParams; i++) {

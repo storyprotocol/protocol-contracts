@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: UNLICENSED
+// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 import { IModuleRegistry } from "contracts/interfaces/modules/IModuleRegistry.sol";
@@ -8,6 +9,7 @@ import { Errors } from "contracts/lib/Errors.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { BaseModule } from "./base/BaseModule.sol";
 import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
+import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 
 /// @title ModuleRegistry
 /// @notice This contract is the source of truth for all modules that are registered in the protocol.
@@ -18,6 +20,8 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
     address public constant PROTOCOL_LEVEL = address(0);
 
     mapping(string => BaseModule) internal _protocolModules;
+    mapping(string => IHook) internal _protocolHooks;
+    mapping(IHook => string) internal _hookKeys;
 
     constructor(address accessControl_) AccessControlled(accessControl_) { }
 
@@ -57,6 +61,38 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
         emit ModuleRemoved(PROTOCOL_LEVEL, moduleKey, moduleAddress);
     }
 
+    /// @notice Registers a new protocol hook.
+    /// @param hookKey The unique identifier for the hook.
+    /// @param hookAddress The address of the hook contract.
+    /// @dev This function can only be called by an account with the MODULE_REGISTRAR_ROLE.
+    function registerProtocolHook(
+        string calldata hookKey,
+        IHook hookAddress
+    ) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
+        if (address(hookAddress) == address(0)) {
+            revert Errors.ZeroAddress();
+        }
+        _protocolHooks[hookKey] = hookAddress;
+        _hookKeys[hookAddress] = hookKey;
+        emit HookAdded(PROTOCOL_LEVEL, hookKey, address(hookAddress));
+    }
+
+    /// @notice Removes a protocol hook.
+    /// @param hookKey The unique identifier for the hook.
+    /// @dev This function can only be called by an account with the MODULE_REGISTRAR_ROLE.
+    /// If the hook is not registered, it reverts with an error.
+    function removeProtocolHook(
+        string calldata hookKey
+    ) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
+        if (address(_protocolHooks[hookKey]) == address(0)) {
+            revert Errors.ModuleRegistry_HookNotRegistered(hookKey);
+        }
+        IHook hookAddress = _protocolHooks[hookKey];
+        delete _protocolHooks[hookKey];
+        delete _hookKeys[hookAddress];
+        emit HookRemoved(PROTOCOL_LEVEL, hookKey, address(hookAddress));
+    }
+    
     /// Get a module from the protocol, by its key.
     function moduleForKey(string calldata moduleKey) external view returns (BaseModule) {
         return _protocolModules[moduleKey];
@@ -65,6 +101,20 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
     // Returns true if the provided address is a module.
     function isModule(string calldata moduleKey, address caller_) external view returns (bool) {
         return address(_protocolModules[moduleKey]) == caller_;
+    }
+
+    /// @notice Returns the protocol hook associated with a given hook key.
+    /// @param hookKey The unique identifier for the hook.
+    /// @return The protocol hook associated with the given hook key.
+    function hookForKey(string calldata hookKey) external view returns (IHook) {
+        return _protocolHooks[hookKey];
+    }
+
+    /// @notice Checks if a hook is registered in the protocol.
+    /// @param hook_ The hook to check.
+    /// @return True if the hook is registered, false otherwise.
+    function isRegisteredHook(IHook hook_) external view returns (bool) {
+        return address(_protocolHooks[_hookKeys[hook_]]) == address(hook_);
     }
 
     /// Execution entrypoint, callable by any address on its own behalf.

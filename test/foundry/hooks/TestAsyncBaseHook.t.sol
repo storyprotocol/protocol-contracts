@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: UNLICENSED
+// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
@@ -68,14 +69,14 @@ contract TestAsyncBaseHook is BaseTest {
         assertEq0(hookData, expectedHookData);
 
         // Check the request ID
-        assertEq32(requestId, _getRequestId(hookParams));
+        assertEq32(requestId, hook.getRequestId(hookParams));
     }
 
      // This test verifies that the executeAsync function emits the correct event.
     function test_asyncBaseHook_executeAsyncVerifyEvent() public {
         bytes memory hookParams = "0x1234";
         bytes memory hookConfig = "0x5678";
-        bytes32 expectedRequestId = _getRequestId(hookParams);
+        bytes32 expectedRequestId = hook.getRequestId(hookParams);
         bytes memory context = _getExecutionContext(hookConfig, hookParams);
         bytes memory expectedHookData = _getExpectedReturnData(hookConfig, hookParams);
 
@@ -144,8 +145,8 @@ contract TestAsyncBaseHook is BaseTest {
         bytes memory hookParams = "0x1234";
         bytes memory hookConfig = "0x5678";
         bytes memory context = _getExecutionContext(hookConfig, hookParams);
-        bytes32 expectedRequestId = _getRequestId(hookParams);
-        bytes memory callbackData = "0x8901";
+        bytes32 expectedRequestId = hook.getRequestId(hookParams);
+        bytes memory callbackData = abi.encode("PASS");
         bytes32 requestId;
         HookResult result;
         bytes memory hookData;
@@ -156,29 +157,30 @@ contract TestAsyncBaseHook is BaseTest {
             address(callbackHandler)
         );
 
-        assertEq(requestId, expectedRequestId);
+        assertEq(requestId, expectedRequestId, "requestId is not equal");
 
         // verify that the requestId is mapped to callbackHandler
         assertEq(
             address(hook.callbackHandlers(requestId)),
-            address(callbackHandler)
+            address(callbackHandler),
+            "callbackHandler is not equal"
         );
 
         // simulate external service callback
         hook.handleCallback(requestId, callbackData);
 
         // verify request id is cleaned up after callback was handled for the requestId
-        assertEq(address(hook.callbackHandlers(requestId)), address(0x0));
-        assertEq(callbackHandler.lastHandledRequestId(), expectedRequestId);
-        assertEq(callbackHandler.lastHandledCallbackData(), callbackData);
+        assertEq(address(hook.callbackHandlers(requestId)), address(0x0), "requestId is not cleaned up");
+        assertEq(callbackHandler.lastHandledRequestId(), expectedRequestId, "last handled requestId is not equal");
+        assertEq(callbackHandler.lastHandledCallbackData(), hook.getProcessedCallbackData(callbackData), "last handled callbackData is not equal");
     }
 
     function test_asyncBaseHook_handleCallbackVerifyEvent() public {
         bytes memory hookParams = "0x1234";
         bytes memory hookConfig = "0x5678";
         bytes memory context = _getExecutionContext(hookConfig, hookParams);
-        bytes32 expectedRequestId = _getRequestId(hookParams);
-        bytes memory callbackData = "0x8901";
+        bytes32 expectedRequestId = hook.getRequestId(hookParams);
+        bytes memory callbackData = abi.encode("PASS");
         bytes32 requestId;
         HookResult result;
         bytes memory hookData;
@@ -196,7 +198,7 @@ contract TestAsyncBaseHook is BaseTest {
             address(hook),
             address(callbackHandler),
             expectedRequestId,
-            callbackData
+            hook.getProcessedCallbackData(callbackData)
         );
         // simulate external service callback
         hook.handleCallback(requestId, callbackData);
@@ -206,7 +208,7 @@ contract TestAsyncBaseHook is BaseTest {
         public
     {
         bytes32 requestId = "0x9999";
-        bytes memory callbackData = "0x5678";
+        bytes memory callbackData = abi.encode("PASS");
 
         // Try to handle the callback with an invalid request ID
         vm.expectRevert(
@@ -220,7 +222,7 @@ contract TestAsyncBaseHook is BaseTest {
 
     function test_asyncBaseHook_revert_NotQualifiedCallbackCaller() public {
         bytes32 requestId = "0x9999";
-        bytes memory callbackData = "0x5678";
+        bytes memory callbackData = abi.encode("PASS");
         vm.startPrank(address(0x7777));
         // Try to handle the callback with an invalid request ID
         vm.expectRevert(
@@ -239,12 +241,6 @@ contract TestAsyncBaseHook is BaseTest {
 
         vm.expectRevert(Errors.Hook_UnsupportedSyncOperation.selector);
         hook.executeSync(hookParams);
-    }
-
-    function _getRequestId(
-        bytes memory params
-    ) internal pure returns (bytes32) {
-        return bytes32(uint256(keccak256(params)));
     }
 
     function _getExecutionContext(bytes memory hookConfig_, bytes memory hookParams_) internal pure returns (bytes memory) {
