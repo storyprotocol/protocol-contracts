@@ -1,18 +1,18 @@
 {
   "main": {
-    "AccessControlSingleton-Impl": "0x006e6eCe64afAeBb8E289eFc7E2398249441d0a7",
-    "AccessControlSingleton-Proxy": "0x3Cf70fb1B00E28D6AA74F2d2d84Fac1CBa6740b3",
-    "IPAssetRegistry": "0xE7A77Fc0Dc677ef5dB296547A844fBd642635506",
-    "IPOrgController-Impl": "0xf9102d48c2585d8bdE09a5f633fDd58485366C7f",
-    "IPOrgController-Proxy": "0x8766B4F2eA35c734f9Ac0F88743e657Dd9769d76",
-    "LicenseRegistry": "0x5b99C26E10c07Ca79C8933693Dda767239cA7656",
-    "LicensingFrameworkRepo": "0xBd81b7E70ba5efC11d17e0fd33E2B01D2885DD2F",
-    "LicensingModule": "0xA0Cf52A453746d5d25ca470202Dbe5F0863DE21A",
-    "MockERC721": "0xC47c9A59550c2C14cE37D1C9626F588723b3b6A4",
-    "ModuleRegistry": "0xD01dCA67Df558e6727A5f38B40ea98349244421a",
-    "RegistrationModule": "0xCA10f175F7A4dbcb1eB2b73cf482a746F1C317fd",
-    "RelationshipModule": "0xfad4d5d951793c5a03ebe5E28064cAae272A4720",
-    "StoryProtocol": "0x61b73A0e471C5b975a3D78A5904f4b140324f719",
-    "TokenGatedHook": "0xfd6E7611a61510438F8764C7ba2eaDC4cBDF1735"
+    "AccessControlSingleton-Impl": "0x4Dc9653D6A21A44ca322474f81B41Dc964a422DD",
+    "AccessControlSingleton-Proxy": "0x7EDacD4d53b5A626471c6728f04D92125CcF647F",
+    "IPAssetRegistry": "0xaD2377c8f9f0ca6382fEf166b08aeDe8318fE49C",
+    "IPOrgController-Impl": "0xdc4A589eB82A7a7dDF026F3713da3338cFa59465",
+    "IPOrgController-Proxy": "0xE3C522921A16c692E664D06d53a251f91323a06B",
+    "LicenseRegistry": "0xCD28eb9D0D2AFcf4354F2c93dE5ce9Bbf88257ae",
+    "LicensingFrameworkRepo": "0xA30bB959Bc298e244aCE0402B5c0609CC8745134",
+    "LicensingModule": "0x6a3E5eB4CE11aE3B063903AB6530c34D6daf9Dc0",
+    "MockERC721": "0x9F9772cd93715A0cb512b3Eb997088a0D0b4a5A3",
+    "ModuleRegistry": "0xedBd4907A7F98de932e635e9076B4E0C36D0E797",
+    "RegistrationModule": "0xfb45e1274D9f0A2DF5C0851a705EEB0665171C5B",
+    "RelationshipModule": "0xf7081c5ff418ddB6C68A3cCc3CC68A4c21803460",
+    "StoryProtocol": "0x336BC9128fFFb7869381E2D0c4A156981cA5d240",
+    "TokenGatedHook": "0x1fDD8955a6D70c84A71Ebb69dE88f3Ad0AAc50d6"
   }
 }
