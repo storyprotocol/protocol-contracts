@@ -58,7 +58,7 @@ contract LicenseRegistry is ERC721 {
             !MODULE_REGISTRY.isModule(
                 ModuleRegistryKeys.LICENSING_MODULE,
                 msg.sender
-            ) || msg.sender != ownerOf(licenseId_)
+            ) && msg.sender != ownerOf(licenseId_)
         ) {
             revert Errors.LicenseRegistry_CallerNotLicensingModuleOrLicensee();
         }
