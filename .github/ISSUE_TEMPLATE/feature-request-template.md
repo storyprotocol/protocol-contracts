@@ -10,15 +10,6 @@ assignees: ''
 
 A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
 
-**Which area of this feature request?**
- - [ ] core
- - [ ] IPA
- - [ ] IPOrg
- - [ ] registration
- - [ ] licensing / LNFT
- - [ ] hooks
- - [ ] others
-
 **Describe the solution you'd like or just add a user story**
 
 A clear and concise description of what you want to happen or add description of the use case.
@@ -30,3 +21,12 @@ A clear and concise description of any alternative solutions or features you've 
 **Additional context**
 
 Add any other context or screenshots about the feature request here.
+
+**Area of this feature request (tbd by the team)**
+ - [ ] core
+ - [ ] IPA
+ - [ ] IPOrg
+ - [ ] registration
+ - [ ] licensing / LNFT
+ - [ ] hooks
+ - [ ] others
