@@ -12,8 +12,17 @@ import { Errors } from "contracts/lib/Errors.sol";
 import { PIPLicensingTerms } from "contracts/lib/modules/PIPLicensingTerms.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
-contract LicensingModuleLicensingTest is BaseTest {
+// TODO: test on derivativeNeedsApproval = false
+contract LicenseRegistryTest is BaseTest {
     using ShortStrings for *;
+
+    event LicenseRegistered(uint256 indexed id);
+    event LicenseNftLinkedToIpa(
+        uint256 indexed licenseId,
+        uint256 indexed ipAssetId
+    );
+    event LicenseActivated(uint256 indexed licenseId);
+    event LicenseRevoked(uint256 indexed licenseId);
 
     address internal ipaOwner = address(0x13336);
     Licensing.ParamValue[] internal params;
@@ -92,8 +101,8 @@ contract LicensingModuleLicensingTest is BaseTest {
         licensingFrameworkRepo.addFramework(framework);
     }
 
-    function test_LicensingModule_createLicense_noParent_ipa_userSetsParam()
-        public
+    function _createLicense_noParent_ipa()
+        internal
         withFrameworkConfig(
             true,
             true,
@@ -115,26 +124,14 @@ contract LicensingModuleLicensingTest is BaseTest {
             new bytes[](0),
             new bytes[](0)
         );
-
-        _assertLicenseData(
-            licenseRegistry.getLicenseData(licenseId),
-            licenseId,
-            Licensing.LicenseStatus.Active,
-            true,
-            true,
-            0, // no parent
-            ipaId_1
-        );
-        _assertLicenseParams(licenseRegistry.getParams(licenseId), params);
-
         return licenseId;
     }
 
-    function test_LicensingModule_createLicense_parent_noIpa_reciprocal()
+    function _createLicense_parent_noIpa_reciprocal()
         public
         returns (uint256 parentLicenseId, uint256 childLicenseId)
     {
-        parentLicenseId = test_LicensingModule_createLicense_noParent_ipa_userSetsParam();
+        parentLicenseId = _createLicense_noParent_ipa();
         uint256 _ipaId = 0; // no ipa
         Licensing.LicenseCreation memory creation = Licensing.LicenseCreation({
             params: new Licensing.ParamValue[](0),
@@ -149,7 +146,125 @@ contract LicensingModuleLicensingTest is BaseTest {
             new bytes[](0)
         );
         assertEq(childLicenseId, 2, "childLicenseId");
+    }
 
+    function test_LicenseRegistry_activateLicense()
+        public
+        returns (uint256 licenseId)
+    {
+        (
+            ,
+            licenseId
+        ) = _createLicense_parent_noIpa_reciprocal();
+        vm.prank(ipOrg.owner());
+        vm.expectEmit(address(licenseRegistry));
+        emit LicenseActivated(licenseId);
+        spg.activateLicense(address(ipOrg), licenseId);
+        Licensing.LicenseData memory license = licenseRegistry.getLicenseData(
+            licenseId
+        );
+        assertEq(
+            uint8(license.status),
+            uint8(Licensing.LicenseStatus.Active),
+            "license status"
+        );
+    }
+
+    function test_LicenseRegistry_revokeLicense()
+        public
+        returns (uint256 licenseId)
+    {
+        licenseId = test_LicenseRegistry_activateLicense();
+
+        vm.prank(licenseRegistry.getRevoker(licenseId));
+        vm.expectEmit(address(licenseRegistry));
+        emit LicenseRevoked(licenseId);
+        licenseRegistry.revokeLicense(licenseId);
+
+        // TODO: also check for change IPA status once implemented
+        Licensing.LicenseData memory license = licenseRegistry.getLicenseData(
+            licenseId
+        );
+        assertEq(
+            uint8(license.status),
+            uint8(Licensing.LicenseStatus.Revoked),
+            "license status"
+        );
+    }
+
+		function test_LicenseRegistry_revert_revokeLicense_CallerNotRevoker() external {
+        uint256 licenseId = test_LicenseRegistry_activateLicense();
+        vm.expectRevert(Errors.LicenseRegistry_CallerNotRevoker.selector);
+        licenseRegistry.revokeLicense(licenseId);
+    }
+
+    function test_LicenseRegistry_revert_CallerNotLicensingModule_noParent_ipa()
+        public
+    {
+        uint256 licenseId = _createLicense_noParent_ipa();
+        Licensing.LicenseData memory license = licenseRegistry.getLicenseData(
+            licenseId
+        );
+        vm.expectRevert(
+            Errors.LicenseRegistry_CallerNotLicensingModule.selector
+        );
+        licenseRegistry.addLicense(license, msg.sender, params);
+    }
+
+    function test_LicenseRegistry_revert_CallerNotLicensingModule_parent_noIpa()
+        public
+    {
+        (
+            ,
+            uint256 licenseId
+        ) = _createLicense_parent_noIpa_reciprocal();
+        Licensing.LicenseData memory license = licenseRegistry.getLicenseData(
+            licenseId
+        );
+        vm.expectRevert(
+            Errors.LicenseRegistry_CallerNotLicensingModule.selector
+        );
+        licenseRegistry.addLicense(license, msg.sender, params);
+    }
+
+    function test_LicenseRegistry_revert_CallerNotLicensor_noParent_ipa()
+        public
+    {
+        uint256 licenseId = _createLicense_noParent_ipa();
+        vm.expectRevert(Errors.LicenseRegistry_CallerNotLicensor.selector);
+        spg.activateLicense(address(ipOrg), licenseId);
+    }
+
+    function test_LicenseRegistry_revert_CallerNotLicensor_parent_noIpa()
+        public
+    {
+        (
+            ,
+            uint256 licenseId
+        ) = _createLicense_parent_noIpa_reciprocal();
+        vm.expectRevert(Errors.LicenseRegistry_CallerNotLicensor.selector);
+        spg.activateLicense(address(ipOrg), licenseId);
+    }
+
+    function test_LicenseRegistry_getLicenseData_noParent_ipa() public {
+        uint256 licenseId = _createLicense_noParent_ipa();
+        _assertLicenseData(
+            licenseRegistry.getLicenseData(licenseId),
+            licenseId,
+            Licensing.LicenseStatus.Active,
+            true,
+            true,
+            0, // no parent
+            ipaId_1
+        );
+        _assertLicenseParams(licenseRegistry.getParams(licenseId), params);
+    }
+
+    function test_LicenseRegistry_getLicenseData_parent_noIpa() public {
+        (
+            uint256 parentLicenseId,
+            uint256 childLicenseId
+        ) = _createLicense_parent_noIpa_reciprocal();
         _assertLicenseData(
             licenseRegistry.getLicenseData(childLicenseId),
             childLicenseId,
@@ -173,29 +288,75 @@ contract LicensingModuleLicensingTest is BaseTest {
         assertEq(parentParams[1].value, childParams[1].value, "attribution");
     }
 
-    function test_LicensingModule_revert_addReciprocalLicense_ParentLicenseNotActive()
-        public
-    {
-        uint256 parentLicenseId = test_LicensingModule_createLicense_noParent_ipa_userSetsParam();
-        Licensing.LicenseCreation memory creation = Licensing.LicenseCreation({
-            params: new Licensing.ParamValue[](0),
-            parentLicenseId: parentLicenseId,
-            ipaId: 0
-        });
+    function test_LicenseRegistry_linkLnftToIpa() public {
+        (
+            ,
+            uint256 childLicenseId
+        ) = _createLicense_parent_noIpa_reciprocal();
 
         vm.prank(ipOrg.owner());
-        uint256 childLicenseId = spg.createLicense(
-            address(ipOrg),
-            creation,
-            new bytes[](0),
-            new bytes[](0)
+        spg.activateLicense(address(ipOrg), childLicenseId);
+
+        vm.expectEmit(address(licenseRegistry));
+        emit LicenseNftLinkedToIpa(childLicenseId, ipaId_2);
+        vm.prank(address(licensingModule));
+        licenseRegistry.linkLnftToIpa(childLicenseId, ipaId_2);
+    }
+
+    function test_LicenseRegistry_revert_linkLnftToIpa_LicenseAlreadyLinkedToIpa()
+        public
+    {
+        (
+            ,
+            uint256 licenseId
+        ) = _createLicense_parent_noIpa_reciprocal();
+
+        vm.prank(ipOrg.owner());
+        spg.activateLicense(address(ipOrg), licenseId);
+
+        vm.prank(ipOrg.owner());
+        licenseRegistry.linkLnftToIpa(licenseId, ipaId_1);
+
+        vm.prank(ipOrg.owner());
+        vm.expectRevert(
+            Errors.LicenseRegistry_LicenseAlreadyLinkedToIpa.selector
         );
-        assertEq(childLicenseId, 2);
+        licenseRegistry.linkLnftToIpa(licenseId, ipaId_1);
+    }
+
+    function test_LicenseRegistry_revert_linkLnftToIpa_LicenseRegistry_IPANotActive()
+        public
+    {
+        (
+            ,
+            uint256 licenseId
+        ) = _createLicense_parent_noIpa_reciprocal();
+
+        vm.prank(ipOrg.owner());
+        spg.activateLicense(address(ipOrg), licenseId);
+
+        uint256 _ipaId = 123_789; // some id that's not active
+
+        vm.prank(ipOrg.owner());
+        vm.expectRevert(Errors.LicenseRegistry_IPANotActive.selector);
+        licenseRegistry.linkLnftToIpa(licenseId, _ipaId);
+    }
+
+    function test_LicenseRegistry_revert_linkLnftToIpa_LicenseNotActive()
+        public
+    {
+        (
+            ,
+            uint256 childLicenseId
+        ) = _createLicense_parent_noIpa_reciprocal();
+        vm.prank(ipOrg.owner());
+        vm.expectRevert(Errors.LicenseRegistry_LicenseNotActive.selector);
+        licenseRegistry.linkLnftToIpa(childLicenseId, ipaId_1);
     }
 
     function _constructInputParams()
         internal
-        pure
+				pure
         returns (Licensing.ParamValue[] memory)
     {
         Licensing.ParamValue[] memory inputParams = new Licensing.ParamValue[](
@@ -289,7 +450,7 @@ contract LicensingModuleLicensingTest is BaseTest {
             rParams[1].tag.toString(),
             "attribution"
         );
-        // assertEq(lParams[1].value, inputParams[0].value); // TODO: check this, set by user
+        // assertEq(lParams[1].value, inputParams[0].value); // Set by user
         assertEq(
             lParams[2].tag.toString(),
             rParams[2].tag.toString(),
