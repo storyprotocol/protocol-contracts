@@ -22,7 +22,7 @@ contract LicenseRegistry is ERC721 {
     using ShortStrings for *;
 
     // TODO: Figure out data needed for indexing
-    event LicenseRegistered(uint256 indexed id);
+    event LicenseRegistered(uint256 indexed id, Licensing.LicenseData licenseData);
     event LicenseNftLinkedToIpa(
         uint256 indexed licenseId,
         uint256 indexed ipAssetId
@@ -122,7 +122,7 @@ contract LicenseRegistry is ERC721 {
         // the licensing module
         uint256 licenseId = ++_licenseCount;
         _licenses[licenseId] = newLicense_;
-        emit LicenseRegistered(licenseId);
+        emit LicenseRegistered(licenseId, newLicense_);
         _mint(licensee_, licenseId);
         uint256 length = values_.length;
         Licensing.ParamValue[] storage params = _licenseParams[licenseId];
@@ -151,18 +151,18 @@ contract LicenseRegistry is ERC721 {
         if (!isLicenseActive(parentLicenseId_)) {
             revert Errors.LicenseRegistry_ParentLicenseNotActive();
         }
-        Licensing.LicenseData storage parent = _licenses[parentLicenseId_];
+        Licensing.LicenseData memory clone = _licenses[parentLicenseId_];
         uint256 licenseId = ++_licenseCount;
-        _licenses[licenseId] = parent;
-        _licenses[licenseId].parentLicenseId = parentLicenseId_;
-        _licenses[licenseId].licensor = licensor_;
-        _licenses[licenseId].ipaId = ipaId_;
-        if (parent.derivativeNeedsApproval) {
-            _licenses[licenseId].status = Licensing.LicenseStatus.PendingLicensorApproval;
+        clone.parentLicenseId = parentLicenseId_;
+        clone.licensor = licensor_;
+        clone.ipaId = ipaId_;
+        if (clone.derivativeNeedsApproval) {
+            clone.status = Licensing.LicenseStatus.PendingLicensorApproval;
         }
         _licenseParams[licenseId] = _licenseParams[parentLicenseId_];
+        _licenses[licenseId] = clone;
+        emit LicenseRegistered(licenseId, clone);
         _mint(licensee_, licenseId);
-        emit LicenseRegistered(licenseId);
         return licenseId;
     }
 
