@@ -5,6 +5,7 @@ import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { BitMask } from "contracts/lib/BitMask.sol";
+import "forge-std/console2.sol";
 
 /// @title Licensing Module Library
 /// Structs needed by the Licensing Modules and registries
@@ -21,7 +22,7 @@ library Licensing {
         Number,
         Address,
         String,
-        StringSet,
+        ShortStringArray,
         // uint256 bitmask representing indexes in choices array. ParamDefinition will have the available choices array.
         MultipleChoice 
     }
@@ -93,8 +94,7 @@ library Licensing {
     uint256 constant MAX_PARAM_TAGS = 150;
 
     /// Input for IpOrg legal terms configuration in LicensingModule (for now, the only option)
-    bytes32 constant LICENSING_FRAMEWORK_CONFIG =
-        keccak256("LICENSING_FRAMEWORK_CONFIG");
+    bytes32 constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");
     bytes32 constant CREATE_LICENSE = keccak256("CREATE_LICENSE");
     bytes32 constant ACTIVATE_LICENSE = keccak256("ACTIVATE_LICENSE");
     bytes32 constant LINK_LNFT_TO_IPA = keccak256("LINK_LNFT_TO_IPA");
@@ -137,7 +137,7 @@ library Licensing {
     function _validateParamValue(
         ParamDefinition memory paramDef_,
         bytes memory value_
-    ) internal pure returns (bool) {
+    ) internal view returns (bool) {
         // An empty value signals the parameter is untagged, to trigger default values in the
         // license agreement text, but that's valid
         if (keccak256(value_) == keccak256("")) {
@@ -164,9 +164,10 @@ library Licensing {
             ) {
                 return false;
             }
-        } else if (paramDef_.paramType == Licensing.ParameterType.StringSet) {
+        } else if (paramDef_.paramType == Licensing.ParameterType.ShortStringArray) {
             // WARNING: Do proper string validation off chain.
-            string[] memory result = abi.decode(value_, (string[]));
+            console2.log("WTF");
+            ShortString[] memory result = abi.decode(value_, (ShortString[]));
             if (result.length == 0) {
                 return false;
             }

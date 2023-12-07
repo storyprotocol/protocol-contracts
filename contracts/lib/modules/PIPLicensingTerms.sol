@@ -70,7 +70,7 @@ library PIPLicensingTerms {
         paramDefs = new Licensing.ParamDefinition[](4);
         paramDefs[0] = Licensing.ParamDefinition(
             CHANNELS_OF_DISTRIBUTION.toShortString(),
-            Licensing.ParameterType.StringSet,
+            Licensing.ParameterType.ShortStringArray,
             "",
             ""
         );

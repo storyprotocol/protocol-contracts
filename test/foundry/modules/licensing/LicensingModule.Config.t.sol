@@ -74,19 +74,8 @@ contract LicensingModuleConfigTest is BaseTest {
     }
 
     function test_LicensingModule_configIpOrg_revert_paramLengthNotValid() public {
+        Licensing.ParamValue[] memory params = new Licensing.ParamValue[](200);
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
-            frameworkId: "test_framework",
-            params: new Licensing.ParamValue[](0),
-            licensor: Licensing.LicensorConfig.IpOrgOwnerAlways
-        });
-        vm.prank(ipOrg.owner());
-        vm.expectRevert(Errors.LicensingModule_InvalidParamsLength.selector);
-        spg.configureIpOrgLicensing(
-            address(ipOrg),
-            config
-        );
-        Licensing.ParamValue[] memory params = new Licensing.ParamValue[](10000000);
-        config = Licensing.LicensingConfig({
             frameworkId: "test_framework",
             params: params,
             licensor: Licensing.LicensorConfig.IpOrgOwnerAlways

@@ -93,8 +93,6 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
         return _frameworkDefs[keccak256(abi.encode(frameworkId_, tag_))];
     }
 
-    
-
     function getParameterDefs(
         string calldata frameworkId_
     ) external view returns (Licensing.ParamDefinition[] memory) {
