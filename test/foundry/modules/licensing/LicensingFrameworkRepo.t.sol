@@ -137,22 +137,19 @@ contract LicensingFrameworkRepoTest is Test, AccessControlHelper {
         Licensing._validateParamValue(pDef, abi.encode(123));
     }
 
-    function test_LicensingFrameworkRepo_validateParamValue_StringSet() public {
+    function test_LicensingFrameworkRepo_validateParamValue_ShortStringArray() public {
+        ShortString[] memory ssValue = new ShortString[](2);
+        ssValue[0] = "test1".toShortString();
+        ssValue[1] = "test2".toShortString();
         Licensing.ParamDefinition memory pDef = Licensing.ParamDefinition({
             tag: "TEST_TAG".toShortString(),
             paramType: Licensing.ParameterType.ShortStringArray,
-            defaultValue: abi.encode(["test".toShortString()]),
+            defaultValue: abi.encode(ssValue),
             availableChoices: ""
         });
-        console2.logBytes(pDef.defaultValue);
-        ShortString[] memory ssValue = abi.decode(pDef.defaultValue, (ShortString[]));
-        console2.log(ssValue.length);
-        console2.log(ssValue[0].toString());
-        Licensing._validateParamValue(pDef, abi.encode(["test"]));
-        //assertTrue(Licensing._validateParamValue(pDef, abi.encode(["test"])));
-        //assertFalse(Licensing._validateParamValue(pDef, abi.encode(["test", "tttest"])));
-        //vm.expectRevert();
-        //Licensing._validateParamValue(pDef, abi.encode(123));
+        assertTrue(Licensing._validateParamValue(pDef, abi.encode(ssValue)));
+        vm.expectRevert();
+        Licensing._validateParamValue(pDef, abi.encode(["test", "tttest"]));
     }
 
     function test_LicensingFrameworkRepo_validateParamValue_MultipleChoice() public {

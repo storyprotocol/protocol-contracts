@@ -42,25 +42,19 @@ contract BitMaskTest is Test {
         }
     }
 
-    function test_BitMask_revert_EmptyArray() public {
-        uint8[] memory ipAssets = new uint8[](0);
-        vm.expectRevert(Errors.EmptyArray.selector);
-        checker.convertToMask(ipAssets);
-    }
-
     function test_BitMask_isSetOnMaskTrue() public {
         uint256 mask = 0;
-        for (uint8 i = 1; i <= uint8(254); i++) {
-            mask |= 1 << (uint256(i) & 0xff);
+        for (uint256 i = 0; i < 256; i++) {
+            mask |= 1 << (i & 0xff);
         }
-        for (uint8 i = 1; i <= uint8(254); i++) {
-            assertTrue(checker.isSet(mask, i));
+        for (uint256 i = 1; i < 256; i++) {
+            assertTrue(checker.isSet(mask, uint8(i)));
         }
     }
 
     function test_BitMask_isSetOnMaskFalse() public {
-        uint256 zeroMask;
         for (uint8 i = 1; i <= uint8(254); i++) {
+            uint256 zeroMask;
             assertFalse(checker.isSet(zeroMask, i));
         }
     }

@@ -166,7 +166,6 @@ library Licensing {
             }
         } else if (paramDef_.paramType == Licensing.ParameterType.ShortStringArray) {
             // WARNING: Do proper string validation off chain.
-            console2.log("WTF");
             ShortString[] memory result = abi.decode(value_, (ShortString[]));
             if (result.length == 0) {
                 return false;
