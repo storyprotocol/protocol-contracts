@@ -165,5 +165,4 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         bytes[] memory hooks = new bytes[](0);
         return spg.registerIPAsset(address(ipOrg), params, hooks, hooks);
     }
-
 }

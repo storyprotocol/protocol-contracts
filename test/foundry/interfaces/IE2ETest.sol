@@ -3,11 +3,13 @@ pragma solidity ^0.8.19;
 
 import { HookResult } from "contracts/interfaces/hooks/base/IHook.sol";
 import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
+import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { HookRegistry } from "contracts/modules/base/HookRegistry.sol";
+import { ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
 interface IE2ETest {
     //
-    // RegistrationModule events
+    // Registration Module
     //
 
     event MetadataUpdated(
@@ -36,7 +38,7 @@ interface IE2ETest {
     );
 
     //
-    // RelationshipModule events
+    // Relationship Module
     //
 
     event RelationshipTypeSet(
@@ -50,10 +52,7 @@ interface IE2ETest {
         uint256 dstSubtypesMask
     );
 
-    event RelationshipTypeUnset(
-        string relType,
-        address ipOrg
-    );
+    event RelationshipTypeUnset(string relType, address ipOrg);
 
     event RelationshipCreated(
         uint256 indexed relationshipId,
@@ -65,7 +64,40 @@ interface IE2ETest {
     );
 
     //
-    // HookRegistry events
+    // Licensing
+    //
+
+    event IpOrgLicensingFrameworkSet(
+        address indexed ipOrg,
+        string frameworkId,
+        string url,
+        Licensing.LicensorConfig licensorConfig
+    );
+
+    event ParameterSet(
+        address indexed ipOrg,
+        string paramTag,
+        bytes defaultValue
+    );
+
+    event FrameworkAdded(string frameworkId, string textUrl);
+
+    event ParamDefinitionAdded(
+        string frameworkId,
+        ShortString tag,
+        Licensing.ParameterType paramType
+    );
+
+    event LicenseRegistered(uint256 indexed id);
+    event LicenseNftLinkedToIpa(
+        uint256 indexed licenseId,
+        uint256 indexed ipAssetId
+    );
+    event LicenseActivated(uint256 indexed licenseId);
+    event LicenseRevoked(uint256 indexed licenseId);
+
+    //
+    // HookRegistry
     //
 
     event HooksRegistered(
@@ -79,16 +111,7 @@ interface IE2ETest {
     );
 
     //
-    // TermsRepository events
-    //
-
-    event TermCategoryAdded(string category);
-    event TermCategoryRemoved(string category);
-    event TermAdded(string category, string termId);
-    event TermDisabled(string category, string termId);
-
-    //
-    // SyncHook events
+    // SyncHook
     //
 
     event SyncHookExecuted(
@@ -96,5 +119,29 @@ interface IE2ETest {
         HookResult indexed result,
         bytes contextData,
         bytes returnData
+    );
+
+    //
+    // IPAssetRegistry
+    //
+
+    event Registered(
+        uint256 ipAssetId_,
+        string name_,
+        address indexed ipOrg_,
+        address indexed registrant_,
+        bytes32 hash_
+    );
+
+    event IPOrgTransferred(
+        uint256 indexed ipAssetId_,
+        address indexed oldIPOrg_,
+        address indexed newIPOrg_
+    );
+
+    event StatusChanged(
+        uint256 indexed ipAssetId_,
+        uint8 oldStatus_,
+        uint8 newStatus_
     );
 }

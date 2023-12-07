@@ -56,6 +56,14 @@ contract ModuleRegistryTest is Test, AccessControlHelper {
 
         assertEq(address(registry.moduleForKey("test")), address(module));
     }
+
+    function test_moduleRegistry_revert_addProtocolModuleZeroAddress() public {
+        vm.expectRevert(Errors.ZeroAddress.selector);
+        vm.prank(admin);
+        registry.registerProtocolModule("test", BaseModule(address(0)));
+
+        assertEq(address(registry.moduleForKey("test")), address(0));
+    }
     
     function test_moduleRegistry_removeProtocolModule() public {
         BaseModule.ModuleConstruction memory moduleConstruction = BaseModule.ModuleConstruction(
@@ -78,5 +86,32 @@ contract ModuleRegistryTest is Test, AccessControlHelper {
         assertEq(address(registry.moduleForKey("test")), address(0));
 
         vm.stopPrank();
+    }
+
+    function test_moduleRegistry_revert_removeProtocolModuleModuleNotRegistered() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Errors.ModuleRegistry_ModuleNotRegistered.selector,
+                "unregistered_module_key"
+            )
+        );
+        vm.prank(admin);
+        registry.removeProtocolModule("unregistered_module_key");
+        assertEq(address(registry.moduleForKey("unregistered_module_key")), address(0));
+    }
+
+    function test_moduleRegistry_revert_configureModuleNotRegistered() public {
+        bytes memory encodedParams = abi.encode("test");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Errors.ModuleRegistry_ModuleNotRegistered.selector,
+                "unregistered_module_key"
+            )
+        );
+        registry.configure(
+            IIPOrg(address(0x123)),
+            "unregistered_module_key",
+            encodedParams
+        );
     }
 }
