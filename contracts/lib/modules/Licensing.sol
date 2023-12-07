@@ -5,7 +5,6 @@ import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { BitMask } from "contracts/lib/BitMask.sol";
-import "forge-std/console2.sol";
 
 /// @title Licensing Module Library
 /// Structs needed by the Licensing Modules and registries
@@ -137,7 +136,7 @@ library Licensing {
     function _validateParamValue(
         ParamDefinition memory paramDef_,
         bytes memory value_
-    ) internal view returns (bool) {
+    ) internal pure returns (bool) {
         // An empty value signals the parameter is untagged, to trigger default values in the
         // license agreement text, but that's valid
         if (keccak256(value_) == keccak256("")) {
@@ -171,7 +170,6 @@ library Licensing {
                 return false;
             }
         } else if (paramDef_.paramType == Licensing.ParameterType.MultipleChoice) {
-            abi.decode(value_, (uint256));
             ShortString[] memory available = abi.decode(paramDef_.availableChoices, (ShortString[]));
             if (available.length == 0) {
                 return false;

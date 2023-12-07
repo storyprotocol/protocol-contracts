@@ -26,7 +26,6 @@ contract LicensingModuleLicensingTest is BaseTest {
         bool reciprocal,
         Licensing.LicensorConfig licensorConfig
     ) {
-
         ShortString[] memory channels = new ShortString[](2);
         channels[0] = "test1".toShortString();
         channels[1] = "test2".toShortString();
@@ -42,17 +41,23 @@ contract LicensingModuleLicensingTest is BaseTest {
             tag: PIPLicensingTerms.DERIVATIVES_ALLOWED.toShortString(),
             value: abi.encode(allowsDerivatives)
         }));
-        uint256 derivativeOptions = 0;
+        uint8[] memory indexes = new uint8[](2);
         if (derivativesWithApproval) {
-            derivativeOptions = derivativeOptions._set(PIPLicensingTerms.ALLOWED_WITH_APPROVAL_INDEX);
+            indexes[0] = PIPLicensingTerms.ALLOWED_WITH_APPROVAL_INDEX;
         }
         if (reciprocal) {
-            derivativeOptions = derivativeOptions._set(PIPLicensingTerms.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX);
+            indexes[1] = PIPLicensingTerms.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX;
         }
+        uint256 derivativeOptions = BitMask._convertToMask(indexes);
         params.push(Licensing.ParamValue({
             tag: PIPLicensingTerms.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
             value: abi.encode(derivativeOptions)
         }));
+        console.log("withFrameworkConfig:");
+        for(uint256 i = 0; i < params.length; i++) {
+            console2.log(params[i].tag.toString());
+            console2.logBytes(params[i].value);
+        }
 
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: PIPLicensingTerms.FRAMEWORK_ID,
@@ -142,6 +147,7 @@ contract LicensingModuleLicensingTest is BaseTest {
         assertEq(licenseId, 2);
         Licensing.LicenseData memory license = licenseRegistry.getLicenseData(licenseId);
         assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.PendingLicensorApproval));
+        assertEq(license.derivativesAllowed, true, "derivativesAllowed");
         assertEq(license.isReciprocal, true, "isReciprocal");
         assertEq(license.derivativeNeedsApproval, true, "derivativeNeedsApproval");
         assertEq(license.revoker, licensingModule.DEFAULT_REVOKER());

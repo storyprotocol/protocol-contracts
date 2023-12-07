@@ -230,15 +230,16 @@ contract LicensingModule is BaseModule {
         bool isReciprocal
     ) {
         uint256 inputLength_ = inputParams_.length;
-        mapping(ShortString => bytes) storage _defaultValues = _ipOrgParamValues[ipOrg_];
+        mapping(ShortString => bytes) storage _ipOrgValues = _ipOrgParamValues[ipOrg_];
         uint256 supportedLength = supportedParams_.length;
         licenseParams = new Licensing.ParamValue[](supportedLength);
+        
         // First, get ipOrg defaults
         for (uint256 i = 0; i < supportedLength; i++) {
             // For every supported parameter
             Licensing.ParamDefinition memory paramDef = supportedParams_[i];
             // Get the default value set by ipOrg
-            bytes memory defaultValue = _defaultValues[paramDef.tag];
+            bytes memory ipOrgValue = _ipOrgValues[paramDef.tag];
             // Find if user has provided a value for this param
             bytes memory inputValue;
             for (uint256 j = 0; j < inputLength_; j++) {
@@ -249,9 +250,9 @@ contract LicensingModule is BaseModule {
                 }
             }
             // Decide which value to use
-            bytes memory resultValue = _decideUserOrDefault(
+            bytes memory resultValue = _decideValueSource(
                 inputValue,
-                defaultValue,
+                ipOrgValue,
                 paramDef
             );
 
@@ -261,51 +262,9 @@ contract LicensingModule is BaseModule {
                 continue;
             }
             // If param is not empty, check for Derivative license flags
-            (
-                derivativesAllowed,
-                derivativeNeedsApproval,
-                isReciprocal
-            ) = _parseDerivativeOptions(paramDef.tag, resultValue);
-        }
-        return (licenseParams, derivativesAllowed, derivativeNeedsApproval, isReciprocal);
-    }
-
-    function _decideUserOrDefault(
-        bytes memory inputValue,
-        bytes memory defaultValue,
-        Licensing.ParamDefinition memory paramDef
-    ) private view returns (bytes memory) {
-        if (inputValue.length > 0) {
-            // If user has set it, but ipOrg has too, revert
-            if (defaultValue.length > 0) {
-                revert Errors.LicensingModule_ParamSetByIpOrg();
-            }
-            // If user has set it and ipOrg has not, user value selected
-            if (!Licensing._validateParamValue(paramDef, inputValue)) {
-                // hoping to catch some bad encoding
-                revert Errors.LicensingModule_InvalidInputValue();
-            }
-            return inputValue;
-        } else {
-            return defaultValue;
-        }
-    }
-
-    function _parseDerivativeOptions(
-        ShortString tag,
-        bytes memory resultValue
-    )
-        private
-        pure
-        returns (
-            bool derivativesAllowed,
-            bool derivativeNeedsApproval,
-            bool isReciprocal
-        )
-    {
-        if (ShortStringOps._equal(tag, PIPLicensingTerms.DERIVATIVES_ALLOWED)) {
-            derivativesAllowed = abi.decode(resultValue, (bool));
-            if (derivativesAllowed) {
+            if (ShortStringOps._equal(paramDef.tag, PIPLicensingTerms.DERIVATIVES_ALLOWED)) {
+                derivativesAllowed = abi.decode(resultValue, (bool));
+            } else if (ShortStringOps._equal(paramDef.tag, PIPLicensingTerms.DERIVATIVES_ALLOWED_OPTIONS)) {
                 uint256 derivativeIndexMask = abi.decode(
                     resultValue,
                     (uint256)
@@ -320,7 +279,44 @@ contract LicensingModule is BaseModule {
                 );
             }
         }
-        return (derivativesAllowed, derivativeNeedsApproval, isReciprocal);
+        // In case there is misconfiguration.
+        // TODO: Add relational structure to LicensingFramework so that this is not needed
+        if (!derivativesAllowed) {
+            derivativeNeedsApproval = false;
+            isReciprocal = false;
+        }
+        return (licenseParams, derivativesAllowed, derivativeNeedsApproval, isReciprocal);
+    }
+
+    function _decideValueSource(
+        bytes memory inputValue,
+        bytes memory ipOrgValue,
+        Licensing.ParamDefinition memory paramDef
+    ) private pure returns (bytes memory) {
+        if (inputValue.length > 0) {
+            // If user has set it, but ipOrg has too, revert
+            if (ipOrgValue.length > 0) {
+                revert Errors.LicensingModule_ParamSetByIpOrg();
+            }
+            // If user has set it and ipOrg has not, user value selected
+            if (!Licensing._validateParamValue(paramDef, inputValue)) {
+                // hoping to catch some bad encoding
+                revert Errors.LicensingModule_InvalidInputValue();
+            }
+            return inputValue;
+        } else if (ipOrgValue.length > 0) {
+            return ipOrgValue;
+        } else {
+            return paramDef.defaultValue;
+        }
+    }
+
+    function _parseDerivativeOption(
+        ShortString tag,
+        bytes memory resultValue,
+        bool derivativesAllowed
+    ) private pure returns (bool) {
+        
     }
 
     /// Gets the licensor address for this IPA.

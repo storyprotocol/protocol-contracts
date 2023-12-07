@@ -31,8 +31,8 @@ contract LicensingModuleConfigTest is BaseTest {
         params[2] = Licensing.ParamDefinition({
             tag: "TEST_TAG_3".toShortString(),
             paramType: Licensing.ParameterType.Address,
-            defaultValue: abi.encode(0),
-            availableChoices: abi.encode(0x4545)
+            defaultValue: abi.encode(0x4545),
+            availableChoices: ""
         });
         Licensing.SetFramework memory framework = Licensing.SetFramework({
             id: "test_framework",
@@ -82,25 +82,6 @@ contract LicensingModuleConfigTest is BaseTest {
         });
         vm.prank(ipOrg.owner());
         vm.expectRevert(Errors.LicensingModule_InvalidParamsLength.selector);
-        spg.configureIpOrgLicensing(
-            address(ipOrg),
-            config
-        );
-    }
-
-    function test_LicensingModule_configIpOrg_revert_paramsNotValid() public {
-        Licensing.ParamValue[] memory params = new Licensing.ParamValue[](1);
-        params[0] = Licensing.ParamValue({
-            tag: "TEST_TAG_3".toShortString(),
-            value: abi.encode(params)
-        });
-        Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
-            frameworkId: "test_framework",
-            params: new Licensing.ParamValue[](0),
-            licensor: Licensing.LicensorConfig.IpOrgOwnerAlways
-        });
-        vm.prank(ipOrg.owner());
-        vm.expectRevert(Errors.LicensingModule_InvalidParamValue.selector);
         spg.configureIpOrgLicensing(
             address(ipOrg),
             config

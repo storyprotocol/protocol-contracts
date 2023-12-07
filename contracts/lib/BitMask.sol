@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "forge-std/console2.sol";
-
 /**
  * @notice Based on OpenZeppelin's BitMap, this library is used to encode a set of indexes in a compact way.
  * Instead of using a storage type like OZ, where they use a mapping(uint256 => uint256) for an indeterminate large number of values,
@@ -18,7 +16,7 @@ library BitMask {
     }
 
     /// Sets the bit at `index` to the boolean `value`.
-    function _setTo(uint256 mask_, uint256 index_, bool value_) internal view returns (uint256) {
+    function _setTo(uint256 mask_, uint256 index_, bool value_) internal pure returns (uint256) {
         if (value_) {
             return _set(mask_, index_);
         } else {
@@ -27,7 +25,7 @@ library BitMask {
     }
 
     /// Sets the bit at `index`.
-    function _set(uint256 mask_, uint256 index_) internal view returns(uint256) {
+    function _set(uint256 mask_, uint256 index_) internal pure returns(uint256) {
         uint256 indexMask = 1 << (index_ & 0xff);
         return mask_ |= indexMask;
     }
@@ -39,7 +37,7 @@ library BitMask {
     }
 
     /// Gets the indexes of the set bits in the mask as an array
-    function _getSetIndexes(uint256 mask_) public pure returns (uint8[] memory) {
+    function _getSetIndexes(uint256 mask_) internal pure returns (uint8[] memory) {
         // Count the number of set bits to allocate the array size
         uint256 count;
         for (uint8 i = 0; i < 256; ++i) {

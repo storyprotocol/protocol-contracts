@@ -82,11 +82,11 @@ library PIPLicensingTerms {
         );
         paramDefs[2] = Licensing.ParamDefinition(
             DERIVATIVES_ALLOWED.toShortString(),
-            Licensing.ParameterType.MultipleChoice,
+            Licensing.ParameterType.Bool,
             abi.encode(false),
             ""
         );
-        paramDefs[2] = Licensing.ParamDefinition(
+        paramDefs[3] = Licensing.ParamDefinition(
             DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
             Licensing.ParameterType.MultipleChoice,
             "", // Since this is dependent on the above, default is unset
