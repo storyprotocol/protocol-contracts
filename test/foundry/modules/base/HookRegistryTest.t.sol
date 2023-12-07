@@ -22,16 +22,11 @@ contract HookRegistryTest is BaseTest {
         super.setUp();
 
         vm.prank(admin);
-        hookRegistry = new MockHookRegistry();
+        hookRegistry = new MockHookRegistry(moduleRegistry);
     }
 
     function test_hookRegistry_registerPreHooks() public {
-        address[] memory hooks = new address[](2);
-        hooks[0] = address(new MockBaseHook(address(accessControl)));
-        hooks[1] = address(new MockBaseHook(address(accessControl)));
-        bytes[] memory hooksConfig = new bytes[](2);
-        hooksConfig[0] = abi.encode("Hook1Config");
-        hooksConfig[1] = abi.encode("Hook2Config");
+        (address[] memory hooks, bytes[] memory hooksConfig) = _generateHooks(2);
         address ipOrgOwner = address(0x789);
         IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
         bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
@@ -49,12 +44,7 @@ contract HookRegistryTest is BaseTest {
     }
 
     function test_hookRegistry_registerPreHooksClearsHooksIfNotEmpty() public {
-        address[] memory hooks = new address[](2);
-        hooks[0] = address(new MockBaseHook(address(accessControl)));
-        hooks[1] = address(new MockBaseHook(address(accessControl)));
-        bytes[] memory hooksConfig = new bytes[](2);
-        hooksConfig[0] = abi.encode("Hook1Config");
-        hooksConfig[1] = abi.encode("Hook2Config");
+        (address[] memory hooks, bytes[] memory hooksConfig) = _generateHooks(2);
         address ipOrgOwner = address(0x789);
         IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
         bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
@@ -73,12 +63,7 @@ contract HookRegistryTest is BaseTest {
     }
 
     function test_hookRegistry_registerPostHooks() public {
-        address[] memory hooks = new address[](2);
-        hooks[0] = address(new MockBaseHook(address(accessControl)));
-        hooks[1] = address(new MockBaseHook(address(accessControl)));
-        bytes[] memory hooksConfig = new bytes[](2);
-        hooksConfig[0] = abi.encode("Hook1Config");
-        hooksConfig[1] = abi.encode("Hook2Config");
+        (address[] memory hooks, bytes[] memory hooksConfig) = _generateHooks(2);
         address ipOrgOwner = address(0x789);
         IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
         bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
@@ -96,12 +81,7 @@ contract HookRegistryTest is BaseTest {
     }
 
     function test_hookRegistry_registerPostHooksClearsHooksIfNotEmpty() public {
-        address[] memory hooks = new address[](2);
-        hooks[0] = address(new MockBaseHook(address(accessControl)));
-        hooks[1] = address(new MockBaseHook(address(accessControl)));
-        bytes[] memory hooksConfig = new bytes[](2);
-        hooksConfig[0] = abi.encode("Hook1Config");
-        hooksConfig[1] = abi.encode("Hook2Config");
+        (address[] memory hooks, bytes[] memory hooksConfig) = _generateHooks(2);
         address ipOrgOwner = address(0x789);
         IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
         bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
@@ -120,12 +100,7 @@ contract HookRegistryTest is BaseTest {
     }
 
     function test_hookRegistry_revertRegisterHooksCallerNotIpOrgOwner() public {
-        address[] memory hooks = new address[](2);
-        hooks[0] = address(new MockBaseHook(address(accessControl)));
-        hooks[1] = address(new MockBaseHook(address(accessControl)));
-        bytes[] memory hooksConfig = new bytes[](2);
-        hooksConfig[0] = abi.encode("Hook1Config");
-        hooksConfig[1] = abi.encode("Hook2Config");
+        (address[] memory hooks, bytes[] memory hooksConfig) = _generateHooks(2);
         address ipOrgOwner = address(0x789);
         IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
         bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
@@ -152,13 +127,8 @@ contract HookRegistryTest is BaseTest {
     }
 
     function test_hookRegistry_revertRegisterDuplicatedHook() public {
-        address hookAddr = address(new MockBaseHook(address(accessControl)));
-        address[] memory hooks = new address[](2);
-        hooks[0] = hookAddr;
-        hooks[1] = hookAddr;
-        bytes[] memory hooksConfig = new bytes[](2);
-        hooksConfig[0] = abi.encode("Hook1Config");
-        hooksConfig[1] = abi.encode("Hook2Config");
+        (address[] memory hooks, bytes[] memory hooksConfig) = _generateHooks(2);
+        hooks[1] = hooks[0];
         address ipOrgOwner = address(0x789);
         IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
         bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
@@ -169,12 +139,7 @@ contract HookRegistryTest is BaseTest {
     }
 
     function test_hookRegistry_getters() public {
-        address[] memory hooks = new address[](2);
-        hooks[0] = address(new MockBaseHook(address(accessControl)));
-        hooks[1] = address(new MockBaseHook(address(accessControl)));
-        bytes[] memory hooksConfig = new bytes[](2);
-        hooksConfig[0] = abi.encode("Hook1Config");
-        hooksConfig[1] = abi.encode("Hook2Config");
+        (address[] memory hooks, bytes[] memory hooksConfig) = _generateHooks(2);
         address ipOrgOwner = address(0x789);
         IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
         bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
@@ -208,12 +173,7 @@ contract HookRegistryTest is BaseTest {
     }
 
     function test_hookRegistry_clearPreHooks() public {
-        address[] memory hooks = new address[](2);
-        hooks[0] = address(new MockBaseHook(address(accessControl)));
-        hooks[1] = address(new MockBaseHook(address(accessControl)));
-        bytes[] memory hooksConfig = new bytes[](2);
-        hooksConfig[0] = abi.encode("Hook1Config");
-        hooksConfig[1] = abi.encode("Hook2Config");
+        (address[] memory hooks, bytes[] memory hooksConfig) = _generateHooks(2);
         address ipOrgOwner = address(0x789);
         IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
         bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
@@ -231,12 +191,7 @@ contract HookRegistryTest is BaseTest {
     }
 
     function test_hookRegistry_clearPostHooks() public {
-        address[] memory hooks = new address[](2);
-        hooks[0] = address(new MockBaseHook(address(accessControl)));
-        hooks[1] = address(new MockBaseHook(address(accessControl)));
-        bytes[] memory hooksConfig = new bytes[](2);
-        hooksConfig[0] = abi.encode("Hook1Config");
-        hooksConfig[1] = abi.encode("Hook2Config");
+        (address[] memory hooks, bytes[] memory hooksConfig) = _generateHooks(2);
         address ipOrgOwner = address(0x789);
         IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
         bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
@@ -254,12 +209,7 @@ contract HookRegistryTest is BaseTest {
     }
 
     function test_hookRegistry_revertClearHooksCallerNotAdmin() public {
-        address[] memory hooks = new address[](2);
-        hooks[0] = address(new MockBaseHook(address(accessControl)));
-        hooks[1] = address(new MockBaseHook(address(accessControl)));
-        bytes[] memory hooksConfig = new bytes[](2);
-        hooksConfig[0] = abi.encode("Hook1Config");
-        hooksConfig[1] = abi.encode("Hook2Config");
+        (address[] memory hooks, bytes[] memory hooksConfig) = _generateHooks(2);
         address ipOrgOwner = address(0x789);
         IIPOrg ipOrg = new MockIPOrg(ipOrgOwner);
         bytes32 registryKey = hookRegistry.hookRegistryKey(address(ipOrg), "RelationshipType_A");
@@ -275,6 +225,10 @@ contract HookRegistryTest is BaseTest {
         address hook2 = address(new MockBaseHook(address(accessControl)));
         address hook3 = address(new MockBaseHook(address(accessControl)));
         address hook5 = address(new MockBaseHook(address(accessControl)));
+        moduleRegistry.registerProtocolHook("Hook-1", IHook(hook1));
+        moduleRegistry.registerProtocolHook("Hook-2", IHook(hook2));
+        moduleRegistry.registerProtocolHook("Hook-3", IHook(hook3));
+        moduleRegistry.registerProtocolHook("Hook-5", IHook(hook5));
 
         address[] memory hooksA = new address[](2);
         hooksA[0] = hook1;
@@ -346,6 +300,14 @@ contract HookRegistryTest is BaseTest {
         address hook7 = address(new MockBaseHook(address(accessControl)));
         address hook8 = address(new MockBaseHook(address(accessControl)));
 
+        moduleRegistry.registerProtocolHook("Hook-1", IHook(hook1));
+        moduleRegistry.registerProtocolHook("Hook-2", IHook(hook2));
+        moduleRegistry.registerProtocolHook("Hook-3", IHook(hook3));
+        moduleRegistry.registerProtocolHook("Hook-5", IHook(hook5));
+        moduleRegistry.registerProtocolHook("Hook-6", IHook(hook6));
+        moduleRegistry.registerProtocolHook("Hook-7", IHook(hook7));
+        moduleRegistry.registerProtocolHook("Hook-8", IHook(hook8));
+
         address[] memory hooksA = new address[](2);
         hooksA[0] = hook1;
         hooksA[1] = hook2;
@@ -414,6 +376,8 @@ contract HookRegistryTest is BaseTest {
     function test_hookRegistry_revertHookAtNonExistRegistryKey() public {
         address hook1 = address(new MockBaseHook(address(accessControl)));
         address hook2 = address(new MockBaseHook(address(accessControl)));
+        moduleRegistry.registerProtocolHook("Hook-1", IHook(hook1));
+        moduleRegistry.registerProtocolHook("Hook-2", IHook(hook2));
 
         address[] memory hooksA = new address[](2);
         hooksA[0] = hook1;
@@ -439,6 +403,8 @@ contract HookRegistryTest is BaseTest {
     function test_hookRegistry_revertHookConfigAtNonExistRegistryKey() public {
         address hook1 = address(new MockBaseHook(address(accessControl)));
         address hook2 = address(new MockBaseHook(address(accessControl)));
+        moduleRegistry.registerProtocolHook("Hook-1", IHook(hook1));
+        moduleRegistry.registerProtocolHook("Hook-2", IHook(hook2));
 
         address[] memory hooksA = new address[](2);
         hooksA[0] = hook1;
@@ -464,6 +430,8 @@ contract HookRegistryTest is BaseTest {
     function test_hookRegistry_revertHooksConfigMismatch() public {
         address hook1 = address(new MockBaseHook(address(accessControl)));
         address hook2 = address(new MockBaseHook(address(accessControl)));
+        moduleRegistry.registerProtocolHook("Hook-1", IHook(hook1));
+        moduleRegistry.registerProtocolHook("Hook-2", IHook(hook2));
 
         address[] memory hooksA = new address[](2);
         hooksA[0] = hook1;
@@ -482,6 +450,7 @@ contract HookRegistryTest is BaseTest {
     function test_hookRegistry_revertRegisterZeroAddress() public {
         address hook1 = address(new MockBaseHook(address(accessControl)));
         address hook2 = address(0);
+        moduleRegistry.registerProtocolHook("Hook-1", IHook(hook1));
 
         address[] memory hooksA = new address[](2);
         hooksA[0] = hook1;
@@ -496,5 +465,38 @@ contract HookRegistryTest is BaseTest {
         vm.expectRevert(Errors.HookRegistry_RegisteringZeroAddressHook.selector);
         hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg1, registryKeyA, hooksA, hooksConfigA);
         vm.stopPrank();
+    }
+
+    function test_hookRegistry_revertRegisterNonWhitelistedHook() public {
+        address hook1 = address(new MockBaseHook(address(accessControl)));
+        address hook2 = address(new MockBaseHook(address(accessControl)));
+
+        address[] memory hooksA = new address[](2);
+        hooksA[0] = hook1;
+        hooksA[1] = hook2;
+        bytes[] memory hooksConfigA = new bytes[](2);
+        hooksConfigA[0] = abi.encode("Hook1Config");
+        hooksConfigA[1] = abi.encode("Hook2Config");
+        address ipOrgOwner1 = address(0x789);
+        IIPOrg ipOrg1 = new MockIPOrg(ipOrgOwner1);
+        bytes32 registryKeyA = hookRegistry.hookRegistryKey(address(ipOrg1), "RelationshipType_A");
+        vm.startPrank(ipOrgOwner1);
+        vm.expectRevert(
+            abi.encodeWithSelector(Errors.HookRegistry_RegisteringNonWhitelistedHook.selector,
+                hook1)
+        );
+        hookRegistry.registerHooks(HookRegistry.HookType.PreAction, ipOrg1, registryKeyA, hooksA, hooksConfigA);
+        vm.stopPrank();
+    }
+
+    function _generateHooks(uint256 numHooks) private returns (address[] memory, bytes[] memory) {
+        address[] memory hooks = new address[](numHooks);
+        bytes[] memory hooksConfig = new bytes[](numHooks);
+        for(uint256 i = 0; i < numHooks; i++) {
+            hooks[i] = address(new MockBaseHook(address(accessControl)));
+            hooksConfig[i] = abi.encode("HookConfig-", i + 1);
+            moduleRegistry.registerProtocolHook(string(abi.encodePacked("Hook-", i + 1)), IHook(hooks[i]));
+        }
+        return (hooks, hooksConfig);
     }
 }

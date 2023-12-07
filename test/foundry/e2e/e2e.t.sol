@@ -1,4 +1,3 @@
-/* solhint-disable contract-name-camelcase, func-name-mixedcase, var-name-mixedcase */
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
@@ -9,10 +8,13 @@ import { StoryProtocol } from "contracts/StoryProtocol.sol";
 import { RelationshipModule } from "contracts/modules/relationships/RelationshipModule.sol";
 import { LicensingModule } from "contracts/modules/licensing/LicensingModule.sol";
 import { TokenGatedHook } from "contracts/hooks/TokenGatedHook.sol";
+import { PolygonTokenHook } from "contracts/hooks/PolygonTokenHook.sol";
+import { MockPolygonTokenClient } from "test/foundry/mocks/MockPolygonTokenClient.sol";
 import { HookRegistry } from "contracts/modules/base/HookRegistry.sol";
 import { HookResult, IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { Hook } from "contracts/lib/hooks/Hook.sol";
 import { TokenGated } from "contracts/lib/hooks/TokenGated.sol";
+import { PolygonToken } from "contracts/lib/hooks/PolygonToken.sol";
 import { MockERC721 } from "test/foundry/mocks/MockERC721.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
@@ -21,11 +23,14 @@ import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortSt
 import { Registration } from "contracts/lib/modules/Registration.sol";
 import { IE2ETest } from "test/foundry/interfaces/IE2ETest.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
+import { Hook } from "contracts/lib/hooks/Hook.sol";
 
 contract E2ETest is IE2ETest, BaseTest {
     using ShortStrings for *;
 
     address public tokenGatedHook;
+    address public polygonTokenHook;
     MockERC721 public mockNFT;
 
     // create 3 roles: protocol admin, ip org owner, ip asset owner
@@ -59,7 +64,20 @@ contract E2ETest is IE2ETest, BaseTest {
         );
 
         /// TOKEN_GATED_HOOK
-        tokenGatedHook = address(new TokenGatedHook(address(accessControl)));
+        bytes memory tokenGatedHookCode = abi.encodePacked(
+            type(TokenGatedHook).creationCode, abi.encode(address(accessControl)));
+        tokenGatedHook = _deployHook(tokenGatedHookCode, Hook.SYNC_FLAG, 0);
+        moduleRegistry.registerProtocolHook("TokenGatedHook", IHook(tokenGatedHook));
+
+        /// POLYGON_TOKEN_HOOK
+        MockPolygonTokenClient mockPolygonTokenClient = new MockPolygonTokenClient();
+        bytes memory polygonTokenHookCode = abi.encodePacked(
+            type(PolygonTokenHook).creationCode,
+            abi.encode(address(accessControl), mockPolygonTokenClient, address(this))
+        );
+        polygonTokenHook = _deployHook(polygonTokenHookCode, Hook.ASYNC_FLAG, 0);
+        moduleRegistry.registerProtocolHook("PolygonTokenHook", IHook(polygonTokenHook));
+
         /// MOCK_ERC_721
         mockNFT = new MockERC721();
         mockNFT.mint(ipAssetOwner1, 1);
@@ -172,20 +190,26 @@ contract E2ETest is IE2ETest, BaseTest {
         // IPOrg 1 owner register hooks to RegistrationModule
         //
 
-        address[] memory hooks = new address[](1);
+        address[] memory hooks = new address[](2);
         hooks[0] = tokenGatedHook;
+        hooks[1] = polygonTokenHook;
 
         TokenGated.Config memory tokenGatedConfig = TokenGated.Config({
             tokenAddress: address(mockNFT)
         });
-        bytes[] memory hooksConfig = new bytes[](1);
+        PolygonToken.Config memory polygonTokenConfig = PolygonToken.Config({
+            tokenAddress: address(mockNFT),
+            balanceThreshold: 1
+        });
+        bytes[] memory hooksConfig = new bytes[](2);
         hooksConfig[0] = abi.encode(tokenGatedConfig);
+        hooksConfig[1] = abi.encode(polygonTokenConfig);
 
         vm.expectEmit(address(registrationModule));
         emit HooksRegistered(
             HookRegistry.HookType.PreAction,
             // from _generateRegistryKey(ipOrg_) => registryKey
-            keccak256(abi.encode(address(ipOrg1), "REGISTRATION")),
+            keccak256(abi.encode(address(ipOrg1), Registration.REGISTER_IP_ASSET, "REGISTRATION")),
             hooks
         );
         vm.prank(ipOrgOwner1);
@@ -193,7 +217,8 @@ contract E2ETest is IE2ETest, BaseTest {
             HookRegistry.HookType.PreAction,
             IIPOrg(ipOrg1),
             hooks,
-            hooksConfig
+            hooksConfig,
+            abi.encode(Registration.REGISTER_IP_ASSET)
         );
 
         // protocol admin add relationship type
@@ -256,8 +281,11 @@ contract E2ETest is IE2ETest, BaseTest {
                 });
         TokenGated.Params memory tokenGatedHookDataCharacter = TokenGated
             .Params({ tokenOwner: ipAssetOwner1 });
-        bytes[] memory preHooksDataCharacter = new bytes[](1);
+        PolygonToken.Params memory polygonTokenDataCharacter = PolygonToken
+            .Params({ tokenOwnerAddress: ipAssetOwner1 });
+        bytes[] memory preHooksDataCharacter = new bytes[](2);
         preHooksDataCharacter[0] = abi.encode(tokenGatedHookDataCharacter);
+        preHooksDataCharacter[1] = abi.encode(polygonTokenDataCharacter);
 
         // TODO: Solve "Stack too deep" for emitting this event
         // vm.expectEmit(address(tokenGatedHook));
@@ -268,14 +296,18 @@ contract E2ETest is IE2ETest, BaseTest {
         //     ""
         // );
         vm.prank(ipAssetOwner1);
-        (uint256 ipAssetId_1, uint256 ipOrg1_AssetId_1) = spg.registerIPAsset(
+        spg.registerIPAsset(
             ipOrg1,
             registerIpAssetParamsCharacter,
             preHooksDataCharacter,
             new bytes[](0)
         );
-        assertEq(ipAssetId_1, 1);
-        assertEq(ipOrg1_AssetId_1, 1);
+        bytes32 requestIdCharacter = keccak256(
+            abi.encodePacked(polygonTokenHook, uint256(0))
+        );
+        PolygonTokenHook(polygonTokenHook).handleCallback(requestIdCharacter, 1);
+        assertEq(registry.ipAssetOwner(1), ipAssetOwner1);
+        assertEq(IIPOrg(ipOrg1).ownerOf(1), ipAssetOwner1);
 
         Registration.RegisterIPAssetParams
             memory registerIpAssetParamsStory = Registration
@@ -289,17 +321,26 @@ contract E2ETest is IE2ETest, BaseTest {
         TokenGated.Params memory tokenGatedHookDataStory = TokenGated.Params({
             tokenOwner: ipAssetOwner2
         });
-        bytes[] memory preHooksDataStory = new bytes[](1);
+        PolygonToken.Params memory polygonTokenDataStory = PolygonToken.Params({
+            tokenOwnerAddress: ipAssetOwner2
+        });
+        bytes[] memory preHooksDataStory = new bytes[](2);
         preHooksDataStory[0] = abi.encode(tokenGatedHookDataStory);
+        preHooksDataStory[1] = abi.encode(polygonTokenDataStory);
         vm.prank(ipAssetOwner2);
-        (uint256 ipAssetId_2, uint256 ipOrg1_AssetId_2) = spg.registerIPAsset(
+        spg.registerIPAsset(
             ipOrg1,
             registerIpAssetParamsStory,
             preHooksDataStory,
             new bytes[](0)
         );
-        assertEq(ipAssetId_2, 2);
-        assertEq(ipOrg1_AssetId_2, 2);
+        bytes32 requestIdStory = keccak256(
+            abi.encodePacked(polygonTokenHook, uint256(1))
+        );
+        PolygonTokenHook(polygonTokenHook).handleCallback(requestIdStory, 1);
+        uint256 ipAssetId_2 = 2;
+        assertEq(registry.ipAssetOwner(ipAssetId_2), ipAssetOwner2);
+        assertEq(IIPOrg(ipOrg1).ownerOf(ipAssetId_2), ipAssetOwner2);
 
         Registration.RegisterIPAssetParams
             memory registerIpAssetParamsOrg2 = Registration
@@ -363,9 +404,6 @@ contract E2ETest is IE2ETest, BaseTest {
         // assertFalse(license.isCommercial, "commercial");
         // assertEq(license.ipaId, 1);
 
-        bytes[] memory hooksTransferIPAsset = new bytes[](1);
-        hooksTransferIPAsset[0] = abi.encode(ipAssetOwner1);
-
         vm.expectEmit(address(registrationModule));
         emit IPAssetTransferred(
             1,
@@ -381,7 +419,7 @@ contract E2ETest is IE2ETest, BaseTest {
             ipAssetOwner2,
             1,
             // BaseModule_HooksParamsLengthMismatc
-            hooksTransferIPAsset,
+            new bytes[](0),
             new bytes[](0)
         );
 

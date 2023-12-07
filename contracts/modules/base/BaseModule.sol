@@ -11,6 +11,8 @@ import { IPOrgController } from "contracts/ip-org/IPOrgController.sol";
 import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { LicenseRegistry } from "contracts/modules/licensing/LicenseRegistry.sol";
+import { ICallbackHandler } from "contracts/interfaces/hooks/base/ICallbackHandler.sol";
+import { IERC165, ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 /// @title BaseModule
 /// @notice Base implementation for all modules in Story Protocol. This is meant to ensure
@@ -18,7 +20,14 @@ import { LicenseRegistry } from "contracts/modules/licensing/LicenseRegistry.sol
 /// It's up to the module how to perform the actions, verifications and authorizations.
 /// @dev This contract should NOT have state in storage, in order to have upgradeable or non-upgradeable
 /// modules.
-abstract contract BaseModule is IModule, HookRegistry {
+abstract contract BaseModule is
+    ERC165,
+    IModule,
+    ICallbackHandler,
+    HookRegistry
+{
+    using Hook for IHook;
+
     struct ModuleConstruction {
         IPAssetRegistry ipaRegistry;
         ModuleRegistry moduleRegistry;
@@ -26,10 +35,24 @@ abstract contract BaseModule is IModule, HookRegistry {
         IPOrgController ipOrgController;
     }
 
+    struct ModuleExecutionContext {
+        IIPOrg ipOrg;
+        address caller;
+        bytes moduleParams;
+        bytes[] preHookParams;
+        bytes[] postHookParams;
+        bytes32 hookRegistryKey;
+        HookType executionHookType;
+        uint256 hookPosition;
+    }
+
     IPAssetRegistry public immutable IPA_REGISTRY;
-    ModuleRegistry public immutable MODULE_REGISTRY;
     LicenseRegistry public immutable LICENSE_REGISTRY;
     IPOrgController public immutable IP_ORG_CONTROLLER;
+
+    /// @notice used to store the context of an async hook execution.
+    /// @dev The execution of the module is pending, and will need to be executed again.
+    mapping(bytes32 => ModuleExecutionContext) private _asyncContexts;
 
     modifier onlyModuleRegistry() {
         if (msg.sender != address(MODULE_REGISTRY)) {
@@ -38,15 +61,13 @@ abstract contract BaseModule is IModule, HookRegistry {
         _;
     }
 
-    constructor(ModuleConstruction memory params_) {
+    constructor(
+        ModuleConstruction memory params_
+    ) HookRegistry(params_.moduleRegistry) {
         if (address(params_.ipaRegistry) == address(0)) {
             revert Errors.BaseModule_ZeroIpaRegistry();
         }
         IPA_REGISTRY = params_.ipaRegistry;
-        if (address(params_.moduleRegistry) == address(0)) {
-            revert Errors.BaseModule_ZeroModuleRegistry();
-        }
-        MODULE_REGISTRY = params_.moduleRegistry;
         if (address(params_.licenseRegistry) == address(0)) {
             revert Errors.BaseModule_ZeroLicenseRegistry();
         }
@@ -57,7 +78,7 @@ abstract contract BaseModule is IModule, HookRegistry {
     /// Main execution entrypoint. It will verify params, execute pre action hooks, perform the action,
     /// execute post action hooks and emit the RequestCompleted event, plus returning the result.
     /// It's up to the module to decode and encode params appropriately.
-    /// @param ipOrg_ address of the IPOrg or zero address 
+    /// @param ipOrg_ address of the IPOrg or zero address
     /// @param caller_ address requesting the execution
     /// @param moduleParams_ encoded params for module action
     /// @param preHookParams_ encoded params for pre action hooks
@@ -71,18 +92,57 @@ abstract contract BaseModule is IModule, HookRegistry {
     ) external onlyModuleRegistry returns (bytes memory result) {
         _verifyExecution(ipOrg_, caller_, moduleParams_);
         bytes32 registryKey = _hookRegistryKey(ipOrg_, caller_, moduleParams_);
-        if (!_executeHooks(preHookParams_, HookType.PreAction, registryKey)) {
-            emit RequestPending(caller_);
+        ModuleExecutionContext memory context = ModuleExecutionContext({
+            ipOrg: ipOrg_,
+            caller: caller_,
+            moduleParams: moduleParams_,
+            preHookParams: preHookParams_,
+            postHookParams: postHookParams_,
+            hookRegistryKey: registryKey,
+            executionHookType: HookType.PreAction,
+            hookPosition: 0
+        });
+        return _execute(context);
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ERC165, IERC165) returns (bool) {
+        return
+            interfaceId == type(ICallbackHandler).interfaceId ||
+            interfaceId == type(IModule).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
+
+    /// @notice Executes the module with the provided parameters.
+    /// @dev This function handles the execution logic for the module.
+    ///      It also will be used by ayhnc hooks to continue the execution of the module.
+    /// @param context_ The execution context which includes all the parameters for the module execution.
+    /// @return result The result of the execution in bytes format.
+    function _execute(
+        ModuleExecutionContext memory context_
+    ) internal returns (bytes memory result) {
+        if (
+            context_.executionHookType == HookType.PreAction &&
+            !_executeHooks(context_)
+        ) {
+            emit RequestPending(context_.caller);
             return "";
         }
-        result = _performAction(ipOrg_, caller_, moduleParams_);
-        _executeHooks(postHookParams_, HookType.PostAction, registryKey);
-        emit RequestCompleted(caller_);
+        result = _performAction(
+            context_.ipOrg,
+            context_.caller,
+            context_.moduleParams
+        );
+        context_.executionHookType = HookType.PostAction;
+        context_.hookPosition = 0;
+        _executeHooks(context_);
+        emit RequestCompleted(context_.caller);
         return result;
     }
 
     /// Configuration entrypoint. It's up to the module to decode params appropriately.
-    /// @param ipOrg_ address of the IPOrg or zero address 
+    /// @param ipOrg_ address of the IPOrg or zero address
     /// @param caller_ address requesting the execution
     /// @param params_ encoded configuration params
     function configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) onlyModuleRegistry external returns (bytes memory) {
@@ -90,54 +150,114 @@ abstract contract BaseModule is IModule, HookRegistry {
     }
 
     function _executeHooks(
-        bytes[] calldata params_,
-        HookRegistry.HookType hType_,
-        bytes32 registryKey_
-    ) virtual internal returns (bool) {
-        address[] memory hooks = _hooksForType(hType_, registryKey_);
-        bytes[] memory hooksConfig = _hooksConfigForType(hType_, registryKey_);
+        ModuleExecutionContext memory context_
+    ) internal virtual returns (bool) {
+        address[] memory hooks = _hooksForType(
+            context_.executionHookType,
+            context_.hookRegistryKey
+        );
+        bytes[] memory hooksConfig = _hooksConfigForType(
+            context_.executionHookType,
+            context_.hookRegistryKey
+        );
         uint256 hooksLength = hooks.length;
-        if (params_.length != hooksLength) {
-            revert Errors.BaseModule_HooksParamsLengthMismatch(uint8(hType_));
+        bytes[] memory hookParams = context_.executionHookType ==
+            HookType.PreAction
+            ? context_.preHookParams
+            : context_.postHookParams;
+        if (hookParams.length != hooksLength) {
+            revert Errors.BaseModule_HooksParamsLengthMismatch(
+                uint8(context_.executionHookType)
+            );
         }
-        for (uint256 i = 0; i < hooksLength; i++) {
-            if (!_executeHook(hType_, hooks[i], hooksConfig[i], params_[i])) {
-                return false;
+        // Continue to execute each hook from the current executing position in the hook list.
+        for (uint256 i = context_.hookPosition; i < hooksLength; i++) {
+            // make sure the hook executing postion is updated in the context
+            context_.hookPosition = i;
+            Hook.ExecutionContext memory hookContext = Hook.ExecutionContext({
+                config: hooksConfig[i],
+                params: hookParams[i]
+            });
+            // check hook type, if async, call executeAsync, otherwise call executeSync
+            HookResult result;
+            if (IHook(hooks[i]).canSupportSyncCall()) {
+                (result, ) = IHook(hooks[i]).executeSync(
+                    abi.encode(hookContext)
+                );
+            } else {
+                result = _executeAsyncHook(hooks[i], hookContext, context_);
             }
+            // means the hook execution is pending
+            if (result != HookResult.Completed) return false;
         }
         return true;
     }
 
-    /// @dev Executes a hook.
-    /// This function should be overridden in derived contracts if they need to support Async hooks.
-    /// @param hook The address of the hook.
-    /// @param hookConfig_ The configuration of the hook.
-    /// @param hookParams_ The parameters of the hook.
-    /// @return True if the hook execution is completed, false otherwise.
-    function _executeHook(
-        HookRegistry.HookType,
-        address hook,
-        bytes memory hookConfig_,
-        bytes memory hookParams_
-    ) internal virtual returns (bool) {
-        Hook.ExecutionContext memory context = Hook.ExecutionContext({
-            config: hookConfig_,
-            params: hookParams_
-        });
-        HookResult result;
-        (result,) = IHook(hook).executeSync(abi.encode(context));
-        return result == HookResult.Completed;
-    }
+    function _configure(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes calldata params_
+    ) internal virtual returns (bytes memory);
 
-    function _configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory);
-    function _verifyExecution(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal {}
-    function _performAction(IIPOrg ipOrg_, address caller_, bytes calldata params_) virtual internal returns (bytes memory result) {}
-    
+    function _verifyExecution(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes calldata params_
+    ) internal virtual {}
+
+    function _performAction(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes memory params_
+    ) internal virtual returns (bytes memory result) {}
+
     /// @dev Generates a registry key based on module execution parameters.
     /// This function should be overridden in derived contracts to provide the actual logic for generating the registry key.
     /// @param ipOrg_ The address of the IPOrg.
     /// @param caller_ The address requesting the execution.
     /// @param params_ The encoded parameters for module action.
     /// @return The generated registry key.
-    function _hookRegistryKey(IIPOrg ipOrg_, address caller_, bytes calldata params_) internal view virtual returns(bytes32);
+    function _hookRegistryKey(
+        IIPOrg ipOrg_,
+        address caller_,
+        bytes calldata params_
+    ) internal view virtual returns (bytes32);
+
+    function _executeAsyncHook(
+        address hook_,
+        Hook.ExecutionContext memory hookContext_,
+        ModuleExecutionContext memory moduleContext_
+    ) internal virtual returns (HookResult) {
+        (HookResult result, , bytes32 requestId) = IHook(hook_).executeAsync(
+            abi.encode(hookContext_),
+            address(this)
+        );
+        // only store the context if the hook is async
+        if (result == HookResult.Pending) {
+            _asyncContexts[requestId] = moduleContext_;
+        }
+        return result;
+    }
+
+    /// @notice Handles the callback from the asynchronous hook.
+    /// @dev This function is called by the external service when the asynchronous hook is completed.
+    /// @param requestId_ The ID of the request.
+    /// @param callbackData_ The data returned by the callback.
+    function handleHookCallback(
+        bytes32 requestId_,
+        bytes calldata callbackData_
+    ) external virtual override {
+        (bool isPass, string memory errorMsg) = abi.decode(
+            callbackData_,
+            (bool, string)
+        );
+
+        if (isPass) {
+            _asyncContexts[requestId_].hookPosition++;
+            _execute(_asyncContexts[requestId_]);
+        } else {
+            emit RequestFailed(_asyncContexts[requestId_].caller, errorMsg);
+        }
+        delete _asyncContexts[requestId_];
+    }
 }
