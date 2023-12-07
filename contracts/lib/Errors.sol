@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: UNLICENSED
+// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 import { IPAsset } from "contracts/lib/IPAsset.sol";
@@ -37,7 +38,6 @@ library Errors {
 
     error BaseModule_HooksParamsLengthMismatch(uint8 hookType);
     error BaseModule_ZeroIpaRegistry();
-    error BaseModule_ZeroModuleRegistry();
     error BaseModule_ZeroLicenseRegistry();
     error BaseModule_OnlyModuleRegistry();
 
@@ -57,6 +57,9 @@ library Errors {
     error HookRegistry_HooksConfigLengthMismatch();
     /// @notice This error is thrown when the provided index is out of bounds of the hooks array.
     error HookRegistry_IndexOutOfBounds(uint256 hooksIndex);
+    error HookRegistry_ZeroModuleRegistry();
+    error HookRegistry_RegisteringNonWhitelistedHook(address hookAddress);
+
 
     ////////////////////////////////////////////////////////////////////////////
     //                      BaseRelationshipProcessor                         //
@@ -71,6 +74,7 @@ library Errors {
 
     error ModuleRegistry_ModuleNotRegistered(string moduleName);
     error ModuleRegistry_CallerNotOrgOwner();
+    error ModuleRegistry_HookNotRegistered(string hookKey);
 
     ////////////////////////////////////////////////////////////////////////////
     //                                 CollectModule                          //
@@ -409,6 +413,11 @@ library Errors {
 
     /// @notice The address is not the owner of the token.
     error TokenGatedHook_NotTokenOwner(address tokenAddress, address ownerAddress);
+
+    error Hook_AsyncHookError(bytes32 requestId, string reason);
+    
+    /// @notice Invalid Hook configuration.
+    error Hook_InvalidHookConfig(string reason);
 
     ////////////////////////////////////////////////////////////////////////////
     //                       LicensorApprovalHook                             //

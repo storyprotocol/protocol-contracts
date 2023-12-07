@@ -59,4 +59,14 @@ contract AccessControlledTest is Test, AccessControlHelper {
         accessControlled.setAccessControl(address(ac2));
     }
 
+    function test_AccessControlled_revert_setAccessControlUnsupportedInterface() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Errors.UnsupportedInterface.selector,
+                "IAccessControl"
+            )
+        );
+        vm.prank(admin);
+        accessControlled.setAccessControl(address(this));
+    }
 }

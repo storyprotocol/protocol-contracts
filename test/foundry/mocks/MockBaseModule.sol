@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: UNLICENSED
+// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.18;
 
 import { BaseModule } from "contracts/modules/base/BaseModule.sol";
@@ -55,7 +56,7 @@ contract MockBaseModule is BaseModule {
     function _performAction(
         IIPOrg ipOrg_,
         address caller_,
-        bytes calldata params_
+        bytes memory params_
     ) internal virtual override returns (bytes memory) {
         _callStack.push(BaseModuleCall(address(ipOrg_), caller_, params_));
         return "";

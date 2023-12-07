@@ -357,7 +357,7 @@ library FixedSet {
     /**
      * @dev Returns the index of the value in the set, or INDEX_NOT_FOUND if not present. O(1).
      */
-    function indexOf(AddressSet storage set, uint256 value) internal view returns (uint256) {
+    function indexOf(UintSet storage set, uint256 value) internal view returns (uint256) {
         return _indexOf(set._inner, bytes32(value));
     }
 

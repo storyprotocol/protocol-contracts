@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: UNLICENSED
+// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 import { IIPOrgController } from "contracts/interfaces/ip-org/IIPOrgController.sol";
@@ -101,7 +102,7 @@ contract StoryProtocol is Multicall {
         );
     }
 
-    /// @notice Transfers an IP asset to another owner.
+    /// @notice Registers an IP Asset.
     /// @param ipOrg_ The governing IP Org under which the IP asset is registered.
     /// @param params_ The registration params, including owner, name, hash.
     /// @param preHooksData_ Hooks to embed with the registration pre-call.
@@ -122,6 +123,10 @@ contract StoryProtocol is Multicall {
             preHooksData_,
             postHooksData_
         );
+        // If the result is empty, then the registration module is pending for async hook execution.
+        if (result.length == 0) {
+            return (0, 0);
+        }
         return abi.decode(result, (uint256, uint256));
     }
 

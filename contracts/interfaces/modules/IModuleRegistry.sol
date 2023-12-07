@@ -37,6 +37,20 @@ interface IModuleRegistry {
         bytes params
     );
 
+    /// @notice Emits when a new hook is added for a specific IP Org.
+    event HookAdded(
+        address indexed ipOrg,
+        string hookKey,
+        address indexed hook
+    );
+
+    /// @notice Emits when a hook is removed for an IP Org.
+    event HookRemoved(
+        address indexed ipOrg,
+        string hookKey,
+        address indexed hook
+    );
+
     /// @notice Fetches the latest protocol module bound to a specific key.
     function protocolModule(string calldata moduleKey) external view returns (address);
 }

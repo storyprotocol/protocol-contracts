@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: UNLICENSED
+// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 import { BaseModule } from "contracts/modules/base/BaseModule.sol";
@@ -257,7 +258,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
     /// Creates and stores a relationship and emits the RelationshipCreated event. Ignores first 2 parameters
     /// @param params_ encoded CreateRelationshipParams for module action
     /// @return encoded relationship id (uint256)
-    function _performAction(IIPOrg, address, bytes calldata params_) virtual override internal returns (bytes memory) {
+    function _performAction(IIPOrg, address, bytes memory params_) virtual override internal returns (bytes memory) {
         LibRelationship.CreateRelationshipParams memory createParams = abi.decode(params_, (LibRelationship.CreateRelationshipParams));
         uint256 relationshipId = ++_relationshipIdCounter;
         LibRelationship.Relationship memory rel = LibRelationship.Relationship({

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: UNLICENSED
+// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 import { Clones } from '@openzeppelin/contracts/proxy/Clones.sol';
@@ -137,11 +138,12 @@ contract IPOrgController is
         }
 
         // Reset the pending owner.
+        address prevOwner = record.owner;
         delete record.pendingOwner;
         record.owner = msg.sender;
 
         emit IPOrgPendingOwnerSet(ipOrg_, address(0));
-        emit IPOrgTransferred(ipOrg_, record.owner, msg.sender);
+        emit IPOrgTransferred(ipOrg_, prevOwner, msg.sender);
     }
 
     /// @notice Registers a new IP Org.

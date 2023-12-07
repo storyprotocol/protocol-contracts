@@ -1,3 +1,4 @@
+/* solhint-disable contract-name-camelcase, func-name-mixedcase */
 // SPDX-License-Identifier: BUSDL-1.1
 pragma solidity ^0.8.13;
 
@@ -14,7 +15,7 @@ import { Errors } from "contracts/lib/Errors.sol";
 contract LicensingFrameworkRepoTest is Test, AccessControlHelper {
     using ShortStrings for *;
 
-    LicensingFrameworkRepo repo;
+    LicensingFrameworkRepo internal repo;
 
     event RequestPending(address indexed sender);
     event RequestCompleted(address indexed sender);
