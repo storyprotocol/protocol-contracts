@@ -1,18 +1,18 @@
 {
   "main": {
-    "AccessControlSingleton-Impl": "0x6ad773E8fD28c3482e5d525e7e2F08e259806cdB",
-    "AccessControlSingleton-Proxy": "0xC20eb1d0a562cD906d2280de74DFcb4cbc159A04",
-    "IPAssetRegistry": "0x44eE13d12105A43c459908DD7B9c869556F19BE3",
-    "IPOrgController-Impl": "0x1F8de754eC04200945d5cC56a0e7648231818d8e",
-    "IPOrgController-Proxy": "0x578BF2322855975106743Af3b8ae5Df81304B86c",
-    "LicenseRegistry": "0x961D653c12a38c51C0368C452307D91561157452",
-    "LicensingFrameworkRepo": "0x4e57d5627094aBFaE2DEe6237Db57b05CF3F2aB3",
-    "LicensingModule": "0x12b148fA981881F1e259f46731D1c211919c21a9",
-    "MockERC721": "0xAc9A12183cFa4b3e4459b0cC724A88Ed9c64BaAf",
-    "ModuleRegistry": "0xb0417817C3c9cc37bC6b498bec2E1ca9ce8E144E",
-    "RegistrationModule": "0x46Ad4a5CAD9eE043974F4711D66934Ff5aa180b0",
-    "RelationshipModule": "0x8D0CFc1Accd92fBB417A9acCED55c2C1446942C8",
-    "StoryProtocol": "0x297DE9426121239e42f38b386481958E6ABFA17f",
-    "TokenGatedHook": "0x2372F5Cba08D58E3c11057f7751e41dea5338F26"
+    "AccessControlSingleton-Impl": "0x736E0127c4A610dC337612eD6722f1c2D0FC8160",
+    "AccessControlSingleton-Proxy": "0x73bb978Ad2E51fb49F3F222D96E7f2376C8b69aC",
+    "IPAssetRegistry": "0x3Cf13760B2415210c2B4EE30fc134be86a27ade1",
+    "IPOrgController-Impl": "0xf73D01CB098Ec5117d0BC34faaee9178aCf48248",
+    "IPOrgController-Proxy": "0x3FDfEaFc527309b01ec2E612bc52b2A940883d4f",
+    "LicenseRegistry": "0x8792868838a391B90A283b62A7CAD34c81ce0ED2",
+    "LicensingFrameworkRepo": "0x6C5ffB2A4f29A46C6Aca6d29D7CCc9b30dE40fE0",
+    "LicensingModule": "0xbF09A5DA9b1C29FFED16e24E3B82ea49B5117011",
+    "MockERC721": "0x1dE24F9D36870Fe1Dcc0ef2B9D4B54b869E35331",
+    "ModuleRegistry": "0x967290607aAdFf7A71FDEa9197100c813B124867",
+    "RegistrationModule": "0x847080FaBec201eFE61C5e8C250D2Bfc10b78566",
+    "RelationshipModule": "0x4401222Fd0B72efDfAa6879843fD9Fb9aEaa6ecD",
+    "StoryProtocol": "0x8E124a757BB3AeC07a2b6c84303254FFb6717f92",
+    "TokenGatedHook": "0x3558C4A409eb48E14336bfd60B35d1a2BDF6f32f"
   }
 }
