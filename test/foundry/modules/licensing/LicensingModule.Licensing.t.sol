@@ -9,9 +9,11 @@ import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { PIPLicensingTerms } from "contracts/lib/modules/PIPLicensingTerms.sol";
+import { BitMask } from "contracts/lib/BitMask.sol";
 
 contract LicensingModuleLicensingTest is BaseTest {
     using ShortStrings for *;
+    using BitMask for uint256;
 
     address ipaOwner = address(0x13336);
     Licensing.ParamValue[] params;
@@ -24,6 +26,7 @@ contract LicensingModuleLicensingTest is BaseTest {
         bool reciprocal,
         Licensing.LicensorConfig licensorConfig
     ) {
+
         ShortString[] memory channels = new ShortString[](2);
         channels[0] = "test1".toShortString();
         channels[1] = "test2".toShortString();
@@ -39,15 +42,18 @@ contract LicensingModuleLicensingTest is BaseTest {
             tag: PIPLicensingTerms.DERIVATIVES_ALLOWED.toShortString(),
             value: abi.encode(allowsDerivatives)
         }));
+        uint256 derivativeOptions = 0;
+        if (derivativesWithApproval) {
+            derivativeOptions = derivativeOptions._set(PIPLicensingTerms.ALLOWED_WITH_APPROVAL_INDEX);
+        }
+        if (reciprocal) {
+            derivativeOptions = derivativeOptions._set(PIPLicensingTerms.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX);
+        }
         params.push(Licensing.ParamValue({
-            tag: PIPLicensingTerms.DERIVATIVES_WITH_APPROVAL.toShortString(),
-            value: abi.encode(derivativesWithApproval)
+            tag: PIPLicensingTerms.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
+            value: abi.encode(derivativeOptions)
         }));
-        params.push(Licensing.ParamValue({
-            tag: PIPLicensingTerms.DERIVATIVES_WITH_RECIPROCAL_LICENSE.toShortString(),
-            value: abi.encode(reciprocal)
-        }));
-       
+
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: PIPLicensingTerms.FRAMEWORK_ID,
             params: params,
@@ -76,7 +82,7 @@ contract LicensingModuleLicensingTest is BaseTest {
     }
     
     function test_LicensingModule_createLicense_noParent_ipa_userSetsParam()
-    withFrameworkConfig(true, true, Licensing.LicensorConfig.IpOrgOwnerAlways)
+    withFrameworkConfig(true, true, true, Licensing.LicensorConfig.IpOrgOwnerAlways)
     public returns (uint256) {
         Licensing.ParamValue[] memory inputParams = new Licensing.ParamValue[](1);
         inputParams[0] = Licensing.ParamValue({
