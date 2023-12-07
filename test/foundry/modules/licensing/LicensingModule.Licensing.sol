@@ -273,7 +273,7 @@ contract LicensingModuleLicensingTest is BaseTest {
         _assertLicenseData(
             licenseRegistry.getLicenseData(licenseId),
             licenseId,
-            Licensing.LicenseStatus.Unset,
+            Licensing.LicenseStatus.Active,
             true,
             true,
             0, // no parent
@@ -290,7 +290,8 @@ contract LicensingModuleLicensingTest is BaseTest {
         _assertLicenseData(
             licenseRegistry.getLicenseData(childLicenseId),
             childLicenseId,
-            Licensing.LicenseStatus.Unset,
+            // parent derivativeNeedsApproval = true, so child is pending
+            Licensing.LicenseStatus.PendingLicensorApproval,
             true,
             true,
             parentLicenseId,
