@@ -3,6 +3,7 @@
 pragma solidity ^0.8.19;
 
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
+import { IPOrg } from "contracts/ip-org/IPOrg.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { RegistrationModule } from "contracts/modules/registration/RegistrationModule.sol";
 import { StoryProtocol } from "contracts/StoryProtocol.sol";
@@ -11,6 +12,8 @@ import { LicensingModule } from "contracts/modules/licensing/LicensingModule.sol
 import { TokenGatedHook } from "contracts/hooks/TokenGatedHook.sol";
 import { HookRegistry } from "contracts/modules/base/HookRegistry.sol";
 import { HookResult, IHook } from "contracts/interfaces/hooks/base/IHook.sol";
+import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
+import { BaseModule } from "contracts/modules/base/BaseModule.sol";
 import { Hook } from "contracts/lib/hooks/Hook.sol";
 import { TokenGated } from "contracts/lib/hooks/TokenGated.sol";
 import { MockERC721 } from "test/foundry/mocks/MockERC721.sol";
@@ -32,12 +35,16 @@ contract E2ETest is IE2ETest, BaseTest {
 
     address internal ipOrgOwner1 = address(1234);
     address internal ipOrgOwner2 = address(4567);
+    address internal ipOrgOwner3 = address(6789);
     address internal ipAssetOwner1 = address(6789);
     address internal ipAssetOwner2 = address(9876);
     address internal ipAssetOwner3 = address(8888);
+    address internal ipAssetOwner4 = address(7777);
+    address internal ipAssetOwner5 = address(6666);
 
     address internal ipOrg1;
     address internal ipOrg2;
+    address internal ipOrg3;
 
     string internal FRAMEWORK_ID_DOGnCO = "test_framework_dog_and_co";
     string internal FRAMEWORK_ID_CATnCO = "test_framework_cat_and_co";
@@ -52,10 +59,20 @@ contract E2ETest is IE2ETest, BaseTest {
     uint256 internal ipAssetId_1;
     uint256 internal ipAssetId_2;
     uint256 internal ipAssetId_3;
+    uint256 internal ipAssetId_4;
+    uint256 internal ipAssetId_5;
     uint256 internal ipOrg1_AssetId_1;
     uint256 internal ipOrg1_AssetId_2;
     uint256 internal ipOrg2_AssetId_1;
+    uint256 internal ipOrg2_AssetId_2;
+    uint256 internal ipOrg3_AssetId_1;
     uint256 internal relIdProtocolLevel;
+    string internal ipOrg1_baseUri = "http://iporg1.baseuri.url";
+    string internal ipOrg2_baseUri = "http://iporg2.baseuri.url";
+    string internal ipOrg3_baseUri = "http://iporg3.baseuri.url";
+    string internal ipOrg1_contractUri = "http://iporg1.contracturi.url";
+    string internal ipOrg2_contractUri = "http://iporg2.contracturi.url";
+    string internal ipOrg3_contractUri = "http://iporg3.contracturi.url";
 
     function setUp() public virtual override {
         super.setUp();
@@ -155,6 +172,7 @@ contract E2ETest is IE2ETest, BaseTest {
         string[] memory ipAssetTypesShared = new string[](2);
         string[] memory ipAssetTypesOnly1 = new string[](1);
         string[] memory ipAssetTypesOnly2 = new string[](1);
+        string[] memory ipAssetTypesScratchPad = new string[](3);
         ipAssetTypesShared[0] = "CHARACTER";
         ipAssetTypesShared[1] = "STORY";
         ipAssetTypesOnly1[0] = "MOVIE";
@@ -172,9 +190,16 @@ contract E2ETest is IE2ETest, BaseTest {
             "IPO2",
             ipAssetTypesShared
         );
+        ipOrg3 = spg.registerIpOrg(
+            ipOrgOwner3,
+            "IPOrgName3",
+            "IPO3",
+            ipAssetTypesShared
+        );
 
         vm.label(ipOrg1, "IPOrg_1");
         vm.label(ipOrg2, "IPOrg_2");
+        vm.label(ipOrg3, "IPOrg_3");
 
         // TODO: check for event `ModuleConfigured`
         vm.prank(ipOrgOwner1);
@@ -183,16 +208,27 @@ contract E2ETest is IE2ETest, BaseTest {
         vm.prank(ipOrgOwner2);
         spg.addIPAssetTypes(ipOrg2, ipAssetTypesOnly2);
 
+        ipAssetTypesScratchPad = registrationModule.getIpOrgAssetTypes(ipOrg3);
+        for (uint256 i = 0; i < ipAssetTypesScratchPad.length; i++) {
+            assertEq(
+                ipAssetTypesScratchPad[i],
+                ipAssetTypesShared[i],
+                "ipAssetTypesScratchPad[i] should match ipAssetTypesShared[i]"
+            );
+        }
+
+        ipAssetTypesScratchPad = registrationModule.getIpOrgAssetTypes(ipOrg2);
+        assertEq(
+            ipAssetTypesScratchPad.length,
+            ipAssetTypesShared.length + ipAssetTypesOnly1.length,
+            "length should match"
+        );
+
         ///
         /// =========================================
         ///         Configure IPOrg modules
         /// =========================================
         ///
-
-        string memory ipOrg1_baseUri = "http://iporg1.baseuri.url";
-        string memory ipOrg2_baseUri = "http://iporg2.baseuri.url";
-        string memory ipOrg1_contractUri = "http://iporg1.contracturi.url";
-        string memory ipOrg2_contractUri = "http://iporg2.contracturi.url";
 
         vm.expectEmit(address(registrationModule));
         emit MetadataUpdated(ipOrg1, ipOrg1_baseUri, ipOrg1_contractUri);
@@ -223,6 +259,9 @@ contract E2ETest is IE2ETest, BaseTest {
             ipOrg2_contractUri,
             "contractURI should be ipOrg2_contractUri"
         );
+
+        vm.prank(ipOrgOwner3);
+        spg.setMetadata(ipOrg3, ipOrg3_baseUri, ipOrg3_contractUri);
 
         ///
         /// =========================================
@@ -380,7 +419,7 @@ contract E2ETest is IE2ETest, BaseTest {
             .LicensingConfig({
                 frameworkId: FRAMEWORK_ID_DOGnCO,
                 params: lParams,
-                licensor: Licensing.LicensorConfig.IpOrgOwnerAlways
+                licensor: Licensing.LicensorConfig.ParentOrIpaOrIpOrgOwners
             });
 
         // TODO: event check for `configureIpOrgLicensing`
@@ -444,93 +483,7 @@ contract E2ETest is IE2ETest, BaseTest {
         /// =========================================
         ///
 
-        //
-        // Asset ID 1 (Org 1, ID 1)
-        //
-
-        Registration.RegisterIPAssetParams
-            memory registerIpAssetParamsCharacter = Registration
-                .RegisterIPAssetParams({
-                    owner: ipAssetOwner1,
-                    ipOrgAssetType: 0,
-                    name: "Character IPA",
-                    hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83930000,
-                    mediaUrl: "https://arweave.net/character"
-                });
-
-        TokenGated.Params memory tokenGatedHookDataCharacter = TokenGated
-            .Params({ tokenOwner: ipAssetOwner1 });
-        preHooksDataCharacter = new bytes[](1);
-        preHooksDataCharacter[0] = abi.encode(tokenGatedHookDataCharacter);
-
-        // TODO: Solve "Stack too deep" for emitting this event
-        // vm.expectEmit(address(tokenGatedHook));
-        // emit SyncHookExecuted(
-        //     address(tokenGatedHook),
-        //     HookResult.Completed,
-        //     _getExecutionContext(hooksConfig[0], abi.encode("")),
-        //     ""
-        // );
-        vm.prank(ipAssetOwner1);
-        (ipAssetId_1, ipOrg1_AssetId_1) = spg.registerIPAsset(
-            ipOrg1,
-            registerIpAssetParamsCharacter,
-            preHooksDataCharacter,
-            new bytes[](0)
-        );
-        assertEq(ipAssetId_1, 1, "ipAssetId_1 should be 1");
-        assertEq(ipOrg1_AssetId_1, 1, "ipOrg1_AssetId_1 should be 1");
-
-        //
-        // Asset ID 2 (Org 1, ID 2)
-        //
-
-        Registration.RegisterIPAssetParams
-            memory registerIpAssetParamsStory = Registration
-                .RegisterIPAssetParams({
-                    owner: ipAssetOwner2,
-                    ipOrgAssetType: 1,
-                    name: "Story IPA",
-                    hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83931111,
-                    mediaUrl: "https://arweave.net/story"
-                });
-        TokenGated.Params memory tokenGatedHookDataStory = TokenGated.Params({
-            tokenOwner: ipAssetOwner2
-        });
-        preHooksDataStory = new bytes[](1);
-        preHooksDataStory[0] = abi.encode(tokenGatedHookDataStory);
-        vm.prank(ipAssetOwner2);
-        (ipAssetId_2, ipOrg1_AssetId_2) = spg.registerIPAsset(
-            ipOrg1,
-            registerIpAssetParamsStory,
-            preHooksDataStory,
-            new bytes[](0)
-        );
-        assertEq(ipAssetId_2, 2, "ipAssetId_2 should be 2");
-        assertEq(ipOrg1_AssetId_2, 2, "ipOrg1_AssetId_2 should be 2");
-
-        //
-        // Asset ID 3 (Org 2, ID 1)
-        //
-
-        Registration.RegisterIPAssetParams
-            memory registerIpAssetParamsOrg2 = Registration
-                .RegisterIPAssetParams({
-                    owner: ipAssetOwner3,
-                    ipOrgAssetType: 1,
-                    name: "Story IPA Org2",
-                    hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83933333,
-                    mediaUrl: "https://arweave.net/story2"
-                });
-        vm.prank(ipAssetOwner3);
-        (ipAssetId_3, ipOrg2_AssetId_1) = spg.registerIPAsset(
-            ipOrg2,
-            registerIpAssetParamsOrg2,
-            new bytes[](0),
-            new bytes[](0)
-        );
-        assertEq(ipAssetId_3, 3, "ipAssetId_3 should be 3");
-        assertEq(ipOrg2_AssetId_1, 1, "ipOrg2_AssetId_1 should be 1");
+        _registerIpAssets();
 
         ///
         /// =========================================
@@ -556,8 +509,7 @@ contract E2ETest is IE2ETest, BaseTest {
 
         ///
         /// =========================================
-        ///             Create License NFTs
-        ///           for IPOrg2's IP Assets
+        ///          Random IP Asset actions
         /// =========================================
         ///
 
@@ -615,7 +567,9 @@ contract E2ETest is IE2ETest, BaseTest {
             uint8(Licensing.LicenseStatus.Active),
             "License should active be if it's not a derivative"
         );
-        vm.expectRevert(Errors.LicenseRegistry_LicenseNotPendingApproval.selector);
+        vm.expectRevert(
+            Errors.LicenseRegistry_LicenseNotPendingApproval.selector
+        );
         vm.prank(ipOrgOwner2); // PIPLicensingTerms specifies the licensor as IPOrgOwnerAlways
         spg.activateLicense(address(ipOrg2), licenseId_1_nonDeriv);
 
@@ -658,8 +612,9 @@ contract E2ETest is IE2ETest, BaseTest {
         // the licensor is ipOrgOwner2.
         vm.prank(ipOrgOwner2);
         spg.activateLicense(address(ipOrg2), licenseId_2_deriv);
-        licenseData_2_derive = licenseRegistry
-            .getLicenseData(licenseId_2_deriv); // refresh license data cached in memory
+        licenseData_2_derive = licenseRegistry.getLicenseData(
+            licenseId_2_deriv
+        ); // refresh license data cached in memory
         assertEq(
             uint8(licenseData_2_derive.status),
             uint8(Licensing.LicenseStatus.Active),
@@ -694,8 +649,9 @@ contract E2ETest is IE2ETest, BaseTest {
         // Comment above on the first license applies here as well.
         vm.prank(ipOrgOwner2);
         spg.activateLicense(address(ipOrg2), licenseId_3_deriv);
-        licenseData_3_derive = licenseRegistry
-            .getLicenseData(licenseId_3_deriv); // refresh license data cached in memory
+        licenseData_3_derive = licenseRegistry.getLicenseData(
+            licenseId_3_deriv
+        ); // refresh license data cached in memory
         assertEq(
             uint8(licenseData_3_derive.status),
             uint8(Licensing.LicenseStatus.Active),
@@ -711,14 +667,204 @@ contract E2ETest is IE2ETest, BaseTest {
         // Try to link license ID 1 (non-derivative) to Asset ID 3, which will fail
         // because Asset ID 3 is already linked to license ID 3 (derivative)
         vm.prank(address(licensingModule));
-        vm.expectRevert(Errors.LicenseRegistry_LicenseAlreadyLinkedToIpa.selector);
-        licenseRegistry.linkLnftToIpa(licenseId_1_nonDeriv, ipAssetId_3);
+        vm.expectRevert(
+            Errors.LicenseRegistry_LicenseAlreadyLinkedToIpa.selector
+        );
+        // One way to link LNFT to IPA
+        spg.linkLnftToIpa(ipOrg2, licenseId_1_nonDeriv, ipAssetId_3);
 
         // Link license ID 1 (non-derivative) to Asset ID 2 (Org 2, ID 2)
         vm.prank(address(licensingModule));
         vm.expectEmit(address(licenseRegistry));
         emit LicenseNftLinkedToIpa(licenseId_2_deriv, ipAssetId_2);
+        // Another way to link LNFT to IPA
         licenseRegistry.linkLnftToIpa(licenseId_2_deriv, ipAssetId_2);
+    }
+
+    function _registerIpAssets() internal {
+        //
+        // Asset ID 1 (Org 1, ID 1)
+        //
+
+        string memory ipAssetMediaUrl = "https://arweave.net/character";
+
+        Registration.RegisterIPAssetParams
+            memory registerIpAssetParams = Registration.RegisterIPAssetParams({
+                owner: ipAssetOwner1,
+                ipOrgAssetType: 0,
+                name: "Character IPA",
+                hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83930000,
+                mediaUrl: ipAssetMediaUrl
+            });
+
+        TokenGated.Params memory tokenGatedHookDataCharacter = TokenGated
+            .Params({ tokenOwner: ipAssetOwner1 });
+        preHooksDataCharacter = new bytes[](1);
+        preHooksDataCharacter[0] = abi.encode(tokenGatedHookDataCharacter);
+
+        // TODO: Solve "Stack too deep" for emitting this event
+        // vm.expectEmit(address(tokenGatedHook));
+        // emit SyncHookExecuted(
+        //     address(tokenGatedHook),
+        //     HookResult.Completed,
+        //     _getExecutionContext(hooksConfig[0], abi.encode("")),
+        //     ""
+        // );
+        vm.prank(ipAssetOwner1);
+        (ipAssetId_1, ipOrg1_AssetId_1) = spg.registerIPAsset(
+            ipOrg1,
+            registerIpAssetParams,
+            preHooksDataCharacter,
+            new bytes[](0)
+        );
+        assertEq(ipAssetId_1, 1, "ipAssetId_1 should be 1");
+        assertEq(ipOrg1_AssetId_1, 1, "ipOrg1_AssetId_1 should be 1");
+        assertEq(
+            IPOrg(ipOrg1).ipAssetId(ipOrg1_AssetId_1),
+            ipAssetId_1,
+            "ipOrg1_AssetId_1 should be global ID 1"
+        );
+        assertEq(
+            IPOrg(ipOrg1).tokenURI(ipOrg1_AssetId_1),
+            ipAssetMediaUrl,
+            string.concat("tokenURI should be ", ipAssetMediaUrl)
+        );
+
+        //
+        // Asset ID 2 (Org 1, ID 2)
+        //
+
+        ipAssetMediaUrl = "https://arweave.net/story";
+        registerIpAssetParams = Registration.RegisterIPAssetParams({
+            owner: ipAssetOwner2,
+            ipOrgAssetType: 1,
+            name: "Story IPA",
+            hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83931111,
+            mediaUrl: ipAssetMediaUrl
+        });
+        TokenGated.Params memory tokenGatedHookDataStory = TokenGated.Params({
+            tokenOwner: ipAssetOwner2
+        });
+        preHooksDataStory = new bytes[](1);
+        preHooksDataStory[0] = abi.encode(tokenGatedHookDataStory);
+        vm.prank(ipAssetOwner2);
+        (ipAssetId_2, ipOrg1_AssetId_2) = spg.registerIPAsset(
+            ipOrg1,
+            registerIpAssetParams,
+            preHooksDataStory,
+            new bytes[](0)
+        );
+        assertEq(ipAssetId_2, 2, "ipAssetId_2 should be 2");
+        assertEq(ipOrg1_AssetId_2, 2, "ipOrg1_AssetId_2 should be 2");
+        assertEq(
+            IPOrg(ipOrg1).ipAssetId(ipOrg1_AssetId_2),
+            ipAssetId_2,
+            "ipOrg1_AssetId_2 should be global ID 2"
+        );
+        assertEq(
+            IPOrg(ipOrg1).tokenURI(ipOrg1_AssetId_2),
+            ipAssetMediaUrl,
+            string.concat("tokenURI should be ", ipAssetMediaUrl)
+        );
+
+        // Random mint in between
+        // moduleRegistry.registerProtocolModule(
+        //     ModuleRegistryKeys.REGISTRATION_MODULE,
+        //     BaseModule(address(this))
+        // );
+        // IIPOrg(ipOrg2).mint(ipAssetOwner3, 1);
+
+        //
+        // Asset ID 3 (Org 2, ID 1)
+        //
+
+        ipAssetMediaUrl = "https://arweave.net/story2";
+        registerIpAssetParams = Registration.RegisterIPAssetParams({
+            owner: ipAssetOwner3,
+            ipOrgAssetType: 1,
+            name: "Story IPA 2",
+            hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83933333,
+            mediaUrl: ipAssetMediaUrl
+        });
+        vm.prank(ipAssetOwner3);
+        (ipAssetId_3, ipOrg2_AssetId_1) = spg.registerIPAsset(
+            ipOrg2,
+            registerIpAssetParams,
+            new bytes[](0),
+            new bytes[](0)
+        );
+        assertEq(ipAssetId_3, 3, "ipAssetId_3 should be 3");
+        assertEq(ipOrg2_AssetId_1, 1, "ipOrg2_AssetId_1 should be 1");
+        assertEq(
+            IPOrg(ipOrg2).ipAssetId(ipOrg2_AssetId_1),
+            ipAssetId_3,
+            "ipOrg2_AssetId_1 should be global ID 3"
+        );
+        assertEq(
+            IPOrg(ipOrg2).tokenURI(ipOrg2_AssetId_1),
+            ipAssetMediaUrl,
+            string.concat("tokenURI should be ", ipAssetMediaUrl)
+        );
+
+        //
+        // Asset ID 4 (Org 2, ID 2)
+        //
+
+        ipAssetMediaUrl = "https://arweave.net/music1";
+        registerIpAssetParams = Registration.RegisterIPAssetParams({
+            owner: ipAssetOwner4,
+            ipOrgAssetType: 1,
+            name: "Music IPA",
+            hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83933333,
+            mediaUrl: ipAssetMediaUrl
+        });
+        vm.prank(ipAssetOwner4);
+        (ipAssetId_4, ipOrg2_AssetId_2) = spg.registerIPAsset(
+            ipOrg2,
+            registerIpAssetParams,
+            new bytes[](0),
+            new bytes[](0)
+        );
+        assertEq(ipAssetId_4, 4, "ipAssetId_4 should be 4");
+        assertEq(ipOrg2_AssetId_2, 2, "ipOrg2_AssetId_2 should be 2");
+        assertEq(
+            IPOrg(ipOrg2).ipAssetId(ipOrg2_AssetId_2),
+            ipAssetId_4,
+            "ipOrg2_AssetId_2 should be global ID 4"
+        );
+        assertEq(
+            IPOrg(ipOrg2).tokenURI(ipOrg2_AssetId_2),
+            ipAssetMediaUrl,
+            string.concat("tokenURI should be ", ipAssetMediaUrl)
+        );
+
+        ipAssetMediaUrl = "https://arweave.net/music2";
+        registerIpAssetParams = Registration.RegisterIPAssetParams({
+            owner: ipAssetOwner5,
+            ipOrgAssetType: 1,
+            name: "Music IPA 2",
+            hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83933333,
+            mediaUrl: ipAssetMediaUrl
+        });
+        vm.prank(ipAssetOwner5);
+        (ipAssetId_5, ipOrg3_AssetId_1) = spg.registerIPAsset(
+            ipOrg3,
+            registerIpAssetParams,
+            new bytes[](0),
+            new bytes[](0)
+        );
+        assertEq(ipAssetId_5, 5, "ipAssetId_5 should be 5");
+        assertEq(ipOrg3_AssetId_1, 1, "ipOrg3_AssetId_1 should be 1");
+        assertEq(
+            IPOrg(ipOrg3).ipAssetId(ipOrg3_AssetId_1),
+            ipAssetId_5,
+            "ipOrg3_AssetId_1 should be global ID 5"
+        );
+        assertEq(
+            IPOrg(ipOrg3).tokenURI(ipOrg3_AssetId_1),
+            ipAssetMediaUrl,
+            string.concat("tokenURI should be ", ipAssetMediaUrl)
+        );
     }
 
     function _addRelationshipType(

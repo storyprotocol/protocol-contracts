@@ -49,7 +49,7 @@ contract LicensingModuleConfigTest is BaseTest {
             config
         );
     }
-   
+
 
     function test_LicensingModule_configIpOrg_revert_InvalidLicensorConfig()
         public
@@ -126,7 +126,6 @@ contract LicensingModuleConfigTest is BaseTest {
             abi.encode(ssValue)
         );
     }
-    
 
     function test_LicensingModule_configIpOrg_revert_ipOrgAlreadySet() public {
         test_LicensingModule_configIpOrg();
@@ -149,6 +148,4 @@ contract LicensingModuleConfigTest is BaseTest {
         );
 
     }
-    
-
 }

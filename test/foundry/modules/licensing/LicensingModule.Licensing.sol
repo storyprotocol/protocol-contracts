@@ -9,7 +9,9 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
 import { Errors } from "contracts/lib/Errors.sol";
+import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { PIPLicensingTerms } from "contracts/lib/modules/PIPLicensingTerms.sol";
+import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
 contract LicensingModuleLicensingTest is BaseTest {
@@ -192,6 +194,40 @@ contract LicensingModuleLicensingTest is BaseTest {
         );
         assertEq(childLicenseId, 2);
     }
+
+    function test_LicensingModule_revert_performAction_InvalidAction() public {
+        vm.prank(address(spg)); // spg has AccessControl.MODULE_EXECUTOR_ROLE access
+        vm.expectRevert(Errors.LicensingModule_InvalidAction.selector);
+        moduleRegistry.execute(
+            IIPOrg(ipOrg),
+            address(this),
+            ModuleRegistryKeys.LICENSING_MODULE,
+            abi.encode("INVALID_ACTION", abi.encode(0, ipaId_1)),
+            new bytes[](0),
+            new bytes[](0)
+        );
+    }
+
+    // function test_LicensingModule_revert_createAction_InvalidLicensorConfig()
+    //     public
+    //     withFrameworkConfig(true, true, Licensing.LicensorConfig(uint(10000)))
+    // {
+    //     uint256 _parentLicenseId = 0; // no parent
+    //     Licensing.ParamValue[] memory inputParams = _constructInputParams();
+    //     Licensing.LicenseCreation memory creation = Licensing.LicenseCreation({
+    //         params: inputParams,
+    //         parentLicenseId: _parentLicenseId,
+    //         ipaId: ipaId_1
+    //     });
+    //     vm.prank(ipOrg.owner());
+    //     vm.expectRevert(Errors.LicensingModule_IpOrgFrameworkNotSet.selector);
+    //     spg.createLicense(
+    //         address(ipOrg),
+    //         creation,
+    //         new bytes[](0),
+    //         new bytes[](0)
+    //     );
+    // }
 
     function _constructInputParams()
         internal
