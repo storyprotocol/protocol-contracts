@@ -32,6 +32,7 @@ import "contracts/lib/modules/PIPLicensingTerms.sol";
 import { PolygonToken } from "contracts/lib/hooks/PolygonToken.sol";
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { Hook } from "contracts/lib/hooks/Hook.sol";
+import "script/foundry/utils/HooksFactory.sol";
 
 
 contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
@@ -51,6 +52,7 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
     address polygonTokenHook;
     address mockNFT;
     address licensingFrameworkRepo;
+    address hooksFactory;
 
     constructor() JsonDeploymentHandler("main") {}
 
@@ -229,13 +231,22 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
         licensingModule = newAddress;
 
+        /// HOOKS_FACTORY
+        contractKey = "HooksFactory";
+
+        console.log(string.concat("Deploying ", contractKey, "..."));
+        newAddress = address(new HooksFactory());
+        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+
+        hooksFactory = newAddress;
+
         /// TOKEN_GATED_HOOK
         contractKey = "TokenGatedHook";
 
         console.log(string.concat("Deploying ", contractKey, "..."));
         bytes memory tokenGatedHookCode = abi.encodePacked(
             type(TokenGatedHook).creationCode, abi.encode(address(accessControl)));
-        newAddress = _deployHook(tokenGatedHookCode, Hook.SYNC_FLAG, 0);
+        newAddress = HooksFactory(hooksFactory).deploy(tokenGatedHookCode, Hook.SYNC_FLAG, block.timestamp);
         _writeAddress(contractKey, newAddress);
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
@@ -252,7 +263,7 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
                 vm.envAddress("POLYGON_TOKEN_ORACLE_CLIENT"),
                 vm.envAddress("POLYGON_TOKEN_ORACLE_COORDINATOR")
             ));
-        newAddress = _deployHook(polygonTokenHookCode, Hook.ASYNC_FLAG, 0);
+        newAddress = HooksFactory(hooksFactory).deploy(polygonTokenHookCode, Hook.ASYNC_FLAG, block.timestamp);
         _writeAddress(contractKey, newAddress);
         console.log(string.concat(contractKey, " deployed to:"), newAddress);
 
@@ -304,6 +315,22 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         accessControlSingleton.grantRole(
             AccessControl.MODULE_EXECUTOR_ROLE,
             ipOrgController
+        );
+        accessControlSingleton.grantRole(
+            AccessControl.HOOK_CALLER_ROLE,
+            moduleRegistry
+        );
+        accessControlSingleton.grantRole(
+            AccessControl.HOOK_CALLER_ROLE,
+            registrationModule
+        );
+        accessControlSingleton.grantRole(
+            AccessControl.HOOK_CALLER_ROLE,
+            relationshipModule
+        );
+        accessControlSingleton.grantRole(
+            AccessControl.HOOK_CALLER_ROLE,
+            licensingModule
         );
 
         // REGISTER MODULES
@@ -365,23 +392,5 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
         _writeDeployment();
         _endBroadcast();
-    }
-
-    function _deployHook(bytes memory code_, uint256 hookTypeFlag_, uint256 seed_) internal returns (address hookAddr) {
-        uint256 randomNumber = uint256(keccak256(abi.encodePacked(seed_)));
-        for (uint256 i = 0; i < 1500; i++) {
-            bytes32 salt = bytes32(randomNumber + i);
-            bytes32 bytecodeHash = keccak256(code_);
-            address expectedAddress = Create2.computeAddress(salt, bytecodeHash);
-            uint160 prefix = hookTypeFlag_ == Hook.SYNC_FLAG ? 0x02 : 0x01;
-            if (_doesAddressStartWith(expectedAddress, prefix)) {
-                hookAddr = Create2.deploy(0, salt, code_);
-                return hookAddr;
-            }
-        }
-    }
-
-    function _doesAddressStartWith(address address_,uint160 prefix_) private pure returns (bool) {
-        return uint160(address_) >> (160 - 2) == prefix_;
     }
 }
