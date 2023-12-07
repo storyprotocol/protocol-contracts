@@ -137,11 +137,12 @@ contract IPOrgController is
         }
 
         // Reset the pending owner.
+        address prevOwner = record.owner;
         delete record.pendingOwner;
         record.owner = msg.sender;
 
         emit IPOrgPendingOwnerSet(ipOrg_, address(0));
-        emit IPOrgTransferred(ipOrg_, record.owner, msg.sender);
+        emit IPOrgTransferred(ipOrg_, prevOwner, msg.sender);
     }
 
     /// @notice Registers a new IP Org.

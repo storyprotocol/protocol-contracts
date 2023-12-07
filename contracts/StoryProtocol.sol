@@ -101,7 +101,7 @@ contract StoryProtocol is Multicall {
         );
     }
 
-    /// @notice Transfers an IP asset to another owner.
+    /// @notice Registers an IP Asset.
     /// @param ipOrg_ The governing IP Org under which the IP asset is registered.
     /// @param params_ The registration params, including owner, name, hash.
     /// @param preHooksData_ Hooks to embed with the registration pre-call.
