@@ -6,6 +6,7 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { BaseModule } from "contracts/modules/base/BaseModule.sol";
+import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { LicensingFrameworkRepo } from "./LicensingFrameworkRepo.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
@@ -15,6 +16,9 @@ import { SPUMLParams } from "contracts/lib/modules/SPUMLParams.sol";
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 import { BitMask } from "contracts/lib/BitMask.sol";
 import { ILicensingModule } from "contracts/interfaces/modules/licensing/ILicensingModule.sol";
+import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
+import { BitMask } from "contracts/lib/BitMask.sol";
+import { ModuleKey, LICENSING_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 
 /// @title Licensing module
 /// @notice Story Protocol module that:
@@ -50,6 +54,11 @@ contract LicensingModule is BaseModule, ILicensingModule {
             revert Errors.ZeroAddress();
         }
         DEFAULT_REVOKER = defaultRevoker_;
+    }
+
+    /// @notice Gets the protocol-wide module key for the licensing module.
+    function moduleKey() public pure override(BaseModule, IModule) returns (ModuleKey) {
+        return LICENSING_MODULE_KEY;
     }
 
     function getIpOrgLicensorConfig(

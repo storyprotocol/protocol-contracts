@@ -7,6 +7,7 @@ import { IRegistrationModule } from "contracts/interfaces/modules/registration/I
 import { IModuleRegistry } from "contracts/interfaces/modules/IModuleRegistry.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
+import { REGISTRATION_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 
 /// @title Global IP Asset Registry
@@ -41,7 +42,7 @@ contract IPAssetRegistry is IIPAssetRegistry {
     /// @notice Restricts calls to the registration module of the IP Asset.
     /// TODO(ramarti): Enable IPOrg-specific registration modules to be authorized.
     modifier onlyRegistrationModule() {
-        if (MODULE_REGISTRY.protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE) != msg.sender) {
+        if (address(MODULE_REGISTRY.protocolModule(REGISTRATION_MODULE_KEY)) != msg.sender) {
             revert Errors.Unauthorized();
         }
         _;
@@ -69,10 +70,6 @@ contract IPAssetRegistry is IIPAssetRegistry {
         string memory name_,
         bytes32 hash_
     ) public onlyRegistrationModule returns (uint256 ipAssetId) {
-
-        if (MODULE_REGISTRY.protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE) != msg.sender) {
-            revert Errors.Unauthorized();
-        }
 
         // Crate a new IP asset with the provided IP attributes.
         ipAssetId = ++totalSupply;
@@ -129,7 +126,7 @@ contract IPAssetRegistry is IIPAssetRegistry {
     /// @notice Returns the current owner of an IP asset.
     /// @param ipAssetId_ The id of the IP asset being queried.
     function ipAssetOwner(uint256 ipAssetId_) public view returns (address) {
-        address registrationModule = MODULE_REGISTRY.protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE);
+        address registrationModule = address(MODULE_REGISTRY.protocolModule(REGISTRATION_MODULE_KEY));
         return IRegistrationModule(registrationModule).ownerOf(ipAssetId_);
     }
 

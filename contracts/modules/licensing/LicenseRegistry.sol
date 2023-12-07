@@ -6,12 +6,12 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
-import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { LicensingFrameworkRepo } from "contracts/modules/licensing/LicensingFrameworkRepo.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
+import { LICENSING_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 
 /// @title LicenseRegistry
 /// @notice This contract is the source of truth for all licenses that are registered in the protocol.
@@ -43,24 +43,16 @@ contract LicenseRegistry is ERC721 {
     LicensingFrameworkRepo public immutable LICENSING_FRAMEWORK_REPO;
 
     modifier onlyLicensingModule() {
-        if (
-            !MODULE_REGISTRY.isModule(
-                ModuleRegistryKeys.LICENSING_MODULE,
-                msg.sender
-            )
-        ) {
+        address licensingModule = address(MODULE_REGISTRY.protocolModule(LICENSING_MODULE_KEY));
+        if (licensingModule != msg.sender) {
             revert Errors.LicenseRegistry_CallerNotLicensingModule();
         }
         _;
     }
 
     modifier onlyLicensingModuleOrLicensee(uint256 licenseId_) {
-        if (
-            !MODULE_REGISTRY.isModule(
-                ModuleRegistryKeys.LICENSING_MODULE,
-                msg.sender
-            ) && msg.sender != ownerOf(licenseId_)
-        ) {
+        address licensingModule = address(MODULE_REGISTRY.protocolModule(LICENSING_MODULE_KEY));
+        if (licensingModule != msg.sender && msg.sender != ownerOf(licenseId_)) {
             revert Errors.LicenseRegistry_CallerNotLicensingModuleOrLicensee();
         }
         _;

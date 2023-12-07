@@ -9,10 +9,12 @@ import { Errors } from "contracts/lib/Errors.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { IPOrgController } from "contracts/ip-org/IPOrgController.sol";
 import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
+import { Gateway } from "contracts/modules/Gateway.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { LicenseRegistry } from "contracts/modules/licensing/LicenseRegistry.sol";
 import { ICallbackHandler } from "contracts/interfaces/hooks/base/ICallbackHandler.sol";
 import { IERC165, ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { ModuleKey } from "contracts/lib/modules/Module.sol";
 
 /// @title BaseModule
 /// @notice Base implementation for all modules in Story Protocol. This is meant to ensure
@@ -54,6 +56,12 @@ abstract contract BaseModule is
     /// @dev The execution of the module is pending, and will need to be executed again.
     mapping(bytes32 => ModuleExecutionContext) private _asyncContexts;
 
+    /// @notice Modifier for authorizing the calling entity.
+    modifier onlyAuthorized() {
+        _authenticate();
+        _;
+    }
+
     modifier onlyModuleRegistry() {
         if (msg.sender != address(MODULE_REGISTRY)) {
             revert Errors.BaseModule_OnlyModuleRegistry();
@@ -74,6 +82,10 @@ abstract contract BaseModule is
         LICENSE_REGISTRY = params_.licenseRegistry;
         IP_ORG_CONTROLLER = params_.ipOrgController;
     }
+
+    /// @notice Gets the protocol-wide key associated with the module.
+    /// @return The string identifier of the module.
+    function moduleKey() public pure virtual override returns (ModuleKey);
 
     /// Main execution entrypoint. It will verify params, execute pre action hooks, perform the action,
     /// execute post action hooks and emit the RequestCompleted event, plus returning the result.
@@ -210,6 +222,13 @@ abstract contract BaseModule is
         address caller_,
         bytes memory params_
     ) internal virtual returns (bytes memory result) {}
+
+    /// @notice Authenticates the caller entity through the module registry.
+    function _authenticate() internal view {
+        if (!MODULE_REGISTRY.isAuthorized(moduleKey(), Gateway(msg.sender), msg.sig)) {
+            revert Errors.BaseModule_Unauthorized();
+        }
+    }
 
     /// @dev Generates a registry key based on module execution parameters.
     /// This function should be overridden in derived contracts to provide the actual logic for generating the registry key.

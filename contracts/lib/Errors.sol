@@ -41,6 +41,9 @@ library Errors {
     error BaseModule_ZeroLicenseRegistry();
     error BaseModule_OnlyModuleRegistry();
 
+    /// @notice The caller is not authorized to perform this operation.
+    error BaseModule_Unauthorized();
+
     ////////////////////////////////////////////////////////////////////////////
     //                            HookRegistry                                //
     ////////////////////////////////////////////////////////////////////////////
@@ -72,9 +75,32 @@ library Errors {
     //                           ModuleRegistry                               //
     ////////////////////////////////////////////////////////////////////////////
 
-    error ModuleRegistry_ModuleNotRegistered(string moduleName);
+    /// @notice The selected module has yet to been registered.
+    error ModuleRegistry_ModuleNotYetRegistered();
+
+    /// @notice The module depenedency has not yet been registered for the gatway.
+    error ModuleRegistry_DependencyNotYetRegistered();
+
+    /// @notice The module depenedency was already registered for the gateway.
+    error ModuleRegistry_DependencyAlreadyRegistered();
+
+    /// @notice The caller is not the org owner.
     error ModuleRegistry_CallerNotOrgOwner();
+
+    /// @notice Hook has yet to be registered.
     error ModuleRegistry_HookNotRegistered(string hookKey);
+    
+    /// @notice The selected module was already registered.
+    error ModuleRegistry_ModuleAlreadyRegistered();
+
+    /// @notice The key of the targeted module does not match the provided key.
+    error ModuleRegistry_ModuleKeyMismatch();
+
+    /// @notice The caller is not authorized to call the module dependency.
+    error ModuleRegistry_Unauthorized();
+
+    /// @notice The gateway is not valid for registration.
+    error ModuleRegistry_InvalidGateway();
 
     ////////////////////////////////////////////////////////////////////////////
     //                                 CollectModule                          //

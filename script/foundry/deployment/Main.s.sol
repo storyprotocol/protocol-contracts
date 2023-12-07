@@ -33,6 +33,7 @@ import { PolygonToken } from "contracts/lib/hooks/PolygonToken.sol";
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { Hook } from "contracts/lib/hooks/Hook.sol";
 import "script/foundry/utils/HooksFactory.sol";
+import { ModuleKey, LICENSING_MODULE_KEY, REGISTRATION_MODULE_KEY, RELATIONSHIP_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 
 
 contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
@@ -335,15 +336,15 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
         // REGISTER MODULES
         ModuleRegistry(moduleRegistry).registerProtocolModule(
-            ModuleRegistryKeys.REGISTRATION_MODULE,
+            REGISTRATION_MODULE_KEY,
             BaseModule(registrationModule)
         );
         ModuleRegistry(moduleRegistry).registerProtocolModule(
-            ModuleRegistryKeys.RELATIONSHIP_MODULE,
+            RELATIONSHIP_MODULE_KEY,
             BaseModule(relationshipModule)
         );
         ModuleRegistry(moduleRegistry).registerProtocolModule(
-            ModuleRegistryKeys.LICENSING_MODULE,
+            LICENSING_MODULE_KEY,
             BaseModule(licensingModule)
         );
         string[] memory ipAssetTypes = new string[](2);
