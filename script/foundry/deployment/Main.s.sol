@@ -28,11 +28,12 @@ import "contracts/modules/licensing/LicenseRegistry.sol";
 import "contracts/modules/licensing/LicensingFrameworkRepo.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
 import "contracts/lib/modules/Licensing.sol";
-import "contracts/lib/modules/PIPLicensingTerms.sol";
+import "contracts/lib/modules/SPUMLParams.sol";
 import { PolygonToken } from "contracts/lib/hooks/PolygonToken.sol";
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { Hook } from "contracts/lib/hooks/Hook.sol";
 import "script/foundry/utils/HooksFactory.sol";
+import { ModuleKey, LICENSING_MODULE_KEY, REGISTRATION_MODULE_KEY, RELATIONSHIP_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 
 
 contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
@@ -335,15 +336,15 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
         // REGISTER MODULES
         ModuleRegistry(moduleRegistry).registerProtocolModule(
-            ModuleRegistryKeys.REGISTRATION_MODULE,
+            REGISTRATION_MODULE_KEY,
             BaseModule(registrationModule)
         );
         ModuleRegistry(moduleRegistry).registerProtocolModule(
-            ModuleRegistryKeys.RELATIONSHIP_MODULE,
+            RELATIONSHIP_MODULE_KEY,
             BaseModule(relationshipModule)
         );
         ModuleRegistry(moduleRegistry).registerProtocolModule(
-            ModuleRegistryKeys.LICENSING_MODULE,
+            LICENSING_MODULE_KEY,
             BaseModule(licensingModule)
         );
         string[] memory ipAssetTypes = new string[](2);
@@ -382,10 +383,10 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         );
 
         // CONFIG LICENSING MODULE
-        Licensing.ParamDefinition[] memory paramDefs = PIPLicensingTerms._getParamDefs();
+        Licensing.ParamDefinition[] memory paramDefs = SPUMLParams._getParamDefs();
         Licensing.SetFramework memory framework = Licensing.SetFramework({
-            id: PIPLicensingTerms.FRAMEWORK_ID,
-            textUrl: vm.envString("PIPL_URL"),
+            id: SPUMLParams.FRAMEWORK_ID,
+            textUrl: vm.envString("SPUML_URL"),
             paramDefs: paramDefs
         });
         LicensingFrameworkRepo(licensingFrameworkRepo).addFramework(framework);

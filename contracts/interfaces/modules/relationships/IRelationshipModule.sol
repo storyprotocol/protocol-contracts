@@ -2,10 +2,12 @@
 pragma solidity ^0.8.13;
 
 import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
+import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 
 /// @title IRelationshipModule
 /// @notice Interface for the RelationshipModule. 
-interface IRelationshipModule {
+interface IRelationshipModule is IModule {
+
     /// Emitted with a new Relationship Type definitions is created
     event RelationshipTypeSet(
         // Short string naming the type

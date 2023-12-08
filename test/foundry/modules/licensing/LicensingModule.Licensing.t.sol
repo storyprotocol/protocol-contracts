@@ -10,8 +10,8 @@ import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
-import { PIPLicensingTerms } from "contracts/lib/modules/PIPLicensingTerms.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
+import { SPUMLParams } from "contracts/lib/modules/SPUMLParams.sol";
 import { BitMask } from "contracts/lib/BitMask.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
@@ -35,27 +35,27 @@ contract LicensingModuleLicensingTest is BaseTest {
         channels[0] = "test1".toShortString();
         channels[1] = "test2".toShortString();
         ipOrgParams.push(Licensing.ParamValue({
-            tag: PIPLicensingTerms.CHANNELS_OF_DISTRIBUTION.toShortString(),
+            tag: SPUMLParams.CHANNELS_OF_DISTRIBUTION.toShortString(),
             value: abi.encode(channels)
         }));
         ipOrgParams.push(Licensing.ParamValue({
-            tag: PIPLicensingTerms.ATTRIBUTION.toShortString(),
+            tag: SPUMLParams.ATTRIBUTION.toShortString(),
             value: ""// unset
         }));
         ipOrgParams.push(Licensing.ParamValue({
-            tag: PIPLicensingTerms.DERIVATIVES_ALLOWED.toShortString(),
+            tag: SPUMLParams.DERIVATIVES_ALLOWED.toShortString(),
             value: abi.encode(allowsDerivatives)
         }));
         uint8[] memory indexes = new uint8[](2);
         if (derivativesWithApproval) {
-            indexes[0] = PIPLicensingTerms.ALLOWED_WITH_APPROVAL_INDEX;
+            indexes[0] = SPUMLParams.ALLOWED_WITH_APPROVAL_INDEX;
         }
         if (reciprocal) {
-            indexes[1] = PIPLicensingTerms.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX;
+            indexes[1] = SPUMLParams.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX;
         }
         uint256 derivativeOptions = BitMask._convertToMask(indexes);
         ipOrgParams.push(Licensing.ParamValue({
-            tag: PIPLicensingTerms.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
+            tag: SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
             value: abi.encode(derivativeOptions)
         }));
         // console.log("withFrameworkConfig:");
@@ -65,7 +65,7 @@ contract LicensingModuleLicensingTest is BaseTest {
         // }
 
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
-            frameworkId: PIPLicensingTerms.FRAMEWORK_ID,
+            frameworkId: SPUMLParams.FRAMEWORK_ID,
             params: ipOrgParams,
             licensor: licensorConfig
         });
@@ -79,10 +79,10 @@ contract LicensingModuleLicensingTest is BaseTest {
         (ipaId_1, ) = _createIpAsset(ipaOwner, 1, bytes(""));
         (ipaId_2, ) = _createIpAsset(ipaOwner, 1, bytes(""));
 
-        Licensing.ParamDefinition[] memory paramDefs = PIPLicensingTerms
+        Licensing.ParamDefinition[] memory paramDefs = SPUMLParams
             ._getParamDefs();
         Licensing.SetFramework memory framework = Licensing.SetFramework({
-            id: PIPLicensingTerms.FRAMEWORK_ID,
+            id: SPUMLParams.FRAMEWORK_ID,
             textUrl: "text_url",
             paramDefs: paramDefs
         });
@@ -191,7 +191,7 @@ contract LicensingModuleLicensingTest is BaseTest {
         assertEq(license.revoker, licensingModule.DEFAULT_REVOKER());
         assertEq(license.licensor, ipOrg.owner());
         assertEq(license.ipOrg, address(ipOrg));
-        assertEq(license.frameworkId.toString(), PIPLicensingTerms.FRAMEWORK_ID);
+        assertEq(license.frameworkId.toString(), SPUMLParams.FRAMEWORK_ID);
         assertEq(license.ipaId, 0, "ipaId");
         assertEq(license.parentLicenseId, parentLicenseId);
         Licensing.ParamValue[] memory parentParams = licenseRegistry.getParams(parentLicenseId);
@@ -249,7 +249,7 @@ contract LicensingModuleLicensingTest is BaseTest {
             1
         );
         inputParams[0] = Licensing.ParamValue({
-            tag: PIPLicensingTerms.ATTRIBUTION.toShortString(),
+            tag: SPUMLParams.ATTRIBUTION.toShortString(),
             value: abi.encode(true)
         });
         return inputParams;
@@ -305,7 +305,7 @@ contract LicensingModuleLicensingTest is BaseTest {
         assertEq(license.ipOrg, address(ipOrg), "ipOrg B");
         assertEq(
             license.frameworkId.toString(),
-            PIPLicensingTerms.FRAMEWORK_ID
+            SPUMLParams.FRAMEWORK_ID
         );
         assertEq(license.ipaId, licenseRegistry.getIpaId(licenseId), "ipaId A");
         assertEq(license.ipaId, expectedIpaId, "ipaId B");

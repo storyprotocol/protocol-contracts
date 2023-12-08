@@ -6,38 +6,30 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { BaseModule } from "contracts/modules/base/BaseModule.sol";
+import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { LicensingFrameworkRepo } from "./LicensingFrameworkRepo.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
-import { PIPLicensingTerms } from "contracts/lib/modules/PIPLicensingTerms.sol";
+import { SPUMLParams } from "contracts/lib/modules/SPUMLParams.sol";
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 import { BitMask } from "contracts/lib/BitMask.sol";
+import { ILicensingModule } from "contracts/interfaces/modules/licensing/ILicensingModule.sol";
+import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
+import { BitMask } from "contracts/lib/BitMask.sol";
+import { ModuleKey, LICENSING_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 
 /// @title Licensing module
 /// @notice Story Protocol module that:
 /// - Enables each IP Org to select a licensing framework fron LicensingFrameworkRepo
 /// - Enables Other modules to mint License NFTs, and attach them to IPAs
 /// - Enables license holders to create derivative licenses and sublicenses
-/// @dev The alpha version of this module is hardcoded to use the SPIPL-1 framework
+/// @dev The alpha version of this module is hardcoded to use the SPUML framework
 /// Thanks to the authors of ERC-5218 for the inspiration (see https://eips.ethereum.org/EIPS/eip-5218)
-contract LicensingModule is BaseModule {
+contract LicensingModule is BaseModule, ILicensingModule {
     using ShortStrings for *;
     using FixedSet for FixedSet.ShortStringSet;
-
-    event IpOrgLicensingFrameworkSet(
-        address indexed ipOrg,
-        string frameworkId,
-        string url,
-        Licensing.LicensorConfig licensorConfig
-    );
-
-    event ParameterSet(
-        address indexed ipOrg,
-        string paramTag,
-        bytes defaultValue
-    );
 
     /// @notice Holds the supported paramerter tags for each ipOrg, and the default values
     /// ipOrg -> paramTag -> bytes
@@ -64,13 +56,18 @@ contract LicensingModule is BaseModule {
         DEFAULT_REVOKER = defaultRevoker_;
     }
 
+    /// @notice Gets the protocol-wide module key for the licensing module.
+    function moduleKey() public pure override(BaseModule, IModule) returns (ModuleKey) {
+        return LICENSING_MODULE_KEY;
+    }
+
     function getIpOrgLicensorConfig(
         address ipOrg_
     ) external view returns (Licensing.LicensorConfig) {
         return _licensorConfig[ipOrg_];
     }
 
-    function getDefaultValueForParam(
+    function getIpOrgValueForParam(
         address ipOrg_,
         string calldata paramTag_
     ) external view returns (bytes memory) {
@@ -263,20 +260,20 @@ contract LicensingModule is BaseModule {
                 continue;
             }
             // If param is not empty, check for Derivative license flags
-            if (ShortStringOps._equal(paramDef.tag, PIPLicensingTerms.DERIVATIVES_ALLOWED)) {
+            if (ShortStringOps._equal(paramDef.tag, SPUMLParams.DERIVATIVES_ALLOWED)) {
                 derivativesAllowed = abi.decode(resultValue, (bool));
-            } else if (ShortStringOps._equal(paramDef.tag, PIPLicensingTerms.DERIVATIVES_ALLOWED_OPTIONS)) {
+            } else if (ShortStringOps._equal(paramDef.tag, SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS)) {
                 uint256 derivativeIndexMask = abi.decode(
                     resultValue,
                     (uint256)
                 );
                 derivativeNeedsApproval = BitMask._isSet(
                     derivativeIndexMask,
-                    PIPLicensingTerms.ALLOWED_WITH_APPROVAL_INDEX
+                    SPUMLParams.ALLOWED_WITH_APPROVAL_INDEX
                 );
                 isReciprocal = BitMask._isSet(
                     derivativeIndexMask,
-                    PIPLicensingTerms.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX
+                    SPUMLParams.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX
                 );
             }
         }
@@ -413,6 +410,12 @@ contract LicensingModule is BaseModule {
             ipOrgAddress
         ];
         uint256 numParams = configParams.length;
+        emit IpOrgLicensingFrameworkSet(
+            ipOrgAddress,
+            config.frameworkId,
+            LICENSING_FRAMEWORK_REPO.getLicenseTextUrl(config.frameworkId),
+            config.licensor
+        );
         // Add the parameters to storage
         for (uint256 i = 0; i < numParams; i++) {
             Licensing.ParamValue memory param = configParams[i];
@@ -425,14 +428,9 @@ contract LicensingModule is BaseModule {
                 revert Errors.LicensingModule_InvalidParamValue();
             }
             paramValues[param.tag] = param.value;
-            emit ParameterSet(ipOrgAddress, param.tag.toString(), param.value);
+            emit ParameterSet(ipOrgAddress, param.tag.toString(), paramDef.paramType, param.value);
         }
-        emit IpOrgLicensingFrameworkSet(
-            ipOrgAddress,
-            config.frameworkId,
-            LICENSING_FRAMEWORK_REPO.getLicenseTextUrl(config.frameworkId),
-            config.licensor
-        );
+        
         return "";
     }
 

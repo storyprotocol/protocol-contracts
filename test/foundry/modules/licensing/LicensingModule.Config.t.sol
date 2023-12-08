@@ -121,15 +121,15 @@ contract LicensingModuleConfigTest is BaseTest {
             uint8(Licensing.LicensorConfig.IpOrgOwnerAlways)
         );
         assertEq(
-            licensingModule.getDefaultValueForParam(address(ipOrg), "TEST_TAG_1"),
+            licensingModule.getIpOrgValueForParam(address(ipOrg), "TEST_TAG_1"),
             abi.encode(true)
         );
         assertEq(
-            licensingModule.getDefaultValueForParam(address(ipOrg), "TEST_TAG_2"),
+            licensingModule.getIpOrgValueForParam(address(ipOrg), "TEST_TAG_2"),
             abi.encode(222)
         );
         assertEq(
-            licensingModule.getDefaultValueForParam(address(ipOrg), "TEST_TAG_3"),
+            licensingModule.getIpOrgValueForParam(address(ipOrg), "TEST_TAG_3"),
             abi.encode(ssValue)
         );
     }

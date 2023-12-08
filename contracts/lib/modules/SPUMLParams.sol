@@ -10,10 +10,10 @@ import { Errors } from "contracts/lib/Errors.sol";
 /// for these terms without the need of a decoder)
 /// @dev must be < 32 bytes long, or they will blow up at some point
 /// see https://docs.openzeppelin.com/contracts/4.x/api/utils#ShortStrings
-library PIPLicensingTerms {
+library SPUMLParams {
     using ShortStrings for *;
 
-    string constant FRAMEWORK_ID = "SPIPL-1.0";
+    string constant FRAMEWORK_ID = "SPUML-1.0";
     ////////////////////////////////////////////////////////////////////////////
     //                               Parameters                               //
     ////////////////////////////////////////////////////////////////////////////
