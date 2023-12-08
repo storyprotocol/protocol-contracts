@@ -10,12 +10,12 @@ import { SPUMLParams } from "contracts/lib/modules/SPUMLParams.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
 contract SPUMLParamsHarness {
-    function exposed_getDerivativeChoices() external pure returns (ShortString[] memory) {
-        return SPUMLParams._getDerivativeChoices();
+    function exposedgetDerivativeChoices() external pure returns (ShortString[] memory) {
+        return SPUMLParams.getDerivativeChoices();
     }
 
-    function exposed_getParamDefs() external pure returns (Licensing.ParamDefinition[] memory paramDefs) {
-        return SPUMLParams._getParamDefs();
+    function exposedgetParamDefs() external pure returns (Licensing.ParamDefinition[] memory paramDefs) {
+        return SPUMLParams.getParamDefs();
     }
 }
 
@@ -28,19 +28,19 @@ contract SPUMLParamsTest is Test {
         checker = new SPUMLParamsHarness();
     }
 
-    function test_SPUMLParams_getDerivativeChoices() public {
-        ShortString[] memory choices = checker.exposed_getDerivativeChoices();
+    function test_SPUMLParamsgetDerivativeChoices() public {
+        ShortString[] memory choices = checker.exposedgetDerivativeChoices();
         assertEq(choices.length, 3);
         assertEq(choices[0].toString(), SPUMLParams.ALLOWED_WITH_APPROVAL);
         assertEq(choices[1].toString(), SPUMLParams.ALLOWED_WITH_RECIPROCAL_LICENSE);
         assertEq(choices[2].toString(), SPUMLParams.ALLOWED_WITH_ATTRIBUTION);
     }
 
-    function test_SPUMLParams_getParamDefs()
+    function test_SPUMLParamsgetParamDefs()
         public
     {
         Licensing.ParamDefinition[] memory paramDefs = new Licensing.ParamDefinition[](4);
-        Licensing.ParamDefinition[] memory actual = checker.exposed_getParamDefs();
+        Licensing.ParamDefinition[] memory actual = checker.exposedgetParamDefs();
 
         paramDefs[0] = Licensing.ParamDefinition(
             SPUMLParams.CHANNELS_OF_DISTRIBUTION.toShortString(),
@@ -64,7 +64,7 @@ contract SPUMLParamsTest is Test {
             SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
             Licensing.ParameterType.MultipleChoice,
             "",
-            abi.encode(checker.exposed_getDerivativeChoices())
+            abi.encode(checker.exposedgetDerivativeChoices())
         );
 
         assertEq(actual.length, paramDefs.length);

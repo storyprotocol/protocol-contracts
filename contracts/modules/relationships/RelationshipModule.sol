@@ -169,9 +169,9 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         address ipOrg_,
         uint8[] memory allowedTypes_
     ) private view returns (address, uint256) {
-        if (relatable_ == LibRelationship.Relatable.Ipa) {
+        if (relatable_ == LibRelationship.Relatables.Ipa) {
             return (address(IPA_REGISTRY), 0);
-        } else if (relatable_ == LibRelationship.Relatable.IpOrgEntry) {
+        } else if (relatable_ == LibRelationship.Relatables.IpOrgEntry) {
             if (ipOrg_ == address(0)) {
                 revert Errors.RelationshipModule_IpOrgRelatableCannotBeProtocolLevel();
             }
@@ -180,11 +180,11 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
                 revert Errors.EmptyArray();
             }
             return (ipOrg_, BitMask.convertToMask(allowedTypes_));
-        } else if (relatable_ == LibRelationship.Relatable.License) {
+        } else if (relatable_ == LibRelationship.Relatables.License) {
             return (address(LICENSE_REGISTRY), 0);
-        } else if (relatable_ == LibRelationship.Relatable.Address) {
+        } else if (relatable_ == LibRelationship.Relatables.Address) {
             return (LibRelationship.NO_ADDRESS_RESTRICTIONS, 0);
-        } else if (relatable_ == LibRelationship.Relatable.ExternalNft) {
+        } else if (relatable_ == LibRelationship.Relatables.ExternalNft) {
             return (LibRelationship.NO_ADDRESS_RESTRICTIONS, 0);
         }
         revert Errors.RelationshipModule_InvalidRelatable();

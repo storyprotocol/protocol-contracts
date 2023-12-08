@@ -383,7 +383,7 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         );
 
         // CONFIG LICENSING MODULE
-        Licensing.ParamDefinition[] memory paramDefs = SPUMLParams._getParamDefs();
+        Licensing.ParamDefinition[] memory paramDefs = SPUMLParams.getParamDefs();
         Licensing.SetFramework memory framework = Licensing.SetFramework({
             id: SPUMLParams.FRAMEWORK_ID,
             textUrl: vm.envString("SPUML_URL"),

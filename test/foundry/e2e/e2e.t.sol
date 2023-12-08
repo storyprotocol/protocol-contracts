@@ -401,8 +401,8 @@ contract E2ETest is IE2ETest, BaseTest {
 
         LibRelationship.RelatedElements memory allowedElements = LibRelationship
             .RelatedElements({
-                src: LibRelationship.Relatable.Address,
-                dst: LibRelationship.Relatable.Address
+                src: LibRelationship.Relatables.Address,
+                dst: LibRelationship.Relatables.Address
             });
         uint8[] memory allowedSrcs = new uint8[](2);
         allowedSrcs[0] = 0;
@@ -429,8 +429,8 @@ contract E2ETest is IE2ETest, BaseTest {
         vm.stopPrank();
 
         allowedElements = LibRelationship.RelatedElements({
-            src: LibRelationship.Relatable.Address,
-            dst: LibRelationship.Relatable.Address
+            src: LibRelationship.Relatables.Address,
+            dst: LibRelationship.Relatables.Address
         });
         allowedSrcs = new uint8[](0);
         allowedDsts = new uint8[](0);

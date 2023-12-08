@@ -81,7 +81,7 @@ contract LicenseRegistryTest is BaseTest {
         (ipaId_2, ) = _createIpAsset(ipaOwner, 1, bytes(""));
 
         Licensing.ParamDefinition[] memory paramDefs = SPUMLParams
-            ._getParamDefs();
+            .getParamDefs();
         Licensing.SetFramework memory framework = Licensing.SetFramework({
             id: SPUMLParams.FRAMEWORK_ID,
             textUrl: "text_url",
