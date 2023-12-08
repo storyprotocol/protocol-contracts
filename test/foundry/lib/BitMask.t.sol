@@ -29,7 +29,7 @@ contract BitMaskTest is Test {
         checker = new BitMaskHarness();
     }
 
-    function test_BitMaskconvertToMask() public {
+    function test_BitMask_convertToMask() public {
         for (uint8 i = 1; i <= 254; i++) {
             uint8[] memory assetTypes = new uint8[](i);
             uint256 resultMask;
@@ -42,7 +42,7 @@ contract BitMaskTest is Test {
         }
     }
 
-    function test_BitMaskisSetOnMaskTrue() public {
+    function test_BitMask_isSetOnMaskTrue() public {
         uint256 mask = 0;
         for (uint256 i = 0; i < 256; i++) {
             mask |= 1 << (i & 0xff);
@@ -52,7 +52,7 @@ contract BitMaskTest is Test {
         }
     }
 
-    function test_BitMaskisSetOnMaskFalse() public {
+    function test_BitMask_isSetOnMaskFalse() public {
         for (uint8 i = 1; i <= uint8(254); i++) {
             uint256 zeroMask;
             assertFalse(checker.isSet(zeroMask, i));
