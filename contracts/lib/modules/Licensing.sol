@@ -2,7 +2,6 @@
 // See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
-import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { BitMask } from "contracts/lib/BitMask.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
