@@ -202,6 +202,10 @@ contract LicenseRegistry is ERC721 {
         return _licenses[id_].isReciprocal;
     }
 
+    function isDerivativeAllowed(uint256 id_) external view returns (bool) {
+        return _licenses[id_].derivativesAllowed;
+    }
+
     function derivativeNeedsApproval(uint256 id_) external view returns (bool) {
         return _licenses[id_].derivativeNeedsApproval;
     }

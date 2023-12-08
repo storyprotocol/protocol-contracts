@@ -22,11 +22,12 @@ import { MockERC721 } from "test/foundry/mocks/MockERC721.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
 import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
-import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
+import { SPUMLParams } from "contracts/lib/modules/SPUMLParams.sol";
 import { Registration } from "contracts/lib/modules/Registration.sol";
 import { IE2ETest } from "test/foundry/interfaces/IE2ETest.sol";
-import { PIPLicensingTerms } from "contracts/lib/modules/PIPLicensingTerms.sol";
 import { Errors } from "contracts/lib/Errors.sol";
+import { BitMask } from "contracts/lib/BitMask.sol";
+import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 
@@ -53,6 +54,7 @@ contract E2ETest is IE2ETest, BaseTest {
 
     string internal FRAMEWORK_ID_DOGnCO = "test_framework_dog_and_co";
     string internal FRAMEWORK_ID_CATnCO = "test_framework_cat_and_co";
+    string internal FRAMEWORK_ID_ORG3 = "test_framework_org3";
 
     uint256 internal mockPolygonTokenHookNonce;
 
@@ -157,72 +159,126 @@ contract E2ETest is IE2ETest, BaseTest {
 
     function _setUp_LicensingFramework() internal {
         //
-        /// Licensing Framework with ID: Dog & Co.
+        /// Licensing Framework with ID: Dog & Co. (FRAMEWORK_ID_DOGnCO)
         //
+
+        uint8[] memory enabledDerivativeIndice = new uint8[](2);
+        enabledDerivativeIndice[0] = SPUMLParams.ALLOWED_WITH_APPROVAL_INDEX;
+        // enabledDerivativeIndice[1] = SPUMLParams
+        //     .ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX;
+
+        // Use 4 of SPUMLParams for Dog & Co.
         Licensing.ParamDefinition[]
-            memory fParams = new Licensing.ParamDefinition[](3);
-        fParams[0] = Licensing.ParamDefinition({
-            tag: "TEST_TAG_DOG_1".toShortString(),
-            paramType: Licensing.ParameterType.Bool,
-            defaultValue: abi.encode(true),
-            availableChoices: ""
-        });
-        fParams[1] = Licensing.ParamDefinition({
-            tag: "TEST_TAG_DOG_2".toShortString(),
-            paramType: Licensing.ParameterType.Number,
-            defaultValue: abi.encode(123),
-            availableChoices: ""
-        });
-        ShortString[] memory choices = new ShortString[](2);
-        choices[0] = "test1_dog".toShortString();
-        choices[1] = "test2_dog".toShortString();
-        fParams[2] = Licensing.ParamDefinition({
-            tag: "TEST_TAG_DOG_3".toShortString(),
+            memory paramDefs = new Licensing.ParamDefinition[](4);
+        ShortString[] memory derivativeChoices = new ShortString[](3);
+        derivativeChoices[0] = SPUMLParams
+            .ALLOWED_WITH_APPROVAL
+            .toShortString();
+        derivativeChoices[1] = SPUMLParams
+            .ALLOWED_WITH_RECIPROCAL_LICENSE
+            .toShortString();
+        derivativeChoices[2] = SPUMLParams
+            .ALLOWED_WITH_ATTRIBUTION
+            .toShortString();
+
+        paramDefs[0] = Licensing.ParamDefinition(
+            SPUMLParams.CHANNELS_OF_DISTRIBUTION.toShortString(),
+            Licensing.ParameterType.ShortStringArray,
+            "",
+            ""
+        );
+        paramDefs[1] = Licensing.ParamDefinition(
+            SPUMLParams.ATTRIBUTION.toShortString(),
+            Licensing.ParameterType.Bool,
+            abi.encode(true),
+            ""
+        );
+        paramDefs[2] = Licensing.ParamDefinition(
+            SPUMLParams.DERIVATIVES_ALLOWED.toShortString(),
+            Licensing.ParameterType.Bool,
+            abi.encode(true),
+            ""
+        );
+        paramDefs[3] = Licensing.ParamDefinition({
+            tag: SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
             paramType: Licensing.ParameterType.MultipleChoice,
-            defaultValue: abi.encode(1),
-            availableChoices: abi.encode(choices)
+            // defaultValue: abi.encode(
+            //     BitMask._convertToMask(enabledDerivativeIndice)
+            // ),
+            defaultValue: "",
+            availableChoices: abi.encode(derivativeChoices)
         });
+
         vm.prank(licensingManager);
         licensingFrameworkRepo.addFramework(
             Licensing.SetFramework({
                 id: FRAMEWORK_ID_DOGnCO,
                 textUrl: "text_url_dog_and_co",
-                paramDefs: fParams
+                paramDefs: paramDefs
             })
         );
 
         //
-        // Licensing Framework with ID: Cat & Co.
+        // Licensing Framework with ID: Cat & Co. (FRAMEWORK_ID_CATnCO)
         //
-        fParams = new Licensing.ParamDefinition[](1);
-        choices = new ShortString[](2);
-        choices[0] = "test1_cat".toShortString();
-        choices[1] = "test2_cat".toShortString();
-        fParams[0] = Licensing.ParamDefinition({
-            tag: "TEST_TAG_CAT_1".toShortString(),
+
+        paramDefs = new Licensing.ParamDefinition[](4);
+
+        ShortString[] memory catColorChoices = new ShortString[](2);
+        catColorChoices[0] = "cat_is_gold".toShortString();
+        catColorChoices[1] = "cat_is_gray".toShortString();
+        paramDefs[0] = Licensing.ParamDefinition({
+            tag: "TEST_TAG_CAT_COLOR".toShortString(),
             paramType: Licensing.ParameterType.MultipleChoice,
             defaultValue: abi.encode(0),
-            availableChoices: abi.encode(choices)
+            availableChoices: abi.encode(catColorChoices)
         });
+        paramDefs[1] = Licensing.ParamDefinition({
+            tag: "TEST_TAG_CAT_IS_CUTE".toShortString(),
+            paramType: Licensing.ParameterType.Bool,
+            defaultValue: abi.encode(true),
+            availableChoices: ""
+        });
+        paramDefs[2] = Licensing.ParamDefinition(
+            SPUMLParams.DERIVATIVES_ALLOWED.toShortString(),
+            Licensing.ParameterType.Bool,
+            abi.encode(true),
+            ""
+        );
+        paramDefs[3] = Licensing.ParamDefinition({
+            tag: SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
+            paramType: Licensing.ParameterType.MultipleChoice,
+            defaultValue: "",
+            availableChoices: abi.encode(derivativeChoices)
+        });
+
         vm.prank(licensingManager);
         licensingFrameworkRepo.addFramework(
             Licensing.SetFramework({
                 id: FRAMEWORK_ID_CATnCO,
                 textUrl: "text_url_cat_and_co",
-                paramDefs: fParams
+                paramDefs: paramDefs
             })
         );
 
         //
-        // Licensing Framework with ID: PIPLicensingTerms
+        // Licensing Framework with ID: Org3 (FRAMEWORK_ID_ORG3)
         //
-        Licensing.ParamDefinition[] memory paramDefs = PIPLicensingTerms
-            ._getParamDefs();
+
+        paramDefs = new Licensing.ParamDefinition[](1);
+
+        paramDefs[0] = Licensing.ParamDefinition(
+            SPUMLParams.DERIVATIVES_ALLOWED.toShortString(),
+            Licensing.ParameterType.Bool,
+            abi.encode(false),
+            ""
+        );
+
         vm.prank(licensingManager);
         licensingFrameworkRepo.addFramework(
             Licensing.SetFramework({
-                id: PIPLicensingTerms.FRAMEWORK_ID,
-                textUrl: "text_url_pip_licensing_terms",
+                id: FRAMEWORK_ID_ORG3,
+                textUrl: "text_url_org3",
                 paramDefs: paramDefs
             })
         );
@@ -431,88 +487,127 @@ contract E2ETest is IE2ETest, BaseTest {
 
         ///
         /// =========================================
-        ///         Configure IPOrg's Licensing
+        ///   Configure IPOrg's org-wide Licensing
         /// =========================================
         ///
 
         //
-        // Configure licensing for dog & co.
+        // NOTE: For each ipOrg, we set IPOrg-wide Licensing terms that get applied to any Licenses under that IPOrg.
+        //       Licenses can modify terms within its IPOrg's assigned Licensing framework, as long as those terms
+        //       aren't specified in IPOrg-wide Licensing terms.
+        //       In other words, you must use IPOrg-wide Licensing terms and modify what's untouched.
+        //
+
+        //
+        // Configure licensing for IPOrg1 (Dog & Co.)
+        // Enforce these license terms to all Licenses under IPOrg1.
         //
 
         Licensing.ParamValue[] memory lParams = new Licensing.ParamValue[](3);
+        ShortString[] memory channel_distribution = new ShortString[](2);
+
+        channel_distribution[0] = "dog loves hoomans".toShortString();
+        channel_distribution[1] = "dog conquers world".toShortString();
+
+        uint8[] memory enabledDerivativeIndice = new uint8[](1);
+        enabledDerivativeIndice[0] = SPUMLParams.ALLOWED_WITH_APPROVAL_INDEX;
+        // enabledDerivativeIndice[1] = SPUMLParams
+        //     .ALLOWED_WITH_ATTRIBUTION_INDEX;
+
+        // Use the list of terms from SPUMLParams
+        lParams = new Licensing.ParamValue[](4);
         lParams[0] = Licensing.ParamValue({
-            tag: "TEST_TAG_DOG_1".toShortString(),
-            value: abi.encode(true)
+            tag: SPUMLParams.CHANNELS_OF_DISTRIBUTION.toShortString(),
+            value: abi.encode(channel_distribution)
         });
         lParams[1] = Licensing.ParamValue({
-            tag: "TEST_TAG_DOG_2".toShortString(),
-            value: abi.encode(222)
-        });
-
-        ShortString[] memory ssValue = new ShortString[](2);
-        ssValue[0] = "test1".toShortString();
-        ssValue[1] = "test2".toShortString();
-        lParams[2] = Licensing.ParamValue({
-            tag: "TEST_TAG_DOG_3".toShortString(),
-            value: abi.encode(ssValue)
-        });
-
-        Licensing.LicensingConfig memory licensingConfig1 = Licensing
-            .LicensingConfig({
-                frameworkId: FRAMEWORK_ID_DOGnCO,
-                params: lParams,
-                licensor: Licensing.LicensorConfig.Source
-            });
-
-        // TODO: event check for `configureIpOrgLicensing`
-        vm.prank(ipOrgOwner1);
-        spg.configureIpOrgLicensing(ipOrg1, licensingConfig1);
-
-        //
-        // Configure licensing for cat & co.
-        //
-
-        ShortString[] memory channels = new ShortString[](2);
-        channels[0] = "test1".toShortString();
-        channels[1] = "test2".toShortString();
-
-        // Use the list of terms from PIPLicensingTerms
-        lParams = new Licensing.ParamValue[](4); // max is four, see PIPLicensingTerms
-        lParams[0] = Licensing.ParamValue({
-            tag: PIPLicensingTerms.CHANNELS_OF_DISTRIBUTION.toShortString(),
-            value: abi.encode(channels)
-        });
-        lParams[1] = Licensing.ParamValue({
-            tag: PIPLicensingTerms.ATTRIBUTION.toShortString(),
-            value: "" // unset
+            tag: SPUMLParams.ATTRIBUTION.toShortString(),
+            value: abi.encode(true) // unset
         });
         lParams[2] = Licensing.ParamValue({
-            tag: PIPLicensingTerms.DERIVATIVES_ALLOWED.toShortString(),
+            tag: SPUMLParams.DERIVATIVES_ALLOWED.toShortString(),
             value: abi.encode(true)
         });
         lParams[3] = Licensing.ParamValue({
-            tag: PIPLicensingTerms.ALLOWED_WITH_APPROVAL.toShortString(),
-            value: abi.encode(true)
+            tag: SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
+            // (active) derivative options are set via bitmask
+            value: abi.encode(BitMask._convertToMask(enabledDerivativeIndice))
         });
 
-        Licensing.LicensingConfig memory licensingConfig2 = Licensing
+        Licensing.LicensingConfig memory licensingConfig = Licensing
             .LicensingConfig({
-                frameworkId: PIPLicensingTerms.FRAMEWORK_ID,
+                frameworkId: FRAMEWORK_ID_DOGnCO,
                 params: lParams,
+                // licensor: Licensing.LicensorConfig.Source
                 licensor: Licensing.LicensorConfig.IpOrgOwnerAlways
             });
 
-        vm.startPrank(ipOrgOwner2);
+        // TODO: event check for `configureIpOrgLicensing`
+        vm.startPrank(ipOrgOwner1);
+        spg.configureIpOrgLicensing(ipOrg1, licensingConfig);
         // Two `configureIpOrgLicensing`s are commented out since right now, we allow
         // `configureIpOrgLicensing` to be called only once per IPOrg.
-        // spg.configureIpOrgLicensing(ipOrg2, licensingConfig1); // this should get overwritten by Unset
+        // spg.configureIpOrgLicensing(ipOrg2, licensingConfig); // this should get overwritten by Unset
         // spg.configureIpOrgLicensing(ipOrg2, Licensing.LicensingConfig({
-        //     frameworkId: PIPLicensingTerms.FRAMEWORK_ID,
+        //     frameworkId: FRAMEWORK_ID_DOGnCO,
         //     params: lParams,
         //     licensor: Licensing.LicensorConfig.Unset
         // }));
-        spg.configureIpOrgLicensing(ipOrg2, licensingConfig2);
         vm.stopPrank();
+
+        //
+        // Configure licensing for IPOrg2 (Cat & Co.).
+        // Enforce these license terms to all Licenses under IPOrg2.
+        // => TEST_TAG_CAT_COLOR = 1 (cat_is_gray)
+        // => TEST_TAG_CAT_IS_CUTE = true
+        //
+
+        lParams = new Licensing.ParamValue[](2);
+        lParams[0] = Licensing.ParamValue({
+            tag: "TEST_TAG_CAT_COLOR".toShortString(),
+            value: abi.encode(1) // BitMask, or just 1 to indicate index 1
+        });
+        lParams[1] = Licensing.ParamValue({
+            tag: "TEST_TAG_CAT_IS_CUTE".toShortString(),
+            value: abi.encode(true)
+        });
+
+        licensingConfig = Licensing.LicensingConfig({
+            frameworkId: FRAMEWORK_ID_CATnCO,
+            params: lParams,
+            // licensor: Licensing.LicensorConfig.Source
+            licensor: Licensing.LicensorConfig.IpOrgOwnerAlways
+        });
+
+        // TODO: event check for `configureIpOrgLicensing`
+        vm.prank(ipOrgOwner2);
+        spg.configureIpOrgLicensing(ipOrg2, licensingConfig);
+
+        //
+        // Configure licensing for IPOrg3.
+        // Enforce these license terms to all Licenses under IPOrg3.
+        // => DERIVATIVES_ALLOWED = false
+        //
+
+        lParams = new Licensing.ParamValue[](1);
+        lParams[0] = Licensing.ParamValue({
+            tag: SPUMLParams.DERIVATIVES_ALLOWED.toShortString(),
+            value: abi.encode(false)
+        });
+
+        licensingConfig = Licensing.LicensingConfig({
+            frameworkId: FRAMEWORK_ID_ORG3,
+            params: lParams,
+            licensor: Licensing.LicensorConfig.Source
+            // licensor: Licensing.LicensorConfig.IpOrgOwnerAlways
+        });
+
+        vm.prank(ipOrgOwner3);
+        spg.configureIpOrgLicensing(ipOrg3, licensingConfig);
+
+        //
+        // Configure
+        //
 
         ///
         /// =========================================
@@ -612,35 +707,24 @@ contract E2ETest is IE2ETest, BaseTest {
         ///
 
         //
-        // Create a license for Asset ID 3 (Org 2, ID 1)
-        // Use PIPLicensingTerms license framework, which is attached to Org 2 (cat & co.)
+        // NOTE You can only add/use ParamValues that aren't used by the license's IPOrg,
+        //      since IPOrg's license terms are enforced to all Licenses under that IPOrg.
         //
 
-        lParams = new Licensing.ParamValue[](3);
-        // allow derivatives of license
-        lParams[0] = Licensing.ParamValue({
-            tag: PIPLicensingTerms.DERIVATIVES_ALLOWED.toShortString(),
-            value: abi.encode(true)
-        });
-        // licensor must approve derivatives
-        lParams[1] = Licensing.ParamValue({
-            tag: PIPLicensingTerms.ALLOWED_WITH_APPROVAL.toShortString(),
-            value: abi.encode(true)
-        });
-        lParams[2] = Licensing.ParamValue({
-            tag: PIPLicensingTerms
-                .ALLOWED_WITH_RECIPROCAL_LICENSE
-                .toShortString(),
-            value: abi.encode(true)
-        });
+        //
+        // Create a license for Asset ID 1 (Org 1, ID 1)
+        // Use SPUMLParams license framework, which is attached to Org 2 (cat & co.)
+        //
+
+        // Only inherit IPOrg's org-wide licensing terms, don't set any params
         Licensing.LicenseCreation memory lCreation = Licensing.LicenseCreation({
-            params: lParams,
+            params: new Licensing.ParamValue[](0),
             parentLicenseId: 0, // no parent
-            ipaId: ipAssetId_3
+            ipaId: ipAssetId_1
         });
-        vm.prank(ipOrgOwner2);
+        vm.prank(ipOrgOwner1);
         licenseId_1_nonDeriv = spg.createLicense(
-            address(ipOrg2),
+            address(ipOrg1),
             lCreation,
             new bytes[](0),
             new bytes[](0)
@@ -651,48 +735,49 @@ contract E2ETest is IE2ETest, BaseTest {
         assertEq(
             uint8(licenseData_1_nonDeriv.status),
             uint8(Licensing.LicenseStatus.Active),
-            "License 1 should active be if it's not a derivative"
+            "License 1 (Org 1) should active on creation + not a derivative"
         );
 
         assertEq(
             licenseData_1_nonDeriv.derivativesAllowed,
             true,
-            "License 1 should allow derivatives"
+            "License 1 (Org 1) should allow derivatives"
         );
         assertEq(
             licenseData_1_nonDeriv.isReciprocal,
-            true,
-            "License 1 should be reciprocal"
+            false,
+            "License 1 (Org 1) should NOT be reciprocal"
         );
         assertEq(
             licenseData_1_nonDeriv.derivativeNeedsApproval,
             true,
-            "License 1's derivatives need approval"
+            "License 1 (Org 1) should approve derivatives"
         );
         assertEq(
             licenseData_1_nonDeriv.ipaId,
-            ipAssetId_3,
-            "License 1's linked IPA ID should be 3"
+            ipAssetId_1,
+            "License 1 (Org 1)'s linked IPA ID should be 1"
         );
         assertEq(
             licenseData_1_nonDeriv.parentLicenseId,
             0,
-            "License 1 should have no parent license"
+            "License 1 (Org 1) should have no parent license"
         );
 
         // Since this is a license without a parent license, the license should be activated immediately on
         // `createLicense`. This is already checked about via status == LicenseStatus.Active, but again checked here.
+        // This is just a test that expects revert.
         vm.expectRevert(
             Errors.LicenseRegistry_LicenseNotPendingApproval.selector
         );
-        vm.prank(ipOrgOwner2);
-        spg.activateLicense(address(ipOrg2), licenseId_1_nonDeriv);
+        vm.prank(ipOrgOwner1);
+        spg.activateLicense(address(ipOrg1), licenseId_1_nonDeriv);
 
         //
         // Create two more licenses for Asset ID 3 (Org 2, ID 1), this time with a parent license
         // (licenseId_1_nonDeriv created above), so this is a sub-license.
         //
-        // Since `licenseId_1_nonDeriv` is reciprocal (as we've configured for PIPLicensingTerms),
+        // Since `licenseId_1_nonDeriv` is reciprocal (as we've configured for SPUMLParams),
         // the two sub-licenses can't modify the params, ie. they inherit the parent's params.
         //
         // First sub-license is created without a linked IP asset, second sub-license is created with a linked IP asset.
@@ -710,14 +795,21 @@ contract E2ETest is IE2ETest, BaseTest {
         // This license does NOT allow derivatives.
         //
 
-        lParams = new Licensing.ParamValue[](6);
+        lParams = new Licensing.ParamValue[](3);
+        // allow channel of distribution
         lParams[0] = Licensing.ParamValue({
-            tag: PIPLicensingTerms.CHANNELS_OF_DISTRIBUTION.toShortString(),
+            tag: SPUMLParams.CHANNELS_OF_DISTRIBUTION.toShortString(),
             value: abi.encode(true)
         });
+        // require attribution
         lParams[1] = Licensing.ParamValue({
-            tag: PIPLicensingTerms.ATTRIBUTION.toShortString(),
+            tag: SPUMLParams.ATTRIBUTION.toShortString(),
             value: abi.encode(true)
+        });
+        // disable derivatives
+        lParams[2] = Licensing.ParamValue({
+            tag: SPUMLParams.DERIVATIVES_ALLOWED.toShortString(),
+            value: abi.encode(false)
         });
 
         lCreation = Licensing.LicenseCreation({
@@ -738,43 +830,41 @@ contract E2ETest is IE2ETest, BaseTest {
         assertEq(
             uint8(licenseData_2_deriv.status),
             uint8(Licensing.LicenseStatus.PendingLicensorApproval),
-            "License 2 should pending approval be if it's a derivative"
+            "License 2 (Org 1) should be pending approval on creation"
         );
 
-        // Because we set the licensorConfig to `Licensing.LicensorConfig.IpOrgOwnerAlways` in PIPLicensingTerms,
-        // the licensor is ipOrgOwner2.
         vm.prank(ipOrgOwner2);
         spg.activateLicense(address(ipOrg2), licenseId_2_deriv);
         licenseData_2_deriv = licenseRegistry.getLicenseData(licenseId_2_deriv); // refresh license data in mem
         assertEq(
             uint8(licenseData_2_deriv.status),
             uint8(Licensing.LicenseStatus.Active),
-            "License 2 should be active"
+            "License 2 (Org 1) should be active"
         );
         assertEq(
             licenseData_2_deriv.derivativesAllowed,
-            true,
-            "License 2 should allow derivatives"
+            false,
+            "License 2 (Org 1) should NOT allow derivatives"
         );
         assertEq(
             licenseData_2_deriv.isReciprocal,
-            true,
-            "License 2 should be reciprocal"
+            false,
+            "License 2 (Org 1) should NOT be reciprocal"
         );
         assertEq(
             licenseData_2_deriv.derivativeNeedsApproval,
-            true,
-            "License 2's derivatives need approval"
+            false,
+            "License 2 (Org 1) should not need to approve derivatives"
         );
         assertEq(
             licenseData_2_deriv.ipaId,
-            ipAssetId_3,
-            "License 2's linked IPA ID should be 3"
+            0,
+            "License 2 (Org 1) should not be linked to IPA"
         );
         assertEq(
             licenseData_2_deriv.parentLicenseId,
-            0,
-            "License 2 should have no parent license"
+            licenseId_1_nonDeriv,
+            "License 2 (Org 1) should have parent license"
         );
 
         //
@@ -782,15 +872,24 @@ contract E2ETest is IE2ETest, BaseTest {
         // This license allows derivatives.
         //
 
-        lParams = new Licensing.ParamValue[](1);
-        // allow derivatives without approval
+        lParams = new Licensing.ParamValue[](2);
+        // allow derivatives without approval, but require reciprocal license
+        enabledDerivativeIndice[0] = SPUMLParams
+            .ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX;
+
+        // derivatives allowed
         lParams[0] = Licensing.ParamValue({
-            tag: PIPLicensingTerms.DERIVATIVES_ALLOWED.toShortString(),
+            tag: SPUMLParams.DERIVATIVES_ALLOWED.toShortString(),
             value: abi.encode(true)
+        });
+        // derivative options => derivatives must be of reciprocal
+        lParams[1] = Licensing.ParamValue({
+            tag: SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
+            value: abi.encode(BitMask._convertToMask(enabledDerivativeIndice))
         });
 
         lCreation = Licensing.LicenseCreation({
-            params: new Licensing.ParamValue[](0), // no licensing params
+            params: lParams,
             parentLicenseId: licenseId_1_nonDeriv,
             ipaId: ipAssetId_3 // linked IP asset (owned by IPOrg 2)
         });
@@ -807,7 +906,7 @@ contract E2ETest is IE2ETest, BaseTest {
         assertEq(
             uint8(licenseData_3_deriv.status),
             uint8(Licensing.LicenseStatus.PendingLicensorApproval),
-            "License 3 should pending approval be if it's a derivative"
+            "License 3 (Org 2) should be pending approval on creation"
         );
 
         // Comment above on the first license applies here as well.
@@ -817,7 +916,50 @@ contract E2ETest is IE2ETest, BaseTest {
         assertEq(
             uint8(licenseData_3_deriv.status),
             uint8(Licensing.LicenseStatus.Active),
-            "License 3 should be active"
+            "License 3 (Org 2) should be active"
+        );
+        assertEq(
+            licenseData_3_deriv.derivativesAllowed,
+            true,
+            "License 3 (Org 2) should allow derivatives"
+        );
+        assertEq(
+            licenseData_3_deriv.isReciprocal,
+            true,
+            "License 3 (Org 2) should be reciprocal"
+        );
+        assertEq(
+            licenseData_3_deriv.derivativeNeedsApproval,
+            false,
+            "License 3 (Org 2) should allow derivatives without approval"
+        );
+        assertEq(
+            licenseData_3_deriv.ipaId,
+            ipAssetId_3,
+            "License 3 (Org 2) should be linked to IPA"
+        );
+        assertEq(
+            licenseData_3_deriv.parentLicenseId,
+            licenseId_1_nonDeriv,
+            "License 3 (Org 2) should have parent license"
+        );
+
+        //
+        // Check that license 2 (Org 1) doesn't allow derivative
+        //
+
+        lCreation = Licensing.LicenseCreation({
+            params: new Licensing.ParamValue[](0), // no licensing params
+            parentLicenseId: licenseId_2_deriv, // License ID 2 DOES NOT ALLOW DERIVATIVES
+            ipaId: 0 // no linked IPA
+        });
+        vm.prank(ipOrgOwner3);
+        vm.expectRevert(Errors.LicensingModule_DerivativeNotAllowed.selector);
+        licenseId_4_sub_deriv = spg.createLicense(
+            address(ipOrg3),
+            lCreation,
+            new bytes[](0),
+            new bytes[](0)
         );
 
         //
@@ -826,7 +968,7 @@ contract E2ETest is IE2ETest, BaseTest {
 
         lCreation = Licensing.LicenseCreation({
             params: new Licensing.ParamValue[](0), // no licensing params
-            parentLicenseId: licenseId_3_deriv,
+            parentLicenseId: licenseId_3_deriv, // License 3 allows derivative without approval
             ipaId: 0 // no linked IPA
         });
         vm.prank(ipOrgOwner3);
@@ -842,7 +984,32 @@ contract E2ETest is IE2ETest, BaseTest {
         assertEq(
             uint8(licenseData_4_sub_deriv.status),
             uint8(Licensing.LicenseStatus.Active),
-            "License 4 should active on creation"
+            "License 4 (Org 3) should active on creation"
+        );
+        assertEq(
+            licenseData_4_sub_deriv.derivativesAllowed,
+            true,
+            "License 4 (Org 3) should allow derivatives (parent is reciprocal, parent allows derivative)"
+        );
+        assertEq(
+            licenseData_4_sub_deriv.isReciprocal,
+            true,
+            "License 4 (Org 3) should be reciprocal (parent is reciprocal, parent allows derivative)"
+        );
+        assertEq(
+            licenseData_4_sub_deriv.derivativeNeedsApproval,
+            false,
+            "License 4 (Org 3) should not need to approve derivative (parent is reciprocal)"
+        );
+        assertEq(
+            licenseData_4_sub_deriv.ipaId,
+            0,
+            "License 4 (Org 3) should not be linked to IPA"
+        );
+        assertEq(
+            licenseData_4_sub_deriv.parentLicenseId,
+            licenseId_3_deriv,
+            "License 4 (Org 3) should have parent license"
         );
 
         ///

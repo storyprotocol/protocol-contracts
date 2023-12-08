@@ -87,9 +87,9 @@ contract IPOrg is
     /// @notice Gets the global IP asset id associated with this IP Org asset.
     /// @param id_ The local id of the IP Org wrapped IP asset.
     /// @return The global identifier of the IP asset.
-    function ipAssetId(uint256 id) public returns (uint256) {
+    function ipAssetId(uint256 id_) public returns (uint256) {
         address registrationModule = address(MODULE_REGISTRY.protocolModule(REGISTRATION_MODULE_KEY));
-        return IRegistrationModule(registrationModule).ipAssetId(address(this), id);
+        return IRegistrationModule(registrationModule).ipAssetId(address(this), id_);
     }
 
     /// @notice Initializes an IP Org.
