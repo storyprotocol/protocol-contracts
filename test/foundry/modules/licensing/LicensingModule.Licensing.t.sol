@@ -55,7 +55,7 @@ contract LicensingModuleLicensingTest is BaseTest {
         if (reciprocal) {
             indexes[1] = SPUMLParams.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX;
         }
-        uint256 derivativeOptions = BitMask._convertToMask(indexes);
+        uint256 derivativeOptions = BitMask.convertToMask(indexes);
         ipOrgParams.push(Licensing.ParamValue({
             tag: SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
             value: abi.encode(derivativeOptions)
@@ -76,7 +76,7 @@ contract LicensingModuleLicensingTest is BaseTest {
         (ipaId_2, ) = _createIpAsset(ipaOwner, 1, bytes(""));
 
         Licensing.ParamDefinition[] memory paramDefs = SPUMLParams
-            ._getParamDefs();
+            .getParamDefs();
         Licensing.SetFramework memory framework = Licensing.SetFramework({
             id: SPUMLParams.FRAMEWORK_ID,
             textUrl: "text_url",

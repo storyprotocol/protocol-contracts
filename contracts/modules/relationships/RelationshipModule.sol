@@ -169,9 +169,9 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         address ipOrg_,
         uint8[] memory allowedTypes_
     ) private view returns (address, uint256) {
-        if (relatable_ == LibRelationship.Relatables.IPA) {
+        if (relatable_ == LibRelationship.Relatables.Ipa) {
             return (address(IPA_REGISTRY), 0);
-        } else if (relatable_ == LibRelationship.Relatables.IPORG_ENTRY) {
+        } else if (relatable_ == LibRelationship.Relatables.IpOrgEntry) {
             if (ipOrg_ == address(0)) {
                 revert Errors.RelationshipModule_IpOrgRelatableCannotBeProtocolLevel();
             }
@@ -179,12 +179,12 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
             if (allowedTypes_.length == 0) {
                 revert Errors.EmptyArray();
             }
-            return (ipOrg_, BitMask._convertToMask(allowedTypes_));
-        } else if (relatable_ == LibRelationship.Relatables.LICENSE) {
+            return (ipOrg_, BitMask.convertToMask(allowedTypes_));
+        } else if (relatable_ == LibRelationship.Relatables.License) {
             return (address(LICENSE_REGISTRY), 0);
-        } else if (relatable_ == LibRelationship.Relatables.ADDRESS) {
+        } else if (relatable_ == LibRelationship.Relatables.Address) {
             return (LibRelationship.NO_ADDRESS_RESTRICTIONS, 0);
-        } else if (relatable_ == LibRelationship.Relatables.EXTERNAL_NFT) {
+        } else if (relatable_ == LibRelationship.Relatables.ExternalNft) {
             return (LibRelationship.NO_ADDRESS_RESTRICTIONS, 0);
         }
         revert Errors.RelationshipModule_InvalidRelatable();
@@ -271,7 +271,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         }
         if (
             relType.srcSubtypesMask != 0 &&
-            !BitMask._isSet(relType.srcSubtypesMask, ipOrg_.ipOrgAssetType(createParams.srcId))
+            !BitMask.isSet(relType.srcSubtypesMask, ipOrg_.ipOrgAssetType(createParams.srcId))
         ) {
             revert Errors.RelationshipModule_InvalidSrcId();
         }
@@ -284,7 +284,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         }
         if (
             relType.dstSubtypesMask != 0 &&
-            !BitMask._isSet(relType.dstSubtypesMask, ipOrg_.ipOrgAssetType(createParams.dstId))
+            !BitMask.isSet(relType.dstSubtypesMask, ipOrg_.ipOrgAssetType(createParams.dstId))
         ) {
             revert Errors.RelationshipModule_InvalidDstId();
         }

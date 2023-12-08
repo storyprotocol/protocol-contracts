@@ -12,35 +12,35 @@ import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { ShortStrings, ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
 contract LicensingLibHarness {
-		function exposed_statusToString(Licensing.LicenseStatus status_) external pure returns (string memory) {
-				return Licensing._statusToString(status_);
+		function exposedstatusToString(Licensing.LicenseStatus status_) external pure returns (string memory) {
+				return Licensing.statusToString(status_);
 		}
 
-		function exposed_decodeMultipleChoice(
+		function exposeddecodeMultipleChoice(
 				bytes memory value,
         bytes memory availableChoices_
 		) external pure returns (ShortString[] memory) {
-				return Licensing._decodeMultipleChoice(value, availableChoices_);
+				return Licensing.decodeMultipleChoice(value, availableChoices_);
 		}
 
-		function exposed_encodeMultipleChoice(
+		function exposedencodeMultipleChoice(
 				uint8[] memory choiceIndexes_
 		) external pure returns (bytes memory) {
-				return Licensing._encodeMultipleChoice(choiceIndexes_);
+				return Licensing.encodeMultipleChoice(choiceIndexes_);
 		}
 
-		function exposed_validateParamValue(
+		function exposedvalidateParamValue(
 				Licensing.ParamDefinition memory paramDef_,
 				bytes memory value_
 		) external pure returns (bool) {
-				return Licensing._validateParamValue(paramDef_, value_);
+				return Licensing.validateParamValue(paramDef_, value_);
 		}
 
-		function exposed_getDecodedParamString(
+		function exposedgetDecodedParamString(
 				Licensing.ParamDefinition memory paramDef_,
 				bytes memory value_
 		) external pure returns (string memory) {
-				return Licensing._getDecodedParamString(paramDef_, value_);
+				return Licensing.getDecodedParamString(paramDef_, value_);
 		}
 }
 
@@ -53,47 +53,47 @@ contract LicensingLibTest is Test {
 				checker = new LicensingLibHarness();
 		}
 
-		function test_LicensingLib_statusToString() public {
-				assertEq(checker.exposed_statusToString(Licensing.LicenseStatus.Unset), "Unset");
-				assertEq(checker.exposed_statusToString(Licensing.LicenseStatus.Active), "Active");
-				assertEq(checker.exposed_statusToString(Licensing.LicenseStatus.PendingLicensorApproval), "Pending Licensor Approval");
-				assertEq(checker.exposed_statusToString(Licensing.LicenseStatus.Revoked), "Revoked");
+		function test_LicensingLibstatusToString() public {
+				assertEq(checker.exposedstatusToString(Licensing.LicenseStatus.Unset), "Unset");
+				assertEq(checker.exposedstatusToString(Licensing.LicenseStatus.Active), "Active");
+				assertEq(checker.exposedstatusToString(Licensing.LicenseStatus.PendingLicensorApproval), "Pending Licensor Approval");
+				assertEq(checker.exposedstatusToString(Licensing.LicenseStatus.Revoked), "Revoked");
 		}
 
-		function test_LicensingLib_decodeMultipleChoice() public {
+		function test_LicensingLibdecodeMultipleChoice() public {
 				ShortString[] memory choices = new ShortString[](3);
 				choices[0] = "a".toShortString();
 				choices[1] = "b".toShortString();
 				choices[2] = "c".toShortString();
 				bytes memory availableChoices = abi.encode(choices);
 				bytes memory value = abi.encodePacked(uint256(1) << 1 | uint256(1) << 2);
-				ShortString[] memory decoded = checker.exposed_decodeMultipleChoice(value, availableChoices);
+				ShortString[] memory decoded = checker.exposeddecodeMultipleChoice(value, availableChoices);
 				assertEq(decoded.length, 2);
 				assertEq(decoded[0].toString(), "b");
 				assertEq(decoded[1].toString(), "c");
 		}
 
-		function test_LicensingLib_encodeMultipleChoice() public {
+		function test_LicensingLibencodeMultipleChoice() public {
 				uint8[] memory choiceIndexes = new uint8[](2);
 				choiceIndexes[0] = 2;
 				choiceIndexes[1] = 1;
-				bytes memory mask = checker.exposed_encodeMultipleChoice(choiceIndexes);
+				bytes memory mask = checker.exposedencodeMultipleChoice(choiceIndexes);
 				assertEq(abi.decode(mask, (uint256)), uint256(1) << 1 | uint256(1) << 2);
 		}
 
-		function test_LicensingLib_validateParamValue() public {
+		function test_LicensingLibvalidateParamValue() public {
 				Licensing.ParamDefinition memory paramDef = Licensing.ParamDefinition(
             "def".toShortString(),
             Licensing.ParameterType.Bool,
             abi.encode(false),
             ""
         );
-				assertTrue(checker.exposed_validateParamValue(paramDef, abi.encode(true)), "bool1");
-				assertTrue(checker.exposed_validateParamValue(paramDef, abi.encode(false)), "bool2");
-				assertTrue(checker.exposed_validateParamValue(paramDef, abi.encode(uint256(1))), "bool3");
-				assertTrue(checker.exposed_validateParamValue(paramDef, abi.encode(address(0))), "bool4");
+				assertTrue(checker.exposedvalidateParamValue(paramDef, abi.encode(true)), "bool1");
+				assertTrue(checker.exposedvalidateParamValue(paramDef, abi.encode(false)), "bool2");
+				assertTrue(checker.exposedvalidateParamValue(paramDef, abi.encode(uint256(1))), "bool3");
+				assertTrue(checker.exposedvalidateParamValue(paramDef, abi.encode(address(0))), "bool4");
 				vm.expectRevert();
-				checker.exposed_validateParamValue(paramDef, abi.encode(""));
+				checker.exposedvalidateParamValue(paramDef, abi.encode(""));
 
 				paramDef = Licensing.ParamDefinition(
 						"def".toShortString(),
@@ -101,11 +101,11 @@ contract LicensingLibTest is Test {
 						abi.encode(uint256(1)),
 						""
 				);
-				assertTrue(checker.exposed_validateParamValue(paramDef, abi.encode(uint256(2))), "num1");
-				assertTrue(checker.exposed_validateParamValue(paramDef, abi.encode(true)), "num2");
-				assertFalse(checker.exposed_validateParamValue(paramDef, abi.encode(address(0))), "num3");
+				assertTrue(checker.exposedvalidateParamValue(paramDef, abi.encode(uint256(2))), "num1");
+				assertTrue(checker.exposedvalidateParamValue(paramDef, abi.encode(true)), "num2");
+				assertFalse(checker.exposedvalidateParamValue(paramDef, abi.encode(address(0))), "num3");
 				// vm.expectRevert();
-				// checker.exposed_validateParamValue(paramDef, abi.encode(""));
+				// checker.exposedvalidateParamValue(paramDef, abi.encode(""));
 
 				paramDef = Licensing.ParamDefinition(
 						"def".toShortString(),
@@ -113,11 +113,11 @@ contract LicensingLibTest is Test {
 						abi.encode(address(0x1)),
 						""
 				);
-				assertFalse(checker.exposed_validateParamValue(paramDef, abi.encode(address(0x0))), "addr1");
-				assertTrue(checker.exposed_validateParamValue(paramDef, abi.encode(address(0x1))), "addr2");
-				assertTrue(checker.exposed_validateParamValue(paramDef, abi.encode(true)), "addr3");
-				assertFalse(checker.exposed_validateParamValue(paramDef, abi.encode(uint256(0))), "addr4");
-				assertTrue(checker.exposed_validateParamValue(paramDef, abi.encode("")), "addr5");
+				assertFalse(checker.exposedvalidateParamValue(paramDef, abi.encode(address(0x0))), "addr1");
+				assertTrue(checker.exposedvalidateParamValue(paramDef, abi.encode(address(0x1))), "addr2");
+				assertTrue(checker.exposedvalidateParamValue(paramDef, abi.encode(true)), "addr3");
+				assertFalse(checker.exposedvalidateParamValue(paramDef, abi.encode(uint256(0))), "addr4");
+				assertTrue(checker.exposedvalidateParamValue(paramDef, abi.encode("")), "addr5");
 
 				paramDef = Licensing.ParamDefinition(
 						"def".toShortString(),
@@ -125,11 +125,11 @@ contract LicensingLibTest is Test {
 						abi.encode("a"),
 						""
 				);
-				assertTrue(checker.exposed_validateParamValue(paramDef, abi.encode("b")), "string1");
-				assertTrue(checker.exposed_validateParamValue(paramDef, abi.encode(uint256(0))), "string2");
-				assertTrue(checker.exposed_validateParamValue(paramDef, abi.encode("")), "string3");
+				assertTrue(checker.exposedvalidateParamValue(paramDef, abi.encode("b")), "string1");
+				assertTrue(checker.exposedvalidateParamValue(paramDef, abi.encode(uint256(0))), "string2");
+				assertTrue(checker.exposedvalidateParamValue(paramDef, abi.encode("")), "string3");
 				vm.expectRevert();
-				checker.exposed_validateParamValue(paramDef, abi.encode(true));
+				checker.exposedvalidateParamValue(paramDef, abi.encode(true));
 
 				ShortString[] memory ssa = new ShortString[](3);
 				ssa[0] = "a".toShortString();
@@ -141,19 +141,19 @@ contract LicensingLibTest is Test {
 						abi.encodePacked(ssa),
 						""
 				);
-				assertFalse(checker.exposed_validateParamValue(paramDef, abi.encode("")));
-				assertFalse(checker.exposed_validateParamValue(paramDef, abi.encode(new ShortString[](0))));
+				assertFalse(checker.exposedvalidateParamValue(paramDef, abi.encode("")));
+				assertFalse(checker.exposedvalidateParamValue(paramDef, abi.encode(new ShortString[](0))));
 		}
 
-		function test_LicensingLib_getDecodedParamString() public {
+		function test_LicensingLibgetDecodedParamString() public {
 				Licensing.ParamDefinition memory paramDef = Licensing.ParamDefinition(
             "def".toShortString(),
             Licensing.ParameterType.Bool,
             abi.encode(false),
             ""
         );
-				assertEq(checker.exposed_getDecodedParamString(paramDef, abi.encode(true)), "true");
-				assertEq(checker.exposed_getDecodedParamString(paramDef, abi.encode(false)), "false");
+				assertEq(checker.exposedgetDecodedParamString(paramDef, abi.encode(true)), "true");
+				assertEq(checker.exposedgetDecodedParamString(paramDef, abi.encode(false)), "false");
 
 				paramDef = Licensing.ParamDefinition(
 						"def".toShortString(),
@@ -161,8 +161,8 @@ contract LicensingLibTest is Test {
 						abi.encode(uint256(1)),
 						""
 				);
-				assertEq(checker.exposed_getDecodedParamString(paramDef, abi.encode(uint256(2))), "2");
-				assertEq(checker.exposed_getDecodedParamString(paramDef, abi.encode(uint256(0))), "0");
+				assertEq(checker.exposedgetDecodedParamString(paramDef, abi.encode(uint256(2))), "2");
+				assertEq(checker.exposedgetDecodedParamString(paramDef, abi.encode(uint256(0))), "0");
 
 				paramDef = Licensing.ParamDefinition(
 						"def".toShortString(),
@@ -170,8 +170,8 @@ contract LicensingLibTest is Test {
 						abi.encode(""),
 						""
 				);
-				assertEq(checker.exposed_getDecodedParamString(paramDef, abi.encode("a")), "a");
-				assertEq(checker.exposed_getDecodedParamString(paramDef, abi.encode("")), "");
+				assertEq(checker.exposedgetDecodedParamString(paramDef, abi.encode("a")), "a");
+				assertEq(checker.exposedgetDecodedParamString(paramDef, abi.encode("")), "");
 
 				paramDef = Licensing.ParamDefinition(
 						"def".toShortString(),
@@ -179,7 +179,7 @@ contract LicensingLibTest is Test {
 						abi.encode(address(0x1)),
 						""
 				);
-				assertEq(checker.exposed_getDecodedParamString(paramDef, abi.encode(address(0x0))), "0x0000000000000000000000000000000000000000");
-				assertEq(checker.exposed_getDecodedParamString(paramDef, abi.encode(address(0xf))), "0x000000000000000000000000000000000000000f");
+				assertEq(checker.exposedgetDecodedParamString(paramDef, abi.encode(address(0x0))), "0x0000000000000000000000000000000000000000");
+				assertEq(checker.exposedgetDecodedParamString(paramDef, abi.encode(address(0xf))), "0x000000000000000000000000000000000000000f");
 		}
 }

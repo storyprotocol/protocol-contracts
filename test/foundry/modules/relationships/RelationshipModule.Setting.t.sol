@@ -20,8 +20,8 @@ contract RelationshipModuleSettingTest is BaseTest {
     function test_RelationshipModule_createAddressToAddress() public {
         _addRelType(
             LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
-            LibRelationship.Relatables.ADDRESS,
-            LibRelationship.Relatables.ADDRESS,
+            LibRelationship.Relatables.Address,
+            LibRelationship.Relatables.Address,
             0
         );
 
@@ -55,8 +55,8 @@ contract RelationshipModuleSettingTest is BaseTest {
     function test_RelationshipModule_createIpOrgToIpOrg() public {
         _addRelType(
             address(ipOrg),
-            LibRelationship.Relatables.IPORG_ENTRY,
-            LibRelationship.Relatables.IPORG_ENTRY,
+            LibRelationship.Relatables.IpOrgEntry,
+            LibRelationship.Relatables.IpOrgEntry,
             2
         );
         (, uint256 localId) = _createIpAsset(ipaOwner, 1, bytes(""));
@@ -93,8 +93,8 @@ contract RelationshipModuleSettingTest is BaseTest {
     {
         _addRelType(
             address(ipOrg),
-            LibRelationship.Relatables.IPORG_ENTRY,
-            LibRelationship.Relatables.IPORG_ENTRY,
+            LibRelationship.Relatables.IpOrgEntry,
+            LibRelationship.Relatables.IpOrgEntry,
             1
         );
         
@@ -122,8 +122,8 @@ contract RelationshipModuleSettingTest is BaseTest {
     function test_RelationshipModule_createAddressToIpa() public {
         _addRelType(
             LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
-            LibRelationship.Relatables.ADDRESS,
-            LibRelationship.Relatables.IPA,
+            LibRelationship.Relatables.Address,
+            LibRelationship.Relatables.Ipa,
             0
         );
         (uint256 ipaId, ) = _createIpAsset(ipaOwner, 2, bytes(""));
@@ -157,8 +157,8 @@ contract RelationshipModuleSettingTest is BaseTest {
     function test_RelationshipModule_createExternalNftToExternalNft() public {
         _addRelType(
             LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
-            LibRelationship.Relatables.EXTERNAL_NFT,
-            LibRelationship.Relatables.EXTERNAL_NFT,
+            LibRelationship.Relatables.ExternalNft,
+            LibRelationship.Relatables.ExternalNft,
             0
         );
 
