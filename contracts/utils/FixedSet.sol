@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
 /// @title FixedSet
-/// @author Raul Martinez @ethicraul
 /// @notice Library for Set data structures, based in OpenZeppelin's, with the following changes:
 /// - Values cannot be removed from the set, so order is preserved
 /// - Index of a value can be obtained
