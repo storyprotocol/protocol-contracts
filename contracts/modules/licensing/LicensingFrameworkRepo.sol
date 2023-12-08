@@ -48,6 +48,8 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
     /// Hash of (frameworkId, tag) => ParamDefinition
     mapping(bytes32 => Licensing.ParamDefinition) private _frameworkDefs;
 
+    /// @notice Constructor for the repo
+    /// @param accessControl_ the address of the access control singleton contract
     constructor(address accessControl_) AccessControlled(accessControl_) {}
 
     /// @notice Adds a new licensing framework to the repo
