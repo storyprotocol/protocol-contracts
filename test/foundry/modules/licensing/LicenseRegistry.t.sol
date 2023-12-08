@@ -64,10 +64,6 @@ contract LicenseRegistryTest is BaseTest {
             tag: SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
             value: abi.encode(derivativeOptions)
         }));
-        for(uint256 i = 0; i < params.length; i++) {
-            console2.log(params[i].tag.toString());
-            console2.logBytes(params[i].value);
-        }
 
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: SPUMLParams.FRAMEWORK_ID,

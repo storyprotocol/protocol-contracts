@@ -20,6 +20,8 @@ contract LicensingModuleLicensingTest is BaseTest {
     address internal ipaOwner = address(0x13336);
     Licensing.ParamValue[] internal ipOrgParams;
 
+    event LicenseNftLinkedToIpa(uint256 licenseId, uint256 ipAssetId);
+
     uint256 internal ipaId_1;
     uint256 internal ipaId_2;
 
@@ -56,12 +58,6 @@ contract LicensingModuleLicensingTest is BaseTest {
             tag: SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
             value: abi.encode(derivativeOptions)
         }));
-        console.log("withFrameworkConfig:");
-        for(uint256 i = 0; i < ipOrgParams.length; i++) {
-            console2.log(ipOrgParams[i].tag.toString());
-            console2.logBytes(ipOrgParams[i].value);
-        }
-
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: SPUMLParams.FRAMEWORK_ID,
             params: ipOrgParams,
@@ -202,6 +198,28 @@ contract LicensingModuleLicensingTest is BaseTest {
         assertEq(parentParams[2].value, childParams[2].value, "derivatives with attribution");
         assertEq(parentParams[3].tag.toString(), childParams[3].tag.toString(), "derivatives with approval");
         assertEq(parentParams[3].value, childParams[3].value, "derivatives with approval");
+    }
+
+    function test_LicensingModule_linkLnftToIpa_onIpaCreation() public {
+        (
+            ,
+            uint256 childLicenseId
+        ) = test_LicensingModule_createLicense_parent_noIpa_reciprocal();
+
+        vm.prank(ipOrg.owner());
+        spg.activateLicense(address(ipOrg), childLicenseId);
+        address licenseOwner = licenseRegistry.ownerOf(childLicenseId);
+
+        
+        // vm.expectEmit(address(licenseRegistry));
+        // emit LicenseNftLinkedToIpa(childLicenseId, 3);
+        _createIpAssetAndLinkLicense(
+            licenseOwner,
+            1,
+            childLicenseId,
+            bytes("")
+        );
+        assertEq(licenseRegistry.getIpaId(childLicenseId), 3);
     }
 
     function _constructInputParams()
