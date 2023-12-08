@@ -9,6 +9,8 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
 import { Errors } from "contracts/lib/Errors.sol";
+import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
+import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { SPUMLParams } from "contracts/lib/modules/SPUMLParams.sol";
 import { BitMask } from "contracts/lib/BitMask.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
@@ -196,6 +198,19 @@ contract LicensingModuleLicensingTest is BaseTest {
         assertEq(parentParams[2].value, childParams[2].value, "derivatives with attribution");
         assertEq(parentParams[3].tag.toString(), childParams[3].tag.toString(), "derivatives with approval");
         assertEq(parentParams[3].value, childParams[3].value, "derivatives with approval");
+    }
+
+    function test_LicensingModule_revert_performAction_InvalidAction() public {
+        vm.prank(address(spg)); // spg has AccessControl.MODULE_EXECUTOR_ROLE access
+        vm.expectRevert(Errors.LicensingModule_InvalidAction.selector);
+        moduleRegistry.execute(
+            IIPOrg(ipOrg),
+            address(this),
+            ModuleRegistryKeys.LICENSING_MODULE,
+            abi.encode("INVALID_ACTION", abi.encode(0, ipaId_1)),
+            new bytes[](0),
+            new bytes[](0)
+        );
     }
 
     function _constructInputParams()

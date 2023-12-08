@@ -1,5 +1,6 @@
+/* solhint-disable contract-name-camelcase, func-name-mixedcase, var-name-mixedcase */
 // SPDX-License-Identifier: BUSDL-1.1
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 import "test/foundry/utils/BaseTest.sol";
@@ -150,6 +151,41 @@ contract RelationshipModuleSettingTest is BaseTest {
         assertEq(rel.dstAddress, address(registry));
         assertEq(rel.srcId, 0);
         assertEq(rel.dstId, ipaId);
+        assertEq(relationshipModule.getRelationshipId(rel), 1);
+    }
+
+    function test_RelationshipModule_createExternalNftToExternalNft() public {
+        _addRelType(
+            LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
+            LibRelationship.Relatables.EXTERNAL_NFT,
+            LibRelationship.Relatables.EXTERNAL_NFT,
+            0
+        );
+
+        LibRelationship.CreateRelationshipParams memory params = LibRelationship
+            .CreateRelationshipParams({
+                relType: "TEST_RELATIONSHIP",
+                srcAddress: address(1111111),
+                srcId: 0,
+                dstAddress: address(2222222),
+                dstId: 0
+            });
+        bytes[] memory preHooksData = new bytes[](0);
+        bytes[] memory postHooksData = new bytes[](0);
+        uint256 id = spg.createRelationship(
+            LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
+            params,
+            preHooksData,
+            postHooksData
+        );
+        assertEq(id, 1);
+        LibRelationship.Relationship memory rel = relationshipModule
+            .getRelationship(1);
+        assertEq(rel.relType, "TEST_RELATIONSHIP");
+        assertEq(rel.srcAddress, address(1111111));
+        assertEq(rel.dstAddress, address(2222222));
+        assertEq(rel.srcId, 0);
+        assertEq(rel.dstId, 0);
         assertEq(relationshipModule.getRelationshipId(rel), 1);
     }
 

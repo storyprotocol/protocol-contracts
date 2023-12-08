@@ -6,7 +6,6 @@ import { IPAsset } from "contracts/lib/IPAsset.sol";
 
 /// @notice IP Org Interface
 interface IIPOrg {
-
     /// @notice Returns the current owner of the IP asset within th IP Org.
     function ownerOf(uint256 id) external view returns (address);
 
@@ -37,4 +36,8 @@ interface IIPOrg {
     /// @notice Returns the Ip Org asset type for a given IP Org asset.
     function ipOrgAssetType(uint256 id_) external view returns (uint8);
 
+    /// @notice Gets the global IP asset id associated with this IP Org asset.
+    /// @param id_ The local id of the IP Org wrapped IP asset.
+    /// @return The global identifier of the IP asset.
+    function ipAssetId(uint256 id_) external returns (uint256);
 }

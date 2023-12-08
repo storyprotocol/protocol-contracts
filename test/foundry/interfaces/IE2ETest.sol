@@ -38,6 +38,14 @@ interface IE2ETest {
     );
 
     //
+    // IModule
+    //
+
+    event RequestPending(address indexed sender);
+    event RequestCompleted(address indexed sender);
+    event RequestFailed(address indexed sender, string reason);
+
+    //
     // Relationship Module
     //
 
@@ -111,17 +119,6 @@ interface IE2ETest {
     );
 
     //
-    // SyncHook
-    //
-
-    event SyncHookExecuted(
-        address indexed hookAddress,
-        HookResult indexed result,
-        bytes contextData,
-        bytes returnData
-    );
-
-    //
     // IPAssetRegistry
     //
 
@@ -143,5 +140,49 @@ interface IE2ETest {
         uint256 indexed ipAssetId_,
         uint8 oldStatus_,
         uint8 newStatus_
+    );
+
+    //
+    // Sync Hooks
+    //
+
+    event SyncHookExecuted(
+        address indexed hookAddress,
+        HookResult indexed result,
+        bytes contextData,
+        bytes returnData
+    );
+
+    //
+    // Async Hooks
+    //
+
+    event AsyncHookExecuted(
+        address indexed hookAddress,
+        address indexed callbackHandler,
+        HookResult indexed result,
+        bytes32 requestId,
+        bytes contextData,
+        bytes returnData
+    );
+
+    event AsyncHookCalledBack(
+        address indexed hookAddress,
+        address indexed callbackHandler,
+        bytes32 requestId,
+        bytes callbackData
+    );
+
+    //
+    // Polygon Token Hook
+    //
+
+    event PolygonTokenBalanceRequest(
+        bytes32 indexed requestId,
+        address indexed requester,
+        address tokenAddress,
+        address tokenOwnerAddress,
+        address callbackAddr,
+        bytes4 callbackFunctionSignature
     );
 }

@@ -148,7 +148,7 @@ contract ModuleRegistryTest is Test, AccessControlHelper {
             IPOrgController(address(0x123))
         );
         MockBaseModule module = new MockBaseModule(admin, moduleConstruction);
-
+        
         vm.expectEmit(address(registry));
         emit ModuleAdded(address(0), string(abi.encodePacked(TEST_MODULE)), address(module));
         vm.prank(admin);
@@ -164,7 +164,7 @@ contract ModuleRegistryTest is Test, AccessControlHelper {
 
         assertEq(address(registry.protocolModule(TEST_MODULE)), address(0));
     }
-
+    
     function test_moduleRegistry_removeProtocolModule() public {
         BaseModule.ModuleConstruction memory moduleConstruction = BaseModule.ModuleConstruction(
             IPAssetRegistry(address(0x123)),

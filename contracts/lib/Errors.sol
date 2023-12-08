@@ -293,6 +293,7 @@ library Errors {
     error LicensingModule_InvalidAction();
     error LicensingModule_CallerNotLicensor();
     error LicensingModule_ParentLicenseNotActive();
+    error LicensingModule_DerivativeNotAllowed();
     error LicensingModule_InvalidIpa();
     error LicensingModule_CallerNotLicenseOwner();
     error LicensingModule_CantFindParentLicenseOrRelatedIpa();
