@@ -33,12 +33,20 @@ contract LicensingModule is BaseModule, ILicensingModule {
     /// ipOrg -> paramTag -> bytes
     // TODO(ramarti): optimize for only 1 sload
     mapping(address => mapping(ShortString => bytes)) private _ipOrgParamValues;
+    /// @notice Holds the licensor config for each ipOrg
     mapping(address => Licensing.LicensorConfig) private _licensorConfig;
+    /// @notice Holds the licensing framework ID for each ipOrg
     mapping(address => string) private _ipOrgFrameworkIds;
 
+    /// The LicensingFrameworkRepo contract
     LicensingFrameworkRepo public immutable LICENSING_FRAMEWORK_REPO;
+    /// The default revoker address
     address public immutable DEFAULT_REVOKER;
 
+    /// Constructor for the licensing module
+    /// @param params_ the module construction parameters
+    /// @param licFrameworkRepo_ the address of the licensing framework repo
+    /// @param defaultRevoker_ the address of the default revoker for all licenses
     constructor(
         ModuleConstruction memory params_,
         address licFrameworkRepo_,
@@ -59,10 +67,13 @@ contract LicensingModule is BaseModule, ILicensingModule {
         return LICENSING_MODULE_KEY;
     }
 
+    /// @notice Gets the licensing framework config of an IP org.
     function getIpOrgLicensorConfig(address ipOrg_) external view returns (Licensing.LicensorConfig) {
         return _licensorConfig[ipOrg_];
     }
 
+    /// @notice Gets the value set by an IP org for a parameter of a licensing framework.
+    /// If no value is set (bytes.length==0), licensors will be able to set their value.
     function getIpOrgValueForParam(address ipOrg_, string calldata paramTag_) external view returns (bytes memory) {
         return _ipOrgParamValues[ipOrg_][paramTag_.toShortString()];
     }
@@ -76,7 +87,10 @@ contract LicensingModule is BaseModule, ILicensingModule {
         // Verification done in _performAction for efficiency
     }
 
-    /// Module entrypoint to create licenses
+    /// Module entrypoint to create licenses. Allows the execution of:
+    /// - Create license
+    /// - Activate license
+    /// - Link derivative license to derivative IPA
     function _performAction(
         IIPOrg ipOrg_,
         address caller_,
@@ -101,6 +115,11 @@ contract LicensingModule is BaseModule, ILicensingModule {
         }
     }
 
+    /// @notice After verifying the action, this function gathers the parameters from
+    /// the input and creates a new license in the LicenseRegistry.
+    /// @param ipOrg_ the ipOrg contract interface
+    /// @param caller_ address requesting execution
+    /// @param params_ encoded LicensingLicenseCreation struct
     function _createLicense(
         IIPOrg ipOrg_,
         address caller_,
@@ -108,7 +127,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
     ) private returns (bytes memory result) {
         Licensing.LicenseCreation memory input = abi.decode(params_, (Licensing.LicenseCreation));
 
-        address licensor = _getLicensor(address(ipOrg_), caller_, input.parentLicenseId, input.ipaId);
+        address licensor = _getLicensor(address(ipOrg_), input.parentLicenseId, input.ipaId);
         // ------ Derivative license checks ------
         if (input.parentLicenseId != 0) {
             if (!LICENSE_REGISTRY.isLicenseActive(input.parentLicenseId)) {
@@ -147,11 +166,33 @@ contract LicensingModule is BaseModule, ILicensingModule {
         }
     }
 
+    /// @notice Creates a non-reciprocal license, meaning that the license parameters
+    /// do not come from the parent license, but from the ipOrg configuration.
+    /// This proccess serves for licenses without parent, or for derivatives
+    /// of non-reciprocal licenses.
+    /// Determining the license parameters is a 3-step process:
+    /// 1. Get the default values set by the ipOrg and the framework defaults
+    /// 2. Get the values set by the user
+    /// 3. Decide which value to use:
+    ///    - If user has set it, but ipOrg has too, revert
+    ///    - If user has set it and ipOrg has not, user value selected
+    ///    - If user has not set it and ipOrg has, ipOrg value selected
+    ///    - If user has not set it and ipOrg has not, default value selected
+    /// For the parameters related to derivatives, the process is the same, but
+    /// the values will be used to set the flags in the license to ease the
+    /// process of creating derivative licenses.
+    /// @dev This function is used by _createLicense
+    /// @param ipOrg_ the ipOrg contract interface
+    /// @param caller_ address requesting execution
+    /// @param licensor_ address of the licensor
+    /// @param input_ the input parameters for the license
+    /// @param frameworkId_ the ID of the licensing framework
+    /// @return the ID of the new license
     function _addNonReciprocalLicense(
         address ipOrg_,
         address caller_,
         address licensor_,
-        Licensing.LicenseCreation memory input,
+        Licensing.LicenseCreation memory input_,
         string memory frameworkId_
     ) private returns (uint256) {
         // Get all param tags from framework
@@ -162,10 +203,10 @@ contract LicensingModule is BaseModule, ILicensingModule {
             bool derivativesAllowed,
             bool isReciprocal,
             bool derivativeNeedsApproval
-        ) = _parseLicenseParameters(ipOrg_, input.params, supportedParams);
+        ) = _parseLicenseParameters(ipOrg_, input_.params, supportedParams);
 
         Licensing.LicenseStatus newLicenseStatus;
-        if (input.parentLicenseId != 0 && LICENSE_REGISTRY.derivativeNeedsApproval(input.parentLicenseId)) {
+        if (input_.parentLicenseId != 0 && LICENSE_REGISTRY.derivativeNeedsApproval(input_.parentLicenseId)) {
             // If parent license ID has `derivativeNeedsApproval` = true, then new license is pending licensor approval.
             // This condition is triggered when parent's `isReciprocal` = false but `derivativeNeedsApproval` = true.
             newLicenseStatus = Licensing.LicenseStatus.PendingLicensorApproval;
@@ -183,12 +224,22 @@ contract LicensingModule is BaseModule, ILicensingModule {
             licensor: licensor_,
             ipOrg: ipOrg_,
             frameworkId: frameworkId_.toShortString(),
-            ipaId: input.ipaId,
-            parentLicenseId: input.parentLicenseId
+            ipaId: input_.ipaId,
+            parentLicenseId: input_.parentLicenseId
         });
         return LICENSE_REGISTRY.addLicense(newLicense, caller_, licenseParams);
     }
 
+    /// Parses the license parameters from the input and the ipOrg configuration.
+    /// @dev This function is used by _addNonReciprocalLicense
+    /// @param ipOrg_ the ipOrg contract interface
+    /// @param inputParams_ the input parameters for the license
+    /// @param supportedParams_ the supported parameters for the license
+    /// @return licenseParams the parsed license parameters
+    /// @return derivativesAllowed whether derivatives are allowed
+    /// @return isReciprocal whether the license is reciprocal
+    /// @return derivativeNeedsApproval whether derivative licenses will need approval
+    /// (state of the license will be PendingLicensorApproval)
     function _parseLicenseParameters(
         address ipOrg_,
         Licensing.ParamValue[] memory inputParams_,
@@ -248,6 +299,11 @@ contract LicensingModule is BaseModule, ILicensingModule {
         }
     }
 
+    /// Decides which value to use for a parameter in a non-reciprocal license.
+    /// @dev This function is used by _parseLicenseParameters
+    /// @param inputValue the value set by the user
+    /// @param ipOrgValue the value set by the ipOrg
+    /// @param paramDef the definition of the parameter
     function _decideValueSource(
         bytes memory inputValue,
         bytes memory ipOrgValue,
@@ -271,19 +327,13 @@ contract LicensingModule is BaseModule, ILicensingModule {
         }
     }
 
-    function _parseDerivativeOption(
-        ShortString tag,
-        bytes memory resultValue,
-        bool derivativesAllowed
-    ) private pure returns (bool) {}
-
     /// Gets the licensor address for this IPA.
-    function _getLicensor(
-        address ipOrg_,
-        address,
-        uint256 parentLicenseId_,
-        uint256 ipaId_
-    ) private view returns (address) {
+    /// @dev This function is used by _createLicense
+    /// @param ipOrg_ the ipOrg contract interface
+    /// @param parentLicenseId_ the ID of the parent license
+    /// @param ipaId_ the ID of the IPA
+    /// @return the licensor address
+    function _getLicensor(address ipOrg_, uint256 parentLicenseId_, uint256 ipaId_) private view returns (address) {
         Licensing.LicensorConfig licensorConfig = _licensorConfig[ipOrg_];
         if (licensorConfig == Licensing.LicensorConfig.Unset) {
             revert Errors.LicensingModule_IpOrgFrameworkNotSet();
@@ -307,7 +357,11 @@ contract LicensingModule is BaseModule, ILicensingModule {
     //                              Config                                    //
     ////////////////////////////////////////////////////////////////////////////
 
-    /// Module entrypoint for configuration. It allows an IPOrg to set licensing term
+    /// Module entrypoint for configuration. It allows an IPOrg to set licensing terms
+    /// that all the Licenses minted for its IPAs will follow.
+    /// @param ipOrg_ the ipOrg contract interface
+    /// @param caller_ address requesting execution
+    /// @param params_ encoded LicensingFrameworkConfig struct
     function _configure(
         IIPOrg ipOrg_,
         address caller_,
@@ -327,8 +381,9 @@ contract LicensingModule is BaseModule, ILicensingModule {
     //                              ipOrgConfig                               //
     ////////////////////////////////////////////////////////////////////////////
 
-    /// Gets commercial and non-commercial terms, and checks for misconfigurations in them before
-    // setting them
+    /// @notice Gets commercial and non-commercial terms, and checks for misconfigurations in them before
+    // setting them.
+    /// @dev This function is used by _configure
     /// @param ipOrg_ the ipOrg contract interface
     /// @param caller_ address requesting execution
     /// @param params_ encoded Licensing.FrameworkConfig struct
@@ -389,6 +444,8 @@ contract LicensingModule is BaseModule, ILicensingModule {
     //                              Hooks                                     //
     ////////////////////////////////////////////////////////////////////////////
 
+    /// @notice Gets the registry key for the hook.
+    /// @dev this functionality is currently disabled.
     function _hookRegistryKey(IIPOrg, address, bytes calldata) internal view virtual override returns (bytes32) {
         return keccak256("TODO");
     }

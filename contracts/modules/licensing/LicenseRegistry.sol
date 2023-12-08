@@ -308,16 +308,16 @@ contract LicenseRegistry is ERC721 {
                 paramDef.paramType != Licensing.ParameterType.MultipleChoice &&
                 paramDef.paramType != Licensing.ParameterType.ShortStringArray
             ) {
-                value = string(abi.encodePacked("\"", value, "\"}")); // solhint-disable-line
+                value = string(abi.encodePacked('"', value, '"}')); // solhint-disable-line
             } else {
                 value = string(abi.encodePacked(value, "}"));
             }
             paramAttributes = string(
                 abi.encodePacked(
                     paramAttributes,
-                    "{\"trait_type\": \"", // solhint-disable-line
+                    '{"trait_type": "', // solhint-disable-line
                     params[i].tag.toString(),
-                    "\", \"value\": ", // solhint-disable-line
+                    '", "value": ', // solhint-disable-line
                     value
                 )
             );
