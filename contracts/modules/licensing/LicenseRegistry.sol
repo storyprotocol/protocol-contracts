@@ -271,8 +271,48 @@ contract LicenseRegistry is ERC721 {
     }
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        // TODO
-        return "";
+        Licensing.LicenseData memory license = getLicenseData(tokenId);
+        // Construct the base JSON metadata with custom name format
+        string memory baseJson = string(abi.encodePacked(
+            '{"name": "Story Protocol License NFT #', Strings.toString(tokenId),
+            '", "description": "License agreement stating the terms of a Story Protocol IP Org", "attributes": ['
+        ));
+        
+        string memory licenseAttributes = string(
+            abi.encodePacked(
+                '{"trait_type": "IP Org", "value": "', Strings.toHexString(uint160(license.ipOrg), 20), '"},',
+                '{"trait_type": "Framework ID", "value": "', license.frameworkId, '"},',
+                '{"trait_type": "Framework URL", "value": "', LICENSING_FRAMEWORK_REPO.getLicenseTextUrl(license.frameworkId.toString()), '"},',
+                '{"trait_type": "Status", "value": "', Licensing._statusToString(license.status), '"},',
+                '{"trait_type": "Licensor", "value": "', Strings.toHexString(uint160(license.licensor), 20), '"},',
+                '{"trait_type": "Licensee", "value": "', Strings.toHexString(uint160(_ownerOf(tokenId)), 20), '"},',
+                '{"trait_type": "Revoker", "value": "', Strings.toHexString(uint160(license.revoker), 20), '"},',
+                '{"trait_type": "Parent License ID", "value": "', Strings.toString(license.parentLicenseId), '"},',
+                '{"trait_type": "Derivative IPA", "value": "', Strings.toString(license.ipaId), '"},'
+            )
+        );
+        // uint256 paramCount = license.params.length;
+        string memory paramAttributes;
+        // TODO attributes
+        // for(uint256 i = 0; i < paramCount; i++) {
+        //paramAttributes = string(abi.encodePacked(
+        //    '{"trait_type": "', license.params[i].tag.toString(), '", "value": "', license.params[i].value.toString(), '"},'
+        //));
+        // }
+
+        return string(abi.encodePacked(
+            "data:application/json;base64,",
+            Base64.encode(
+                bytes(
+                    string(abi.encodePacked(
+                        baseJson,
+                        licenseAttributes,
+                        paramAttributes,
+                        ']}'
+                    )
+                )
+            ))
+        ));
     }
 
     function _linkNftToIpa(
