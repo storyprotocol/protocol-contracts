@@ -28,8 +28,5 @@ interface ILicensingModule is IModule {
     /// If no value is set (bytes.length==0), licensors will be able to set their value.
     /// @param ipOrg_ address of the IP org
     /// @param paramTag_ string tag of the parameter
-    function getIpOrgValueForParam(
-        address ipOrg_,
-        string calldata paramTag_
-    ) external view returns (bytes memory);
+    function getIpOrgValueForParam(address ipOrg_, string calldata paramTag_) external view returns (bytes memory);
 }

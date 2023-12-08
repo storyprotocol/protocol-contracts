@@ -42,7 +42,7 @@ library BitMask {
             if (_isSet(mask_, i)) {
                 ++count;
             }
-        }        
+        }
         uint8[] memory setBitIndexes = new uint8[](count);
         // Fill the array with indices of set bits
         uint256 index = 0;

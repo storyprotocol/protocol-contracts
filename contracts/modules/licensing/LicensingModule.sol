@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
-// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
+// See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { Errors } from "contracts/lib/Errors.sol";
-import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { BaseModule } from "contracts/modules/base/BaseModule.sol";
 import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { LicensingFrameworkRepo } from "./LicensingFrameworkRepo.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
-import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { SPUMLParams } from "contracts/lib/modules/SPUMLParams.sol";
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 import { BitMask } from "contracts/lib/BitMask.sol";
@@ -167,10 +165,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
         ) = _parseLicenseParameters(ipOrg_, input.params, supportedParams);
 
         Licensing.LicenseStatus newLicenseStatus;
-        if (
-            input.parentLicenseId != 0 &&
-            LICENSE_REGISTRY.derivativeNeedsApproval(input.parentLicenseId)
-        ) {
+        if (input.parentLicenseId != 0 && LICENSE_REGISTRY.derivativeNeedsApproval(input.parentLicenseId)) {
             // If parent license ID has `derivativeNeedsApproval` = true, then new license is pending licensor approval.
             // This condition is triggered when parent's `isReciprocal` = false but `derivativeNeedsApproval` = true.
             newLicenseStatus = Licensing.LicenseStatus.PendingLicensorApproval;
@@ -209,9 +204,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
         )
     {
         uint256 inputLength_ = inputParams_.length;
-        mapping(ShortString => bytes) storage _ipOrgValues = _ipOrgParamValues[
-            ipOrg_
-        ];
+        mapping(ShortString => bytes) storage _ipOrgValues = _ipOrgParamValues[ipOrg_];
         uint256 supportedLength = supportedParams_.length;
         licenseParams = new Licensing.ParamValue[](supportedLength);
 
@@ -287,7 +280,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
     /// Gets the licensor address for this IPA.
     function _getLicensor(
         address ipOrg_,
-        address caller_,
+        address,
         uint256 parentLicenseId_,
         uint256 ipaId_
     ) private view returns (address) {
@@ -388,7 +381,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
             config.licensor,
             configParams
         );
-        
+
         return "";
     }
 
@@ -396,11 +389,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
     //                              Hooks                                     //
     ////////////////////////////////////////////////////////////////////////////
 
-    function _hookRegistryKey(
-        IIPOrg ipOrg_,
-        address caller_,
-        bytes calldata params_
-    ) internal view virtual override returns (bytes32) {
+    function _hookRegistryKey(IIPOrg, address, bytes calldata) internal view virtual override returns (bytes32) {
         return keccak256("TODO");
     }
 }

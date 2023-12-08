@@ -244,28 +244,55 @@ contract LicenseRegistry is ERC721 {
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         Licensing.LicenseData memory license = getLicenseData(tokenId);
         // Construct the base JSON metadata with custom name format
-        string memory baseJson = string(abi.encodePacked(
-            '{"name": "Story Protocol License NFT #', Strings.toString(tokenId),
-            '", "description": "License agreement stating the terms of a Story Protocol IP Org", "attributes": ['
-        ));
-        
-        string memory licenseAttributes1 = string(
+        string memory baseJson = string(
+            /* solhint-disable */
             abi.encodePacked(
-                '{"trait_type": "IP Org", "value": "', Strings.toHexString(uint160(license.ipOrg), 20), '"},',
-                '{"trait_type": "Framework ID", "value": "', license.frameworkId.toString(), '"},',
-                '{"trait_type": "Framework URL", "value": "', LICENSING_FRAMEWORK_REPO.getLicenseTextUrl(license.frameworkId.toString()), '"},',
-                '{"trait_type": "Status", "value": "', Licensing._statusToString(license.status), '"},'
+                '{"name": "Story Protocol License NFT #',
+                Strings.toString(tokenId),
+                '", "description": "License agreement stating the terms of a Story Protocol IP Org", "attributes": ['
             )
+            /* solhint-enable */
+        );
+
+        string memory licenseAttributes1 = string(
+            /* solhint-disable */
+            abi.encodePacked(
+                '{"trait_type": "IP Org", "value": "',
+                Strings.toHexString(uint160(license.ipOrg), 20),
+                '"},',
+                '{"trait_type": "Framework ID", "value": "',
+                license.frameworkId.toString(),
+                '"},',
+                '{"trait_type": "Framework URL", "value": "',
+                LICENSING_FRAMEWORK_REPO.getLicenseTextUrl(license.frameworkId.toString()),
+                '"},',
+                '{"trait_type": "Status", "value": "',
+                Licensing._statusToString(license.status),
+                '"},'
+            )
+            /* solhint-enable */
         );
 
         string memory licenseAttributes2 = string(
+            /* solhint-disable */
             abi.encodePacked(
-                '{"trait_type": "Licensor", "value": "', Strings.toHexString(uint160(license.licensor), 20), '"},',
-                '{"trait_type": "Licensee", "value": "', Strings.toHexString(uint160(_ownerOf(tokenId)), 20), '"},',
-                '{"trait_type": "Revoker", "value": "', Strings.toHexString(uint160(license.revoker), 20), '"},',
-                '{"trait_type": "Parent License ID", "value": "', Strings.toString(license.parentLicenseId), '"},',
-                '{"trait_type": "Derivative IPA", "value": "', Strings.toString(license.ipaId), '"},'
+                '{"trait_type": "Licensor", "value": "',
+                Strings.toHexString(uint160(license.licensor), 20),
+                '"},',
+                '{"trait_type": "Licensee", "value": "',
+                Strings.toHexString(uint160(_ownerOf(tokenId)), 20),
+                '"},',
+                '{"trait_type": "Revoker", "value": "',
+                Strings.toHexString(uint160(license.revoker), 20),
+                '"},',
+                '{"trait_type": "Parent License ID", "value": "',
+                Strings.toString(license.parentLicenseId),
+                '"},',
+                '{"trait_type": "Derivative IPA", "value": "',
+                Strings.toString(license.ipaId),
+                '"},'
             )
+            /* solhint-enable */
         );
         Licensing.ParamValue[] memory params = _licenseParams[tokenId];
         uint256 paramCount = params.length;
@@ -276,42 +303,44 @@ contract LicenseRegistry is ERC721 {
                 params[i].tag
             );
             string memory value = Licensing._getDecodedParamString(paramDef, params[i].value);
-            
-            if (paramDef.paramType != Licensing.ParameterType.MultipleChoice && paramDef.paramType != Licensing.ParameterType.ShortStringArray) {
-                value = string(abi.encodePacked(
-                    '"', value, '"}'
-                ));
+
+            if (
+                paramDef.paramType != Licensing.ParameterType.MultipleChoice &&
+                paramDef.paramType != Licensing.ParameterType.ShortStringArray
+            ) {
+                value = string(abi.encodePacked("\"", value, "\"}")); // solhint-disable-line
             } else {
-                value = string(abi.encodePacked(
-                    value, '}'
-                ));
+                value = string(abi.encodePacked(value, "}"));
             }
             paramAttributes = string(
                 abi.encodePacked(
-                    paramAttributes, '{"trait_type": "', params[i].tag.toString(), '", "value": ', value
+                    paramAttributes,
+                    "{\"trait_type\": \"", // solhint-disable-line
+                    params[i].tag.toString(),
+                    "\", \"value\": ", // solhint-disable-line
+                    value
                 )
             );
             if (i != paramCount - 1) {
-                paramAttributes = string(abi.encodePacked(paramAttributes, ','));
+                paramAttributes = string(abi.encodePacked(paramAttributes, ","));
             } else {
-                paramAttributes = string(abi.encodePacked(paramAttributes, ']'));
+                paramAttributes = string(abi.encodePacked(paramAttributes, "]"));
             }
         }
 
-        return string(abi.encodePacked(
-            "data:application/json;base64,",
-            Base64.encode(
-                bytes(
-                    string(abi.encodePacked(
-                        baseJson,
-                        licenseAttributes1,
-                        licenseAttributes2,
-                        paramAttributes,
-                        '}'
+        return
+            string(
+                abi.encodePacked(
+                    "data:application/json;base64,",
+                    Base64.encode(
+                        bytes(
+                            string(
+                                abi.encodePacked(baseJson, licenseAttributes1, licenseAttributes2, paramAttributes, "}")
+                            )
+                        )
                     )
                 )
-            ))
-        ));
+            );
     }
 
     function _linkNftToIpa(uint256 licenseId_, uint256 ipaId_) private onlyActive(licenseId_) {

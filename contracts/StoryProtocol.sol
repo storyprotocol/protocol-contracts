@@ -238,32 +238,18 @@ contract StoryProtocol is Multicall {
     /// @param ipOrg_ the ipOrg address
     /// @param licenseId_ the license id
     /// @param ipaId_ the ipa id
-    function linkLnftToIpa(
-        address ipOrg_,
-        uint256 licenseId_,
-        uint256 ipaId_
-    ) public {
+    function linkLnftToIpa(address ipOrg_, uint256 licenseId_, uint256 ipaId_) public {
         _linkLnftToIpa(ipOrg_, licenseId_, ipaId_, msg.sender);
     }
 
-
-    function _linkLnftToIpa(
-        address ipOrg_,
-        uint256 licenseId_,
-        uint256 ipaId_,
-        address caller_
-    ) private {
+    function _linkLnftToIpa(address ipOrg_, uint256 licenseId_, uint256 ipaId_, address caller_) private {
         MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             caller_,
             LICENSING_MODULE,
-            abi.encode(
-                Licensing.LINK_LNFT_TO_IPA,
-                abi.encode(licenseId_, ipaId_)
-            ),
+            abi.encode(Licensing.LINK_LNFT_TO_IPA, abi.encode(licenseId_, ipaId_)),
             new bytes[](0),
             new bytes[](0)
         );
     }
-    
 }
