@@ -82,12 +82,6 @@ interface IE2ETest {
         Licensing.LicensorConfig licensorConfig
     );
 
-    event ParameterSet(
-        address indexed ipOrg,
-        string paramTag,
-        bytes defaultValue
-    );
-
     event FrameworkAdded(string frameworkId, string textUrl);
 
     event ParamDefinitionAdded(
