@@ -11,7 +11,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "StoryProtocol",
-  "license": "BUSL-1.1",
+  "license": "Unlicensed",
   "devDependencies": {
     "@changesets/cli": "^2.26.2",
     "@nomiclabs/hardhat-ethers": "^2.2.3",
