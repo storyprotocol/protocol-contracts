@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.19;
 
 import { Errors } from "contracts/lib/Errors.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";

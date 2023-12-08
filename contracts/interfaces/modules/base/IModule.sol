@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import { IModule } from "./IModule.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
+import { ModuleKey } from "contracts/lib/modules/Module.sol";
 
 /// @title IModule
 /// @notice Interface for a Story Protocol Module, building block of the protocol functionality.
@@ -13,6 +13,10 @@ interface IModule {
     event RequestCompleted(address indexed sender);
     /// Module execution failed.
     event RequestFailed(address indexed sender, string reason);
+
+    /// @notice Gets the protocol-wide key associated with the module.
+    /// @return The bytes32 identifier of the module.
+    function moduleKey() external pure returns (ModuleKey);
 
     /// @notice Main execution entrypoint.
     /// @dev It will verify params, execute pre action hooks, perform the action,
