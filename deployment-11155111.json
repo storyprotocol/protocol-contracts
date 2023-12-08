@@ -1,19 +1,19 @@
 {
   "main": {
-    "AccessControlSingleton-Impl": "0xFed3A979239654Bb89e335161307FAcC3E4a3217",
-    "AccessControlSingleton-Proxy": "0x86b1257fD39c95866b7d0283d2AA2585CFE3D2F3",
-    "IPAssetRegistry": "0x679863b64072b7562c0fc7d8d831a6047681986A",
-    "IPOrgController-Impl": "0x98c7ed972DA19A48c2Fb4aED4f4b04a163b34d59",
-    "IPOrgController-Proxy": "0x6Fb096d829304aCeC8922a10a8C2581E8E84695A",
-    "LicenseRegistry": "0xd6Ab11cE59Ab4F3fAc577A83d169A5666EaC329C",
-    "LicensingFrameworkRepo": "0xc6E5668aBF375fa32eF73370115e2860cd3cA518",
-    "LicensingModule": "0xF4aC0201654b417D8E87fD470846511bF9856AFD",
-    "MockERC721": "0x2e93CCEA2588a74c59626066c0F9640B97dA33C1",
-    "ModuleRegistry": "0x4Bf7387C9666F5A30604B3dcba1dC6edfC50d4A2",
-    "PolygonTokenHook": "0x492afDfC26F279adb1F2014318E5fF7445C03115",
-    "RegistrationModule": "0xEC2a3833f96c9e4492E2BC013CC2C6DF8583ceC9",
-    "RelationshipModule": "0x481972bA7702FA848cCd1Ee15eCD3eD6b059E2aa",
-    "StoryProtocol": "0x537fcCce413236A4E5f4f385e2edC861aEc622f0",
-    "TokenGatedHook": "0xaf1616E8fe0C9F18286bD73FC0314e7dC0dc90B4"
+    "AccessControlSingleton-Impl": "0x4Cc25812230AEd687399A403462fF58feece055a",
+    "AccessControlSingleton-Proxy": "0x989226de3Ed451f90FfDb3B01BD6d493eBc41074",
+    "IPAssetRegistry": "0x452ab8643ECFF091e22ADb927E8aFaE3cAC55FC0",
+    "IPOrgController-Impl": "0xE65FaB0aF2c0D153cC4685e6659609ac1Cfe66dC",
+    "IPOrgController-Proxy": "0x0bA53D5803A7bB84fb625C076Db83b2CEC8E7a13",
+    "LicenseRegistry": "0x036b1e5B0dC4058Ff847431a788f747CA4F2e0C6",
+    "LicensingFrameworkRepo": "0x93A989e1ED079a2562aaD34233DfC5e4b3B02d39",
+    "LicensingModule": "0xF804dB4E7D02f914241E37Ec95C8c94C71b31Dc6",
+    "MockERC721": "0x319acfb55cdE186fd035dc912C8d00FA5fc4d613",
+    "ModuleRegistry": "0x15cdeFeFfa6Eaf47265CC83214Ad6Dc4f91D4457",
+    "PolygonTokenHook": "0x6447B985f0236070Cfee5F7AA99738eC5879C8F3",
+    "RegistrationModule": "0x01aD76Fb4B3976A25D473774868dA05a593ad221",
+    "RelationshipModule": "0xE5fD56acB590Bd62857FD2C2d9cb71F79e16AE4f",
+    "StoryProtocol": "0xd5702aC83953e354B857e73BB3188e299b709859",
+    "TokenGatedHook": "0x8A8045258235C8e09e76B938DC7d24c74578073b"
   }
 }
