@@ -73,7 +73,6 @@ contract LicensingModuleConfigTest is BaseTest {
         );
     }
 
-    // This is obsolete now as we're using Bitmasks
     function test_LicensingModule_configIpOrg_revert_paramLengthNotValid() public {
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: "test_framework",
