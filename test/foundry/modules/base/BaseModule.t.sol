@@ -6,6 +6,7 @@ import "forge-std/Test.sol";
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
 import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
+import { ModuleKey } from "contracts/lib/modules/Module.sol";
 import { BaseModule } from "contracts/modules/base/BaseModule.sol";
 import { HookRegistry } from "contracts/modules/base/HookRegistry.sol";
 import { MockBaseModule } from  "test/foundry/mocks/MockBaseModule.sol";
@@ -20,6 +21,9 @@ import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 
 
 contract BaseModuleTest is BaseTest {
+
+    ModuleKey constant TEST_MODULE = ModuleKey.wrap(keccak256(abi.encodePacked("test")));
+
     MockBaseModule module;
     IPAssetRegistry ipaRegistry = IPAssetRegistry(address(456));
     MockIPOrg mockIpOrg;
@@ -42,6 +46,12 @@ contract BaseModuleTest is BaseTest {
             paramC: 456,
             someHookRegisteringRelatedInfo: "HookRegistryRelatedInfo"
         });
+    }
+
+    function test_baseModule_revert_unauthorizedCaller() public {
+        moduleRegistry.registerProtocolModule(TEST_MODULE, module);
+        vm.expectRevert(Errors.BaseModule_Unauthorized.selector);
+        module.test();
     }
 
     function test_baseModule_revert_constructorIpaRegistryIsZero() public {

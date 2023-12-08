@@ -17,7 +17,8 @@ import "contracts/modules/licensing/LicenseRegistry.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
-import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
+import { LICENSING_MODULE_KEY, RELATIONSHIP_MODULE_KEY, REGISTRATION_MODULE_KEY } from "contracts/lib/modules/Module.sol";
+import { IGateway } from "contracts/interfaces/modules/IGateway.sol";
 import { RegistrationModule } from "contracts/modules/registration/RegistrationModule.sol";
 import { LicensingFrameworkRepo } from "contracts/modules/licensing/LicensingFrameworkRepo.sol";
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
@@ -93,7 +94,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             address(licensingFrameworkRepo),
             defaultRevoker
         );
-        moduleRegistry.registerProtocolModule(ModuleRegistryKeys.LICENSING_MODULE, licensingModule);
+        moduleRegistry.registerProtocolModule(LICENSING_MODULE_KEY, licensingModule);
 
         // Create Registration Module
         registrationModule = new RegistrationModule(
@@ -105,7 +106,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             }),
             address(accessControl)
         );
-        moduleRegistry.registerProtocolModule(ModuleRegistryKeys.REGISTRATION_MODULE, registrationModule);
+        moduleRegistry.registerProtocolModule(REGISTRATION_MODULE_KEY, registrationModule);
 
         // Create Relationship Module
         relationshipModule = new RelationshipModule(
@@ -117,8 +118,9 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             }),
             address(accessControl)
         );
-        moduleRegistry.registerProtocolModule(ModuleRegistryKeys.RELATIONSHIP_MODULE, relationshipModule);
+        moduleRegistry.registerProtocolModule(RELATIONSHIP_MODULE_KEY, relationshipModule);
 
+        // moduleRegistry.registerProtocolGateway(IGateway(spg));
         IPOrgParams.RegisterIPOrgParams memory ipAssetOrgParams = IPOrgParams.RegisterIPOrgParams(
             address(registry),
             "IPOrgName",

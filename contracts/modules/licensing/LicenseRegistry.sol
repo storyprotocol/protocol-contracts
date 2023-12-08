@@ -6,12 +6,12 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
-import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { LicensingFrameworkRepo } from "contracts/modules/licensing/LicensingFrameworkRepo.sol";
 import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
+import { LICENSING_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 
 /// @title LicenseRegistry
 /// @notice This contract is the source of truth for all licenses that are registered in the protocol.
@@ -43,24 +43,16 @@ contract LicenseRegistry is ERC721 {
     LicensingFrameworkRepo public immutable LICENSING_FRAMEWORK_REPO;
 
     modifier onlyLicensingModule() {
-        if (
-            !MODULE_REGISTRY.isModule(
-                ModuleRegistryKeys.LICENSING_MODULE,
-                msg.sender
-            )
-        ) {
+        address licensingModule = address(MODULE_REGISTRY.protocolModule(LICENSING_MODULE_KEY));
+        if (licensingModule != msg.sender) {
             revert Errors.LicenseRegistry_CallerNotLicensingModule();
         }
         _;
     }
 
     modifier onlyLicensingModuleOrLicensee(uint256 licenseId_) {
-        if (
-            !MODULE_REGISTRY.isModule(
-                ModuleRegistryKeys.LICENSING_MODULE,
-                msg.sender
-            ) && msg.sender != ownerOf(licenseId_)
-        ) {
+        address licensingModule = address(MODULE_REGISTRY.protocolModule(LICENSING_MODULE_KEY));
+        if (licensingModule != msg.sender && msg.sender != ownerOf(licenseId_)) {
             revert Errors.LicenseRegistry_CallerNotLicensingModuleOrLicensee();
         }
         _;
@@ -210,6 +202,10 @@ contract LicenseRegistry is ERC721 {
         return _licenses[id_].isReciprocal;
     }
 
+    function isDerivativeAllowed(uint256 id_) external view returns (bool) {
+        return _licenses[id_].derivativesAllowed;
+    }
+
     function derivativeNeedsApproval(uint256 id_) external view returns (bool) {
         return _licenses[id_].derivativeNeedsApproval;
     }
@@ -271,8 +267,76 @@ contract LicenseRegistry is ERC721 {
     }
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        // TODO
-        return "";
+        Licensing.LicenseData memory license = getLicenseData(tokenId);
+        // Construct the base JSON metadata with custom name format
+        string memory baseJson = string(abi.encodePacked(
+            '{"name": "Story Protocol License NFT #', Strings.toString(tokenId),
+            '", "description": "License agreement stating the terms of a Story Protocol IP Org", "attributes": ['
+        ));
+        
+        string memory licenseAttributes1 = string(
+            abi.encodePacked(
+                '{"trait_type": "IP Org", "value": "', Strings.toHexString(uint160(license.ipOrg), 20), '"},',
+                '{"trait_type": "Framework ID", "value": "', license.frameworkId.toString(), '"},',
+                '{"trait_type": "Framework URL", "value": "', LICENSING_FRAMEWORK_REPO.getLicenseTextUrl(license.frameworkId.toString()), '"},',
+                '{"trait_type": "Status", "value": "', Licensing._statusToString(license.status), '"},'
+            )
+        );
+
+        string memory licenseAttributes2 = string(
+            abi.encodePacked(
+                '{"trait_type": "Licensor", "value": "', Strings.toHexString(uint160(license.licensor), 20), '"},',
+                '{"trait_type": "Licensee", "value": "', Strings.toHexString(uint160(_ownerOf(tokenId)), 20), '"},',
+                '{"trait_type": "Revoker", "value": "', Strings.toHexString(uint160(license.revoker), 20), '"},',
+                '{"trait_type": "Parent License ID", "value": "', Strings.toString(license.parentLicenseId), '"},',
+                '{"trait_type": "Derivative IPA", "value": "', Strings.toString(license.ipaId), '"},'
+            )
+        );
+        Licensing.ParamValue[] memory params = _licenseParams[tokenId];
+        uint256 paramCount = params.length;
+        string memory paramAttributes;
+        for (uint256 i = 0; i < paramCount; i++) {
+            Licensing.ParamDefinition memory paramDef = LICENSING_FRAMEWORK_REPO.getParamDefinition(
+                license.frameworkId.toString(),
+                params[i].tag
+            );
+            string memory value = Licensing._getDecodedParamString(paramDef, params[i].value);
+            
+            if (paramDef.paramType != Licensing.ParameterType.MultipleChoice && paramDef.paramType != Licensing.ParameterType.ShortStringArray) {
+                value = string(abi.encodePacked(
+                    '"', value, '"}'
+                ));
+            } else {
+                value = string(abi.encodePacked(
+                    value, '}'
+                ));
+            }
+            paramAttributes = string(
+                abi.encodePacked(
+                    paramAttributes, '{"trait_type": "', params[i].tag.toString(), '", "value": ', value
+                )
+            );
+            if (i != paramCount - 1) {
+                paramAttributes = string(abi.encodePacked(paramAttributes, ','));
+            } else {
+                paramAttributes = string(abi.encodePacked(paramAttributes, ']'));
+            }
+        }
+
+        return string(abi.encodePacked(
+            "data:application/json;base64,",
+            Base64.encode(
+                bytes(
+                    string(abi.encodePacked(
+                        baseJson,
+                        licenseAttributes1,
+                        licenseAttributes2,
+                        paramAttributes,
+                        '}'
+                    )
+                )
+            ))
+        ));
     }
 
     function _linkNftToIpa(

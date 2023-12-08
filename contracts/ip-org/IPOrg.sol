@@ -11,7 +11,7 @@ import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
-import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
+import { REGISTRATION_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 
 /// @title IP Organization Contract
@@ -42,7 +42,7 @@ contract IPOrg is
 
     /// @notice Restricts calls to being through the registration module.
     modifier onlyRegistrationModule() {
-        if (IModuleRegistry(MODULE_REGISTRY).protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE) != msg.sender) {
+        if (address(MODULE_REGISTRY.protocolModule(REGISTRATION_MODULE_KEY)) != msg.sender) {
             revert Errors.Unauthorized();
         }
         _;
@@ -74,22 +74,22 @@ contract IPOrg is
     function tokenURI(
         uint256 tokenId_
     ) public view override returns (string memory) {
-        address registrationModule = IModuleRegistry(MODULE_REGISTRY).protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE);
+        address registrationModule = address(IModuleRegistry(MODULE_REGISTRY).protocolModule(REGISTRATION_MODULE_KEY));
         return IRegistrationModule(registrationModule).tokenURI(address(this), tokenId_, ipOrgAssetType(tokenId_));
     }
 
     /// @notice Retrieves the contract URI for the IP Org collection.
     function contractURI() public view override returns (string memory) {
-        address registrationModule = IModuleRegistry(MODULE_REGISTRY).protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE);
+        address registrationModule = address(IModuleRegistry(MODULE_REGISTRY).protocolModule(REGISTRATION_MODULE_KEY));
         return IRegistrationModule(registrationModule).contractURI(address(this));
     }
 
     /// @notice Gets the global IP asset id associated with this IP Org asset.
-    /// @param id The local id of the IP Org wrapped IP asset.
+    /// @param id_ The local id of the IP Org wrapped IP asset.
     /// @return The global identifier of the IP asset.
-    function ipAssetId(uint256 id) public returns (uint256) {
-        address registrationModule = MODULE_REGISTRY.protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE);
-        return IRegistrationModule(registrationModule).ipAssetId(address(this), id);
+    function ipAssetId(uint256 id_) public returns (uint256) {
+        address registrationModule = address(MODULE_REGISTRY.protocolModule(REGISTRATION_MODULE_KEY));
+        return IRegistrationModule(registrationModule).ipAssetId(address(this), id_);
     }
 
     /// @notice Initializes an IP Org.

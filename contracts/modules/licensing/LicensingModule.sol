@@ -6,6 +6,7 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { BaseModule } from "contracts/modules/base/BaseModule.sol";
+import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { LicensingFrameworkRepo } from "./LicensingFrameworkRepo.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
@@ -15,6 +16,9 @@ import { SPUMLParams } from "contracts/lib/modules/SPUMLParams.sol";
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 import { BitMask } from "contracts/lib/BitMask.sol";
 import { ILicensingModule } from "contracts/interfaces/modules/licensing/ILicensingModule.sol";
+import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
+import { BitMask } from "contracts/lib/BitMask.sol";
+import { ModuleKey, LICENSING_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 
 /// @title Licensing module
 /// @notice Story Protocol module that:
@@ -50,6 +54,11 @@ contract LicensingModule is BaseModule, ILicensingModule {
             revert Errors.ZeroAddress();
         }
         DEFAULT_REVOKER = defaultRevoker_;
+    }
+
+    /// @notice Gets the protocol-wide module key for the licensing module.
+    function moduleKey() public pure override(BaseModule, IModule) returns (ModuleKey) {
+        return LICENSING_MODULE_KEY;
     }
 
     function getIpOrgLicensorConfig(
@@ -130,6 +139,9 @@ contract LicensingModule is BaseModule, ILicensingModule {
             if (!LICENSE_REGISTRY.isLicenseActive(input.parentLicenseId)) {
                 revert Errors.LicensingModule_ParentLicenseNotActive();
             }
+            if (!LICENSE_REGISTRY.isDerivativeAllowed(input.parentLicenseId)) {
+                revert Errors.LicensingModule_DerivativeNotAllowed();
+            }
         }
         // If this is a derivative and parent is reciprocal, license parameters
         // cannot be changed in the new license
@@ -150,8 +162,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
                     )
                 );
         } else {
-            // If this is not a derivative, or parent is not reciprocal, caller must be
-            // the licensor
+            // If this is not a derivative, or parent is not reciprocal, caller must be the licensor
             if (licensor != caller_) {
                 revert Errors.LicensingModule_CallerNotLicensor();
             }
@@ -187,14 +198,23 @@ contract LicensingModule is BaseModule, ILicensingModule {
             bool derivativesAllowed,
             bool isReciprocal,
             bool derivativeNeedsApproval
-        ) = _parseLicenseParameters(
-            ipOrg_,
-            input.params,
-            supportedParams
-        );
+        ) = _parseLicenseParameters(ipOrg_, input.params, supportedParams);
+
+        Licensing.LicenseStatus newLicenseStatus;
+        if (
+            input.parentLicenseId != 0 &&
+            LICENSE_REGISTRY.derivativeNeedsApproval(input.parentLicenseId)
+        ) {
+            // If parent license ID has `derivativeNeedsApproval` = true, then new license is pending licensor approval.
+            // This condition is triggered when parent's `isReciprocal` = false but `derivativeNeedsApproval` = true.
+            newLicenseStatus = Licensing.LicenseStatus.PendingLicensorApproval;
+        } else {
+            newLicenseStatus = Licensing.LicenseStatus.Active;
+        }
+
         // Create license
         Licensing.LicenseData memory newLicense = Licensing.LicenseData({
-            status: Licensing.LicenseStatus.Active,
+            status: newLicenseStatus,
             derivativesAllowed: derivativesAllowed,
             isReciprocal: isReciprocal,
             derivativeNeedsApproval: derivativeNeedsApproval,
@@ -212,17 +232,23 @@ contract LicensingModule is BaseModule, ILicensingModule {
         address ipOrg_,
         Licensing.ParamValue[] memory inputParams_,
         Licensing.ParamDefinition[] memory supportedParams_
-    ) private view returns (
-        Licensing.ParamValue[] memory licenseParams,
-        bool derivativesAllowed,
-        bool derivativeNeedsApproval,
-        bool isReciprocal
-    ) {
+    )
+        private
+        view
+        returns (
+            Licensing.ParamValue[] memory licenseParams,
+            bool derivativesAllowed,
+            bool isReciprocal,
+            bool derivativeNeedsApproval
+        )
+    {
         uint256 inputLength_ = inputParams_.length;
-        mapping(ShortString => bytes) storage _ipOrgValues = _ipOrgParamValues[ipOrg_];
+        mapping(ShortString => bytes) storage _ipOrgValues = _ipOrgParamValues[
+            ipOrg_
+        ];
         uint256 supportedLength = supportedParams_.length;
         licenseParams = new Licensing.ParamValue[](supportedLength);
-        
+
         // First, get ipOrg defaults
         for (uint256 i = 0; i < supportedLength; i++) {
             // For every supported parameter
@@ -274,7 +300,6 @@ contract LicensingModule is BaseModule, ILicensingModule {
             derivativeNeedsApproval = false;
             isReciprocal = false;
         }
-        return (licenseParams, derivativesAllowed, derivativeNeedsApproval, isReciprocal);
     }
 
     function _decideValueSource(
@@ -304,9 +329,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
         ShortString tag,
         bytes memory resultValue,
         bool derivativesAllowed
-    ) private pure returns (bool) {
-        
-    }
+    ) private pure returns (bool) {}
 
     /// Gets the licensor address for this IPA.
     function _getLicensor(
@@ -401,12 +424,6 @@ contract LicensingModule is BaseModule, ILicensingModule {
             ipOrgAddress
         ];
         uint256 numParams = configParams.length;
-        emit IpOrgLicensingFrameworkSet(
-            ipOrgAddress,
-            config.frameworkId,
-            LICENSING_FRAMEWORK_REPO.getLicenseTextUrl(config.frameworkId),
-            config.licensor
-        );
         // Add the parameters to storage
         for (uint256 i = 0; i < numParams; i++) {
             Licensing.ParamValue memory param = configParams[i];
@@ -419,8 +436,14 @@ contract LicensingModule is BaseModule, ILicensingModule {
                 revert Errors.LicensingModule_InvalidParamValue();
             }
             paramValues[param.tag] = param.value;
-            emit ParameterSet(ipOrgAddress, param.tag.toString(), paramDef.paramType, param.value);
         }
+        emit IpOrgLicensingFrameworkSet(
+            ipOrgAddress,
+            config.frameworkId,
+            LICENSING_FRAMEWORK_REPO.getLicenseTextUrl(config.frameworkId),
+            config.licensor,
+            configParams
+        );
         
         return "";
     }

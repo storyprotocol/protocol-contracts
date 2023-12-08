@@ -9,12 +9,13 @@ import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { IRegistrationModule } from "contracts/interfaces/modules/registration/IRegistrationModule.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { AccessControlled } from "contracts/access-control/AccessControlled.sol";
+import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
 import { Registration } from "contracts/lib/modules/Registration.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
-
+import { ModuleKey, REGISTRATION_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 
 /// @title Registration Module
 /// @notice The registration module is responsible for registration, transferring, and
@@ -52,6 +53,10 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         address accessControl_
     ) BaseModule(params_) AccessControlled(accessControl_) {}
 
+    /// @notice Gets the protocol-wide module key for the registration module.
+    function moduleKey() public pure override(BaseModule, IModule) returns (ModuleKey) {
+        return REGISTRATION_MODULE_KEY;
+    }
 
     /// @notice Registers hooks for a specific type and IP Org.
     /// @dev This function can only be called by the IP Org owner.
@@ -59,6 +64,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     /// @param ipOrg_ The IP Org for which the hooks are being registered.
     /// @param hooks_ The addresses of the hooks to register.
     /// @param hooksConfig_ The configurations for the hooks.
+    /// @param registerParams_ The parameters for the registration.
     function registerHooks(
         HookType hType_,
         IIPOrg ipOrg_,
@@ -292,30 +298,29 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     /// @param toIpOrg_ The address of the new governing IP Org.
     /// @param toIpOrgType_ The type of the IP asset within the new IP Org.
     /// TODO(leeren) Expose this function to FE once IP Orgs are finalized.
-    function _transferIPAssetToIPOrg(
-        address fromIpOrg_,
-        uint256 fromIpOrgAssetId_,
-        address toIpOrg_,
-        uint8 toIpOrgType_,
-        address from_,
-        address to_
-    ) internal returns (uint256 ipAssetId_, uint256 ipOrgAssetId_) {
-        uint256 id = ipAssetId[address(fromIpOrg_)][fromIpOrgAssetId_];
-
-        address owner = IIPOrg(fromIpOrg_).ownerOf(ipOrgAssetId_);
-
-        delete ipAssetId[address(fromIpOrg_)][fromIpOrgAssetId_];
-        delete ipOrgAssets[id];
-        IIPOrg(fromIpOrg_).burn(ipOrgAssetId_);
-        IPA_REGISTRY.transferIPOrg(
-            ipAssetId_,
-            toIpOrg_
-        );
-        ipOrgAssetId_ = IIPOrg(toIpOrg_).mint(owner, toIpOrgType_);
-        IPOrgAsset memory ipOrgAsset = IPOrgAsset(toIpOrg_, ipOrgAssetId_);
-        ipOrgAssets[id] = ipOrgAsset;
-        ipAssetId[address(toIpOrg_)][ipOrgAssetId_] = id;
-    }
+    /// NOTE: This function is currently not used, but will be used in the future. Commented out for now.
+    // function _transferIPAssetToIPOrg(
+    //     address fromIpOrg_,
+    //     uint256 fromIpOrgAssetId_,
+    //     address toIpOrg_,
+    //     uint8 toIpOrgType_,
+    //     address from_,
+    //     address to_
+    // ) internal returns (uint256 ipAssetId_, uint256 ipOrgAssetId_) {
+    //     uint256 id = ipAssetId[address(fromIpOrg_)][fromIpOrgAssetId_];
+    //     address owner = IIPOrg(fromIpOrg_).ownerOf(ipOrgAssetId_);
+    //     delete ipAssetId[address(fromIpOrg_)][fromIpOrgAssetId_];
+    //     delete ipOrgAssets[id];
+    //     IIPOrg(fromIpOrg_).burn(ipOrgAssetId_);
+    //     IPA_REGISTRY.transferIPOrg(
+    //         ipAssetId_,
+    //         toIpOrg_
+    //     );
+    //     ipOrgAssetId_ = IIPOrg(toIpOrg_).mint(owner, toIpOrgType_);
+    //     IPOrgAsset memory ipOrgAsset = IPOrgAsset(toIpOrg_, ipOrgAssetId_);
+    //     ipOrgAssets[id] = ipOrgAsset;
+    //     ipAssetId[address(toIpOrg_)][ipOrgAssetId_] = id;
+    // }
 
 
     /// @dev Adds new IP asset types to an IP Org.

@@ -55,7 +55,7 @@ contract LicensingModuleConfigTest is BaseTest {
             config
         );
     }
-   
+
 
     function test_LicensingModule_configIpOrg_revert_InvalidLicensorConfig()
         public
@@ -76,7 +76,7 @@ contract LicensingModuleConfigTest is BaseTest {
     function test_LicensingModule_configIpOrg_revert_paramLengthNotValid() public {
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: "test_framework",
-            params: new Licensing.ParamValue[](100),
+            params: new Licensing.ParamValue[](1000),
             licensor: Licensing.LicensorConfig.IpOrgOwnerAlways
         });
         vm.prank(ipOrg.owner());
@@ -132,7 +132,6 @@ contract LicensingModuleConfigTest is BaseTest {
             abi.encode(ssValue)
         );
     }
-    
 
     function test_LicensingModule_configIpOrg_revert_ipOrgAlreadySet() public {
         test_LicensingModule_configIpOrg();
@@ -154,6 +153,4 @@ contract LicensingModuleConfigTest is BaseTest {
             config
         );
     }
-    
-
 }

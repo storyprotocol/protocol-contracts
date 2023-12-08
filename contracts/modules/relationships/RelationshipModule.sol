@@ -13,6 +13,8 @@ import { BitMask } from "contracts/lib/BitMask.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IRegistrationModule } from "contracts/interfaces/modules/registration/IRegistrationModule.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
+import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
+import { ModuleKey, REGISTRATION_MODULE_KEY, RELATIONSHIP_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 
 /// @title Relationship Module
 /// @notice Contract that handles the creation and management of relationships between entities.
@@ -42,6 +44,11 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         address accessControl_
     ) BaseModule(params_) AccessControlled(accessControl_) {}
 
+
+    /// @notice Gets the protocol-wide module key for the relationship module.
+    function moduleKey() public pure override(BaseModule, IModule) returns (ModuleKey) {
+        return RELATIONSHIP_MODULE_KEY;
+    }
 
     /// @notice Registers hooks for a specific hook type, based on IP Org and relationship type.
     /// @dev This function can only be called by the IP Org owner.
@@ -166,7 +173,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         uint8[] memory allowedTypes_
     ) private view {
         IRegistrationModule regModule = IRegistrationModule(
-            MODULE_REGISTRY.protocolModule(ModuleRegistryKeys.REGISTRATION_MODULE)
+            address(MODULE_REGISTRY.protocolModule(REGISTRATION_MODULE_KEY))
         );
         uint256 length = allowedTypes_.length;
         for (uint256 i = 0; i < length; i++) {

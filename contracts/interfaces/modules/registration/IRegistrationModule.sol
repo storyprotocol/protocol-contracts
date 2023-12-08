@@ -2,9 +2,11 @@
 pragma solidity ^0.8.19;
 
 import { Registration } from "contracts/lib/modules/Registration.sol";
+import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
+import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 
 /// @title IRegistrationModule
-interface IRegistrationModule {
+interface IRegistrationModule is IModule {
 
     /// @notice Emits when an IPOrg updates metadata associated with its IPA.
     /// @param ipOrg The address of the IP Org whose metadata was updated.
@@ -76,4 +78,5 @@ interface IRegistrationModule {
 
     /// @notice Returns true if the index for an IP Org asset type is supported.
     function isValidIpOrgAssetType(address ipOrg_, uint8 index) external view returns (bool);
+
 }

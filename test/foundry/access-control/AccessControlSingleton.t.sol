@@ -9,6 +9,8 @@ import { AccessControlSingleton } from "contracts/access-control/AccessControlSi
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 contract AccessControlSingletonTest is Test, AccessControlHelper {
+
+    error TestError();
     function setUp() public {
         _setupAccessControl();
     }
@@ -18,6 +20,11 @@ contract AccessControlSingletonTest is Test, AccessControlHelper {
             accessControl.hasRole(AccessControl.PROTOCOL_ADMIN_ROLE, admin),
             "Admin role not set correctly"
         );
+    }
+
+    function test_AccessControlSingleton_revert_reinitialize() public {
+        vm.expectRevert("Initializable: contract is already initialized");
+        accessControl.initialize(admin);
     }
 
     function test_AccessControlSingleton_revert_zeroAdmin() public {

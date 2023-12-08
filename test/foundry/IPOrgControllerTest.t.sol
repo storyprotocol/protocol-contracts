@@ -14,7 +14,7 @@ import { AccessControlHelper } from "./utils/AccessControlHelper.sol";
 import { MockIPOrgController } from "./mocks/MockIPOrgController.sol";
 import { BaseModule } from "contracts/modules/base/BaseModule.sol";
 import { RegistrationModule } from "contracts/modules/registration/RegistrationModule.sol";
-import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
+import { REGISTRATION_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 import { LicensingFrameworkRepo } from "contracts/modules/licensing/LicensingFrameworkRepo.sol";
 import 'test/foundry/utils/ProxyHelper.sol';
 import "forge-std/Test.sol";
@@ -86,7 +86,7 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
             address(accessControl)
         );
         _grantRole(vm, AccessControl.MODULE_REGISTRAR_ROLE, address(this));
-        moduleRegistry.registerProtocolModule(ModuleRegistryKeys.REGISTRATION_MODULE, registrationModule);
+        moduleRegistry.registerProtocolModule(REGISTRATION_MODULE_KEY, registrationModule);
 
         vm.label(prevIpOrgOwner, "Prev IP Org Owner");
         vm.label(newIpOrgOwner, "New IP Org Owner");
@@ -119,7 +119,7 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
         ipAssetTypes[0] = "type1";
         ipAssetTypes[1] = "type2";
         ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", ipAssetTypes));
-        moduleRegistry.registerProtocolModule(ModuleRegistryKeys.REGISTRATION_MODULE, BaseModule(address(this)));
+        vm.startPrank(address(registrationModule));
         uint256 ipAssetId = ipOrg.mint(ipOrgOwner, 1);
         assertEq(ipOrg.ipOrgAssetType(ipAssetId), 1);
         assertEq(ipOrg.ownerOf(ipAssetId), ipOrgOwner);
@@ -140,9 +140,10 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
         ipAssetTypes[0] = "type1";
         ipAssetTypes[1] = "type2";
         ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", ipAssetTypes));
-        moduleRegistry.registerProtocolModule(ModuleRegistryKeys.REGISTRATION_MODULE, BaseModule(address(this)));
+        vm.startPrank(address(registrationModule));
         uint256 ipAssetId = ipOrg.mint(ipOrgOwner, 1);
         ipOrg.burn(ipAssetId);
+        vm.stopPrank();
         vm.expectRevert(Errors.IPOrg_IdDoesNotExist.selector);
         ipOrg.ipOrgAssetType(ipAssetId);
         vm.expectRevert();
@@ -154,7 +155,7 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
         ipAssetTypes[0] = "type1";
         ipAssetTypes[1] = "type2";
         ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", ipAssetTypes));
-        moduleRegistry.registerProtocolModule(ModuleRegistryKeys.REGISTRATION_MODULE, BaseModule(address(this)));
+        vm.prank(address(registrationModule));
         uint256 ipAssetId = ipOrg.mint(ipOrgOwner, 1);
         vm.prank(ipOrgOwner);
         vm.expectRevert(Errors.Unauthorized.selector);

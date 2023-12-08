@@ -5,7 +5,6 @@ pragma solidity ^0.8.19;
  * @notice Based on OpenZeppelin's BitMap, this library is used to encode a set of indexes in a compact way.
  * Instead of using a storage type like OZ, where they use a mapping(uint256 => uint256) for an indeterminate large number of values,
  * this library limts it to a 256 values in a single uint256.
- * @author Raul Martinez
  */
 library BitMask {
 
@@ -40,17 +39,15 @@ library BitMask {
     function _getSetIndexes(uint256 mask_) internal pure returns (uint8[] memory) {
         // Count the number of set bits to allocate the array size
         uint256 count;
-        for (uint8 i = 0; i < 256; ++i) {
+        for (uint8 i = 0; i < 255; ++i) {
             if (_isSet(mask_, i)) {
                 ++count;
             }
-        }
-        
+        }        
         uint8[] memory setBitIndexes = new uint8[](count);
-
         // Fill the array with indices of set bits
         uint256 index = 0;
-        for (uint8 i = 0; i < 256; ++i) {
+        for (uint8 i = 0; i < 255; ++i) {
             if (_isSet(mask_, i)) {
                 setBitIndexes[index] = i;
                 ++index;

@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 
 import { IIPOrgController } from "contracts/interfaces/ip-org/IIPOrgController.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
+import { Gateway } from "contracts/modules/Gateway.sol";
 import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
@@ -14,6 +15,11 @@ import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
+import { ILicensingModule } from "contracts/interfaces/modules/licensing/ILicensingModule.sol";
+import { IRegistrationModule } from "contracts/interfaces/modules/registration/IRegistrationModule.sol";
+import { IRelationshipModule } from "contracts/interfaces/modules/relationships/IRelationshipModule.sol";
+import { RELATIONSHIP_MODULE, LICENSING_MODULE, REGISTRATION_MODULE } from "contracts/lib/modules/Module.sol";
+import { ModuleKey, REGISTRATION_MODULE_KEY, LICENSING_MODULE_KEY, RELATIONSHIP_MODULE_KEY, ModuleDependencies } from "contracts/lib/modules/Module.sol";
 
 /// @title Story Protocol Gateway Contract
 /// @notice The Story Protocol contract acts as a global gateway for calling all
@@ -23,6 +29,11 @@ import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 ///         In the future, for more customized logic, IP Orgs may choose to create 
 ///         their own frontend contracts (gateways) for IP interaction.
 contract StoryProtocol is Multicall {
+
+    // Modules which the Story Protocol gateway depends on.
+    IRegistrationModule public registrationModule;
+    ILicensingModule public licensingModule;
+    IRelationshipModule public relationshipModule;
 
     IIPOrgController public immutable IP_ORG_CONTROLLER;
     ModuleRegistry public immutable MODULE_REGISTRY;
@@ -58,7 +69,7 @@ contract StoryProtocol is Multicall {
         MODULE_REGISTRY.configure(
             IIPOrg(ipOrg_),
             msg.sender,
-            ModuleRegistryKeys.REGISTRATION_MODULE,
+            REGISTRATION_MODULE,
             encodedParams
         );
     }
@@ -77,7 +88,7 @@ contract StoryProtocol is Multicall {
         MODULE_REGISTRY.configure(
             IIPOrg(ipOrg_),
             msg.sender,
-            ModuleRegistryKeys.REGISTRATION_MODULE,
+            REGISTRATION_MODULE,
             encodedParams
         );
     }
@@ -120,7 +131,7 @@ contract StoryProtocol is Multicall {
         bytes memory result = MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             msg.sender,
-            ModuleRegistryKeys.REGISTRATION_MODULE,
+            REGISTRATION_MODULE,
             encodedParams,
             preHooksData_,
             postHooksData_
@@ -156,7 +167,7 @@ contract StoryProtocol is Multicall {
         MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             msg.sender,
-            ModuleRegistryKeys.REGISTRATION_MODULE,
+            REGISTRATION_MODULE,
             encodedParams,
             preHooksData_,
             postHooksData_
@@ -174,7 +185,7 @@ contract StoryProtocol is Multicall {
         MODULE_REGISTRY.configure(
             IIPOrg(params_.ipOrg),
             msg.sender,
-            ModuleRegistryKeys.RELATIONSHIP_MODULE,
+            RELATIONSHIP_MODULE,
             abi.encode(LibRelationship.ADD_REL_TYPE_CONFIG, abi.encode(params_))
         );
     }
@@ -186,7 +197,7 @@ contract StoryProtocol is Multicall {
         MODULE_REGISTRY.configure(
             IIPOrg(ipOrg_),
             msg.sender,
-            ModuleRegistryKeys.RELATIONSHIP_MODULE,
+            RELATIONSHIP_MODULE,
             abi.encode(
                 LibRelationship.REMOVE_REL_TYPE_CONFIG,
                 abi.encode(relType)
@@ -203,7 +214,7 @@ contract StoryProtocol is Multicall {
         bytes memory result = MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             msg.sender,
-            ModuleRegistryKeys.RELATIONSHIP_MODULE,
+            RELATIONSHIP_MODULE,
             abi.encode(params_),
             preHooksData_,
             postHooksData_
@@ -225,7 +236,7 @@ contract StoryProtocol is Multicall {
         MODULE_REGISTRY.configure(
             IIPOrg(ipOrg_),
             msg.sender,
-            ModuleRegistryKeys.LICENSING_MODULE,
+            LICENSING_MODULE,
             abi.encode(Licensing.LICENSING_FRAMEWORK_CONFIG, abi.encode(config_))
         );
     }
@@ -246,7 +257,7 @@ contract StoryProtocol is Multicall {
         bytes memory result = MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             msg.sender,
-            ModuleRegistryKeys.LICENSING_MODULE,
+            LICENSING_MODULE,
             abi.encode(
                 Licensing.CREATE_LICENSE,
                 params
@@ -267,7 +278,7 @@ contract StoryProtocol is Multicall {
         MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             msg.sender,
-            ModuleRegistryKeys.LICENSING_MODULE,
+            LICENSING_MODULE,
             abi.encode(
                 Licensing.ACTIVATE_LICENSE,
                 abi.encode(licenseId_)

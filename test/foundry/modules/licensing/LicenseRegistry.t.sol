@@ -64,7 +64,6 @@ contract LicenseRegistryTest is BaseTest {
             tag: SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
             value: abi.encode(derivativeOptions)
         }));
-
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: SPUMLParams.FRAMEWORK_ID,
             params: params,
@@ -339,6 +338,16 @@ contract LicenseRegistryTest is BaseTest {
         vm.prank(ipOrg.owner());
         vm.expectRevert(Errors.LicenseRegistry_LicenseNotActive.selector);
         licenseRegistry.linkLnftToIpa(childLicenseId, ipaId_1);
+    }
+
+    function test_LicenseRegistry_metadata() public {
+        (
+            ,
+            uint256 childLicenseId
+        ) = _createLicense_parent_noIpa_reciprocal();
+        string memory expected = "data:application/json;base64,eyJuYW1lIjogIlN0b3J5IFByb3RvY29sIExpY2Vuc2UgTkZUICMyIiwgImRlc2NyaXB0aW9uIjogIkxpY2Vuc2UgYWdyZWVtZW50IHN0YXRpbmcgdGhlIHRlcm1zIG9mIGEgU3RvcnkgUHJvdG9jb2wgSVAgT3JnIiwgImF0dHJpYnV0ZXMiOiBbeyJ0cmFpdF90eXBlIjogIklQIE9yZyIsICJ2YWx1ZSI6ICIweGY1YmEyMTY5MWE4YmMwMTFiN2I0MzA4NTRiNDFkNWJlMGI3OGI5MzgifSx7InRyYWl0X3R5cGUiOiAiRnJhbWV3b3JrIElEIiwgInZhbHVlIjogIlNQVU1MLTEuMCJ9LHsidHJhaXRfdHlwZSI6ICJGcmFtZXdvcmsgVVJMIiwgInZhbHVlIjogInRleHRfdXJsIn0seyJ0cmFpdF90eXBlIjogIlN0YXR1cyIsICJ2YWx1ZSI6ICJQZW5kaW5nIExpY2Vuc29yIEFwcHJvdmFsIn0seyJ0cmFpdF90eXBlIjogIkxpY2Vuc29yIiwgInZhbHVlIjogIjB4MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDFjOCJ9LHsidHJhaXRfdHlwZSI6ICJMaWNlbnNlZSIsICJ2YWx1ZSI6ICIweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAxYzgifSx7InRyYWl0X3R5cGUiOiAiUmV2b2tlciIsICJ2YWx1ZSI6ICIweDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAyMmIifSx7InRyYWl0X3R5cGUiOiAiUGFyZW50IExpY2Vuc2UgSUQiLCAidmFsdWUiOiAiMSJ9LHsidHJhaXRfdHlwZSI6ICJEZXJpdmF0aXZlIElQQSIsICJ2YWx1ZSI6ICIwIn0seyJ0cmFpdF90eXBlIjogIkNoYW5uZWxzLU9mLURpc3RyaWJ1dGlvbiIsICJ2YWx1ZSI6IFsidGVzdDEiLCJ0ZXN0MiJdfSx7InRyYWl0X3R5cGUiOiAiQXR0cmlidXRpb24iLCAidmFsdWUiOiAidHJ1ZSJ9LHsidHJhaXRfdHlwZSI6ICJEZXJpdmF0aXZlcy1BbGxvd2VkIiwgInZhbHVlIjogInRydWUifSx7InRyYWl0X3R5cGUiOiAiRGVyaXZhdGl2ZXMtQWxsb3dlZC1PcHRpb25zIiwgInZhbHVlIjogWyJBbGxvd2VkLVdpdGgtQXBwcm92YWwiLCJBbGxvd2VkLVJlY2lwcm9jYWwtTGljZW5zZSJdfV19";
+        assertEq(licenseRegistry.tokenURI(childLicenseId), expected);
+
     }
 
     function _constructInputParams()

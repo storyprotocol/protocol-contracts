@@ -5,11 +5,15 @@ pragma solidity ^0.8.19;
 import { IModuleRegistry } from "contracts/interfaces/modules/IModuleRegistry.sol";
 import { AccessControlled } from "contracts/access-control/AccessControlled.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
+import { IGateway } from "contracts/interfaces/modules/IGateway.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { BaseModule } from "./base/BaseModule.sol";
 import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
+import { ModuleKey, ModuleDependencies, toModuleKey } from "contracts/lib/modules/Module.sol";
+import { Gateway } from "./Gateway.sol";
 
 /// @title ModuleRegistry
 /// @notice This contract is the source of truth for all modules that are registered in the protocol.
@@ -19,46 +23,124 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
 
     address public constant PROTOCOL_LEVEL = address(0);
 
-    mapping(string => BaseModule) internal _protocolModules;
     mapping(string => IHook) internal _protocolHooks;
     mapping(IHook => string) internal _hookKeys;
+
+    /// @notice Maps module keys to their respective modules.
+    mapping(ModuleKey => address) internal _modules;
+
+    /// @notice Tracks whether a gateway can call a specific module function.
+    mapping(ModuleKey => mapping(IGateway => mapping(bytes4 => bool))) internal _isAuthorized;
 
     constructor(address accessControl_) AccessControlled(accessControl_) { }
 
     /// @notice Gets the protocol-wide module associated with a module key.
-    /// @param moduleKey_ The unique module key used to identify the module.
-    function protocolModule(string calldata moduleKey_) public view returns (address) {
-        return address(_protocolModules[moduleKey_]);
+    /// @param key_ The unique module key used to identify the module.
+    function protocolModule(string calldata key_) public view returns (address) {
+        return _modules[toModuleKey(key_)];
     }
 
-    /// Add a module to the protocol, that will be available for all IPOrgs.
-    /// This is only callable by MODULE_REGISTRAR_ROLE holders.
-    /// @param moduleKey short module descriptor
-    /// @param moduleAddress address of the module
-    function registerProtocolModule(
-        string calldata moduleKey,
-        BaseModule moduleAddress
+    /// @notice Gets the protocol-wide module associated with a module key.
+    /// @param key_ The unique module key used to identify the module.
+    function protocolModule(ModuleKey key_) public view returns (address) {
+        return _modules[key_];
+    }
+
+    /// @notice Checks whether a gateway is authorized to call a module function.
+    /// @param key_ The type of the module being checked.
+    /// @param gateway_ The gateway which has the module function as a dependency.
+    /// @param fn_ The module function whose access is being checked for.
+    function isAuthorized(ModuleKey key_, IGateway gateway_, bytes4 fn_) public view returns (bool) {
+        if (_modules[key_] == address(0)) {
+            revert Errors.ModuleRegistry_ModuleNotYetRegistered();
+        }
+        return _isAuthorized[key_][gateway_][fn_];
+    }
+
+    /// @notice Registers a new gateway to the protocol with its declared dependencies.
+    /// @dev This is only callable by entities with the MODULE_REGISTRAR_ROLE role.
+    /// @param gateway_ The gateway being registered into the protocol.
+    function registerProtocolGateway(
+        IGateway gateway_
     ) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
-        // TODO: inteface check in the module
-        if (address(moduleAddress) == address(0)) {
+        ModuleDependencies memory dependencies = gateway_.updateDependencies();
+        uint256 numModules = dependencies.keys.length;
+        if (numModules != dependencies.fns.length) {
+            revert Errors.ModuleRegistry_InvalidGateway();
+        }
+
+        for (uint256 i = 0; i < numModules; ++i) {
+            ModuleKey moduleKey = dependencies.keys[i];
+            bytes4[] memory fns = dependencies.fns[i];
+
+            if (_modules[moduleKey] == address(0)) {
+                revert Errors.ModuleRegistry_ModuleNotYetRegistered();
+            }
+
+            // Authorize all module function dependencies for the gateway.
+            for (uint256 j = 0; j < fns.length; j++ ) {
+                if (_isAuthorized[moduleKey][gateway_][fns[j]]) {
+                    revert Errors.ModuleRegistry_DependencyAlreadyRegistered();
+                }
+                _isAuthorized[moduleKey][gateway_][fns[j]] = true;
+                emit ModuleAuthorizationGranted(moduleKey, fns[j], address(gateway_), true);
+            }
+
+        }
+    }
+
+    /// @notice Removes a gatway as an authorized caller of the protocol.
+    /// @dev This is only callable by entities with the MODULE_REGISTRAR_ROLE role.
+    /// @param gateway_ The gateway being removed from the protocol.
+    function removeProtocolGateway(
+        IGateway gateway_
+    ) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
+        ModuleDependencies memory dependencies = gateway_.getDependencies();
+        uint256 numModules = dependencies.keys.length;
+        if (numModules != dependencies.fns.length) {
+            revert Errors.ModuleRegistry_InvalidGateway();
+        }
+
+        for (uint256 i = 0; i < numModules; ++i) {
+            ModuleKey moduleKey = dependencies.keys[i];
+            bytes4[] memory fns = dependencies.fns[i];
+
+            // Revoke authorizations made previously.
+            // TODO: Change logic to track dependencies through the registry itself.
+            for (uint256 j = 0; j < fns.length; j++ ) {
+                if (!_isAuthorized[moduleKey][gateway_][fns[j]]) {
+                    revert Errors.ModuleRegistry_DependencyNotYetRegistered();
+                }
+                _isAuthorized[moduleKey][gateway_][fns[j]] = false;
+                emit ModuleAuthorizationGranted(moduleKey, fns[j], address(gateway_), false);
+            }
+
+        }
+    }
+
+    /// @notice Adds a new module to the protocol.
+    /// @dev This is only callable by entities with the MODULE_REGISTRAR_ROLE role.
+    /// @param key_ The identifier for the type of module being enrolled.
+    /// @param module_ The module that will be registered into the protocol.
+    function registerProtocolModule(
+        ModuleKey key_,
+        IModule module_
+    ) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
+        if (address(module_) == address(0)) {
             revert Errors.ZeroAddress();
         }
-        _protocolModules[moduleKey] = moduleAddress;
-        emit ModuleAdded(PROTOCOL_LEVEL, moduleKey, address(moduleAddress));
-    }
 
-    /// Remove a module from the protocol (all IPOrgs)
-    /// This is only callable by MODULE_REGISTRAR_ROLE holders.
-    /// @param moduleKey short module descriptor
-    function removeProtocolModule(
-        string calldata moduleKey
-    ) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
-        if (address(_protocolModules[moduleKey]) == address(0)) {
-            revert Errors.ModuleRegistry_ModuleNotRegistered(moduleKey);
+        if (_modules[key_] != address(0)) {
+            revert Errors.ModuleRegistry_ModuleAlreadyRegistered();
         }
-        address moduleAddress = address(_protocolModules[moduleKey]);
-        delete _protocolModules[moduleKey];
-        emit ModuleRemoved(PROTOCOL_LEVEL, moduleKey, moduleAddress);
+
+        if (module_.moduleKey() != key_) {
+            revert Errors.ModuleRegistry_ModuleKeyMismatch();
+        }
+
+        _modules[key_] = address(module_);
+
+        emit ModuleAdded(PROTOCOL_LEVEL, string(abi.encodePacked(key_)), address(module_));
     }
 
     /// @notice Registers a new protocol hook.
@@ -93,14 +175,20 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
         emit HookRemoved(PROTOCOL_LEVEL, hookKey, address(hookAddress));
     }
     
-    /// Get a module from the protocol, by its key.
-    function moduleForKey(string calldata moduleKey) external view returns (BaseModule) {
-        return _protocolModules[moduleKey];
-    }
+    /// Removes the current module configured for a module key.
+    /// This is only callable by MODULE_REGISTRAR_ROLE holders.
+    /// @param key_ The identifier for the type of module being removed.
+    function removeProtocolModule(
+        ModuleKey key_
+    ) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
+        if (_modules[key_] == address(0)) {
+            revert Errors.ModuleRegistry_ModuleNotYetRegistered();
+        }
 
-    // Returns true if the provided address is a module.
-    function isModule(string calldata moduleKey, address caller_) external view returns (bool) {
-        return address(_protocolModules[moduleKey]) == caller_;
+        address removedModule = _modules[key_];
+        delete _modules[key_];
+
+        emit ModuleRemoved(key_, removedModule);
     }
 
     /// @notice Returns the protocol hook associated with a given hook key.
@@ -126,7 +214,7 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
     /// @return encoded result of the module execution
     function execute(
         IIPOrg ipOrg_,
-        string memory moduleKey_,
+        string calldata moduleKey_,
         bytes memory moduleParams_,
         bytes[] memory preHookParams_,
         bytes[] memory postHookParams_
@@ -182,14 +270,14 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
     function _execute(
         IIPOrg ipOrg_,
         address caller_,
-        string memory moduleKey_,
+        string calldata moduleKey_,
         bytes memory moduleParams_,
         bytes[] memory preHookParams_,
         bytes[] memory postHookParams_
     ) private returns (bytes memory result) {
-        BaseModule module = _protocolModules[moduleKey_];
+        IModule module = IModule(_modules[toModuleKey(moduleKey_)]);
         if (address(module) == address(0)) {
-            revert Errors.ModuleRegistry_ModuleNotRegistered(moduleKey_);
+            revert Errors.ModuleRegistry_ModuleNotYetRegistered();
         }
         result = module.execute(ipOrg_, caller_, moduleParams_, preHookParams_, postHookParams_);
         emit ModuleExecuted(address(ipOrg_), moduleKey_, caller_, moduleParams_, preHookParams_, postHookParams_);
@@ -202,9 +290,9 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
         string calldata moduleKey_,
         bytes calldata params_
     ) private returns (bytes memory result) {
-        BaseModule module = _protocolModules[moduleKey_];
+        IModule module = IModule(_modules[toModuleKey(moduleKey_)]);
         if (address(module) == address(0)) {
-            revert Errors.ModuleRegistry_ModuleNotRegistered(moduleKey_);
+            revert Errors.ModuleRegistry_ModuleNotYetRegistered();
         }
         result = module.configure(ipOrg_, caller_, params_);
         emit ModuleConfigured(address(ipOrg_), moduleKey_, caller_, params_);

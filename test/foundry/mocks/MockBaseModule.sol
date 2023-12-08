@@ -4,6 +4,7 @@ pragma solidity ^0.8.18;
 
 import { BaseModule } from "contracts/modules/base/BaseModule.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
+import { ModuleKey } from "contracts/lib/modules/Module.sol";
 
 /// @title Mock BaseModule
 /// @notice This mock contract is used for testing the base module flow
@@ -29,6 +30,13 @@ contract MockBaseModule is BaseModule {
         ModuleConstruction memory params_
     ) BaseModule(params_) {
         _admin = admin_;
+    }
+
+    // Stub for testing authorization via the module registry.
+    function test() external onlyAuthorized() {}
+
+    function moduleKey() public pure override returns (ModuleKey) {
+        return ModuleKey.wrap(keccak256(abi.encodePacked("test")));
     }
 
     function callStackAt(

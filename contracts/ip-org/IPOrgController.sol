@@ -16,6 +16,7 @@ import { IIPOrgController } from "contracts/interfaces/ip-org/IIPOrgController.s
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { IPOrg } from "contracts/ip-org/IPOrg.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { REGISTRATION_MODULE } from "contracts/lib/modules/Module.sol";
 
 /// @title IP Org Controller Contract
 /// @notice The IP Org Controller is the protocol-wide factory contract for creating
@@ -184,7 +185,7 @@ contract IPOrgController is
         ModuleRegistry(MODULE_REGISTRY).configure(
             IIPOrg(ipOrg_),
             address(this),
-            ModuleRegistryKeys.REGISTRATION_MODULE,
+            REGISTRATION_MODULE,
             encodedParams
         );
 
@@ -202,15 +203,6 @@ contract IPOrgController is
     function _ipOrgRecord(address ipOrg_) internal view returns (IPOrgRecord storage record) {
         IPOrgControllerStorage storage $ = _getIpOrgControllerStorage();
         record = $.ipOrgs[ipOrg_];
-        if (!$.ipOrgs[ipOrg_].registered) {
-            revert Errors.IPOrgController_IPOrgNonExistent();
-        }
-    }
-
-    /// @dev Checks whether an IP Org exists, throwing if not.
-    /// @param ipOrg_ The address of the IP Org being queried.
-    function _assertIPOrgExists(address ipOrg_) internal view {
-        IPOrgControllerStorage storage $ = _getIpOrgControllerStorage();
         if (!$.ipOrgs[ipOrg_].registered) {
             revert Errors.IPOrgController_IPOrgNonExistent();
         }
