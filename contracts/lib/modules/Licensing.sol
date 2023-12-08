@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
+// See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
-import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { BitMask } from "contracts/lib/BitMask.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
@@ -26,7 +25,7 @@ library Licensing {
         String,
         ShortStringArray,
         // uint256 bitmask representing indexes in choices array. ParamDefinition will have the available choices array.
-        MultipleChoice 
+        MultipleChoice
     }
 
     enum LicensorConfig {
@@ -93,17 +92,15 @@ library Licensing {
         LicensorConfig licensor;
     }
 
-    uint256 constant MAX_PARAM_TAGS = 150;
+    uint256 internal constant MAX_PARAM_TAGS = 150;
 
     /// Input for IpOrg legal terms configuration in LicensingModule (for now, the only option)
-    bytes32 constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");
-    bytes32 constant CREATE_LICENSE = keccak256("CREATE_LICENSE");
-    bytes32 constant ACTIVATE_LICENSE = keccak256("ACTIVATE_LICENSE");
-    bytes32 constant LINK_LNFT_TO_IPA = keccak256("LINK_LNFT_TO_IPA");
+    bytes32 public constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");
+    bytes32 public constant CREATE_LICENSE = keccak256("CREATE_LICENSE");
+    bytes32 public constant ACTIVATE_LICENSE = keccak256("ACTIVATE_LICENSE");
+    bytes32 public constant LINK_LNFT_TO_IPA = keccak256("LINK_LNFT_TO_IPA");
 
-    function _statusToString(
-        LicenseStatus status_
-    ) internal pure returns (string memory) {
+    function _statusToString(LicenseStatus status_) internal pure returns (string memory) {
         if (status_ == LicenseStatus.Unset) {
             return "Unset";
         } else if (status_ == LicenseStatus.Active) {
@@ -130,17 +127,12 @@ library Licensing {
         return result;
     }
 
-    function _encodeMultipleChoice(
-        uint8[] memory choiceIndexes_
-    ) internal pure returns (bytes memory value) {
+    function _encodeMultipleChoice(uint8[] memory choiceIndexes_) internal pure returns (bytes memory value) {
         uint256 mask = BitMask._convertToMask(choiceIndexes_);
         return abi.encode(mask);
     }
 
-    function _validateParamValue(
-        ParamDefinition memory paramDef_,
-        bytes memory value_
-    ) internal pure returns (bool) {
+    function _validateParamValue(ParamDefinition memory paramDef_, bytes memory value_) internal pure returns (bool) {
         // An empty value signals the parameter is untagged, to trigger default values in the
         // license agreement text, but that's valid
         if (keccak256(value_) == keccak256("")) {

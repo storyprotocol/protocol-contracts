@@ -2,24 +2,28 @@
 pragma solidity ^0.8.19;
 
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import { HookResult } from "contracts/interfaces/hooks/base/IHook.sol";
-import { BaseHook } from "contracts/hooks/base/BaseHook.sol";
-import { ICallbackHandler } from "contracts/interfaces/hooks/base/ICallbackHandler.sol";
-import { Errors } from "contracts/lib/Errors.sol";
-import { AccessControlled } from "contracts/access-control/AccessControlled.sol";
-import { AccessControl } from "contracts/lib/AccessControl.sol";
-import { Hook } from "contracts/lib/hooks/Hook.sol";
 
-/// @title AsyncBaseHook
-/// @notice This contract is the base contract for all asynchronous hooks.
-/// @dev It provides the basic structure and functionality for asynchronous hook execution.
+import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { BaseHook } from "contracts/hooks/base/BaseHook.sol";
+import { Errors } from "contracts/lib/Errors.sol";
+import { Hook } from "contracts/lib/hooks/Hook.sol";
+import { HookResult } from "contracts/interfaces/hooks/base/IHook.sol";
+import { ICallbackHandler } from "contracts/interfaces/hooks/base/ICallbackHandler.sol";
+
+/// @title Asynchronous Base Hook
+/// @notice This contract serves as the base functionality for all asynchronous hooks.
 abstract contract AsyncBaseHook is BaseHook {
     using ERC165Checker for address;
 
-    /// @dev requestId => callback handler
+    /// @dev Maps async hook request ids to callback handlers.
     mapping(bytes32 => ICallbackHandler) public callbackHandlers;
 
-    /// @dev Emitted when an asynchronous hook is executed.
+    /// @notice This event emits when an async hook is executed.
+    /// @param hookAddress Address of the executed hook.
+    /// @param callbackHandler The address of the handler of the callback.
+    /// @param result State of the hook (either pending or complete).
+    /// @param contextData Additional contextual data related to the execution.
+    /// @param returnData Data returned by the hook.
     event AsyncHookExecuted(
         address indexed hookAddress,
         address indexed callbackHandler,
@@ -40,9 +44,7 @@ abstract contract AsyncBaseHook is BaseHook {
     /// @notice Constructs the AsyncBaseHook contract.
     /// @param accessControl_ The address of the access control contract.
     /// @dev The constructor sets the access control and callback caller addresses.
-    constructor(
-        address accessControl_
-    ) BaseHook(accessControl_) {}
+    constructor(address accessControl_) BaseHook(accessControl_) {}
 
     /// @notice Executes an asynchronous hook.
     /// @dev Modules would utilize the function to make an async call.
@@ -66,18 +68,11 @@ abstract contract AsyncBaseHook is BaseHook {
             revert Errors.ZeroAddress();
         }
         // Check if the callback handler supports the ICallbackHandler interface
-        if (
-            !callbackHandler_.supportsInterface(
-                type(ICallbackHandler).interfaceId
-            )
-        ) {
+        if (!callbackHandler_.supportsInterface(type(ICallbackHandler).interfaceId)) {
             revert Errors.UnsupportedInterface("ICallbackHandler");
         }
 
-        Hook.ExecutionContext memory context = abi.decode(
-            hookContext_,
-            (Hook.ExecutionContext)
-        );
+        Hook.ExecutionContext memory context = abi.decode(hookContext_, (Hook.ExecutionContext));
         _validateConfig(context.config);
 
         // Request an asynchronous call
@@ -111,17 +106,11 @@ abstract contract AsyncBaseHook is BaseHook {
     /// @dev Internal function to handle a callback from an asynchronous call.
     /// @param requestId_ The ID of the request.
     /// @param callbackData_ The data returned by the callback.
-    function _handleCallback(
-        bytes32 requestId_,
-        bytes memory callbackData_
-    ) internal virtual {
+    function _handleCallback(bytes32 requestId_, bytes memory callbackData_) internal virtual {
         // Only designated callback caller can make a callback
         address caller = _callbackCaller(requestId_);
         if (msg.sender != caller) {
-            revert Errors.Hook_OnlyCallbackCallerCanCallback(
-                msg.sender,
-                caller
-            );
+            revert Errors.Hook_OnlyCallbackCallerCanCallback(msg.sender, caller);
         }
 
         // Checking if a callback handler exists for the given request ID

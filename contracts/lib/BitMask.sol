@@ -3,11 +3,10 @@ pragma solidity ^0.8.19;
 
 /**
  * @notice Based on OpenZeppelin's BitMap, this library is used to encode a set of indexes in a compact way.
- * Instead of using a storage type like OZ, where they use a mapping(uint256 => uint256) for an indeterminate large number of values,
+ * Instead of using a storage type like OZ, where they use a mapping(uint256 => uint256) for large numbers of values,
  * this library limts it to a 256 values in a single uint256.
  */
 library BitMask {
-
     /// Returns whether the bit at `index` is set.
     function _isSet(uint256 mask_, uint8 index_) internal pure returns (bool) {
         uint256 indexMask = 1 << (index_ & 0xff);
@@ -24,13 +23,13 @@ library BitMask {
     }
 
     /// Sets the bit at `index`.
-    function _set(uint256 mask_, uint256 index_) internal pure returns(uint256) {
+    function _set(uint256 mask_, uint256 index_) internal pure returns (uint256) {
         uint256 indexMask = 1 << (index_ & 0xff);
         return mask_ |= indexMask;
     }
 
     /// Unsets the bit at `index`.
-    function _unset(uint256 mask_, uint256 index_) internal pure returns(uint256) {
+    function _unset(uint256 mask_, uint256 index_) internal pure returns (uint256) {
         uint256 indexMask = 1 << (index_ & 0xff);
         return mask_ &= ~indexMask;
     }
@@ -58,7 +57,7 @@ library BitMask {
 
     function _convertToMask(uint8[] memory indexes_) internal pure returns (uint256) {
         uint256 mask = 0;
-        for (uint256 i = 0; i < indexes_.length;) {
+        for (uint256 i = 0; i < indexes_.length; ) {
             mask |= 1 << (uint256(indexes_[i]) & 0xff);
             unchecked {
                 i++;

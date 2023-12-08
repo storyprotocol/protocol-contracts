@@ -8,7 +8,6 @@ import { ModuleDependencies } from "contracts/lib/modules/Module.sol";
 ///         that may be granted access by the module registry to call module
 ///         functions declared by the gateway's module dependency set.
 interface IGateway {
-
     /// @notice Synchronizes all downstream dependencies via the module registry.
     /// @dev This function may only be called by the module registry.
     /// @return dependencies The freshly updated dependencies needed by the gateway.
@@ -17,5 +16,4 @@ interface IGateway {
     /// @notice Fetches all module dependencies required by the gateway contract.
     /// @return dependencies The dependencies that the gateway requires from the protocol.
     function getDependencies() external view returns (ModuleDependencies memory dependencies);
-
 }

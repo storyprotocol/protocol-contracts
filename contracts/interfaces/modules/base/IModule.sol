@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.19;
 
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { ModuleKey } from "contracts/lib/modules/Module.sol";
@@ -43,9 +43,5 @@ interface IModule {
     /// @param caller_ address requesting the execution
     /// @param params_ encoded params for module configuration
     /// @return result of the module configuration
-    function configure(
-        IIPOrg ipOrg_,
-        address caller_,
-        bytes calldata params_
-    ) external returns (bytes memory result);
+    function configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) external returns (bytes memory result);
 }

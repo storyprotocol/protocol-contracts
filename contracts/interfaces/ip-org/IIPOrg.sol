@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
-
-import { IERC721Metadata } from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
-import { IPAsset } from "contracts/lib/IPAsset.sol";
+pragma solidity ^0.8.19;
 
 /// @notice IP Org Interface
 interface IIPOrg {

@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
+// See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 /// @title IP Org Params Library
 /// @notice Library for constants, structs, and helper functions for IP Orgs.
 library IPOrgParams {
-
     struct RegisterIPOrgParams {
         address registry;
         string name;
@@ -20,5 +19,4 @@ library IPOrgParams {
         string name;
         string symbol;
     }
-
 }

@@ -1,16 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
-// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
-pragma solidity ^0.8.13;
+// See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
+pragma solidity ^0.8.19;
 
-import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { IPOrgController } from "contracts/ip-org/IPOrgController.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { IModuleRegistry } from "contracts/interfaces/modules/IModuleRegistry.sol";
 import { IRegistrationModule } from "contracts/interfaces/modules/registration/IRegistrationModule.sol";
-import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import { IERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol";
-import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { REGISTRATION_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 
@@ -20,11 +16,7 @@ import { Errors } from "contracts/lib/Errors.sol";
 ///         the IP Asset group and as a conduit used by the IP registration module
 ///         for transferring IP ownership and configuring its IP-related metadata.
 ///         Crations of new IP Orgs happen through the IP Org Controller contract.
-contract IPOrg is
-    IIPOrg,
-    ERC721Upgradeable
-{
-
+contract IPOrg is IIPOrg, ERC721Upgradeable {
     /// @notice Tracks the last index of the IP asset wrapper.
     uint256 public lastIndex;
 
@@ -51,10 +43,7 @@ contract IPOrg is
     /// @notice Creates the IP Org implementation contract.
     /// @param controller_ Address of the IP Org controller.
     /// @param moduleRegistry_ Address of the IP asset module registry.
-    constructor(
-        address controller_,
-        address moduleRegistry_
-    ) initializer {
+    constructor(address controller_, address moduleRegistry_) initializer {
         CONTROLLER = controller_;
         MODULE_REGISTRY = IModuleRegistry(moduleRegistry_);
     }
@@ -71,9 +60,7 @@ contract IPOrg is
 
     /// @notice Retrieves the token URI for an IP Asset within the IP Asset Org.
     /// @param tokenId_ The id of the IP Asset within the IP Asset Org.
-    function tokenURI(
-        uint256 tokenId_
-    ) public view override returns (string memory) {
+    function tokenURI(uint256 tokenId_) public view override returns (string memory) {
         address registrationModule = address(IModuleRegistry(MODULE_REGISTRY).protocolModule(REGISTRATION_MODULE_KEY));
         return IRegistrationModule(registrationModule).tokenURI(address(this), tokenId_, ipOrgAssetType(tokenId_));
     }
@@ -95,11 +82,7 @@ contract IPOrg is
     /// @notice Initializes an IP Org.
     /// @param name_ Name to assign to the IP Org.
     /// @param symbol_ Symbol to assign to the IP Org.
-    function initialize(
-        string calldata name_,
-        string calldata symbol_
-    ) public initializer {
-
+    function initialize(string calldata name_, string calldata symbol_) public initializer {
         if (msg.sender != CONTROLLER) {
             revert Errors.Unauthorized();
         }
@@ -142,6 +125,4 @@ contract IPOrg is
         }
         return _ipOrgAssetTypes[id_];
     }
-
-
 }

@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
-// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
+// See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 /// @title Relationship Module Library
 library Registration {
-
     /// @notice IPOrg configuration settings.
     struct IPOrgConfig {
         string baseURI;
@@ -30,5 +29,4 @@ library Registration {
     // Constants used for determining module execution logic.
     bytes32 public constant REGISTER_IP_ASSET = keccak256("REGISTER_IP_ASSET");
     bytes32 public constant TRANSFER_IP_ASSET = keccak256("TRANSFER_IP_ASSET");
-
 }

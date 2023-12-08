@@ -16,35 +16,23 @@ abstract contract BaseHook is IHook, AccessControlled {
     constructor(address accessControl_) AccessControlled(accessControl_) {}
 
     /// @notice Executes a synchronous hook.
-    /// @dev By default, synchronous execution is disabled and this function reverts. 
+    /// @dev By default, synchronous execution is disabled and this function reverts.
     /// Subclasses can enable synchronous execution by overriding this function.
     /// Only a caller with the HOOK_CALLER_ROLE can call this function.
     function executeSync(
         bytes calldata
-    )
-        external
-        virtual
-        override
-        onlyRole(AccessControl.HOOK_CALLER_ROLE)
-        returns (HookResult, bytes memory)
-    {
+    ) external virtual override onlyRole(AccessControl.HOOK_CALLER_ROLE) returns (HookResult, bytes memory) {
         revert Errors.Hook_UnsupportedSyncOperation();
     }
 
     /// @notice Executes an asynchronous hook.
-    /// @dev By default, asynchronous execution is disabled and this function reverts. 
+    /// @dev By default, asynchronous execution is disabled and this function reverts.
     /// Subclasses can enable asynchronous execution by overriding this function.
     /// Only a caller with the HOOK_CALLER_ROLE can call this function.
     function executeAsync(
         bytes calldata,
         address
-    )
-        external
-        virtual
-        override
-        onlyRole(AccessControl.HOOK_CALLER_ROLE)
-        returns (HookResult, bytes memory, bytes32)
-    {
+    ) external virtual override onlyRole(AccessControl.HOOK_CALLER_ROLE) returns (HookResult, bytes memory, bytes32) {
         revert Errors.Hook_UnsupportedAsyncOperation();
     }
 
@@ -52,9 +40,7 @@ abstract contract BaseHook is IHook, AccessControlled {
     /// @dev This function calls the internal _validateConfig function with the provided configuration data.
     /// If the validation fails, it will revert with an error.
     /// @param hookConfig_ The configuration data for the hook.
-    function validateConfig(
-        bytes calldata hookConfig_
-    ) external view override {
+    function validateConfig(bytes calldata hookConfig_) external view override {
         _validateConfig(hookConfig_);
     }
 

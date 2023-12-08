@@ -1,24 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { HookResult } from "contracts/interfaces/hooks/base/IHook.sol";
-import { BaseHook } from "contracts/hooks/base/BaseHook.sol";
-import { Errors } from "contracts/lib/Errors.sol";
-import { AccessControlled } from "contracts/access-control/AccessControlled.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { BaseHook } from "contracts/hooks/base/BaseHook.sol";
 import { Hook } from "contracts/lib/hooks/Hook.sol";
+import { HookResult } from "contracts/interfaces/hooks/base/IHook.sol";
 
-/// @title SyncBaseHook
-/// @notice This contract is the base contract for all synchronous hooks.
-/// @dev It provides the basic structure and functionality for synchronous hook execution.
+/// @title Synchronous Base Hook
+/// @notice This contract serves as the base for all synchronous hooks.
 abstract contract SyncBaseHook is BaseHook {
     /// @dev Emitted when a synchronous hook is executed.
-    event SyncHookExecuted(
-        address indexed hookAddress,
-        HookResult indexed result,
-        bytes contextData,
-        bytes returnData
-    );
+    event SyncHookExecuted(address indexed hookAddress, HookResult indexed result, bytes contextData, bytes returnData);
 
     /// @notice Constructs the SyncBaseHook contract.
     /// @param accessControl_ The address of the access control contract.
@@ -33,16 +25,8 @@ abstract contract SyncBaseHook is BaseHook {
     /// @return hookData The data returned by the hook.
     function executeSync(
         bytes calldata hookContext_
-    )
-        external
-        override
-        onlyRole(AccessControl.HOOK_CALLER_ROLE)
-        returns (HookResult result, bytes memory hookData)
-    {
-        Hook.ExecutionContext memory context = abi.decode(
-            hookContext_,
-            (Hook.ExecutionContext)
-        );
+    ) external override onlyRole(AccessControl.HOOK_CALLER_ROLE) returns (HookResult result, bytes memory hookData) {
+        Hook.ExecutionContext memory context = abi.decode(hookContext_, (Hook.ExecutionContext));
         _validateConfig(context.config);
         hookData = _executeSyncCall(context.config, context.params);
         result = HookResult.Completed;

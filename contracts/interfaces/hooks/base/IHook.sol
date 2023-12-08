@@ -13,17 +13,14 @@ enum HookResult {
 /// @notice This interface defines the methods for synchronous and asynchronous hooks.
 /// @dev Hooks are used to execute custom logic in response to certain events or conditions.
 interface IHook {
-
     /// @notice Executes a synchronous hook.
-    /// @param hookContext_ The context of executing a hook. It is an encoded version of Hook.ExecutionContext 
+    /// @param hookContext_ The context of executing a hook. It is an encoded version of Hook.ExecutionContext
     /// @return result The result of the hook execution.
     /// @return hookData The data returned by the hook.
-    function executeSync(
-        bytes calldata hookContext_
-    ) external returns (HookResult result, bytes memory hookData);
+    function executeSync(bytes calldata hookContext_) external returns (HookResult result, bytes memory hookData);
 
     /// @notice Executes an asynchronous hook.
-    /// @param hookContext_ The context of executing a hook. It is an encoded version of Hook.ExecutionContext 
+    /// @param hookContext_ The context of executing a hook. It is an encoded version of Hook.ExecutionContext
     /// @param callbackHandler_ The address of the callback handler.
     /// @return result The result of the hook execution.
     /// @return hookData The data returned by the hook.
@@ -31,9 +28,7 @@ interface IHook {
     function executeAsync(
         bytes calldata hookContext_,
         address callbackHandler_
-    )
-        external
-        returns (HookResult result, bytes memory hookData, bytes32 requestId);
+    ) external returns (HookResult result, bytes memory hookData, bytes32 requestId);
 
     /// @notice Validates the configuration for the hook.
     /// @dev This function should be overridden in concrete Hook to provide specific validation logic.

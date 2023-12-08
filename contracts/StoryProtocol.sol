@@ -1,48 +1,38 @@
 // SPDX-License-Identifier: UNLICENSED
-// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
+// See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
+
+import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 
 import { IIPOrgController } from "contracts/interfaces/ip-org/IIPOrgController.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
-import { Gateway } from "contracts/modules/Gateway.sol";
-import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
+
 import { Errors } from "contracts/lib/Errors.sol";
-import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
-import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
 import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
-import { Registration } from "contracts/lib/modules/Registration.sol";
-import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
-import { FixedSet } from "contracts/utils/FixedSet.sol";
-import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
-import { ILicensingModule } from "contracts/interfaces/modules/licensing/ILicensingModule.sol";
-import { IRegistrationModule } from "contracts/interfaces/modules/registration/IRegistrationModule.sol";
-import { IRelationshipModule } from "contracts/interfaces/modules/relationships/IRelationshipModule.sol";
+import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
+import { Registration } from "contracts/lib/modules/Registration.sol";
 import { RELATIONSHIP_MODULE, LICENSING_MODULE, REGISTRATION_MODULE } from "contracts/lib/modules/Module.sol";
-import { ModuleKey, REGISTRATION_MODULE_KEY, LICENSING_MODULE_KEY, RELATIONSHIP_MODULE_KEY, ModuleDependencies } from "contracts/lib/modules/Module.sol";
 
 /// @title Story Protocol Gateway Contract
-/// @notice The Story Protocol contract acts as a global gateway for calling all
+/// @notice The Story Protocol contract acts as a global gateway for calling
 ///         protocol-standardized IP actions (based on their enrolled modules).
 ///         Most functions can be solely executed through this contract, as it will
 ///         be actively maintained and upgraded to support all standardized modules.
-///         In the future, for more customized logic, IP Orgs may choose to create 
+///         In the future, for more customized logic, IP Orgs may choose to create
 ///         their own frontend contracts (gateways) for IP interaction.
 contract StoryProtocol is Multicall {
-
-    // Modules which the Story Protocol gateway depends on.
-    IRegistrationModule public registrationModule;
-    ILicensingModule public licensingModule;
-    IRelationshipModule public relationshipModule;
-
+    /// @notice The IP Org Controller administers creation of new IP Orgs.
     IIPOrgController public immutable IP_ORG_CONTROLLER;
+
+    /// @notice The module registry is used to authorize calls to modules.
     ModuleRegistry public immutable MODULE_REGISTRY;
 
+    /// @notice Initializes a new Story Protocol gateway contract.
+    /// @param ipOrgController_ IP Org Controller contract, used for IP Org creation.
+    /// @param moduleRegistry_ Protocol-wide module registry used for module bookkeeping.
     constructor(IIPOrgController ipOrgController_, ModuleRegistry moduleRegistry_) {
-        if (
-            address(ipOrgController_) == address(0) ||
-            address(moduleRegistry_) == address(0)
-        ) {
+        if (address(ipOrgController_) == address(0) || address(moduleRegistry_) == address(0)) {
             revert Errors.ZeroAddress();
         }
         IP_ORG_CONTROLLER = ipOrgController_;
@@ -57,60 +47,30 @@ contract StoryProtocol is Multicall {
     /// @param ipOrg_ The address of the IP Org being configured.
     /// @param baseURI_ The base token metadata URI for the IP Org.
     /// @param contractURI_ The contract URI associated with the IP Org.
-    function setMetadata(
-        address ipOrg_,
-        string calldata baseURI_,
-        string calldata contractURI_
-    ) public {
-        bytes memory encodedParams = abi.encode(
-            Registration.SET_IP_ORG_METADATA,
-            abi.encode(baseURI_, contractURI_)
-        );
-        MODULE_REGISTRY.configure(
-            IIPOrg(ipOrg_),
-            msg.sender,
-            REGISTRATION_MODULE,
-            encodedParams
-        );
+    function setMetadata(address ipOrg_, string calldata baseURI_, string calldata contractURI_) public {
+        bytes memory encodedParams = abi.encode(Registration.SET_IP_ORG_METADATA, abi.encode(baseURI_, contractURI_));
+        MODULE_REGISTRY.configure(IIPOrg(ipOrg_), msg.sender, REGISTRATION_MODULE, encodedParams);
     }
 
     /// @notice Adds additional IP asset types for an IP Org.
     /// @param ipOrg_ The address of the IP Org being configured.
-    /// @param ipAssetTypes_ The new IP asset type descriptors to add.
-    function addIPAssetTypes(
-        address ipOrg_,
-        string[] calldata ipAssetTypes_
-    ) public {
-        bytes memory encodedParams = abi.encode(
-            Registration.SET_IP_ORG_ASSET_TYPES,
-            abi.encode(ipAssetTypes_)
-        );
-        MODULE_REGISTRY.configure(
-            IIPOrg(ipOrg_),
-            msg.sender,
-            REGISTRATION_MODULE,
-            encodedParams
-        );
+    /// @param ipAssetTypes_ The IP asset type descriptors to add for the IPOrg.
+    function addIPAssetTypes(address ipOrg_, string[] calldata ipAssetTypes_) public {
+        bytes memory encodedParams = abi.encode(Registration.SET_IP_ORG_ASSET_TYPES, abi.encode(ipAssetTypes_));
+        MODULE_REGISTRY.configure(IIPOrg(ipOrg_), msg.sender, REGISTRATION_MODULE, encodedParams);
     }
 
     /// @notice Registers a new IP Org
     /// @param owner_ The address of the IP Org to be registered.
     /// @param name_ A name to associate with the IP Org.
     /// @param symbol_ A symbol to associate with the IP Org.
-    /// TODO: Add module configurations to the IP Org registration process.
-    /// TODO: Add permissions for IP Org registration.
     function registerIpOrg(
         address owner_,
         string calldata name_,
         string calldata symbol_,
         string[] calldata ipAssetTypes_
     ) external returns (address ipOrg_) {
-        return IP_ORG_CONTROLLER.registerIpOrg(
-            owner_,
-            name_,
-            symbol_,
-            ipAssetTypes_
-        );
+        return IP_ORG_CONTROLLER.registerIpOrg(owner_, name_, symbol_, ipAssetTypes_);
     }
 
     /// @notice Registers an IP Asset.
@@ -136,7 +96,7 @@ contract StoryProtocol is Multicall {
             preHooksData_,
             postHooksData_
         );
-        // If the result is empty, then the registration module is pending for async hook execution.
+        // An empty result indicates that an async hook call is pending execution.
         if (result.length == 0) {
             return (0, 0);
         }
@@ -160,10 +120,7 @@ contract StoryProtocol is Multicall {
         bytes[] calldata preHooksData_,
         bytes[] calldata postHooksData_
     ) public {
-        bytes memory encodedParams = abi.encode(
-            Registration.TRANSFER_IP_ASSET,
-            abi.encode(from_, to_, ipAssetId_)
-        );
+        bytes memory encodedParams = abi.encode(Registration.TRANSFER_IP_ASSET, abi.encode(from_, to_, ipAssetId_));
         MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             msg.sender,
@@ -178,10 +135,9 @@ contract StoryProtocol is Multicall {
     //                            Relationships                               //
     ////////////////////////////////////////////////////////////////////////////
 
-
-    function addRelationshipType(
-        LibRelationship.AddRelationshipTypeParams calldata params_
-    ) external {
+    /// @notice Adds a new custom relationship type for an IP Org.
+    /// @param params_ Relationship configs including sources, destinations, and relationship type.
+    function addRelationshipType(LibRelationship.AddRelationshipTypeParams calldata params_) external {
         MODULE_REGISTRY.configure(
             IIPOrg(params_.ipOrg),
             msg.sender,
@@ -190,27 +146,29 @@ contract StoryProtocol is Multicall {
         );
     }
 
-    function removeRelationshipType(
-        address ipOrg_,
-        string calldata relType
-    ) external {
+    /// @notice Removes a relationship type for an IP Org.
+    /// @param ipOrg_ The IP Org under which the relationship type is defined.
+    /// @param relType_ The relationship type being removed from the IP Org.
+    function removeRelationshipType(address ipOrg_, string calldata relType_) external {
         MODULE_REGISTRY.configure(
             IIPOrg(ipOrg_),
             msg.sender,
             RELATIONSHIP_MODULE,
-            abi.encode(
-                LibRelationship.REMOVE_REL_TYPE_CONFIG,
-                abi.encode(relType)
-            )
+            abi.encode(LibRelationship.REMOVE_REL_TYPE_CONFIG, abi.encode(relType_))
         );
     }
 
+    /// @notice Creates a new relationship for an IP Org.
+    /// @param ipOrg_ The address of the IP Org creating the relationship.
+    /// @param params_ Params for relationship creation, including type, source, and destination.
+    /// @param preHooksData_ Data to be processed by any enrolled pre-hook actions.
+    /// @param postHooksData_ Data to be processed by any enrolled post-hook actions.
     function createRelationship(
         address ipOrg_,
         LibRelationship.CreateRelationshipParams calldata params_,
         bytes[] calldata preHooksData_,
         bytes[] calldata postHooksData_
-    ) external returns(uint256 relId) {
+    ) external returns (uint256 relId) {
         bytes memory result = MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             msg.sender,
@@ -226,13 +184,10 @@ contract StoryProtocol is Multicall {
     //                            Licensing                                   //
     ////////////////////////////////////////////////////////////////////////////
 
-    /// Allows an IPOrg to configure its licensing framework (collection of commercial and non-commercial terms)
-    /// @param ipOrg_ the ipOrg address
-    /// @param config_ the licensing framework config
-    function configureIpOrgLicensing(
-        address ipOrg_,
-        Licensing.LicensingConfig calldata config_
-    ) external {
+    /// @notice Configures a licensing framework for an IP Org, including licensing terms.
+    /// @param ipOrg_ The address of the IP Org configuring the licensing.
+    /// @param config_ Licensing configuration, including framework and licensor.
+    function configureIpOrgLicensing(address ipOrg_, Licensing.LicensingConfig calldata config_) external {
         MODULE_REGISTRY.configure(
             IIPOrg(ipOrg_),
             msg.sender,
@@ -240,13 +195,13 @@ contract StoryProtocol is Multicall {
             abi.encode(Licensing.LICENSING_FRAMEWORK_CONFIG, abi.encode(config_))
         );
     }
-    
-    /// Creates a tradeable License NFT in License Registry.
-    /// @param ipOrg_ the ipOrg address
-    /// @param params_ LicenseCreation params
-    /// @param preHooksData_ Hooks data to embed with the registration pre-call.
-    /// @param postHooksData_ Hooks data to embed with the registration post-call.
-    /// @return id of the created license
+
+    /// Creates a tradeable License NFT in the License Registry.
+    /// @param ipOrg_ The address of the IP Org creating the license.
+    /// @param params_ Params around licensing creation, including IP asset id and terms.
+    /// @param preHooksData_ Data to be processed by any enrolled pre-hook actions.
+    /// @param postHooksData_ Data to be processed by any enrolled post-hook actions.
+    /// @return The id of the created license.
     function createLicense(
         address ipOrg_,
         Licensing.LicenseCreation calldata params_,
@@ -258,31 +213,22 @@ contract StoryProtocol is Multicall {
             IIPOrg(ipOrg_),
             msg.sender,
             LICENSING_MODULE,
-            abi.encode(
-                Licensing.CREATE_LICENSE,
-                params
-            ),
+            abi.encode(Licensing.CREATE_LICENSE, params),
             preHooksData_,
             postHooksData_
         );
         return abi.decode(result, (uint256));
     }
 
-    /// Activates a license that's Pending Approval
-    /// @param ipOrg_ the ipOrg address
-    /// @param licenseId_ the license id
-    function activateLicense(
-        address ipOrg_,
-        uint256 licenseId_
-    ) external {
+    /// Activates a license that is pending approval
+    /// @param ipOrg_ Address of the IP Org under which the license is contained.
+    /// @param licenseId_ The identifier of the license.
+    function activateLicense(address ipOrg_, uint256 licenseId_) external {
         MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             msg.sender,
             LICENSING_MODULE,
-            abi.encode(
-                Licensing.ACTIVATE_LICENSE,
-                abi.encode(licenseId_)
-            ),
+            abi.encode(Licensing.ACTIVATE_LICENSE, abi.encode(licenseId_)),
             new bytes[](0),
             new bytes[](0)
         );
@@ -310,7 +256,7 @@ contract StoryProtocol is Multicall {
         MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
             caller_,
-            ModuleRegistryKeys.LICENSING_MODULE,
+            LICENSING_MODULE,
             abi.encode(
                 Licensing.LINK_LNFT_TO_IPA,
                 abi.encode(licenseId_, ipaId_)

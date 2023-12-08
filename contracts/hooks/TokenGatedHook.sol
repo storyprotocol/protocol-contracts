@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { HookResult } from "contracts/interfaces/hooks/base/IHook.sol";
 import { SyncBaseHook } from "contracts/hooks/base/SyncBaseHook.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { TokenGated } from "contracts/lib/hooks/TokenGated.sol";
@@ -9,8 +8,7 @@ import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC16
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /// @title TokenGatedHook
-/// @notice This contract is a hook that ensures the user is the owner of a specific NFT token.
-/// @dev It extends SyncBaseHook and provides the implementation for validating the hook configuration and executing the hook.
+/// @notice Synchronous hook for ensursing a user is the owner of an NFT token.
 contract TokenGatedHook is SyncBaseHook {
     using ERC165Checker for address;
 
@@ -28,11 +26,7 @@ contract TokenGatedHook is SyncBaseHook {
             revert Errors.ZeroAddress();
         }
         // Check if the configured token address is a valid ERC 721 contract
-        if (
-            !tokenAddress.supportsInterface(
-            type(IERC721).interfaceId
-        )
-        ) {
+        if (!tokenAddress.supportsInterface(type(IERC721).interfaceId)) {
             revert Errors.UnsupportedInterface("IERC721");
         }
     }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
+// See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 import { BaseModule } from "contracts/modules/base/BaseModule.sol";
@@ -12,51 +12,59 @@ import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
 import { BitMask } from "contracts/lib/BitMask.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IRegistrationModule } from "contracts/interfaces/modules/registration/IRegistrationModule.sol";
-import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 import { ModuleKey, REGISTRATION_MODULE_KEY, RELATIONSHIP_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 
 /// @title Relationship Module
-/// @notice Contract that handles the creation and management of relationships between entities.
-/// There are protocol level relationships, that are available for all IPOrgs, and IPOrg level relationships,
-/// that are only available for a specific IPOrg.
-/// Relationship types are configurable, allowing to link together different types of entities:
-/// - IPA (Intellectual Property Asset)
-/// - IPOrg Entry, including subcategories
-/// - Licenses
-/// - Addresses
-/// - External NFTs
-/// And combinations of them.
-/// NOTE: This is an alpha version, a more efficient way of storing and verifying relationships will be implemented in the future.
+/// @notice Handles creation and management of relationships between IP entities.
+///         Note that two types of relationships exist, those that are available across
+///         all IP Orgs (protocol-wide), and those that are exclusive to IP Orgs.
+///         Relationship types link different IP entities together, including:
+///         - IPAs (Intellectual Property Assets)
+///         - IPOrg Assets
+///         - Licenses
+///         - Addresses
+///         - External NFTs
 contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled {
-
     using Address for address;
 
+    /// @notice Maps protocol-wide relationship types to their definitions.
     mapping(string => LibRelationship.RelationshipType) private _protocolRelTypes;
+
+    /// @notice Maps IP Org relationship types to their definitions.
+    /// @dev The key is given by the keccak-256 hash of (string relName, address ipOrg).
     mapping(bytes32 => LibRelationship.RelationshipType) private _ipOrgRelTypes;
 
+    /// @dev Internal counter for tracking the current relationship id.
     uint256 private _relationshipIdCounter;
+
+    /// @dev Tracks relationship ids to their relationships.
     mapping(uint256 => LibRelationship.Relationship) private _relationships;
+
+    /// @dev Maps relationship hashes to their underlying ids.
     mapping(bytes32 => uint256) private _relHashes;
 
+    /// @notice Creates a new relationship module.
+    /// @param params_ Core attributes required by all protocol modules.
+    /// @param accessControl_ Global access singleton contract used for protocol authorization.
     constructor(
         BaseModule.ModuleConstruction memory params_,
         address accessControl_
     ) BaseModule(params_) AccessControlled(accessControl_) {}
 
-
     /// @notice Gets the protocol-wide module key for the relationship module.
+    /// @return The protocol-wide key configured for the relationship module.
     function moduleKey() public pure override(BaseModule, IModule) returns (ModuleKey) {
         return RELATIONSHIP_MODULE_KEY;
     }
 
-    /// @notice Registers hooks for a specific hook type, based on IP Org and relationship type.
+    /// @notice Registers hooks on behalf of an IP Org for a specific hook and relationship type.
     /// @dev This function can only be called by the IP Org owner.
-    /// @param hType_ The type of the hooks to register.
-    /// @param ipOrg_ The IP Org for which the hooks are being registered.
-    /// @param relType_ The relationship type for which the hooks are being registered.
+    /// @param hType_ The type of hooks to register.
+    /// @param ipOrg_ The IP Org for which the hooks are being registered for.
+    /// @param relType_ The relationship type he hooks are being registered under.
     /// @param hooks_ The addresses of the hooks to register.
-    /// @param hooksConfig_ The configurations for the hooks.
+    /// @param hooksConfig_ The associated configurations for the hooks.
     function registerHooks(
         HookType hType_,
         IIPOrg ipOrg_,
@@ -68,12 +76,15 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         registerHooks(hType_, ipOrg_, registryKey, hooks_, hooksConfig_);
     }
 
-    /// Gets relationship type definition for a given relationship type name
-    /// Will revert if no relationship type is found
-    /// @param ipOrg_ IP Org address or zero address for protocol level relationships
-    /// @param relType_ the name of the relationship type
-    /// @return result the relationship type definition
-    function getRelationshipType(address ipOrg_, string memory relType_) virtual override public view returns (LibRelationship.RelationshipType memory result) {
+    /// @notice Gets the type definition for a given relationship type name.
+    /// @dev This function Will revert if no relationship type is found.
+    /// @param ipOrg_ Address of the IP Org or zero address if it is a protocol-wide relationship.
+    /// @param relType_ the name of the relationship type.
+    /// @return result The relationship type definition.
+    function getRelationshipType(
+        address ipOrg_,
+        string memory relType_
+    ) public view virtual override returns (LibRelationship.RelationshipType memory result) {
         if (ipOrg_ == LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP) {
             result = _protocolRelTypes[relType_];
         } else {
@@ -85,28 +96,40 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         return result;
     }
 
-    /// Gets relationship definition for a given relationship id
+    /// @notice Gets the relationship definition for a given relationship id.
+    /// @param relationshipId_ The identifier for the relationship.
+    /// @return The underlying relationship.
     function getRelationship(uint256 relationshipId_) external view returns (LibRelationship.Relationship memory) {
         return _relationships[relationshipId_];
     }
 
-    /// Gets relationship id for a given relationship
-    function getRelationshipId(LibRelationship.Relationship calldata rel_) external virtual override view returns (uint256) {
+    /// @notice Gets the relationship id for a given relationship.
+    /// @param rel_ The data structure of the relationship.
+    /// @return The id of the relationship.
+    function getRelationshipId(
+        LibRelationship.Relationship calldata rel_
+    ) external view virtual override returns (uint256) {
         return _relHashes[keccak256(abi.encode(rel_))];
     }
 
-    /// Checks if a relationship has been set
-    function relationshipExists(LibRelationship.Relationship calldata rel_) external virtual override view returns (bool) {
+    /// @notice Checks whether a given relationship exists or not.
+    /// @param rel_ The relationship entity being checked for.
+    /// @return True if the relationship exists, False otherwise.
+    function relationshipExists(
+        LibRelationship.Relationship calldata rel_
+    ) external view virtual override returns (bool) {
         return _relHashes[keccak256(abi.encode(rel_))] != 0;
     }
 
-    /// Relationship module supports configuration to add or remove relationship types
+    /// @dev Configures a relationship, adding or removing new relationship types.
+    // @param ipOrg_ IP Org address or zero address if configuring across the protocol.
+    // @param params_ Encoded relationship data (see LibRelationship for details).
     function _configure(
         IIPOrg ipOrg_,
         address caller_,
         bytes calldata params_
-    ) virtual override internal returns (bytes memory) {
-        _verifyConfigCaller(ipOrg_, caller_);    
+    ) internal virtual override returns (bytes memory) {
+        _verifyConfigCaller(ipOrg_, caller_);
         (bytes32 configType, bytes memory configData) = abi.decode(params_, (bytes32, bytes));
         if (configType == LibRelationship.ADD_REL_TYPE_CONFIG) {
             _addRelationshipType(abi.decode(configData, (LibRelationship.AddRelationshipTypeParams)));
@@ -119,11 +142,11 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         return "";
     }
 
-    /// Auth check for caller, if wanting to configure a protocol level relationship type,
-    /// caller must have RELATIONSHIP_MANAGER_ROLE, if it's an IPOrg level relationship type,
-    /// caller must be the owner of the IPOrg
-    /// @param ipOrg_ zero address for protocol level relationships, IPOrg address for IPOrg level relationships
-    /// @param caller_ initiator of the configuration
+    /// @dev Verifies whether configuration for a relationship is authorized. For
+    ///      protocol-wide relationships, the caller must have the RELATIONSHIP_MANAGER_ROLE.
+    ///      For IP Org relationships, the caller must be the owner of the IP Org.
+    /// @param ipOrg_ Addrss of the IP Org, or the zero address for protocol-wide relationships.
+    /// @param caller_ Address of the caller of the configuration setting.
     function _verifyConfigCaller(IIPOrg ipOrg_, address caller_) private view {
         if (address(ipOrg_) == LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP) {
             if (!_hasRole(AccessControl.RELATIONSHIP_MANAGER_ROLE, caller_)) {
@@ -136,12 +159,11 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         }
     }
 
-    /// Gets the address and subtype mask to set a relationship type definition
-    /// @param relatable_ which element category is being configured
-    /// @param ipOrg_ IPOrg address
-    /// @param allowedTypes_ ipOrg related types, if applicable
-    /// @return a tuple with the accepted address and the subtype mask for this node of a
-    /// relationship type definition
+    /// @notice Gets the controlling address and subtype mask for setting relationship type definitions.
+    /// @param relatable_ The type of entity being set as part of a relationship.
+    /// @param ipOrg_ Address of the IP Org or the zero address (if protocol-wide).
+    /// @param allowedTypes_ The allowable set of IP Org relationship types.
+    /// @return The controlling address and subtype mask for applying the relationship typedefs.
     function _addressConfigFor(
         LibRelationship.Relatables relatable_,
         address ipOrg_,
@@ -168,10 +190,10 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         revert Errors.RelationshipModule_InvalidRelatable();
     }
 
-    function _verifySupportedIpOrgIndexType(
-        address ipOrg_,
-        uint8[] memory allowedTypes_
-    ) private view {
+    /// @dev Checks whether provided relationship types are valid.
+    /// @param ipOrg_ Address of the IP Org or zero address (if protocol-wide).
+    /// @param allowedTypes_ The provided set of relationship types being checked for.
+    function _verifySupportedIpOrgIndexType(address ipOrg_, uint8[] memory allowedTypes_) private view {
         IRegistrationModule regModule = IRegistrationModule(
             address(MODULE_REGISTRY.protocolModule(REGISTRATION_MODULE_KEY))
         );
@@ -182,13 +204,20 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
             }
         }
     }
-    
-    /// Configures a Relationship Type from the more user friendly AddRelationshipTypeParams struct,
-    /// and adds it to the appropriate mapping (protocol or IPOrg)
-    /// @param params_ AddRelationshipTypeParams
+
+    /// @dev Configures a new protocol-wide or IP Org relationship type.
+    /// @param params_ Parameters associated with the relationship type creation.
     function _addRelationshipType(LibRelationship.AddRelationshipTypeParams memory params_) private {
-        (address src, uint256 srcSubtypesMask) = _addressConfigFor(params_.allowedElements.src, params_.ipOrg, params_.allowedSrcs);
-        (address dst, uint256 dstSubtypesMask) = _addressConfigFor(params_.allowedElements.dst, params_.ipOrg, params_.allowedDsts);
+        (address src, uint256 srcSubtypesMask) = _addressConfigFor(
+            params_.allowedElements.src,
+            params_.ipOrg,
+            params_.allowedSrcs
+        );
+        (address dst, uint256 dstSubtypesMask) = _addressConfigFor(
+            params_.allowedElements.dst,
+            params_.ipOrg,
+            params_.allowedDsts
+        );
         LibRelationship.RelationshipType memory relDef = LibRelationship.RelationshipType({
             src: src,
             srcSubtypesMask: srcSubtypesMask,
@@ -212,9 +241,9 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         );
     }
 
-    /// Removes a relationship type definition from the appropriate mapping (protocol or IPOrg)
-    /// @param ipOrg_ zero address for protocol level relationships, IPOrg address for IPOrg level relationships
-    /// @param relType_ name of the relationship type
+    /// @dev Removes a relationship type from an IP Org or across thep rotocol.
+    /// @param ipOrg_ Address of the IP Org or the zero address (if protocol-wide).
+    /// @param relType_ Name of the relationship type.
     function _removeRelationshipType(address ipOrg_, string memory relType_) private {
         if (ipOrg_ == address(0)) {
             delete _protocolRelTypes[relType_];
@@ -224,49 +253,51 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         emit RelationshipTypeUnset(relType_, ipOrg_);
     }
 
-    /// Verifies that the relationship execute() wants to set is valid according to its type definition
-    /// @param ipOrg_ IPOrg address or zero address for protocol level relationships
-    /// @param params_ encoded params for module action
-    function _verifyExecution(IIPOrg ipOrg_, address, bytes calldata params_) virtual override internal {
-        LibRelationship.CreateRelationshipParams memory createParams = abi.decode(params_, (LibRelationship.CreateRelationshipParams));
+    /// @dev Verifies that a relationship config is valid according to its typedef.
+    /// @param ipOrg_ Address of the IP Org or the zero address (if protocol-wide).
+    /// @param params_ Encoded parameters used for relationship processing (see LibRelationship).
+    function _verifyExecution(IIPOrg ipOrg_, address, bytes calldata params_) internal virtual override {
+        LibRelationship.CreateRelationshipParams memory createParams = abi.decode(
+            params_,
+            (LibRelationship.CreateRelationshipParams)
+        );
         LibRelationship.RelationshipType memory relType = getRelationshipType(address(ipOrg_), createParams.relType);
         // Source checks
         if (createParams.srcAddress == address(0)) {
             revert Errors.RelationshipModule_InvalidSrcAddress();
         }
-        if(relType.src != LibRelationship.NO_ADDRESS_RESTRICTIONS) {
-            if (createParams.srcAddress != relType.src) {
-                revert Errors.RelationshipModule_InvalidSrcAddress();
-            }
+        if (relType.src != LibRelationship.NO_ADDRESS_RESTRICTIONS && createParams.srcAddress != relType.src) {
+            revert Errors.RelationshipModule_InvalidSrcAddress();
         }
-        if (relType.srcSubtypesMask != 0) {
-            uint8 srcType = ipOrg_.ipOrgAssetType(createParams.srcId);
-            if (!BitMask._isSet(relType.srcSubtypesMask, srcType)) {
-                revert Errors.RelationshipModule_InvalidSrcId();
-            }
+        if (
+            relType.srcSubtypesMask != 0 &&
+            !BitMask._isSet(relType.srcSubtypesMask, ipOrg_.ipOrgAssetType(createParams.srcId))
+        ) {
+            revert Errors.RelationshipModule_InvalidSrcId();
         }
         // Destination checks
         if (createParams.dstAddress == address(0)) {
             revert Errors.RelationshipModule_InvalidDstAddress();
         }
-        if (relType.dst != LibRelationship.NO_ADDRESS_RESTRICTIONS) {
-            if (createParams.dstAddress != relType.dst) {
-                revert Errors.RelationshipModule_InvalidDstAddress();
-            }
+        if (relType.dst != LibRelationship.NO_ADDRESS_RESTRICTIONS && createParams.dstAddress != relType.dst) {
+            revert Errors.RelationshipModule_InvalidDstAddress();
         }
-        if (relType.dstSubtypesMask != 0) {
-            uint8 dstType = ipOrg_.ipOrgAssetType(createParams.dstId);
-            if (!BitMask._isSet(relType.dstSubtypesMask, dstType)) {
-                revert Errors.RelationshipModule_InvalidDstId();
-            }
+        if (
+            relType.dstSubtypesMask != 0 &&
+            !BitMask._isSet(relType.dstSubtypesMask, ipOrg_.ipOrgAssetType(createParams.dstId))
+        ) {
+            revert Errors.RelationshipModule_InvalidDstId();
         }
     }
 
-    /// Creates and stores a relationship and emits the RelationshipCreated event. Ignores first 2 parameters
-    /// @param params_ encoded CreateRelationshipParams for module action
-    /// @return encoded relationship id (uint256)
-    function _performAction(IIPOrg, address, bytes memory params_) virtual override internal returns (bytes memory) {
-        LibRelationship.CreateRelationshipParams memory createParams = abi.decode(params_, (LibRelationship.CreateRelationshipParams));
+    /// @dev Processes the configuration of a new relationship.
+    /// @param params_ Encoded parameters used for relationship processing (see LibRelationship).
+    /// @return The encoded uint256 relationship identifier.
+    function _performAction(IIPOrg, address, bytes memory params_) internal virtual override returns (bytes memory) {
+        LibRelationship.CreateRelationshipParams memory createParams = abi.decode(
+            params_,
+            (LibRelationship.CreateRelationshipParams)
+        );
         uint256 relationshipId = ++_relationshipIdCounter;
         LibRelationship.Relationship memory rel = LibRelationship.Relationship({
             relType: createParams.relType,
@@ -288,16 +319,24 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         return abi.encode(relationshipId);
     }
 
+    /// @dev Gets the hook registry key associated with an IP Org and relationship type.
+    /// @param ipOrg_ Address of the IP Org under which the hook is registered.
+    /// @param params_ Relationship config params from which the type is sourced.
     function _hookRegistryKey(
         IIPOrg ipOrg_,
         address,
         bytes calldata params_
-    ) internal view virtual override returns(bytes32) {
-        LibRelationship.CreateRelationshipParams memory createParams = abi.decode(params_, (LibRelationship.CreateRelationshipParams));
+    ) internal view virtual override returns (bytes32) {
+        LibRelationship.CreateRelationshipParams memory createParams = abi.decode(
+            params_,
+            (LibRelationship.CreateRelationshipParams)
+        );
         return _generateRegistryKey(ipOrg_, createParams.relType);
     }
 
-    function _generateRegistryKey(IIPOrg ipOrg_, string memory relType_) private pure returns(bytes32) {
+    /// @dev Creates a new hooks registration key for the relationship module.
+    /// @param ipOrg_ The IP Org under which the key is associated.
+    function _generateRegistryKey(IIPOrg ipOrg_, string memory relType_) private pure returns (bytes32) {
         return keccak256(abi.encode(address(ipOrg_), relType_));
     }
 }

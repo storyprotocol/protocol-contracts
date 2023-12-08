@@ -6,7 +6,6 @@ import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 /// @title ILicensingModule
 interface ILicensingModule is IModule {
-
     /// Emits when an IP org picks a licensing framework
     /// and sets its configuration.
     /// @param ipOrg address of the IP org
