@@ -19,8 +19,8 @@ contract RelationshipModuleConfigTest is BaseTest {
 
     function test_RelationshipModule_addProtocolRelationshipType() public {
         LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
-            src: LibRelationship.Relatables.ADDRESS,
-            dst: LibRelationship.Relatables.ADDRESS
+            src: LibRelationship.Relatable.Address,
+            dst: LibRelationship.Relatable.Address
         });
         uint8[] memory allowedSrcs = new uint8[](0);
         uint8[] memory allowedDsts = new uint8[](0);
@@ -46,8 +46,8 @@ contract RelationshipModuleConfigTest is BaseTest {
 
     function test_RelationshipModule_addIpOrgIpOrgRelationships() public {
         LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
-            src: LibRelationship.Relatables.IPORG_ENTRY,
-            dst: LibRelationship.Relatables.IPORG_ENTRY
+            src: LibRelationship.Relatable.IpOrgEntry,
+            dst: LibRelationship.Relatable.IpOrgEntry
         });
         uint8[] memory allowedSrcs = new uint8[](2);
         allowedSrcs[0] = 0;
@@ -86,8 +86,8 @@ contract RelationshipModuleConfigTest is BaseTest {
         allowedDsts[0] = 9;
 
         LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
-            src: LibRelationship.Relatables.IPORG_ENTRY,
-            dst: LibRelationship.Relatables.IPORG_ENTRY
+            src: LibRelationship.Relatable.IpOrgEntry,
+            dst: LibRelationship.Relatable.IpOrgEntry
         });
         
         LibRelationship.AddRelationshipTypeParams memory params = LibRelationship.AddRelationshipTypeParams({
@@ -105,8 +105,8 @@ contract RelationshipModuleConfigTest is BaseTest {
 
     function test_RelationshipModule_revert_RelationshipModule_CallerNotIpOrgOwner() public {
         LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
-            src: LibRelationship.Relatables.IPORG_ENTRY,
-            dst: LibRelationship.Relatables.IPORG_ENTRY
+            src: LibRelationship.Relatable.IpOrgEntry,
+            dst: LibRelationship.Relatable.IpOrgEntry
         });
         uint8[] memory allowedSrcs = new uint8[](2);
         allowedSrcs[0] = 0;
@@ -126,8 +126,8 @@ contract RelationshipModuleConfigTest is BaseTest {
 
     function test_RelationshipModule_revert_ipOrgRelatableCannotBeProtocolLevel() public {
         LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
-            src: LibRelationship.Relatables.IPORG_ENTRY,
-            dst: LibRelationship.Relatables.IPORG_ENTRY
+            src: LibRelationship.Relatable.IpOrgEntry,
+            dst: LibRelationship.Relatable.IpOrgEntry
         });
         uint8[] memory allowedSrcs = new uint8[](1);
         allowedSrcs[0] = 1;
@@ -148,8 +148,8 @@ contract RelationshipModuleConfigTest is BaseTest {
 
     function test_RelationshipModule_removeProtocolRelationshipType() public {
         LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
-            src: LibRelationship.Relatables.ADDRESS,
-            dst: LibRelationship.Relatables.ADDRESS
+            src: LibRelationship.Relatable.Address,
+            dst: LibRelationship.Relatable.Address
         });
         uint8[] memory allowedSrcs = new uint8[](0);
         uint8[] memory allowedDsts = new uint8[](0);
