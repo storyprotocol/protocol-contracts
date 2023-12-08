@@ -208,15 +208,6 @@ contract IPOrgController is
         }
     }
 
-    /// @dev Checks whether an IP Org exists, throwing if not.
-    /// @param ipOrg_ The address of the IP Org being queried.
-    // function _assertIPOrgExists(address ipOrg_) internal view {
-    //     IPOrgControllerStorage storage $ = _getIpOrgControllerStorage();
-    //     if (!$.ipOrgs[ipOrg_].registered) {
-    //         revert Errors.IPOrgController_IPOrgNonExistent();
-    //     }
-    // }
-
     /// @dev Authorizes upgrade to a new contract address via UUPS.
     function _authorizeUpgrade(address) 
         internal 
