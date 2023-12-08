@@ -16,6 +16,7 @@ import { IIPOrgController } from "contracts/interfaces/ip-org/IIPOrgController.s
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { IPOrg } from "contracts/ip-org/IPOrg.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { REGISTRATION_MODULE } from "contracts/lib/modules/Module.sol";
 
 /// @title IP Org Controller Contract
 /// @notice The IP Org Controller is the protocol-wide factory contract for creating
@@ -184,7 +185,7 @@ contract IPOrgController is
         ModuleRegistry(MODULE_REGISTRY).configure(
             IIPOrg(ipOrg_),
             address(this),
-            ModuleRegistryKeys.REGISTRATION_MODULE,
+            REGISTRATION_MODULE,
             encodedParams
         );
 

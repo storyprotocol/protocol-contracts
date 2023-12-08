@@ -29,6 +29,27 @@ contract AccessControlledUpgradeableTest is Test, AccessControlHelper {
         );
     }
 
+    function test_AccessControlled_revert_invalidInterface() public {
+        MockAccessControlledUpgradeable invalidACL = new MockAccessControlledUpgradeable();
+        invalidACL.setIsInterfaceValid(false);
+        address mockAddr = address(new MockAccessControlledUpgradeable());
+        bytes memory encodedData = abi.encodeWithSelector(
+            bytes4(keccak256(bytes("initialize(address)"))),
+            address(invalidACL)
+        );
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Errors.UnsupportedInterface.selector,
+                "IAccessControl"
+            )
+        );
+        _deployUUPSProxy(
+            mockAddr,
+            encodedData
+        );
+        invalidACL.setIsInterfaceValid(false);
+    }
+
     function test_AccessControlled_onlyRole() public {
         bytes32 role = keccak256("TEST_ROLE");
         _grantRole(vm, role, address(this));

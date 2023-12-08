@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 
 /// @title ILicensingModule
-interface ILicensingModule {
+interface ILicensingModule is IModule {
 
     /// Emits when an IP org picks a licensing framework
     /// and sets its configuration.

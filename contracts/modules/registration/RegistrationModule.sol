@@ -9,12 +9,13 @@ import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
 import { IRegistrationModule } from "contracts/interfaces/modules/registration/IRegistrationModule.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { AccessControlled } from "contracts/access-control/AccessControlled.sol";
+import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
 import { Registration } from "contracts/lib/modules/Registration.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IPAsset } from "contracts/lib/IPAsset.sol";
-
+import { ModuleKey, REGISTRATION_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 
 /// @title Registration Module
 /// @notice The registration module is responsible for registration, transferring, and
@@ -52,6 +53,10 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
         address accessControl_
     ) BaseModule(params_) AccessControlled(accessControl_) {}
 
+    /// @notice Gets the protocol-wide module key for the registration module.
+    function moduleKey() public pure override(BaseModule, IModule) returns (ModuleKey) {
+        return REGISTRATION_MODULE_KEY;
+    }
 
     /// @notice Registers hooks for a specific type and IP Org.
     /// @dev This function can only be called by the IP Org owner.
