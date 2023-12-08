@@ -58,13 +58,7 @@ Open `index.html` in `coverage/` folder.
 
 ## Setup
 
-You'll need to add the following variables to a `.env` file:
-
--   `MAINNET_RPC_URL`
--   `MAINNET_PRIVATEKEY`
--   `GOERLI_RPC_URL`
--   `GOERLI_PRIVATEKEY`
--   `ETHERSCAN_API_KEY`
+Copy .env.example into .env, and set the required variables.
 
 ## Deploying
 
