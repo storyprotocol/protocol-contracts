@@ -12,23 +12,13 @@ interface ILicensingModule {
     /// @param frameworkId the ID of the licensing framework
     /// @param url to the legal document
     /// @param licensorConfig the configuration of the licensor
+    /// @param values the values of the parameters (tag and bytes value)
     event IpOrgLicensingFrameworkSet(
         address indexed ipOrg,
         string frameworkId,
         string url,
-        Licensing.LicensorConfig licensorConfig
-    );
-
-    /// Emits when an IP org sets a parameter of a licensing framework.
-    /// @param ipOrg address of the IP org
-    /// @param paramTag the tag of the parameter
-    /// @param paramType the default value of the parameter
-    /// @param paramValue the type of the parameter
-    event ParameterSet(
-        address indexed ipOrg,
-        string paramTag,
-        Licensing.ParameterType paramType,
-        bytes paramValue
+        Licensing.LicensorConfig licensorConfig,
+        Licensing.ParamValue[] values
     );
 
     /// Gets the licensing framework of an IP org.
@@ -42,6 +32,4 @@ interface ILicensingModule {
         address ipOrg_,
         string calldata paramTag_
     ) external view returns (bytes memory);
-
-
 }
