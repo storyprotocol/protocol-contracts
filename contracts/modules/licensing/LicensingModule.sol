@@ -410,12 +410,6 @@ contract LicensingModule is BaseModule, ILicensingModule {
             ipOrgAddress
         ];
         uint256 numParams = configParams.length;
-        emit IpOrgLicensingFrameworkSet(
-            ipOrgAddress,
-            config.frameworkId,
-            LICENSING_FRAMEWORK_REPO.getLicenseTextUrl(config.frameworkId),
-            config.licensor
-        );
         // Add the parameters to storage
         for (uint256 i = 0; i < numParams; i++) {
             Licensing.ParamValue memory param = configParams[i];
