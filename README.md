@@ -2,7 +2,7 @@
 
 [See Alpha agreement if you are going to use these contracts](https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf)
 
-![Logo]([image.png])
+![Logo](image.png)
 
 # Story Protocol Contracts
 
