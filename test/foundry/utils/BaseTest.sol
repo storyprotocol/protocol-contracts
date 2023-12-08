@@ -165,7 +165,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             mediaUrl: ""
         });
         bytes[] memory hooks = new bytes[](0);
-        return spg.registerIPAsset(address(ipOrg), params, hooks, hooks);
+        return spg.registerIPAsset(address(ipOrg), params, 0, hooks, hooks);
     }
 
     function _deployHook(bytes memory code_, uint256 hookTypeFlag_, uint256 seed_) internal returns (address hookAddr) {

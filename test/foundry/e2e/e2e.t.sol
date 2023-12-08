@@ -308,6 +308,7 @@ contract E2ETest is IE2ETest, BaseTest {
         spg.registerIPAsset(
             ipOrg1,
             registerIpAssetParamsCharacter,
+            0,
             preHooksDataCharacter,
             new bytes[](0)
         );
@@ -340,6 +341,7 @@ contract E2ETest is IE2ETest, BaseTest {
         spg.registerIPAsset(
             ipOrg1,
             registerIpAssetParamsStory,
+            0,
             preHooksDataStory,
             new bytes[](0)
         );
@@ -364,6 +366,7 @@ contract E2ETest is IE2ETest, BaseTest {
         (uint256 ipAssetId_3, uint256 ipOrg2_AssetId_1) = spg.registerIPAsset(
             ipOrg2,
             registerIpAssetParamsOrg2,
+            0,
             new bytes[](0),
             new bytes[](0)
         );
