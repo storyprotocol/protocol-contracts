@@ -22,11 +22,13 @@ interface ILicensingModule {
     /// Emits when an IP org sets a parameter of a licensing framework.
     /// @param ipOrg address of the IP org
     /// @param paramTag the tag of the parameter
-    /// @param defaultValue the default value of the parameter
+    /// @param paramType the default value of the parameter
+    /// @param paramValue the type of the parameter
     event ParameterSet(
         address indexed ipOrg,
         string paramTag,
-        bytes defaultValue
+        Licensing.ParameterType paramType,
+        bytes paramValue
     );
 
     /// Gets the licensing framework of an IP org.
