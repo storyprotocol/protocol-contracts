@@ -1,5 +1,6 @@
+/* solhint-disable contract-name-camelcase, func-name-mixedcase, var-name-mixedcase */
 // SPDX-License-Identifier: BUSDL-1.1
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.19;
 
 import { Errors } from "contracts/lib/Errors.sol";
 import { IPOrg } from "contracts/ip-org/IPOrg.sol";
@@ -10,12 +11,13 @@ import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { LicenseRegistry } from "contracts/modules/licensing/LicenseRegistry.sol";
 import { AccessControlSingleton } from "contracts/access-control/AccessControlSingleton.sol";
 import { IPAssetRegistry } from "contracts/IPAssetRegistry.sol";
-import { AccessControlHelper } from "./utils/AccessControlHelper.sol";
-import { MockIPOrgController } from "./mocks/MockIPOrgController.sol";
+import { AccessControlHelper } from "../utils/AccessControlHelper.sol";
+import { MockIPOrgController } from "../mocks/MockIPOrgController.sol";
 import { BaseModule } from "contracts/modules/base/BaseModule.sol";
 import { RegistrationModule } from "contracts/modules/registration/RegistrationModule.sol";
 import { REGISTRATION_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 import { LicensingFrameworkRepo } from "contracts/modules/licensing/LicensingFrameworkRepo.sol";
+import { Clones } from '@openzeppelin/contracts/proxy/Clones.sol';
 import 'test/foundry/utils/ProxyHelper.sol';
 import "forge-std/Test.sol";
 
@@ -95,8 +97,7 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
 
     function test_ipOrgController_registerIpOrg() public {
         vm.prank(ipOrgOwner);
-        string[] memory ipAssetTypes = new string[](0);
-        ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", ipAssetTypes));
+        ipOrg = IPOrg(ipOrgController.registerIpOrg(msg.sender, "name", "symbol", new string[](0)));
         assertTrue(ipOrgController.isIpOrg(address(ipOrg)));
     }
 
@@ -112,6 +113,16 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
         vm.prank(ipOrgOwner);
         string[] memory ipAssetTypes = new string[](0);
         ipOrg = IPOrg(ipOrgController.registerIpOrg(address(0), "name", "symbol", ipAssetTypes));
+    }
+
+    function test_ipOrg_revert_initialize_Unauthorized() public {
+        address ipOrg_ = Clones.clone(address(new IPOrg(address(this), address(moduleRegistry))));
+        vm.prank(address(0));
+        vm.expectRevert(Errors.Unauthorized.selector);
+        IPOrg(ipOrg_).initialize(
+            "name",
+            "symbol"
+        );
     }
 
     function test_ipOrg_mint() public {
