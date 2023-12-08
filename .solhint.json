@@ -3,10 +3,12 @@
   "plugins": ["prettier"],
   "rules": {
     "code-complexity": ["error", 8],
-    "compiler-version": ["error", ">=0.8.0"],
+    "compiler-version": ["error", ">=0.8.19"],
     "const-name-snakecase": "off",
+    "no-empty-blocks": "off",
     "constructor-syntax": "error",
     "func-visibility": ["error", { "ignoreConstructors": true }],
+    "modifier-name-mixedcase":  "error",
     "max-line-length": ["error", 120],
     "not-rely-on-time": "off",
     "reason-string": ["warn", { "maxLength": 64 }],

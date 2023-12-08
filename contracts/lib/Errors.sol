@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
-// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
+// See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
-import { IPAsset } from "contracts/lib/IPAsset.sol";
-
-/// @title Errors
-/// @notice Library for all contract errors, including a set of global errors.
+/// @title Errors Library
+/// @notice Library for all Story Protocol contract errors.
 library Errors {
     ////////////////////////////////////////////////////////////////////////////
     //                                  Globals                               //
@@ -50,19 +48,27 @@ library Errors {
 
     /// @notice The hook is already registered.
     error HookRegistry_RegisteringDuplicatedHook();
+
     /// @notice This error is thrown when trying to register a hook with the address 0.
     error HookRegistry_RegisteringZeroAddressHook();
+
     /// @notice This error is thrown when the caller is not IP Org owner.
     error HookRegistry_CallerNotIPOrgOwner();
+
     /// @notice This error is thrown when trying to register more than the maximum allowed number of hooks.
     error HookRegistry_MaxHooksExceeded();
-    /// @notice This error is thrown when the length of the hooks configuration array does not match the length of the hooks array.
+
+    /// @notice Hooks configuration array length does not match that of the hooks array.
     error HookRegistry_HooksConfigLengthMismatch();
+
     /// @notice This error is thrown when the provided index is out of bounds of the hooks array.
     error HookRegistry_IndexOutOfBounds(uint256 hooksIndex);
-    error HookRegistry_ZeroModuleRegistry();
-    error HookRegistry_RegisteringNonWhitelistedHook(address hookAddress);
 
+    /// @notice The module may not be the zero address.
+    error HookRegistry_ZeroModuleRegistry();
+
+    /// @notice The provided hook has not been whitelisted.
+    error HookRegistry_RegisteringNonWhitelistedHook(address hookAddress);
 
     ////////////////////////////////////////////////////////////////////////////
     //                      BaseRelationshipProcessor                         //
@@ -89,7 +95,7 @@ library Errors {
 
     /// @notice Hook has yet to be registered.
     error ModuleRegistry_HookNotRegistered(string hookKey);
-    
+
     /// @notice The selected module was already registered.
     error ModuleRegistry_ModuleAlreadyRegistered();
 
@@ -323,7 +329,7 @@ library Errors {
     error LicenseRegistry_IPANotActive();
     error LicenseRegistry_LicenseNotActive();
     error LicenseRegistry_LicenseAlreadyLinkedToIpa();
-    
+
     ////////////////////////////////////////////////////////////////////////////
     //                            RegistrationModule                          //
     ////////////////////////////////////////////////////////////////////////////
@@ -398,7 +404,7 @@ library Errors {
 
     /// @notice Relating unsupported src ipOrg asset type
     error RelationshipModule_InvalidSrcId();
-    
+
     /// @notice Relating unsupported dst ipOrg asset type
     error RelationshipModule_InvalidDstId();
 
@@ -414,10 +420,7 @@ library Errors {
     ////////////////////////////////////////////////////////////////////////////
 
     /// @notice Mismatch between parity of accounts and their respective allocations.
-    error RoyaltyNFT_AccountsAndAllocationsMismatch(
-        uint256 accountsLength,
-        uint256 allocationsLength
-    );
+    error RoyaltyNFT_AccountsAndAllocationsMismatch(uint256 accountsLength, uint256 allocationsLength);
 
     /// @notice Invalid summation for royalty NFT allocations.
     error RoyaltyNFT_InvalidAllocationsSum(uint32 allocationsSum);
@@ -425,6 +428,9 @@ library Errors {
     ////////////////////////////////////////////////////////////////////////////
     //                                  Hook                                  //
     ////////////////////////////////////////////////////////////////////////////
+
+    /// @notice The hook request was not found.
+    error Hook_RequestedNotFound();
 
     /// @notice The sync operation is not supported in Async hooks.
     error Hook_UnsupportedSyncOperation();
@@ -442,7 +448,7 @@ library Errors {
     error TokenGatedHook_NotTokenOwner(address tokenAddress, address ownerAddress);
 
     error Hook_AsyncHookError(bytes32 requestId, string reason);
-    
+
     /// @notice Invalid Hook configuration.
     error Hook_InvalidHookConfig(string reason);
 

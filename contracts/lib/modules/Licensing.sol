@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
+// See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
-import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { BitMask } from "contracts/lib/BitMask.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
@@ -26,7 +25,7 @@ library Licensing {
         String,
         ShortStringArray,
         // uint256 bitmask representing indexes in choices array. ParamDefinition will have the available choices array.
-        MultipleChoice 
+        MultipleChoice
     }
 
     enum LicensorConfig {
@@ -93,17 +92,15 @@ library Licensing {
         LicensorConfig licensor;
     }
 
-    uint256 constant MAX_PARAM_TAGS = 150;
+    uint256 internal constant MAX_PARAM_TAGS = 150;
 
     /// Input for IpOrg legal terms configuration in LicensingModule (for now, the only option)
-    bytes32 constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");
-    bytes32 constant CREATE_LICENSE = keccak256("CREATE_LICENSE");
-    bytes32 constant ACTIVATE_LICENSE = keccak256("ACTIVATE_LICENSE");
-    bytes32 constant LINK_LNFT_TO_IPA = keccak256("LINK_LNFT_TO_IPA");
+    bytes32 public constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");
+    bytes32 public constant CREATE_LICENSE = keccak256("CREATE_LICENSE");
+    bytes32 public constant ACTIVATE_LICENSE = keccak256("ACTIVATE_LICENSE");
+    bytes32 public constant LINK_LNFT_TO_IPA = keccak256("LINK_LNFT_TO_IPA");
 
-    function _statusToString(
-        LicenseStatus status_
-    ) internal pure returns (string memory) {
+    function _statusToString(LicenseStatus status_) internal pure returns (string memory) {
         if (status_ == LicenseStatus.Unset) {
             return "Unset";
         } else if (status_ == LicenseStatus.Active) {
@@ -130,17 +127,12 @@ library Licensing {
         return result;
     }
 
-    function _encodeMultipleChoice(
-        uint8[] memory choiceIndexes_
-    ) internal pure returns (bytes memory value) {
+    function _encodeMultipleChoice(uint8[] memory choiceIndexes_) internal pure returns (bytes memory value) {
         uint256 mask = BitMask._convertToMask(choiceIndexes_);
         return abi.encode(mask);
     }
 
-    function _validateParamValue(
-        ParamDefinition memory paramDef_,
-        bytes memory value_
-    ) internal pure returns (bool) {
+    function _validateParamValue(ParamDefinition memory paramDef_, bytes memory value_) internal pure returns (bool) {
         // An empty value signals the parameter is untagged, to trigger default values in the
         // license agreement text, but that's valid
         if (keccak256(value_) == keccak256("")) {
@@ -149,35 +141,30 @@ library Licensing {
         if (paramDef_.paramType == Licensing.ParameterType.Bool) {
             abi.decode(value_, (bool));
             return true;
-        } else if (paramDef_.paramType == Licensing.ParameterType.Number) {
-            if (abi.decode(value_, (uint256)) == 0) {
-                return false;
-            }
-        } else if (paramDef_.paramType == Licensing.ParameterType.Address) {
+        } else if (paramDef_.paramType == Licensing.ParameterType.Number && abi.decode(value_, (uint256)) == 0) {
+            return false;
+        } else if (
+            paramDef_.paramType == Licensing.ParameterType.Address &&
             // Not supporting address(0) as a valid value
-            if (abi.decode(value_, (address)) == address(0)) {
-                return false;
-            }
-        } else if (paramDef_.paramType == Licensing.ParameterType.String) {
-            abi.decode(value_, (string));
-            // WARNING: Do proper string validation off chain.
-            if (
-                keccak256(value_) == keccak256(abi.encode(" ")) ||
-                keccak256(value_) == keccak256(abi.encode(""))
-            ) {
-                return false;
-            }
-        } else if (paramDef_.paramType == Licensing.ParameterType.ShortStringArray) {
-            // WARNING: Do proper string validation off chain.
-            ShortString[] memory result = abi.decode(value_, (ShortString[]));
-            if (result.length == 0) {
-                return false;
-            }
-        } else if (paramDef_.paramType == Licensing.ParameterType.MultipleChoice) {
-            ShortString[] memory available = abi.decode(paramDef_.availableChoices, (ShortString[]));
-            if (available.length == 0) {
-                return false;
-            }
+            abi.decode(value_, (address)) == address(0)
+        ) {
+            return false;
+        } else if (
+            paramDef_.paramType == Licensing.ParameterType.String &&
+            (keccak256(abi.encodePacked(abi.decode(value_, (string)))) == keccak256(abi.encode(" ")) ||
+                keccak256(abi.encodePacked(abi.decode(value_, (string)))) == keccak256(abi.encode("")))
+        ) {
+            return false;
+        } else if (
+            paramDef_.paramType == Licensing.ParameterType.ShortStringArray &&
+            abi.decode(value_, (ShortString[])).length == 0
+        ) {
+            return false;
+        } else if (
+            paramDef_.paramType == Licensing.ParameterType.MultipleChoice &&
+            abi.decode(paramDef_.availableChoices, (ShortString[])).length == 0
+        ) {
+            return false;
         }
         return true;
     }
@@ -187,16 +174,18 @@ library Licensing {
         uint256 len = ss.length;
         for (uint256 i = 0; i < len; i++) {
             ShortString s = ss[i];
-            result = string(abi.encodePacked(result, '"', s.toString(), '"'));
+            result = string(abi.encodePacked(result, "\"", s.toString(), "\"")); // solhint-disable-line
             if (i != len - 1) {
-                result = string(abi.encodePacked(result, ','));
+                result = string(abi.encodePacked(result, ","));
             }
-
         }
         return string(abi.encodePacked(result, "]"));
     }
 
-    function _getDecodedParamString(Licensing.ParamDefinition memory paramDef_, bytes memory value_) internal pure returns (string memory) {
+    function _getDecodedParamString(
+        Licensing.ParamDefinition memory paramDef_,
+        bytes memory value_
+    ) internal pure returns (string memory) {
         if (paramDef_.paramType == Licensing.ParameterType.Bool) {
             return abi.decode(value_, (bool)) ? "true" : "false";
         } else if (paramDef_.paramType == Licensing.ParameterType.Number) {
@@ -215,5 +204,4 @@ library Licensing {
         }
         return "";
     }
-
 }
