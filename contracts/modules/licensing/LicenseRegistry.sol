@@ -13,8 +13,6 @@ import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortSt
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 
-import "forge-std/console2.sol";
-
 /// @title LicenseRegistry
 /// @notice This contract is the source of truth for all licenses that are registered in the protocol.
 /// It will only be written by licensing modules.
@@ -302,21 +300,32 @@ contract LicenseRegistry is ERC721 {
         uint256 paramCount = params.length;
         string memory paramAttributes;
         for (uint256 i = 0; i < paramCount; i++) {
-            console2.log(params[i].tag.toString());
             Licensing.ParamDefinition memory paramDef = LICENSING_FRAMEWORK_REPO.getParamDefinition(
                 license.frameworkId.toString(),
                 params[i].tag
             );
             string memory value = Licensing._getDecodedParamString(paramDef, params[i].value);
-            console2.log(value);
+            
+            if (paramDef.paramType != Licensing.ParameterType.MultipleChoice && paramDef.paramType != Licensing.ParameterType.ShortStringArray) {
+                value = string(abi.encodePacked(
+                    '"', value, '"}'
+                ));
+            } else {
+                value = string(abi.encodePacked(
+                    value, '}'
+                ));
+            }
             paramAttributes = string(
                 abi.encodePacked(
-                    '{"trait_type": "', params[i].tag.toString(), '", "value": "', value, '"}'
+                    paramAttributes, '{"trait_type": "', params[i].tag.toString(), '", "value": ', value
                 )
             );
-            if (i ==)
+            if (i != paramCount - 1) {
+                paramAttributes = string(abi.encodePacked(paramAttributes, ','));
+            } else {
+                paramAttributes = string(abi.encodePacked(paramAttributes, ']'));
+            }
         }
-        paramAttributes = string(abi.encodePacked(paramAttributes, ));
 
         return string(abi.encodePacked(
             "data:application/json;base64,",
@@ -327,7 +336,7 @@ contract LicenseRegistry is ERC721 {
                         licenseAttributes1,
                         licenseAttributes2,
                         paramAttributes,
-                        ']}'
+                        '}'
                     )
                 )
             ))

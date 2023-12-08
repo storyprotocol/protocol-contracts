@@ -8,8 +8,6 @@ import { BitMask } from "contracts/lib/BitMask.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { ShortStrings, ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
-import "forge-std/console2.sol";
-
 /// @title Licensing Module Library
 /// Structs needed by the Licensing Modules and registries
 library Licensing {
@@ -121,11 +119,9 @@ library Licensing {
     function _decodeMultipleChoice(
         bytes memory value,
         bytes memory availableChoices
-    ) internal view returns (ShortString[] memory) {
+    ) internal pure returns (ShortString[] memory) {
         uint256 mask = abi.decode(value, (uint256));
-        console2.log(mask);
         uint8[] memory indexes = BitMask._getSetIndexes(mask);
-        console2.log(indexes.length);
         ShortString[] memory choices = abi.decode(availableChoices, (ShortString[]));
         ShortString[] memory result = new ShortString[](indexes.length);
         for (uint256 i = 0; i < indexes.length; i++) {
@@ -136,7 +132,7 @@ library Licensing {
 
     function _encodeMultipleChoice(
         uint8[] memory choiceIndexes_
-    ) internal view returns (bytes memory value) {
+    ) internal pure returns (bytes memory value) {
         uint256 mask = BitMask._convertToMask(choiceIndexes_);
         return abi.encode(mask);
     }
@@ -144,7 +140,7 @@ library Licensing {
     function _validateParamValue(
         ParamDefinition memory paramDef_,
         bytes memory value_
-    ) internal view returns (bool) {
+    ) internal pure returns (bool) {
         // An empty value signals the parameter is untagged, to trigger default values in the
         // license agreement text, but that's valid
         if (keccak256(value_) == keccak256("")) {
@@ -191,15 +187,16 @@ library Licensing {
         uint256 len = ss.length;
         for (uint256 i = 0; i < len; i++) {
             ShortString s = ss[i];
-            result = string(abi.encode(result, s.toString()));
+            result = string(abi.encodePacked(result, '"', s.toString(), '"'));
             if (i != len - 1) {
-                result = string(abi.encode(result, ", "));
+                result = string(abi.encodePacked(result, ','));
             }
+
         }
-        return string(abi.encode(result, "]"));
+        return string(abi.encodePacked(result, "]"));
     }
 
-    function _getDecodedParamString(Licensing.ParamDefinition memory paramDef_, bytes memory value_) internal view returns (string memory) {
+    function _getDecodedParamString(Licensing.ParamDefinition memory paramDef_, bytes memory value_) internal pure returns (string memory) {
         if (paramDef_.paramType == Licensing.ParameterType.Bool) {
             return abi.decode(value_, (bool)) ? "true" : "false";
         } else if (paramDef_.paramType == Licensing.ParameterType.Number) {
@@ -211,12 +208,10 @@ library Licensing {
             return Strings.toHexString(uint160(addr), 20);
         } else if (paramDef_.paramType == Licensing.ParameterType.ShortStringArray) {
             ShortString[] memory choices = abi.decode(value_, (ShortString[]));
-            return "";
-            //return _shortStringArrayToJsonArray(choices);
+            return _shortStringArrayToJsonArray(choices);
         } else if (paramDef_.paramType == Licensing.ParameterType.MultipleChoice) {
             ShortString[] memory choices = _decodeMultipleChoice(value_, paramDef_.availableChoices);
-            return "";
-            //return _shortStringArrayToJsonArray(choices);
+            return _shortStringArrayToJsonArray(choices);
         }
         return "";
     }
