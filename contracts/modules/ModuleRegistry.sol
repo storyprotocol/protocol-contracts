@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
+// See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 import { IModuleRegistry } from "contracts/interfaces/modules/IModuleRegistry.sol";
@@ -9,21 +9,22 @@ import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 import { IGateway } from "contracts/interfaces/modules/IGateway.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
-import { BaseModule } from "./base/BaseModule.sol";
 import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { ModuleKey, ModuleDependencies, toModuleKey } from "contracts/lib/modules/Module.sol";
-import { Gateway } from "./Gateway.sol";
 
 /// @title ModuleRegistry
-/// @notice This contract is the source of truth for all modules that are registered in the protocol.
-/// It's also the entrypoint for execution and configuration of modules, either directly by users
-/// or by MODULE_EXECUTOR_ROLE holders.
+/// @notice The module registry serves as the global repository for all modules
+///         registered under Story Protocol, and acts as the central authorization
+///         mechanism for configuring which frontends may call which modules.
 contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
-
+    /// @notice Identifying protocol-wide modules (opposed to those bound to specific IP Orgs).
     address public constant PROTOCOL_LEVEL = address(0);
 
+    /// @dev Maps protocol hook string keys to their respective hooks.
     mapping(string => IHook) internal _protocolHooks;
+
+    /// @dev Maps hook contracts to their respective hook key names.
     mapping(IHook => string) internal _hookKeys;
 
     /// @notice Maps module keys to their respective modules.
@@ -32,7 +33,7 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
     /// @notice Tracks whether a gateway can call a specific module function.
     mapping(ModuleKey => mapping(IGateway => mapping(bytes4 => bool))) internal _isAuthorized;
 
-    constructor(address accessControl_) AccessControlled(accessControl_) { }
+    constructor(address accessControl_) AccessControlled(accessControl_) {}
 
     /// @notice Gets the protocol-wide module associated with a module key.
     /// @param key_ The unique module key used to identify the module.
@@ -60,9 +61,7 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
     /// @notice Registers a new gateway to the protocol with its declared dependencies.
     /// @dev This is only callable by entities with the MODULE_REGISTRAR_ROLE role.
     /// @param gateway_ The gateway being registered into the protocol.
-    function registerProtocolGateway(
-        IGateway gateway_
-    ) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
+    function registerProtocolGateway(IGateway gateway_) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
         ModuleDependencies memory dependencies = gateway_.updateDependencies();
         uint256 numModules = dependencies.keys.length;
         if (numModules != dependencies.fns.length) {
@@ -78,23 +77,20 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
             }
 
             // Authorize all module function dependencies for the gateway.
-            for (uint256 j = 0; j < fns.length; j++ ) {
+            for (uint256 j = 0; j < fns.length; j++) {
                 if (_isAuthorized[moduleKey][gateway_][fns[j]]) {
                     revert Errors.ModuleRegistry_DependencyAlreadyRegistered();
                 }
                 _isAuthorized[moduleKey][gateway_][fns[j]] = true;
                 emit ModuleAuthorizationGranted(moduleKey, fns[j], address(gateway_), true);
             }
-
         }
     }
 
     /// @notice Removes a gatway as an authorized caller of the protocol.
     /// @dev This is only callable by entities with the MODULE_REGISTRAR_ROLE role.
     /// @param gateway_ The gateway being removed from the protocol.
-    function removeProtocolGateway(
-        IGateway gateway_
-    ) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
+    function removeProtocolGateway(IGateway gateway_) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
         ModuleDependencies memory dependencies = gateway_.getDependencies();
         uint256 numModules = dependencies.keys.length;
         if (numModules != dependencies.fns.length) {
@@ -107,14 +103,13 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
 
             // Revoke authorizations made previously.
             // TODO: Change logic to track dependencies through the registry itself.
-            for (uint256 j = 0; j < fns.length; j++ ) {
+            for (uint256 j = 0; j < fns.length; j++) {
                 if (!_isAuthorized[moduleKey][gateway_][fns[j]]) {
                     revert Errors.ModuleRegistry_DependencyNotYetRegistered();
                 }
                 _isAuthorized[moduleKey][gateway_][fns[j]] = false;
                 emit ModuleAuthorizationGranted(moduleKey, fns[j], address(gateway_), false);
             }
-
         }
     }
 
@@ -163,9 +158,7 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
     /// @param hookKey The unique identifier for the hook.
     /// @dev This function can only be called by an account with the MODULE_REGISTRAR_ROLE.
     /// If the hook is not registered, it reverts with an error.
-    function removeProtocolHook(
-        string calldata hookKey
-    ) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
+    function removeProtocolHook(string calldata hookKey) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
         if (address(_protocolHooks[hookKey]) == address(0)) {
             revert Errors.ModuleRegistry_HookNotRegistered(hookKey);
         }
@@ -174,13 +167,11 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
         delete _hookKeys[hookAddress];
         emit HookRemoved(PROTOCOL_LEVEL, hookKey, address(hookAddress));
     }
-    
+
     /// Removes the current module configured for a module key.
     /// This is only callable by MODULE_REGISTRAR_ROLE holders.
     /// @param key_ The identifier for the type of module being removed.
-    function removeProtocolModule(
-        ModuleKey key_
-    ) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
+    function removeProtocolModule(ModuleKey key_) external onlyRole(AccessControl.MODULE_REGISTRAR_ROLE) {
         if (_modules[key_] == address(0)) {
             revert Errors.ModuleRegistry_ModuleNotYetRegistered();
         }
@@ -245,11 +236,7 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
     /// @param ipOrg_ address of the IPOrg, or address(0) for protocol-level stuff
     /// @param moduleKey_ short module descriptor
     /// @param params_ encoded params for module configuration
-    function configure(
-        IIPOrg ipOrg_,
-        string calldata moduleKey_,
-        bytes calldata params_
-    ) external {
+    function configure(IIPOrg ipOrg_, string calldata moduleKey_, bytes calldata params_) external {
         _configure(ipOrg_, msg.sender, moduleKey_, params_);
     }
 
@@ -267,6 +254,13 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
         return _configure(ipOrg_, caller_, moduleKey_, params_);
     }
 
+    /// @dev Executes an action for a specific module.
+    /// @param ipOrg_ The IP Org under which the execution is performed.
+    /// @param caller_ The address of the original calling entity.
+    /// @param moduleKey_ The identifier of the module being executed.
+    /// @param moduleParams_ Encoded data to be passed to the module.
+    /// @param preHookParams_ Set of data to be used for any registered pre-hooks.
+    /// @param postHookParams_ Set of data to be used for any registered post-hooks.
     function _execute(
         IIPOrg ipOrg_,
         address caller_,
@@ -284,6 +278,11 @@ contract ModuleRegistry is IModuleRegistry, AccessControlled, Multicall {
         return result;
     }
 
+    /// @dev Configures a specific module for an IP Org.
+    /// @param ipOrg_ The IP Org making the relevant configurations.
+    /// @param caller_ The address of the calling entity performing the configuration.
+    /// @param moduleKey_ The identifier for the module being configured.
+    /// @param params_ Module-specific data used for the configuration.
     function _configure(
         IIPOrg ipOrg_,
         address caller_,

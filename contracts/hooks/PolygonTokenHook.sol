@@ -1,29 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { HookResult } from "contracts/interfaces/hooks/base/IHook.sol";
 import { AsyncBaseHook } from "contracts/hooks/base/AsyncBaseHook.sol";
 import { Errors } from "contracts/lib/Errors.sol";
+import { IPolygonTokenClient } from "contracts/interfaces/utils/IPolygonTokenClient.sol";
 import { PolygonToken } from "contracts/lib/hooks/PolygonToken.sol";
 
-interface IPolygonTokenClient {
-    function sendRequest(
-        bytes32 requestId,
-        address requester,
-        address tokenAddress,
-        address tokenOwnerAddress,
-        address callbackAddr,
-        bytes4 callbackFunctionSignature
-    ) external;
-}
-
-/// @title PolygonTokenHook
-/// @notice This is asynchronous hook used to verify a user owning specific Polygon tokens.
+/// @title Polygon Token Hooks Contract
+/// @notice Asynchronous hook used for verifying token balances on Polygon.
 contract PolygonTokenHook is AsyncBaseHook {
     /// @notice The address that is allowed to call the callback function.
-    /// @dev This address is set during contract deployment and cannot be changed afterwards.
     address private immutable CALLBACK_CALLER;
 
+    /// @notice The address of the Polygon client used for call fulfillment.
     address public immutable ORACLE_CLIENT;
 
     /// @notice A counter used to generate unique request IDs for each token request.
@@ -32,27 +21,21 @@ contract PolygonTokenHook is AsyncBaseHook {
     /// @notice A mapping that links each request ID to a PolygonTokenRequest struct.
     mapping(bytes32 => PolygonTokenRequest) private requestIdToRequest;
 
-    /// @notice A struct used to store information about a token request.
-    /// @dev It includes the requester's address, the token's address, the token owner's address, a balance threshold,
-    ///      and two boolean flags to indicate whether the request is completed and whether it exists.
+    /// @notice Stores information rlated to a async Polygon token balance request.
     struct PolygonTokenRequest {
-        address requester;
-        address tokenAddress;
-        address tokenOwnerAddress;
-        uint256 balanceThreshold;
-        bool isRequestCompleted;
-        bool exists;
+        address requester; // Address of the requestor.
+        address tokenAddress; // Address of the Polygon token whose balance is being queried for.
+        address tokenOwnerAddress; // Address of the owner of the Polygon token.
+        uint256 balanceThreshold; // The target token balance necessary for successful fulfillment.
+        bool isRequestCompleted; // Whether the request was completed or not.
+        bool exists; // Whether the request exists.
     }
 
-    /// @notice Initializes the contract during deployment.
-    /// @param accessControl_ The address of the access control contract.
-    /// @param oracleClient_ The address of the oracle client contract for access Polygon Token info.
+    /// @notice Initializes the Polygon Token Hook contract.
+    /// @param accessControl_ The address of the contract used for authorization.
+    /// @param oracleClient_ The address of the oracle client querying for Polygon Token info.
     /// @param callbackCaller_ The address of the callback caller contract.
-    constructor(
-        address accessControl_,
-        address oracleClient_,
-        address callbackCaller_
-    ) AsyncBaseHook(accessControl_) {
+    constructor(address accessControl_, address oracleClient_, address callbackCaller_) AsyncBaseHook(accessControl_) {
         if (callbackCaller_ == address(0)) revert Errors.ZeroAddress();
         if (oracleClient_ == address(0)) revert Errors.ZeroAddress();
         CALLBACK_CALLER = callbackCaller_;
@@ -62,15 +45,16 @@ contract PolygonTokenHook is AsyncBaseHook {
     /// @notice Handles the callback of a token request.
     /// @param requestId The unique ID of the request.
     /// @param balance The balance of the token.
-    /// @dev This function checks if the request exists and verifies the token balance against the balance threshold.
-    /// If the balance is less than the threshold, it sets an error message. Otherwise, it sets the isPassed flag to true.
-    /// It then deletes the request from the requestIdToRequest mapping.
-    /// Finally, it calls the _handleCallback() function, passing the requestId and the encoded isPassed flag and errorMessage.
-    /// The encoding is done using abi.encode(isPassed, errorMessage).
+    /// @dev This function checks if the request exists and verifies th token balance against the configured balance
+    ///      threshold. If the balance is less than the threshold, an error message is set. Otherwise, the callback
+    ///      is marked as successful via `isPassed=true`, and the request is deleted, after which the `handleCallback`
+    ///      function is called with the encoding `abi.encode(isPassed, errorMessage)`.
     function handleCallback(bytes32 requestId, uint256 balance) external {
         bool isPassed = false;
         string memory errorMessage = "";
-        require(requestIdToRequest[requestId].exists, "Request not found");
+        if (!requestIdToRequest[requestId].exists) {
+            revert Errors.Hook_RequestedNotFound();
+        }
         if (balance < requestIdToRequest[requestId].balanceThreshold) {
             errorMessage = "Balance of Token is not enough";
         } else {
@@ -80,15 +64,12 @@ contract PolygonTokenHook is AsyncBaseHook {
         _handleCallback(requestId, abi.encode(isPassed, errorMessage));
     }
 
-    /// @notice Validates the configuration for the hook.
-    /// @dev This function checks if the tokenAddress and balanceThreshold in the configuration are valid.
-    ///      It reverts if the tokenAddress is the zero address or if the balanceThreshold is zero.
-    /// @param hookConfig_ The configuration data for the hook, encoded as bytes.
+    /// @notice Validates the configuration for the async hook.
+    /// @dev Validates whether the configured token address and balance threshold are valid.
+    ///      This function reverts when a zero token address or a zero balance threshold is configured.
+    /// @param hookConfig_ The configuration data for the hook, encoded as a bytes array.
     function _validateConfig(bytes memory hookConfig_) internal pure override {
-        PolygonToken.Config memory config = abi.decode(
-            hookConfig_,
-            (PolygonToken.Config)
-        );
+        PolygonToken.Config memory config = abi.decode(hookConfig_, (PolygonToken.Config));
         if (config.tokenAddress == address(0)) {
             revert Errors.Hook_InvalidHookConfig("tokenAddress is 0");
         }
@@ -97,25 +78,18 @@ contract PolygonTokenHook is AsyncBaseHook {
         }
     }
 
-    /// @dev Internal function to request an asynchronous call,
-    /// concrete hoot implementation should override the function.
-    /// The function should revert in case of error.
+    /// @dev Internal function for requesting an async call meant for implementations
+    ///      to override. This function should revert in case of any errors.
     /// @param hookConfig_ The configuration of the hook.
     /// @param hookParams_ The parameters for the hook.
     /// @return hookData The data returned by the hook.
-    /// @return requestId The ID of the request.
+    /// @return requestId The id of the request.
     function _requestAsyncCall(
         bytes memory hookConfig_,
         bytes memory hookParams_
     ) internal override returns (bytes memory hookData, bytes32 requestId) {
-        PolygonToken.Config memory config = abi.decode(
-            hookConfig_,
-            (PolygonToken.Config)
-        );
-        PolygonToken.Params memory params = abi.decode(
-            hookParams_,
-            (PolygonToken.Params)
-        );
+        PolygonToken.Config memory config = abi.decode(hookConfig_, (PolygonToken.Config));
+        PolygonToken.Params memory params = abi.decode(hookParams_, (PolygonToken.Params));
         requestId = keccak256(abi.encodePacked(this, nonce++));
         hookData = "";
 
@@ -139,7 +113,7 @@ contract PolygonTokenHook is AsyncBaseHook {
     }
 
     /// @notice Returns the address of the callback caller.
-    /// @return The address of the callback caller.
+    /// @return The address of the caller of the callback.
     function _callbackCaller(bytes32) internal view override returns (address) {
         return CALLBACK_CALLER;
     }

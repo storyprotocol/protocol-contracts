@@ -7,12 +7,11 @@ import { ModuleDependencies } from "contracts/lib/modules/Module.sol";
 import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
 
 /// @title Module Gateway
-/// @notice This contract serves as the base layer all module "frontends" must 
+/// @notice This contract serves as the base layer all module "frontends" must
 ///         extend. Protocol admins enroll gateways through the module registry,
 ///         which give them access to call all module functions listed as part
 ///         of their dependency set.
 abstract contract Gateway is IGateway {
-
     bool public registered;
 
     ModuleRegistry public immutable MODULE_REGISTRY;
@@ -34,5 +33,4 @@ abstract contract Gateway is IGateway {
 
     /// @notice Fetches all module dependencies required by the gateway contract.
     function getDependencies() external view virtual override returns (ModuleDependencies memory dependencies);
-
 }

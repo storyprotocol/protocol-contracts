@@ -26,7 +26,7 @@ snapshot :; forge snapshot
 
 slither :; slither ./contracts
 
-format :; npx prettier --write contracts/**/*.sol && npx prettier --write contracts/*.sol
+format :; npx prettier --write --plugin=prettier-plugin-solidity 'contracts/**/*.sol' && npx prettier --write --plugin=prettier-plugin-solidity --write 'contracts/*.sol'
 
 # remove `test` and `script` folders from coverage
 coverage:
@@ -36,7 +36,7 @@ coverage:
 	genhtml lcov.info --output-dir coverage
 
 # solhint should be installed globally
-lint :; npx solhint contracts/**/*.sol && npx solhint contracts/*.sol
+lint :; npx solhint 'contracts/**/*.sol'
 
 deploy-goerli :; npx hardhat run ./script/deploy-reveal-engine.js --network goerli
 verify-goerli :; npx hardhat verify --network goerli ${contract}

@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
-// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
+// See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
-import { Errors } from "contracts/lib/Errors.sol";
 
 /// List of Protocol Term Ids (meaning the Licensing Module will have specific instructions
 /// for these terms without the need of a decoder)
@@ -13,25 +12,25 @@ import { Errors } from "contracts/lib/Errors.sol";
 library SPUMLParams {
     using ShortStrings for *;
 
-    string constant FRAMEWORK_ID = "SPUML-1.0";
+    string public constant FRAMEWORK_ID = "SPUML-1.0";
     ////////////////////////////////////////////////////////////////////////////
     //                               Parameters                               //
     ////////////////////////////////////////////////////////////////////////////
-    string constant CHANNELS_OF_DISTRIBUTION = "Channels-Of-Distribution";
-    string constant ATTRIBUTION = "Attribution";
-    string constant DERIVATIVES_ALLOWED = "Derivatives-Allowed";
-    string constant DERIVATIVES_ALLOWED_OPTIONS = "Derivatives-Allowed-Options";
-    
+    string public constant CHANNELS_OF_DISTRIBUTION = "Channels-Of-Distribution";
+    string public constant ATTRIBUTION = "Attribution";
+    string public constant DERIVATIVES_ALLOWED = "Derivatives-Allowed";
+    string public constant DERIVATIVES_ALLOWED_OPTIONS = "Derivatives-Allowed-Options";
+
     ////////////////////////////////////////////////////////////////////////////
     //                       Derivative Options                               //
     ////////////////////////////////////////////////////////////////////////////
-    string constant ALLOWED_WITH_APPROVAL = "Allowed-With-Approval";
-    uint8 constant ALLOWED_WITH_APPROVAL_INDEX = 0;
-    string constant ALLOWED_WITH_RECIPROCAL_LICENSE = "Allowed-Reciprocal-License";
-    uint8 constant ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX = 1;
-    string constant ALLOWED_WITH_ATTRIBUTION = "Allowed-With-Attribution";
-    uint8 constant ALLOWED_WITH_ATTRIBUTION_INDEX = 2;
-    
+    string public constant ALLOWED_WITH_APPROVAL = "Allowed-With-Approval";
+    uint8 public constant ALLOWED_WITH_APPROVAL_INDEX = 0;
+    string public constant ALLOWED_WITH_RECIPROCAL_LICENSE = "Allowed-Reciprocal-License";
+    uint8 public constant ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX = 1;
+    string public constant ALLOWED_WITH_ATTRIBUTION = "Allowed-With-Attribution";
+    uint8 public constant ALLOWED_WITH_ATTRIBUTION_INDEX = 2;
+
     // On beta version
     // Parameters:
     // string constant CONTENT_STANDARDS = "Content-Standards";
@@ -54,7 +53,6 @@ library SPUMLParams {
     // string constant ALLOWED_WITH_REVENUE_CEILING = "Allowed-With-Revenue-Ceiling";
     // string constant DERIVATIVES_ALLOWED_TAG_AMOUNT = "Derivatives-Allowed-Tag-Amount";
 
-
     function _getDerivativeChoices() internal pure returns (ShortString[] memory) {
         ShortString[] memory choices = new ShortString[](3);
         choices[0] = ALLOWED_WITH_APPROVAL.toShortString();
@@ -63,11 +61,7 @@ library SPUMLParams {
         return choices;
     }
 
-    function _getParamDefs()
-        internal
-        pure
-        returns (Licensing.ParamDefinition[] memory paramDefs)
-    {
+    function _getParamDefs() internal pure returns (Licensing.ParamDefinition[] memory paramDefs) {
         paramDefs = new Licensing.ParamDefinition[](4);
         paramDefs[0] = Licensing.ParamDefinition(
             CHANNELS_OF_DISTRIBUTION.toShortString(),
@@ -93,7 +87,5 @@ library SPUMLParams {
             "", // Since this is dependent on the above, default is unset
             abi.encode(_getDerivativeChoices())
         );
-
     }
-
 }

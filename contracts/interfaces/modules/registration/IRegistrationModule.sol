@@ -1,22 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { Registration } from "contracts/lib/modules/Registration.sol";
-import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 
 /// @title IRegistrationModule
 interface IRegistrationModule is IModule {
-
     /// @notice Emits when an IPOrg updates metadata associated with its IPA.
     /// @param ipOrg The address of the IP Org whose metadata was updated.
     /// @param baseURI The base token URI to be used for token metadata.
     /// @param contractURI The contract URI to be used for contract metadata.
-    event MetadataUpdated(
-        address indexed ipOrg,
-        string baseURI,
-        string contractURI
-    );
+    event MetadataUpdated(address indexed ipOrg, string baseURI, string contractURI);
 
     /// @notice Emits when a new IP asset is registered.
     /// @param ipAssetId The identifier of the newly registered IP asset.
@@ -66,7 +59,11 @@ interface IRegistrationModule is IModule {
     /// @param ipOrgAssetId_ The local id of the IP asset within the IP Org.
     /// @param ipOrgAssetType_ The IP Org asset type.
     /// @return The token URI associated with the IP Org.
-    function tokenURI(address ipOrg_, uint256 ipOrgAssetId_, uint8 ipOrgAssetType_) external view returns (string memory);
+    function tokenURI(
+        address ipOrg_,
+        uint256 ipOrgAssetId_,
+        uint8 ipOrgAssetType_
+    ) external view returns (string memory);
 
     /// @notice Gets the contract URI for an IP Org.
     /// @param ipOrg_ The address of the IP Org.
@@ -78,5 +75,4 @@ interface IRegistrationModule is IModule {
 
     /// @notice Returns true if the index for an IP Org asset type is supported.
     function isValidIpOrgAssetType(address ipOrg_, uint8 index) external view returns (bool);
-
 }

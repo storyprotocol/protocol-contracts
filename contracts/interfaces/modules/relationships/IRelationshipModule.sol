@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.19;
 
 import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
 import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 
 /// @title IRelationshipModule
-/// @notice Interface for the RelationshipModule. 
+/// @notice Interface for the RelationshipModule.
 interface IRelationshipModule is IModule {
-
     /// Emitted with a new Relationship Type definitions is created
     event RelationshipTypeSet(
         // Short string naming the type
@@ -57,11 +56,17 @@ interface IRelationshipModule is IModule {
     /// @param ipOrg_ IP Org address or zero address for protocol level relationships
     /// @param relType_ the name of the relationship type
     /// @return result the relationship type definition
-    function getRelationshipType(address ipOrg_, string memory relType_) external view returns (LibRelationship.RelationshipType memory);
+    function getRelationshipType(
+        address ipOrg_,
+        string memory relType_
+    ) external view returns (LibRelationship.RelationshipType memory);
+
     /// Gets relationship definition for a given relationship id
     function getRelationship(uint256 relationshipId_) external view returns (LibRelationship.Relationship memory);
+
     /// Gets relationship id for a given relationship
     function getRelationshipId(LibRelationship.Relationship calldata rel_) external view returns (uint256);
+
     /// Checks if a relationship has been set
-    function relationshipExists(LibRelationship.Relationship calldata rel_) external view returns (bool);   
+    function relationshipExists(LibRelationship.Relationship calldata rel_) external view returns (bool);
 }
