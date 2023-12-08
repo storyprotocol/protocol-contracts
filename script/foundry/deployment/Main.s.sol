@@ -385,7 +385,7 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         Licensing.ParamDefinition[] memory paramDefs = SPUMLParams._getParamDefs();
         Licensing.SetFramework memory framework = Licensing.SetFramework({
             id: SPUMLParams.FRAMEWORK_ID,
-            textUrl: vm.envString("PIPL_URL"),
+            textUrl: vm.envString("SPUML_URL"),
             paramDefs: paramDefs
         });
         LicensingFrameworkRepo(licensingFrameworkRepo).addFramework(framework);
