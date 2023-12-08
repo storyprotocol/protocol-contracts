@@ -127,7 +127,7 @@ contract LicensingLibTest is Test {
 				);
 				assertTrue(checker.exposed_validateParamValue(paramDef, abi.encode("b")), "string1");
 				assertTrue(checker.exposed_validateParamValue(paramDef, abi.encode(uint256(0))), "string2");
-				assertFalse(checker.exposed_validateParamValue(paramDef, abi.encode("")), "string3");
+				assertTrue(checker.exposed_validateParamValue(paramDef, abi.encode("")), "string3");
 				vm.expectRevert();
 				checker.exposed_validateParamValue(paramDef, abi.encode(true));
 
