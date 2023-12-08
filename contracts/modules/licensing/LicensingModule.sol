@@ -410,6 +410,12 @@ contract LicensingModule is BaseModule, ILicensingModule {
             ipOrgAddress
         ];
         uint256 numParams = configParams.length;
+        emit IpOrgLicensingFrameworkSet(
+            ipOrgAddress,
+            config.frameworkId,
+            LICENSING_FRAMEWORK_REPO.getLicenseTextUrl(config.frameworkId),
+            config.licensor
+        );
         // Add the parameters to storage
         for (uint256 i = 0; i < numParams; i++) {
             Licensing.ParamValue memory param = configParams[i];
@@ -422,14 +428,9 @@ contract LicensingModule is BaseModule, ILicensingModule {
                 revert Errors.LicensingModule_InvalidParamValue();
             }
             paramValues[param.tag] = param.value;
-            emit ParameterSet(ipOrgAddress, param.tag.toString(), param.value);
+            emit ParameterSet(ipOrgAddress, param.tag.toString(), paramDef.paramType, param.value);
         }
-        emit IpOrgLicensingFrameworkSet(
-            ipOrgAddress,
-            config.frameworkId,
-            LICENSING_FRAMEWORK_REPO.getLicenseTextUrl(config.frameworkId),
-            config.licensor
-        );
+        
         return "";
     }
 
