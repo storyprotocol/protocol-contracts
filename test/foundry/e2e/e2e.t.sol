@@ -1024,7 +1024,7 @@ contract E2ETest is IE2ETest, BaseTest {
         vm.expectRevert(
             Errors.LicenseRegistry_LicenseAlreadyLinkedToIpa.selector
         );
-        // One way to link LNFT to IPA
+        // // One way to link LNFT to IPA
         spg.linkLnftToIpa(ipOrg2, licenseId_1_nonDeriv, ipAssetId_3);
 
         // Link license ID 1 (non-derivative) to Asset ID 2 (Org 2, ID 2)
@@ -1033,6 +1033,52 @@ contract E2ETest is IE2ETest, BaseTest {
         emit LicenseNftLinkedToIpa(licenseId_2_deriv, ipAssetId_2);
         // Another way to link LNFT to IPA
         licenseRegistry.linkLnftToIpa(licenseId_2_deriv, ipAssetId_2);
+
+        ///
+        ///
+        /// Register IP Asset & Link to LNFT at the same time
+        ///
+        ///
+
+        string memory ipAssetMediaUrl = "https://arweave.net/music3";
+        Registration.RegisterIPAssetParams memory ipAssetData = Registration.RegisterIPAssetParams({
+            owner: ipAssetOwner5,
+            ipOrgAssetType: 1,
+            name: "Music IPA 3",
+            hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83933399,
+            mediaUrl: ipAssetMediaUrl
+        });
+
+        vm.prank(ipAssetOwner5);
+        vm.expectRevert(Errors.LicenseRegistry_LicenseAlreadyLinkedToIpa.selector);
+        (uint256 ipAssetId_6, uint256 ipOrg3_AssetId_2) = spg.registerIPAsset(
+            ipOrg3,
+            ipAssetData,
+            licenseId_3_deriv,
+            new bytes[](0), // no pre-hook
+            new bytes[](0) // no post-hook
+        );
+
+        vm.prank(ipAssetOwner5);
+        (ipAssetId_6, ipOrg3_AssetId_2) = spg.registerIPAsset(
+            ipOrg3,
+            ipAssetData,
+            licenseId_4_sub_deriv,
+            new bytes[](0), // no pre-hook
+            new bytes[](0) // no post-hook
+        );
+        assertEq(ipAssetId_6, 6, "ipAssetId_6 should be 6");
+        assertEq(ipOrg3_AssetId_2, 2, "ipOrg3_AssetId_2 should be 2");
+        assertEq(
+            IPOrg(ipOrg3).ipAssetId(ipOrg3_AssetId_2),
+            ipAssetId_6,
+            "ipOrg3_AssetId_2 should be global ID 6"
+        );
+        assertEq(
+            IPOrg(ipOrg3).tokenURI(ipOrg3_AssetId_2),
+            ipAssetMediaUrl,
+            string.concat("tokenURI should be ", ipAssetMediaUrl)
+        );
     }
 
     ///
@@ -1182,8 +1228,9 @@ contract E2ETest is IE2ETest, BaseTest {
         (ipAssetId_1, ipOrg1_AssetId_1) = spg.registerIPAsset(
             ipOrg1,
             ipAssetData,
-            preHooksData, // pre-hook param data for hooks: TokenGated
-            new bytes[](0) // no data since there's no registration action hook in post-hook
+            0,
+            preHooksData,
+            new bytes[](0)
         );
         assertEq(ipAssetId_1, 1, "ipAssetId_1 should be 1");
         assertEq(ipOrg1_AssetId_1, 1, "ipOrg1_AssetId_1 should be 1");
@@ -1217,8 +1264,9 @@ contract E2ETest is IE2ETest, BaseTest {
         (ipAssetId_2, ipOrg1_AssetId_2) = spg.registerIPAsset(
             ipOrg1,
             ipAssetData,
-            preHooksData, // pre-hook param data for hooks: TokenGated
-            new bytes[](0) // no data since there's no registration action hook in post-hook
+            0,
+            preHooksData,
+            new bytes[](0)
         );
         assertEq(ipAssetId_2, 2, "ipAssetId_2 should be 2");
         assertEq(ipOrg1_AssetId_2, 2, "ipOrg1_AssetId_2 should be 2");
@@ -1232,13 +1280,6 @@ contract E2ETest is IE2ETest, BaseTest {
             ipAssetMediaUrl,
             string.concat("tokenURI should be ", ipAssetMediaUrl)
         );
-
-        // Random mint in between
-        // moduleRegistry.registerProtocolModule(
-        //     ModuleRegistryKeys.REGISTRATION_MODULE,
-        //     BaseModule(address(this))
-        // );
-        // IIPOrg(ipOrg2).mint(ipAssetOwner3, 1);
 
         //
         // Asset ID 3 (Org 2, ID 1)
@@ -1273,6 +1314,7 @@ contract E2ETest is IE2ETest, BaseTest {
         spg.registerIPAsset(
             ipOrg2,
             ipAssetData,
+            0, // no license
             preHooksData, // pre-hook params: PolygonToken
             new bytes[](0) // no post-hook
         );
@@ -1333,6 +1375,7 @@ contract E2ETest is IE2ETest, BaseTest {
         spg.registerIPAsset(
             ipOrg2,
             ipAssetData,
+            0, // no license
             preHooksData, // pre-hook params: PolygonToken
             new bytes[](0) // no post-hook
         );
@@ -1375,6 +1418,7 @@ contract E2ETest is IE2ETest, BaseTest {
         (ipAssetId_5, ipOrg3_AssetId_1) = spg.registerIPAsset(
             ipOrg3,
             ipAssetData,
+            0, // no license
             new bytes[](0), // no pre-hook
             new bytes[](0) // no post-hook
         );

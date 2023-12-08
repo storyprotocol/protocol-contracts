@@ -116,12 +116,14 @@ contract StoryProtocol is Multicall {
     /// @notice Registers an IP Asset.
     /// @param ipOrg_ The governing IP Org under which the IP asset is registered.
     /// @param params_ The registration params, including owner, name, hash.
+    /// @param licenseId_ Optional: The license id to associate with the IP asset, 0 if none.
     /// @param preHooksData_ Hooks to embed with the registration pre-call.
     /// @param postHooksData_ Hooks to embed with the registration post-call.
     /// @return The global IP asset and local IP Org asset id.
     function registerIPAsset(
         address ipOrg_,
         Registration.RegisterIPAssetParams calldata params_,
+        uint256 licenseId_,
         bytes[] calldata preHooksData_,
         bytes[] calldata postHooksData_
     ) public returns (uint256, uint256) {
@@ -138,7 +140,11 @@ contract StoryProtocol is Multicall {
         if (result.length == 0) {
             return (0, 0);
         }
-        return abi.decode(result, (uint256, uint256));
+        (uint256 globalId, uint256 localId) = abi.decode(result, (uint256, uint256));
+        if (licenseId_ != 0) {
+            _linkLnftToIpa(ipOrg_, licenseId_, globalId, msg.sender);
+        }
+        return (globalId, localId);
     }
 
     /// @notice Transfers an IP asset to another owner.
@@ -290,11 +296,21 @@ contract StoryProtocol is Multicall {
         address ipOrg_,
         uint256 licenseId_,
         uint256 ipaId_
-    ) external {
+    ) public {
+        _linkLnftToIpa(ipOrg_, licenseId_, ipaId_, msg.sender);
+    }
+
+
+    function _linkLnftToIpa(
+        address ipOrg_,
+        uint256 licenseId_,
+        uint256 ipaId_,
+        address caller_
+    ) private {
         MODULE_REGISTRY.execute(
             IIPOrg(ipOrg_),
-            msg.sender,
-            LICENSING_MODULE,
+            caller_,
+            ModuleRegistryKeys.LICENSING_MODULE,
             abi.encode(
                 Licensing.LINK_LNFT_TO_IPA,
                 abi.encode(licenseId_, ipaId_)
@@ -303,4 +319,5 @@ contract StoryProtocol is Multicall {
             new bytes[](0)
         );
     }
+    
 }

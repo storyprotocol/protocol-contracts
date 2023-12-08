@@ -167,7 +167,27 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
             mediaUrl: ""
         });
         bytes[] memory hooks = new bytes[](0);
-        return spg.registerIPAsset(address(ipOrg), params, hooks, hooks);
+        return spg.registerIPAsset(address(ipOrg), params, 0, hooks, hooks);
+    }
+
+    function _createIpAssetAndLinkLicense(
+        address ipAssetOwner,
+        uint8 ipOrgAssetType,
+        uint256 licenseId,
+        bytes memory collectData
+    ) internal isValidReceiver(ipAssetOwner) returns (uint256 globalId, uint256 localId) {
+        // vm.assume(ipAssetType > uint8(type(IPAsset.IPAssetType).min));
+        // vm.assume(ipAssetType < uint8(type(IPAsset.IPAssetType).max));
+        vm.prank(address(ipAssetOwner));
+        Registration.RegisterIPAssetParams memory params = Registration.RegisterIPAssetParams({
+            owner: ipAssetOwner,
+            name: "TestIPAsset",
+            ipOrgAssetType: ipOrgAssetType,
+            hash: "",
+            mediaUrl: ""
+        });
+        bytes[] memory hooks = new bytes[](0);
+        return spg.registerIPAsset(address(ipOrg), params, licenseId, hooks, hooks);
     }
 
     function _deployHook(bytes memory code_, uint256 hookTypeFlag_, uint256 seed_) internal returns (address hookAddr) {

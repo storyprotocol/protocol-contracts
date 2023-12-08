@@ -175,7 +175,7 @@ contract RegistrationModuleTest is BaseTest {
             mediaUrl: mediaUrl_
         });
         bytes[] memory hooks = new bytes[](0);
-        return spg.registerIPAsset(address(ipOrg), params, hooks, hooks);
+        return spg.registerIPAsset(address(ipOrg), params, 0, hooks, hooks);
     }
 
 }
