@@ -315,7 +315,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
                 revert Errors.LicensingModule_ParamSetByIpOrg();
             }
             // If user has set it and ipOrg has not, user value selected
-            if (!Licensing._validateParamValue(paramDef, inputValue)) {
+            if (!Licensing.validateParamValue(paramDef, inputValue)) {
                 // hoping to catch some bad encoding
                 revert Errors.LicensingModule_InvalidInputValue();
             }
@@ -424,7 +424,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
                 config.frameworkId,
                 param.tag
             );
-            if (!Licensing._validateParamValue(paramDef, param.value)) {
+            if (!Licensing.validateParamValue(paramDef, param.value)) {
                 revert Errors.LicensingModule_InvalidParamValue();
             }
             paramValues[param.tag] = param.value;

@@ -267,7 +267,7 @@ contract LicenseRegistry is ERC721 {
                 LICENSING_FRAMEWORK_REPO.getLicenseTextUrl(license.frameworkId.toString()),
                 '"},',
                 '{"trait_type": "Status", "value": "',
-                Licensing._statusToString(license.status),
+                Licensing.statusToString(license.status),
                 '"},'
             )
             /* solhint-enable */
@@ -302,7 +302,7 @@ contract LicenseRegistry is ERC721 {
                 license.frameworkId.toString(),
                 params[i].tag
             );
-            string memory value = Licensing._getDecodedParamString(paramDef, params[i].value);
+            string memory value = Licensing.getDecodedParamString(paramDef, params[i].value);
 
             if (
                 paramDef.paramType != Licensing.ParameterType.MultipleChoice &&

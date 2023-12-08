@@ -75,19 +75,19 @@ contract LicensingFrameworkRepoTest is Test, AccessControlHelper {
         repo.addFramework(framework);
     }
 
-    function test_LicensingFrameworkRepo_validateParamValue_Bool() public {
+    function test_LicensingFrameworkRepovalidateParamValue_Bool() public {
         Licensing.ParamDefinition memory pDef = Licensing.ParamDefinition({
             tag: "TEST_TAG".toShortString(),
             paramType: Licensing.ParameterType.Bool,
             defaultValue: abi.encode(true),
             availableChoices: ""
         });
-        assertTrue(Licensing._validateParamValue(pDef, abi.encode(true)));
-        assertTrue(Licensing._validateParamValue(pDef, abi.encode(false)));
+        assertTrue(Licensing.validateParamValue(pDef, abi.encode(true)));
+        assertTrue(Licensing.validateParamValue(pDef, abi.encode(false)));
         // WARNING: we cant prevent this
-        assertTrue(Licensing._validateParamValue(pDef, abi.encode(1)));
+        assertTrue(Licensing.validateParamValue(pDef, abi.encode(1)));
         vm.expectRevert();
-        Licensing._validateParamValue(pDef, abi.encode("test"));
+        Licensing.validateParamValue(pDef, abi.encode("test"));
     }
 
     function test_LicensingFrameworkRepo_validateParam_emptyValue() public {
@@ -97,48 +97,48 @@ contract LicensingFrameworkRepoTest is Test, AccessControlHelper {
             defaultValue: "",
             availableChoices: ""
         });
-        assertTrue(Licensing._validateParamValue(pDef, ""));
+        assertTrue(Licensing.validateParamValue(pDef, ""));
     }
 
-    function test_LicensingFrameworkRepo_validateParamValue_Number() public {
+    function test_LicensingFrameworkRepovalidateParamValue_Number() public {
         Licensing.ParamDefinition memory pDef = Licensing.ParamDefinition({
             tag: "TEST_TAG".toShortString(),
             paramType: Licensing.ParameterType.Number,
             defaultValue: abi.encode(123),
             availableChoices: ""
         });
-        assertTrue(Licensing._validateParamValue(pDef, abi.encode(1123123)));
+        assertTrue(Licensing.validateParamValue(pDef, abi.encode(1123123)));
         //WARNING: everyting can be decoded as a number
        
     }
 
-    function test_LicensingFrameworkRepo_validateParamValue_Address() public {
+    function test_LicensingFrameworkRepovalidateParamValue_Address() public {
         Licensing.ParamDefinition memory pDef = Licensing.ParamDefinition({
             tag: "TEST_TAG".toShortString(),
             paramType: Licensing.ParameterType.Address,
             defaultValue: abi.encode(0x123),
             availableChoices: ""
         });
-        assertTrue(Licensing._validateParamValue(pDef, abi.encode(address(0x123))));
-        assertFalse(Licensing._validateParamValue(pDef, abi.encode(address(0))));
+        assertTrue(Licensing.validateParamValue(pDef, abi.encode(address(0x123))));
+        assertFalse(Licensing.validateParamValue(pDef, abi.encode(address(0))));
     }
 
-    function test_LicensingFrameworkRepo_validateParamValue_String() public {
+    function test_LicensingFrameworkRepovalidateParamValue_String() public {
         Licensing.ParamDefinition memory pDef = Licensing.ParamDefinition({
             tag: "TEST_TAG".toShortString(),
             paramType: Licensing.ParameterType.String,
             defaultValue: abi.encode("test"),
             availableChoices: ""
         });
-        assertTrue(Licensing._validateParamValue(pDef, abi.encode("test")), "string is true");
-        assertFalse(Licensing._validateParamValue(pDef, ""), "empty value is false");
-        assertFalse(Licensing._validateParamValue(pDef, abi.encode("")), "empty string is false");
-        assertFalse(Licensing._validateParamValue(pDef, abi.encode(" ")), "space is false");
+        assertTrue(Licensing.validateParamValue(pDef, abi.encode("test")), "string is true");
+        assertFalse(Licensing.validateParamValue(pDef, ""), "empty value is false");
+        assertFalse(Licensing.validateParamValue(pDef, abi.encode("")), "empty string is false");
+        assertFalse(Licensing.validateParamValue(pDef, abi.encode(" ")), "space is false");
         vm.expectRevert();
-        Licensing._validateParamValue(pDef, abi.encode(123));
+        Licensing.validateParamValue(pDef, abi.encode(123));
     }
 
-    function test_LicensingFrameworkRepo_validateParamValue_ShortStringArray() public {
+    function test_LicensingFrameworkRepovalidateParamValue_ShortStringArray() public {
         ShortString[] memory ssValue = new ShortString[](2);
         ssValue[0] = "test1".toShortString();
         ssValue[1] = "test2".toShortString();
@@ -148,12 +148,12 @@ contract LicensingFrameworkRepoTest is Test, AccessControlHelper {
             defaultValue: abi.encode(ssValue),
             availableChoices: ""
         });
-        assertTrue(Licensing._validateParamValue(pDef, abi.encode(ssValue)));
+        assertTrue(Licensing.validateParamValue(pDef, abi.encode(ssValue)));
         vm.expectRevert();
-        Licensing._validateParamValue(pDef, abi.encode(["test", "tttest"]));
+        Licensing.validateParamValue(pDef, abi.encode(["test", "tttest"]));
     }
 
-    function test_LicensingFrameworkRepo_validateParamValue_MultipleChoice() public {
+    function test_LicensingFrameworkRepovalidateParamValue_MultipleChoice() public {
         ShortString[] memory ssValue = new ShortString[](2);
         ssValue[0] = "test1".toShortString();
         ssValue[1] = "test2".toShortString();
@@ -164,7 +164,7 @@ contract LicensingFrameworkRepoTest is Test, AccessControlHelper {
             availableChoices: abi.encode(ssValue)
         });
 
-        assertTrue(Licensing._validateParamValue(pDef, abi.encode(0x1)));
+        assertTrue(Licensing.validateParamValue(pDef, abi.encode(0x1)));
 
     }
     
