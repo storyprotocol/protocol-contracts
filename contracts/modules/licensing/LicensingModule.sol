@@ -287,8 +287,8 @@ contract LicensingModule is BaseModule, ILicensingModule {
                 derivativesAllowed = abi.decode(resultValue, (bool));
             } else if (ShortStringOps._equal(paramDef.tag, SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS)) {
                 uint256 derivativeIndexMask = abi.decode(resultValue, (uint256));
-                derivativeNeedsApproval = BitMask._isSet(derivativeIndexMask, SPUMLParams.ALLOWED_WITH_APPROVAL_INDEX);
-                isReciprocal = BitMask._isSet(derivativeIndexMask, SPUMLParams.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX);
+                derivativeNeedsApproval = BitMask.isSet(derivativeIndexMask, SPUMLParams.ALLOWED_WITH_APPROVAL_INDEX);
+                isReciprocal = BitMask.isSet(derivativeIndexMask, SPUMLParams.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX);
             }
         }
         // In case there is misconfiguration.
@@ -315,7 +315,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
                 revert Errors.LicensingModule_ParamSetByIpOrg();
             }
             // If user has set it and ipOrg has not, user value selected
-            if (!Licensing._validateParamValue(paramDef, inputValue)) {
+            if (!Licensing.validateParamValue(paramDef, inputValue)) {
                 // hoping to catch some bad encoding
                 revert Errors.LicensingModule_InvalidInputValue();
             }
@@ -424,7 +424,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
                 config.frameworkId,
                 param.tag
             );
-            if (!Licensing._validateParamValue(paramDef, param.value)) {
+            if (!Licensing.validateParamValue(paramDef, param.value)) {
                 revert Errors.LicensingModule_InvalidParamValue();
             }
             paramValues[param.tag] = param.value;

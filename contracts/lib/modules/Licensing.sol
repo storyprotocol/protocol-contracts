@@ -143,7 +143,7 @@ library Licensing {
     bytes32 public constant LINK_LNFT_TO_IPA = keccak256("LINK_LNFT_TO_IPA");
 
     /// @notice Returns the string representation of a license status.
-    function _statusToString(LicenseStatus status_) internal pure returns (string memory) {
+    function statusToString(LicenseStatus status_) internal pure returns (string memory) {
         if (status_ == LicenseStatus.Unset) {
             return "Unset";
         } else if (status_ == LicenseStatus.Active) {
@@ -161,12 +161,12 @@ library Licensing {
     /// @param value the encoded value
     /// @param availableChoices the encoded available choices for the parameter, defined in parameter
     /// definition
-    function _decodeMultipleChoice(
+    function decodeMultipleChoice(
         bytes memory value,
         bytes memory availableChoices
     ) internal pure returns (ShortString[] memory) {
         uint256 mask = abi.decode(value, (uint256));
-        uint8[] memory indexes = BitMask._getSetIndexes(mask);
+        uint8[] memory indexes = BitMask.getSetIndexes(mask);
         ShortString[] memory choices = abi.decode(availableChoices, (ShortString[]));
         ShortString[] memory result = new ShortString[](indexes.length);
         for (uint256 i = 0; i < indexes.length; i++) {
@@ -179,8 +179,8 @@ library Licensing {
     /// and encodes it into bytes
     /// @param choiceIndexes_ the indexes of the chosen options
     /// @return value the encoded value
-    function _encodeMultipleChoice(uint8[] memory choiceIndexes_) internal pure returns (bytes memory value) {
-        uint256 mask = BitMask._convertToMask(choiceIndexes_);
+    function encodeMultipleChoice(uint8[] memory choiceIndexes_) internal pure returns (bytes memory value) {
+        uint256 mask = BitMask.convertToMask(choiceIndexes_);
         return abi.encode(mask);
     }
 
@@ -190,7 +190,7 @@ library Licensing {
     /// so they should be done off chain. Also, Boolean decoded as a Number will be valid.
     /// @param paramDef_ the parameter definition
     /// @param value_ the encoded value
-    function _validateParamValue(ParamDefinition memory paramDef_, bytes memory value_) internal pure returns (bool) {
+    function validateParamValue(ParamDefinition memory paramDef_, bytes memory value_) internal pure returns (bool) {
         // An empty value signals the parameter is untagged, to trigger default values in the
         // license agreement text, but that's valid
         if (keccak256(value_) == keccak256("")) {
@@ -231,7 +231,7 @@ library Licensing {
     /// metadata rendering.
     /// @param ss the ShortString[]
     /// @return the string representation of a JSON array
-    function _shortStringArrayToJsonArray(ShortString[] memory ss) internal pure returns (string memory) {
+    function shortStringArrayToJsonArray(ShortString[] memory ss) internal pure returns (string memory) {
         string memory result = "[";
         uint256 len = ss.length;
         for (uint256 i = 0; i < len; i++) {
@@ -249,7 +249,7 @@ library Licensing {
     /// @param paramDef_ the parameter definition
     /// @param value_ the encoded value
     /// @return the string representation of the value
-    function _getDecodedParamString(
+    function getDecodedParamString(
         Licensing.ParamDefinition memory paramDef_,
         bytes memory value_
     ) internal pure returns (string memory) {
@@ -264,10 +264,10 @@ library Licensing {
             return Strings.toHexString(uint160(addr), 20);
         } else if (paramDef_.paramType == Licensing.ParameterType.ShortStringArray) {
             ShortString[] memory choices = abi.decode(value_, (ShortString[]));
-            return _shortStringArrayToJsonArray(choices);
+            return shortStringArrayToJsonArray(choices);
         } else if (paramDef_.paramType == Licensing.ParameterType.MultipleChoice) {
-            ShortString[] memory choices = _decodeMultipleChoice(value_, paramDef_.availableChoices);
-            return _shortStringArrayToJsonArray(choices);
+            ShortString[] memory choices = decodeMultipleChoice(value_, paramDef_.availableChoices);
+            return shortStringArrayToJsonArray(choices);
         }
         return "";
     }

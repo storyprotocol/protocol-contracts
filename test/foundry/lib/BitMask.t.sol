@@ -12,11 +12,11 @@ import { MockERC721 } from "test/foundry/mocks/MockERC721.sol";
 contract BitMaskHarness {
 
     function convertToMask(uint8[] calldata assetTypes) pure external returns (uint256) {
-        return BitMask._convertToMask(assetTypes);
+        return BitMask.convertToMask(assetTypes);
     }
 
     function isSet(uint256 mask, uint8 assetType) pure external returns (bool) {
-        return BitMask._isSet(mask, assetType);
+        return BitMask.isSet(mask, assetType);
     }
 
 }
