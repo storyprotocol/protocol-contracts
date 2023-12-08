@@ -43,6 +43,10 @@ jobs:
         with:
           version: nightly
 
+      - name: List files in the repository
+        run: |
+          ls -R ${{ github.workspace }}          
+
       - name: Run Forge build
         run: |
           forge --version
@@ -63,20 +67,3 @@ jobs:
       #   run:
       #     forge coverage --report lcov --report summary
       #   id: forge-code-coverage
-
-  hardhat-test:
-    strategy:
-      fail-fast: true
-
-    name: Hardhat Unit Test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-      - name: Environment
-        uses: actions/setup-node@v3
-      - name: Test
-        uses: ambersun1234/hardhat-test-action@v0.0.1
-        with:
-          network: hardhat

@@ -16,6 +16,7 @@ docs/
 .env
 
 .idea/
+.vscode
 .github/
 node_modules/
 
@@ -28,3 +29,6 @@ deployment-31337.json
 # Script data
 script/data/
 
+# Coverage
+coverage/
+lcov.info

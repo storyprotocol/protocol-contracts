@@ -1,56 +1,72 @@
-// SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.13;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
 
-import { IRelationshipProcessor } from "./processors/IRelationshipProcessor.sol";
-import { IPAsset } from "contracts/lib/IPAsset.sol";
-import { Relationship } from "contracts/lib/modules/Relationship.sol";
+import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
+import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 
-interface IRelationshipModule {
-
-    event RelationSet(
-        address sourceContract,
-        uint256 sourceId,
-        address destContract,
-        uint256 destId,
-        bytes32 indexed relationshipId,
-        uint256 endTime
-    );
-    event RelationUnset(
-        address sourceContract,
-        uint256 sourceId,
-        address destContract,
-        uint256 destId,
-        bytes32 indexed relationshipId
-    );
-    event RelationPendingProcessor(
-        address sourceContract,
-        uint256 sourceId,
-        address destContract,
-        uint256 destId,
-        bytes32 indexed relationshipId
+/// @title IRelationshipModule
+/// @notice Interface for the RelationshipModule.
+interface IRelationshipModule is IModule {
+    /// Emitted with a new Relationship Type definitions is created
+    event RelationshipTypeSet(
+        // Short string naming the type
+        string relType,
+        // Zero for protocol-wide, or address of the IPOrg
+        address indexed ipOrg,
+        // Allowed src address, zero address if empty, all F for all addresses are OK
+        address src,
+        // Allowed items for src
+        LibRelationship.Relatables srcRelatable,
+        // Mask of allowed subtypes for src (see BitMask)
+        uint256 srcSubtypesMask,
+        // Allowed dst address, zero address if empty, all F for all addresses are OK
+        address dst,
+        // Allowed items for dst
+        LibRelationship.Relatables dstRelatable,
+        // Mask of allowed subtypes for dst (see BitMask)
+        uint256 dstSubtypesMask
     );
 
-    event RelationshipConfigSet(
-        string name,
-        bytes32 indexed relationshipId,
-        uint256 sourceIpAssetTypeMask,
-        uint256 destIpAssetTypeMask,
-        bool onlySameIPAssetOrg,
-        address processor,
-        uint256 maxTtl,
-        uint256 minTtl,
-        bool renewable
+    /// Emitted when a Relationship Type definition is removed
+    event RelationshipTypeUnset(
+        // Short string naming the type
+        string relType,
+        // Zero for protocol-wide, or address of the IPOrg
+        address ipOrg
     );
 
-    event RelationshipConfigUnset(bytes32 indexed relationshipId);
+    /// Emitted when a Relationship is created, linking 2 elements
+    event RelationshipCreated(
+        // Sequential Relationship ID
+        uint256 indexed relationshipId,
+        // Short string naming the type
+        string relType,
+        // Source contract or EOA
+        address srcAddress,
+        // Source item ID
+        uint256 srcId,
+        // Destination contract or EOA
+        address dstAddress,
+        // Destination item ID
+        uint256 dstId
+    );
 
-    function relate(Relationship.RelationshipParams calldata params_, bytes calldata data_) external;
-    function unrelate(Relationship.RelationshipParams calldata params_) external;
-    function areTheyRelated(Relationship.RelationshipParams calldata params_) external view returns (bool);
-    function isRelationshipExpired(Relationship.RelationshipParams calldata params_) external view returns (bool);
-    function setRelationshipConfig(string calldata name_, Relationship.SetRelationshipConfigParams calldata params_) external returns(bytes32 relationshipId);
-    function getRelationshipId(string calldata name_) external view returns (bytes32);
-    function unsetRelationshipConfig(bytes32 relationshipId_) external;
-    function getRelationshipConfig(bytes32 relationshipId_) external view returns (Relationship.RelationshipConfig memory);
-    function getRelationshipConfigDecoded(bytes32 relationshipId_) external view returns (Relationship.SetRelationshipConfigParams memory);
+    /// Gets relationship type definition for a given relationship type name
+    /// Will revert if no relationship type is found
+    /// @param ipOrg_ IP Org address or zero address for protocol level relationships
+    /// @param relType_ the name of the relationship type
+    /// @return result the relationship type definition
+    function getRelationshipType(
+        address ipOrg_,
+        string memory relType_
+    ) external view returns (LibRelationship.RelationshipType memory);
+
+    /// Gets relationship definition for a given relationship id
+    function getRelationship(uint256 relationshipId_) external view returns (LibRelationship.Relationship memory);
+
+    /// Gets relationship id for a given relationship
+    function getRelationshipId(LibRelationship.Relationship calldata rel_) external view returns (uint256);
+
+    /// Checks if a relationship has been set
+    function relationshipExists(LibRelationship.Relationship calldata rel_) external view returns (bool);
 }

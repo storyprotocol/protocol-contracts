@@ -1,28 +1,22 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: UNLICENSED
+// See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
+pragma solidity ^0.8.19;
 
-pragma solidity ^0.8.13;
-
-import { Errors } from "contracts/lib/Errors.sol";
-import { AccessControl } from "contracts/lib/AccessControl.sol";
-import { IVersioned } from "contracts/interfaces/utils/IVersioned.sol";
-import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import { Multicall } from "@openzeppelin/contracts/utils/Multicall.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-/// @notice AccessControlSingleton contract. Manages protocol admin keys. Other contracts might inherit
-/// AccessControlled or its upgradeable version to use the onlyRole modifier.
-/// TODO: Evaluate making this contract AccessControlEnumerableUpgradeable so it could enforce unique roles
-/// (as in only 1 address can have a role at a time)
-contract AccessControlSingleton is
-    AccessControlUpgradeable,
-    UUPSUpgradeable,
-    Multicall,
-    IVersioned
-{
-    string public constant version = "0.1.0";
+import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { Errors } from "contracts/lib/Errors.sol";
 
-    /// @notice Initializer method, access point to initialize inheritance tree.
-    /// @param admin_ address to be the PROTOCOL_ADMIN_ROLE.
+/// @title Access Control Singleton
+/// @notice This contract serves as the global source of truth for role-based authorization.
+///         Contracts that inherit the AccessControlled contract or its upgradable variant
+///         are may be granted granular access to certain roles by utilizing the `onlyRole`
+///         modifier with the required role input as a parameter.
+contract AccessControlSingleton is AccessControlUpgradeable, UUPSUpgradeable, Multicall {
+    /// @notice Initialize the Access Control Singleton contract.
+    /// @param admin_ address to inherit the PROTOCOL_ADMIN_ROLE.
     function initialize(address admin_) external initializer {
         if (admin_ == address(0)) revert Errors.ZeroAddress();
         __AccessControl_init();
@@ -30,19 +24,13 @@ contract AccessControlSingleton is
         _grantRole(AccessControl.PROTOCOL_ADMIN_ROLE, admin_);
     }
 
-    /// @notice Method for PROTOCOL_ADMIN_ROLE to create new roles, and define their role admin.
-    /// @param role_ id of the new role. Should be keccak256("<ROLE_NAME>").
-    /// @param admin_ role id that will be the role admin for the new role.
-    function setRoleAdmin(
-        bytes32 role_,
-        bytes32 admin_
-    ) external onlyRole(AccessControl.PROTOCOL_ADMIN_ROLE) {
+    /// @notice Defines the admin role associated for a given protocol role.
+    /// @param role_ The id of the new role, given by keccak256("<ROLE_NAME>").
+    /// @param admin_ The id of the admin role provisioned for the provided role.
+    function setRoleAdmin(bytes32 role_, bytes32 admin_) external onlyRole(AccessControl.PROTOCOL_ADMIN_ROLE) {
         _setRoleAdmin(role_, admin_);
     }
 
-    /// @notice Access control for the upgrade process (UPGRADER_ROLE)
-    /// @param newImplementation_ address of the new deployed implementation.
-    function _authorizeUpgrade(
-        address newImplementation_
-    ) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
+    /// @notice Authorizes an upgrade for the contract.
+    function _authorizeUpgrade(address) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
 }

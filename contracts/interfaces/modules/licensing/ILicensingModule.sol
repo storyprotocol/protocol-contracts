@@ -1,23 +1,32 @@
-// SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.13;
-import { ZeroAddress, Unauthorized } from "contracts/errors/General.sol";
-import { IPAssetOrgFactory } from "contracts/IPAssetOrgFactory.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
-import { ITermsProcessor } from "./terms/ITermsProcessor.sol";
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
-import { IERC5218 } from "./IERC5218.sol";
 
-interface ILicensingModule {
-    
-    event NonCommercialLicenseUriSet(string uri);
+/// @title Licensing Module Interface
+interface ILicensingModule is IModule {
+    /// Emits when an IP org picks a licensing framework and sets its configuration.
+    /// @param ipOrg Address of the IP org whose license framework is being set.
+    /// @param frameworkId The uint256 id of the set licensing framework.
+    /// @param url A string URL which points to the associated legal document.
+    /// @param licensorConfig Configuration associated with the framework's licensor.
+    /// @param values A list of terms describing the licensing framework.
+    event IpOrgLicensingFrameworkSet(
+        address indexed ipOrg,
+        string frameworkId,
+        string url,
+        Licensing.LicensorConfig licensorConfig,
+        Licensing.ParamValue[] values
+    );
 
-    event IPAssetOrgConfigSet(address ipAssetOrg, Licensing.IPAssetOrgConfig config);
+    /// @notice Gets the licensing framework for an IP org.
+    /// @param ipOrg_ The address of the selected IP Org.
+    function getIpOrgLicensorConfig(address ipOrg_) external view returns (Licensing.LicensorConfig);
 
-    function configureIpAssetOrgLicensing(address ipAssetOrg_, Licensing.IPAssetOrgConfig memory config_) external;
-
-    function getIpAssetOrgConfig(address ipAssetOrg_) external view returns (Licensing.IPAssetOrgConfig memory);
-
-    function getNonCommercialLicenseURI() external view returns (string memory);
-
+    /// Gets the value set by an IP org for a parameter of a licensing framework.
+    /// If no value is set (bytes.length==0), licensors will be able to set their value.
+    /// @param ipOrg_ address of the IP org
+    /// @param paramTag_ string tag of the parameter
+    function getIpOrgValueForParam(address ipOrg_, string calldata paramTag_) external view returns (bytes memory);
 }

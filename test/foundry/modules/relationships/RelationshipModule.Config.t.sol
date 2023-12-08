@@ -1,167 +1,177 @@
 // SPDX-License-Identifier: BUSDL-1.1
 pragma solidity ^0.8.13;
 
+import "forge-std/Test.sol";
 import 'test/foundry/utils/BaseTest.sol';
-import { Errors } from "contracts/lib/Errors.sol";
-import { Relationship } from "contracts/lib/modules/Relationship.sol";
+import 'contracts/modules/relationships/RelationshipModule.sol';
+import 'contracts/lib/modules/LibRelationship.sol';
+import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { BitMask } from "contracts/lib/BitMask.sol";
 
-contract RelationshipModuleSetupRelationshipsTest is BaseTest {
+contract RelationshipModuleConfigTest is BaseTest {
 
-    function setUp() virtual override public {
-        deployProcessors = true;
+    address relCreator = address(4444444);
+
+    function setUp() override public {
         super.setUp();
+        _grantRole(vm, AccessControl.RELATIONSHIP_MANAGER_ROLE, relCreator);
     }
 
-    function test_setRelationship() public {
-        IPAsset.IPAssetType[] memory sourceIpAssets = new IPAsset.IPAssetType[](1);
-        sourceIpAssets[0] = IPAsset.IPAssetType.STORY;
-        IPAsset.IPAssetType[] memory destIpAssets = new IPAsset.IPAssetType[](2);
-        destIpAssets[0] = IPAsset.IPAssetType.CHARACTER;
-        destIpAssets[1] = IPAsset.IPAssetType.ART;
+    function test_RelationshipModule_addProtocolRelationshipType() public {
+        LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
+            src: LibRelationship.Relatables.ADDRESS,
+            dst: LibRelationship.Relatables.ADDRESS
+        });
+        uint8[] memory allowedSrcs = new uint8[](0);
+        uint8[] memory allowedDsts = new uint8[](0);
+        LibRelationship.AddRelationshipTypeParams memory params = LibRelationship.AddRelationshipTypeParams({
+            relType: "TEST_RELATIONSHIP",
+            ipOrg: LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
+            allowedElements: allowedElements,
+            allowedSrcs: allowedSrcs,
+            allowedDsts: allowedDsts
+        });
+        vm.prank(relCreator);
+        // Todo test event
+        spg.addRelationshipType(params);
+        LibRelationship.RelationshipType memory relType = relationshipModule.getRelationshipType(
+            LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
+            "TEST_RELATIONSHIP"
+        );
+        assertEq(relType.src, LibRelationship.NO_ADDRESS_RESTRICTIONS);
+        assertEq(relType.srcSubtypesMask, 0);
+        assertEq(relType.dst, LibRelationship.NO_ADDRESS_RESTRICTIONS);
+        assertEq(relType.dstSubtypesMask, 0);
+    }
+
+    function test_RelationshipModule_addIpOrgIpOrgRelationships() public {
+        LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
+            src: LibRelationship.Relatables.IPORG_ENTRY,
+            dst: LibRelationship.Relatables.IPORG_ENTRY
+        });
+        uint8[] memory allowedSrcs = new uint8[](2);
+        allowedSrcs[0] = 0;
+        allowedSrcs[1] = 2;
+        uint8[] memory allowedDsts = new uint8[](1);
+        allowedDsts[0] = 1;
+        LibRelationship.AddRelationshipTypeParams memory params = LibRelationship.AddRelationshipTypeParams({
+            relType: "TEST_RELATIONSHIP",
+            ipOrg: address(ipOrg),
+            allowedElements: allowedElements,
+            allowedSrcs: allowedSrcs,
+            allowedDsts: allowedDsts
+        });
+        vm.prank(ipOrgOwner);
+        // Todo test event
+        spg.addRelationshipType(params);
+        LibRelationship.RelationshipType memory relType = relationshipModule.getRelationshipType(
+            address(ipOrg),
+            "TEST_RELATIONSHIP"
+        );
+        assertEq(relType.src, address(ipOrg));
+        assertEq(relType.srcSubtypesMask, BitMask._convertToMask(allowedSrcs));
+        assertEq(relType.dst, address(ipOrg));
+        assertEq(relType.dstSubtypesMask, BitMask._convertToMask(allowedDsts));
+
+    }
+
+    function test_RelationshipModule_revert_addIpOrgIpOrgRelationships_UnsupportedTypes() public {
+        uint8[] memory allowedSrcs = new uint8[](0);
+        uint8[] memory allowedDsts = new uint8[](0);
+        allowedSrcs = new uint8[](3);
+        allowedSrcs[0] = 1;
+        allowedSrcs[1] = 2;
+        allowedSrcs[2] = 0;
+        allowedDsts = new uint8[](1);
+        allowedDsts[0] = 9;
+
+        LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
+            src: LibRelationship.Relatables.IPORG_ENTRY,
+            dst: LibRelationship.Relatables.IPORG_ENTRY
+        });
         
-        Relationship.SetRelationshipConfigParams memory params = Relationship.SetRelationshipConfigParams({
-            sourceIpAssets: sourceIpAssets,
-            allowedExternalSource: false,
-            destIpAssets: destIpAssets,
-            allowedExternalDest: true,
-            onlySameIPAssetOrg: true,
-            processor: address(relationshipProcessor),
-            disputer: address(this),
-            timeConfig: Relationship.TimeConfig({
-                minTtl: 0,
-                maxTtl: 0,
-                renewable: false
-            })
+        LibRelationship.AddRelationshipTypeParams memory params = LibRelationship.AddRelationshipTypeParams({
+            relType: "TEST_RELATIONSHIP",
+            ipOrg: address(ipOrg),
+            allowedElements: allowedElements,
+            allowedSrcs: allowedSrcs,
+            allowedDsts: allowedDsts
         });
-
-        bytes32 relId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
-        assertEq(relId, keccak256(abi.encode("RELATIONSHIP")));
-
-        Relationship.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relId);
-        assertEq(config.sourceIpAssetTypeMask, 1 << (uint256(IPAsset.IPAssetType.STORY) & 0xff));
-        assertEq(config.destIpAssetTypeMask, 1 << (uint256(IPAsset.IPAssetType.CHARACTER) & 0xff) | 1 << (uint256(IPAsset.IPAssetType.ART) & 0xff) | (uint256(IPAsset.EXTERNAL_ASSET) << 248));
-        assertTrue(config.onlySameIPAssetOrg);
-        // TODO: test for event
-
+        vm.prank(ipOrgOwner);
+        // Todo test event
+        vm.expectRevert(Errors.RelationshipModule_UnsupportedIpOrgIndexType.selector);
+        spg.addRelationshipType(params);
     }
 
-    function test_revert_IfMasksNotConfigured() public {
-        IPAsset.IPAssetType[] memory sourceIpAssets = new IPAsset.IPAssetType[](1);
-        sourceIpAssets[0] = IPAsset.IPAssetType.UNDEFINED;
-        IPAsset.IPAssetType[] memory destIpAssets = new IPAsset.IPAssetType[](2);
-
-        Relationship.SetRelationshipConfigParams memory params = Relationship.SetRelationshipConfigParams({
-            sourceIpAssets: sourceIpAssets,
-            allowedExternalSource: false,
-            destIpAssets: destIpAssets,
-            allowedExternalDest: true,
-            onlySameIPAssetOrg: true,
-            processor: address(relationshipProcessor),
-            disputer: address(this),
-            timeConfig: Relationship.TimeConfig({
-                minTtl: 0,
-                maxTtl: 0,
-                renewable: false
-            })
+    function test_RelationshipModule_revert_RelationshipModule_CallerNotIpOrgOwner() public {
+        LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
+            src: LibRelationship.Relatables.IPORG_ENTRY,
+            dst: LibRelationship.Relatables.IPORG_ENTRY
         });
-
-        vm.expectRevert();
-        relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
-    }
-
-    function test_relationshipConfigDecoded() public {
-        IPAsset.IPAssetType[] memory sourceIpAssets = new IPAsset.IPAssetType[](1);
-        sourceIpAssets[0] = IPAsset.IPAssetType.STORY;
-        IPAsset.IPAssetType[] memory destIpAssets = new IPAsset.IPAssetType[](2);
-        destIpAssets[0] = IPAsset.IPAssetType.CHARACTER;
-        destIpAssets[1] = IPAsset.IPAssetType.ART;
-        
-        Relationship.SetRelationshipConfigParams memory params = Relationship.SetRelationshipConfigParams({
-            sourceIpAssets: sourceIpAssets,
-            allowedExternalSource: false,
-            destIpAssets: destIpAssets,
-            allowedExternalDest: true,
-            onlySameIPAssetOrg: true,
-            processor: address(relationshipProcessor),
-            disputer: address(this),
-            timeConfig: Relationship.TimeConfig({
-                minTtl: 0,
-                maxTtl: 0,
-                renewable: false
-            })
+        uint8[] memory allowedSrcs = new uint8[](2);
+        allowedSrcs[0] = 0;
+        allowedSrcs[1] = 2;
+        uint8[] memory allowedDsts = new uint8[](1);
+        allowedDsts[0] = 1;
+        LibRelationship.AddRelationshipTypeParams memory params = LibRelationship.AddRelationshipTypeParams({
+            relType: "TEST_RELATIONSHIP",
+            ipOrg: address(ipOrg),
+            allowedElements: allowedElements,
+            allowedSrcs: allowedSrcs,
+            allowedDsts: allowedDsts
         });
-        bytes32 relId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
-
-        Relationship.SetRelationshipConfigParams memory result = relationshipModule.getRelationshipConfigDecoded(relId);
-
-        _assertEqIPAssetArray(result.sourceIpAssets, params.sourceIpAssets);
-        _assertEqIPAssetArray(result.destIpAssets, params.destIpAssets);
-        assertEq(result.allowedExternalSource, params.allowedExternalSource);
-        assertEq(result.allowedExternalDest, params.allowedExternalDest);
-        assertEq(result.onlySameIPAssetOrg, params.onlySameIPAssetOrg);
-        assertEq(result.processor, params.processor);
-        assertEq(result.disputer, params.disputer);
-        assertEq(result.timeConfig.minTtl, params.timeConfig.minTtl);
-        assertEq(result.timeConfig.maxTtl, params.timeConfig.maxTtl);
-        assertEq(result.timeConfig.renewable, params.timeConfig.renewable);
-
+        vm.expectRevert(Errors.RelationshipModule_CallerNotIpOrgOwner.selector);
+        spg.addRelationshipType(params);
     }
 
-    function _assertEqIPAssetArray(IPAsset.IPAssetType[] memory result, IPAsset.IPAssetType[] memory expected) internal {
-        for (uint256 i = 0; i < result.length; i++) {
-            if (i < expected.length) {
-                assertEq(uint256(result[i]), uint256(expected[i]));
-            } else {
-                assertEq(uint256(result[i]), 0);
-            }
-        }
+    function test_RelationshipModule_revert_ipOrgRelatableCannotBeProtocolLevel() public {
+        LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
+            src: LibRelationship.Relatables.IPORG_ENTRY,
+            dst: LibRelationship.Relatables.IPORG_ENTRY
+        });
+        uint8[] memory allowedSrcs = new uint8[](1);
+        allowedSrcs[0] = 1;
+        uint8[] memory allowedDsts = new uint8[](1);
+        allowedDsts[0] = 0;
+        LibRelationship.AddRelationshipTypeParams memory params = LibRelationship.AddRelationshipTypeParams({
+            relType: "TEST_RELATIONSHIP",
+            ipOrg: LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
+            allowedElements: allowedElements,
+            allowedSrcs: allowedSrcs,
+            allowedDsts: allowedDsts
+        });
+        vm.prank(relCreator);
+        // Todo test event
+        vm.expectRevert(Errors.RelationshipModule_IpOrgRelatableCannotBeProtocolLevel.selector);
+        spg.addRelationshipType(params);
     }
+
+    function test_RelationshipModule_removeProtocolRelationshipType() public {
+        LibRelationship.RelatedElements memory allowedElements = LibRelationship.RelatedElements({
+            src: LibRelationship.Relatables.ADDRESS,
+            dst: LibRelationship.Relatables.ADDRESS
+        });
+        uint8[] memory allowedSrcs = new uint8[](0);
+        uint8[] memory allowedDsts = new uint8[](0);
+        LibRelationship.AddRelationshipTypeParams memory params = LibRelationship.AddRelationshipTypeParams({
+            relType: "TEST_RELATIONSHIP",
+            ipOrg: LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
+            allowedElements: allowedElements,
+            allowedSrcs: allowedSrcs,
+            allowedDsts: allowedDsts
+        });
+        vm.startPrank(relCreator);
+        // Todo test event
+        spg.addRelationshipType(params);
+        spg.removeRelationshipType(LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP, "TEST_RELATIONSHIP");
+        vm.stopPrank();
+        vm.expectRevert(abi.encodeWithSignature("RelationshipModule_RelTypeNotSet(string)", "TEST_RELATIONSHIP"));
+        LibRelationship.RelationshipType memory relType = relationshipModule.getRelationshipType(
+            LibRelationship.PROTOCOL_LEVEL_RELATIONSHIP,
+            "TEST_RELATIONSHIP"
+        );        assertEq(relType.src, address(0));
+    }
+
 
 }
 
-contract RelationshipModuleUnsetRelationshipsTest is BaseTest {
-
-
-    bytes32 relationshipId;
-
-    function setUp() virtual override public {
-        deployProcessors = true;
-        super.setUp();
-        IPAsset.IPAssetType[] memory sourceIpAssets = new IPAsset.IPAssetType[](1);
-        sourceIpAssets[0] = IPAsset.IPAssetType.STORY;
-        IPAsset.IPAssetType[] memory destIpAssets = new IPAsset.IPAssetType[](1);
-        destIpAssets[0] = IPAsset.IPAssetType.CHARACTER;
-        Relationship.SetRelationshipConfigParams memory params = Relationship.SetRelationshipConfigParams({
-            sourceIpAssets: sourceIpAssets,
-            allowedExternalSource: false,
-            destIpAssets: destIpAssets,
-            allowedExternalDest: true,
-            onlySameIPAssetOrg: true,
-            processor: address(relationshipProcessor),
-            disputer: address(this),
-            timeConfig: Relationship.TimeConfig({
-                minTtl: 0,
-                maxTtl: 0,
-                renewable: false
-            })
-        });
-        relationshipId = relationshipModule.setRelationshipConfig("RELATIONSHIP", params);
-    }
-
-    function test_unsetRelationshipConfig() public {
-        relationshipModule.unsetRelationshipConfig(relationshipId);
-
-        Relationship.RelationshipConfig memory config = relationshipModule.getRelationshipConfig(relationshipId);
-        assertEq(config.sourceIpAssetTypeMask, 0);
-        assertEq(config.destIpAssetTypeMask, 0);
-        assertFalse(config.onlySameIPAssetOrg);
-        // TODO: test for event
-    }
-
-    function test_revert_unsetRelationshipConfigNonExistingRelationship() public {
-        bytes32 id = relationshipModule.getRelationshipId("UNDEFINED_Relationship");
-        vm.expectRevert(Errors.RelationshipModule_NonExistingRelationship.selector);
-        relationshipModule.unsetRelationshipConfig(id);
-    }
-
-}

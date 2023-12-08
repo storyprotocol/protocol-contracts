@@ -3,176 +3,147 @@ pragma solidity ^0.8.19;
 
 import 'test/foundry/utils/ProxyHelper.sol';
 import 'test/foundry/utils/BaseTestUtils.sol';
-import "test/foundry/mocks/RelationshipModuleHarness.sol";
-import "test/foundry/mocks/MockCollectNFT.sol";
-import "test/foundry/mocks/MockCollectModule.sol";
-import "contracts/IPAssetOrgFactory.sol";
+import 'test/foundry/utils/AccessControlHelper.sol';
+import "contracts/StoryProtocol.sol";
+import "contracts/ip-org/IPOrgController.sol";
+import "contracts/ip-org/IPOrg.sol";
+import "contracts/lib/IPOrgParams.sol";
 import "contracts/IPAssetRegistry.sol";
+import "contracts/lib/modules/Registration.sol";
 import "contracts/access-control/AccessControlSingleton.sol";
-import "contracts/ip-assets/IPAssetOrg.sol";
-import "contracts/lib/IPAsset.sol";
-import "contracts/errors/General.sol";
-import "contracts/modules/relationships/processors/PermissionlessRelationshipProcessor.sol";
-import "contracts/modules/relationships/processors/DstOwnerRelationshipProcessor.sol";
-import "contracts/modules/relationships/RelationshipModuleBase.sol";
-import "contracts/modules/relationships/ProtocolRelationshipModule.sol";
 import "contracts/IPAssetRegistry.sol";
-import "contracts/interfaces/modules/collect/ICollectModule.sol";
-
+import "contracts/modules/relationships/RelationshipModule.sol";
+import "contracts/modules/licensing/LicenseRegistry.sol";
+import "contracts/modules/licensing/LicensingModule.sol";
+import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { LICENSING_MODULE_KEY, RELATIONSHIP_MODULE_KEY, REGISTRATION_MODULE_KEY } from "contracts/lib/modules/Module.sol";
+import { IGateway } from "contracts/interfaces/modules/IGateway.sol";
+import { RegistrationModule } from "contracts/modules/registration/RegistrationModule.sol";
+import { LicensingFrameworkRepo } from "contracts/modules/licensing/LicensingFrameworkRepo.sol";
+import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
+import { Hook } from "contracts/lib/hooks/Hook.sol";
 
-// On active refactor
-// import "contracts/modules/licensing/LicensingModule.sol";
-// import "contracts/interfaces/modules/licensing/terms/ITermsProcessor.sol";
-// import "contracts/modules/licensing/LicenseRegistry.sol";
-// import '../mocks/MockTermsProcessor.sol';
-// import { Licensing } from "contracts/lib/modules/Licensing.sol";
+contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
+    using ShortStrings for *;
 
-// TODO: Commented out contracts in active refactor. 
-// Run tests from make lint, which will not run collect and license
-contract BaseTest is BaseTestUtils, ProxyHelper {
-
-    IPAssetOrg public ipAssetOrg;
-    address ipAssetOrgImpl;
-    IPAssetOrgFactory public ipAssetOrgFactory;
-    RelationshipModuleBase public relationshipModule;
-    AccessControlSingleton accessControl;
-    PermissionlessRelationshipProcessor public relationshipProcessor;
-    DstOwnerRelationshipProcessor public dstOwnerRelationshipProcessor;
-    // LicensingModule public licensingModule;
-    // ILicenseRegistry public licenseRegistry;
-    // MockTermsProcessor public nonCommercialTermsProcessor;
-    // MockTermsProcessor public commercialTermsProcessor;
-    ICollectModule public collectModule;
-    RelationshipModuleHarness public relationshipModuleHarness;
+    IPOrg public ipOrg;
+    IPOrgController public ipOrgController;
+    ModuleRegistry public moduleRegistry;
+    RelationshipModule public relationshipModule;
     IPAssetRegistry public registry;
+    StoryProtocol public spg;
+    LicensingFrameworkRepo public licensingFrameworkRepo;
+    LicensingModule public licensingModule;
+    LicenseRegistry public licenseRegistry;
+    RegistrationModule public registrationModule;
 
-    address public defaultCollectNftImpl;
-    address public collectModuleImpl;
-    address public accessControlSingletonImpl;
-
-    bool public deployProcessors = false;
-
-    address constant admin = address(123);
     address constant upgrader = address(6969);
-    address constant ipAssetOrgOwner = address(456);
-    address constant revoker = address(789);
-    // string constant NON_COMMERCIAL_LICENSE_URI = "https://noncommercial.license";
-    // string constant COMMERCIAL_LICENSE_URI = "https://commercial.license";
-
-    constructor() {}
+    address constant ipOrgOwner = address(456);
+    address constant relManager = address(9999);
+    address constant licensingManager = address(333);
+    address constant defaultRevoker = address(555);
 
     function setUp() virtual override(BaseTestUtils) public {
         super.setUp();
 
         // Create Access Control
-        accessControlSingletonImpl = address(new AccessControlSingleton());
-        accessControl = AccessControlSingleton(
+        _setupAccessControl();
+        _grantRole(vm, AccessControl.UPGRADER_ROLE, upgrader);
+        
+        // Setup module registry
+        moduleRegistry = new ModuleRegistry(address(accessControl));
+
+        // Create IPAssetRegistry 
+        registry = new IPAssetRegistry(address(moduleRegistry));
+
+        // Create IPOrgController
+        address ipOrgControllerImpl = address(new IPOrgController(address(moduleRegistry)));
+        ipOrgController = IPOrgController(
             _deployUUPSProxy(
-                accessControlSingletonImpl,
+                ipOrgControllerImpl,
                 abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), admin
+                    bytes4(keccak256(bytes("initialize(address)"))),
+                    address(accessControl)
                 )
             )
         );
-        vm.prank(admin);
-        accessControl.grantRole(AccessControl.UPGRADER_ROLE, upgrader);
-        
-        // Create IPAssetRegistry 
-        registry = new IPAssetRegistry();
 
-        // Create IPAssetOrg Factory
-        ipAssetOrgFactory = new IPAssetOrgFactory();
-        
-        // Create Licensing Module
-        // address licensingImplementation = address(new LicensingModule(address(ipAssetOrgFactory)));
-        // licensingModule = LicensingModule(
-        //     _deployUUPSProxy(
-        //         licensingImplementation,
-        //         abi.encodeWithSelector(
-        //             bytes4(keccak256(bytes("initialize(address,string)"))),
-        //             address(accessControl), NON_COMMERCIAL_LICENSE_URI
-        //         )
-        //     )
-        // );
+        spg = new StoryProtocol(ipOrgController, moduleRegistry);
+        _grantRole(vm, AccessControl.IPORG_CREATOR_ROLE, address(spg));
+        _grantRole(vm, AccessControl.MODULE_EXECUTOR_ROLE, address(spg));
+        _grantRole(vm, AccessControl.MODULE_EXECUTOR_ROLE, address(address(ipOrgController)));
+        _grantRole(vm, AccessControl.MODULE_REGISTRAR_ROLE, address(this));
 
-        defaultCollectNftImpl = _deployCollectNFTImpl();
-        collectModule = ICollectModule(_deployCollectModule(defaultCollectNftImpl));
+        // Create Licensing contracts
+        licensingFrameworkRepo = new LicensingFrameworkRepo(address(accessControl));
+        _grantRole(vm, AccessControl.LICENSING_MANAGER, licensingManager);
 
-        IPAsset.RegisterIPAssetOrgParams memory ipAssetOrgParams = IPAsset.RegisterIPAssetOrgParams(
+        licenseRegistry = new LicenseRegistry(
             address(registry),
-            "IPAssetOrgName",
+            address(moduleRegistry),
+            address(licensingFrameworkRepo)
+        );
+        licensingModule = new LicensingModule(
+            BaseModule.ModuleConstruction({
+                ipaRegistry: registry,
+                moduleRegistry: moduleRegistry,
+                licenseRegistry: licenseRegistry,
+                ipOrgController: ipOrgController
+            }),
+            address(licensingFrameworkRepo),
+            defaultRevoker
+        );
+        moduleRegistry.registerProtocolModule(LICENSING_MODULE_KEY, licensingModule);
+
+        // Create Registration Module
+        registrationModule = new RegistrationModule(
+            BaseModule.ModuleConstruction({
+                ipaRegistry: registry,
+                moduleRegistry: moduleRegistry,
+                licenseRegistry: licenseRegistry,
+                ipOrgController: ipOrgController
+            }),
+            address(accessControl)
+        );
+        moduleRegistry.registerProtocolModule(REGISTRATION_MODULE_KEY, registrationModule);
+
+        // Create Relationship Module
+        relationshipModule = new RelationshipModule(
+            BaseModule.ModuleConstruction({
+                ipaRegistry: registry,
+                moduleRegistry: moduleRegistry,
+                licenseRegistry: licenseRegistry,
+                ipOrgController: ipOrgController
+            }),
+            address(accessControl)
+        );
+        moduleRegistry.registerProtocolModule(RELATIONSHIP_MODULE_KEY, relationshipModule);
+
+        // moduleRegistry.registerProtocolGateway(IGateway(spg));
+        IPOrgParams.RegisterIPOrgParams memory ipAssetOrgParams = IPOrgParams.RegisterIPOrgParams(
+            address(registry),
+            "IPOrgName",
             "FRN",
             "description",
             "tokenURI"
         );
 
-        vm.startPrank(ipAssetOrgOwner);
-        address ipAssets;
-        ipAssets = ipAssetOrgFactory.registerIPAssetOrg(ipAssetOrgParams);
-        ipAssetOrg = IPAssetOrg(ipAssets);
-        // licenseRegistry = ILicenseRegistry(ipAssetOrg.getLicenseRegistry());
+        vm.startPrank(ipOrgOwner);
+        string[] memory ipAssetTypes = new string[](3);
+        ipAssetTypes[0] = "CHARACTER";
+        ipAssetTypes[1] = "STORY";
+        ipAssetTypes[2] = "LOCATION";
+        ipOrg = IPOrg(spg.registerIpOrg(
+            ipOrgOwner,
+            ipAssetOrgParams.name,
+            ipAssetOrgParams.symbol,
+            ipAssetTypes
+        ));
 
-        // Configure Licensing for IPAssetOrg
-        // nonCommercialTermsProcessor = new MockTermsProcessor();
-        // commercialTermsProcessor = new MockTermsProcessor();
-        // licensingModule.configureIpAssetOrgLicensing(address(ipAssetOrg), _getLicensingConfig());
 
         vm.stopPrank();
 
-        // Create Relationship Module
-        relationshipModuleHarness = new RelationshipModuleHarness(address(ipAssetOrgFactory));
-        relationshipModule = RelationshipModuleBase(
-            _deployUUPSProxy(
-                address(relationshipModuleHarness),
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
-                )
-            )
-        );
-
-        if (deployProcessors) {
-            relationshipProcessor = new PermissionlessRelationshipProcessor(address(relationshipModule));
-            dstOwnerRelationshipProcessor = new DstOwnerRelationshipProcessor(address(relationshipModule));
-        }
-    }
-
-    // function _getLicensingConfig() view internal returns (Licensing.IPAssetOrgConfig memory) {
-    //     return Licensing.IPAssetOrgConfig({
-    //         nonCommercialConfig: Licensing.IpAssetConfig({
-    //             canSublicense: true,
-    //             ipAssetOrgRootLicenseId: 0
-    //         }),
-    //         nonCommercialTerms: Licensing.TermsProcessorConfig({
-    //             processor: address(0), //nonCommercialTermsProcessor,
-    //             data: abi.encode("nonCommercial")
-    //         }),
-    //         commercialConfig: Licensing.IpAssetConfig({
-    //             canSublicense: false,
-    //             ipAssetOrgRootLicenseId: 0
-    //         }),
-    //         commercialTerms: Licensing.TermsProcessorConfig({
-    //             processor: address(0),// commercialTermsProcessor,
-    //             data: abi.encode("commercial")
-    //         }),
-    //         rootIpAssetHasCommercialRights: false,
-    //         revoker: revoker,
-    //         commercialLicenseUri: "uriuri"
-    //     });
-    // }
-
-    function _deployCollectNFTImpl() internal virtual returns (address) {
-        return address(new MockCollectNFT());
-    }
-
-    function _deployCollectModule(address collectNftImpl) internal virtual returns (address) {
-        collectModuleImpl = address(new MockCollectModule(address(registry), collectNftImpl));
-        return _deployUUPSProxy(
-                collectModuleImpl,
-                abi.encodeWithSelector(
-                    bytes4(keccak256(bytes("initialize(address)"))), address(accessControl)
-                )
-        );
     }
 
     /// @dev Helper function for creating an IP asset for an owner and IP type.
@@ -180,20 +151,60 @@ contract BaseTest is BaseTestUtils, ProxyHelper {
     ///      tested against. The reason this is currently added is that during
     ///      fuzz testing, foundry may plug existing contracts as potential
     ///      owners for IP asset creation.
-    function _createIpAsset(address ipAssetOwner, uint8 ipAssetType, bytes memory collectData) internal isValidReceiver(ipAssetOwner) returns (uint256) {
-        vm.assume(ipAssetType > uint8(type(IPAsset.IPAssetType).min));
-        vm.assume(ipAssetType < uint8(type(IPAsset.IPAssetType).max));
-        vm.prank(address(ipAssetOrg));
-        (uint256 id, ) = ipAssetOrg.createIpAsset(IPAsset.CreateIpAssetParams({
-            ipAssetType: IPAsset.IPAssetType(ipAssetType),
-            name: "name",
-            description: "description",
-            mediaUrl: "mediaUrl",
-            to: ipAssetOwner,
-            parentIpAssetOrgId: 0,
-            collectData: collectData
-        }));
-        return id;
+    function _createIpAsset(
+        address ipAssetOwner,
+        uint8 ipOrgAssetType,
+        bytes memory collectData
+    ) internal isValidReceiver(ipAssetOwner) returns (uint256 globalId, uint256 localId) {
+        // vm.assume(ipAssetType > uint8(type(IPAsset.IPAssetType).min));
+        // vm.assume(ipAssetType < uint8(type(IPAsset.IPAssetType).max));
+        vm.prank(address(ipAssetOwner));
+        Registration.RegisterIPAssetParams memory params = Registration.RegisterIPAssetParams({
+            owner: ipAssetOwner,
+            name: "TestIPAsset",
+            ipOrgAssetType: ipOrgAssetType, 
+            hash: "",
+            mediaUrl: ""
+        });
+        bytes[] memory hooks = new bytes[](0);
+        return spg.registerIPAsset(address(ipOrg), params, 0, hooks, hooks);
     }
 
+    function _createIpAssetAndLinkLicense(
+        address ipAssetOwner,
+        uint8 ipOrgAssetType,
+        uint256 licenseId,
+        bytes memory collectData
+    ) internal isValidReceiver(ipAssetOwner) returns (uint256 globalId, uint256 localId) {
+        // vm.assume(ipAssetType > uint8(type(IPAsset.IPAssetType).min));
+        // vm.assume(ipAssetType < uint8(type(IPAsset.IPAssetType).max));
+        vm.prank(address(ipAssetOwner));
+        Registration.RegisterIPAssetParams memory params = Registration.RegisterIPAssetParams({
+            owner: ipAssetOwner,
+            name: "TestIPAsset",
+            ipOrgAssetType: ipOrgAssetType,
+            hash: "",
+            mediaUrl: ""
+        });
+        bytes[] memory hooks = new bytes[](0);
+        return spg.registerIPAsset(address(ipOrg), params, licenseId, hooks, hooks);
+    }
+
+    function _deployHook(bytes memory code_, uint256 hookTypeFlag_, uint256 seed_) internal returns (address hookAddr) {
+        uint256 randomNumber = uint256(keccak256(abi.encodePacked(seed_)));
+        for (uint256 i = 0; i < 1500; i++) {
+            bytes32 salt = bytes32(randomNumber + i);
+            bytes32 bytecodeHash = keccak256(code_);
+            address expectedAddress = Create2.computeAddress(salt, bytecodeHash);
+            uint160 prefix = hookTypeFlag_ == Hook.SYNC_FLAG ? 0x02 : 0x01;
+            if (_doesAddressStartWith(expectedAddress, prefix)) {
+                hookAddr = Create2.deploy(0, salt, code_);
+                return hookAddr;
+            }
+        }
+    }
+
+    function _doesAddressStartWith(address address_,uint160 prefix_) private pure returns (bool) {
+        return uint160(address_) >> (160 - 2) == prefix_;
+    }
 }
