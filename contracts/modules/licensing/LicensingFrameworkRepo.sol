@@ -27,7 +27,7 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
         /// @notice The tags of the parameters of the framework.
         FixedSet.ShortStringSet paramTags;
         /// @notice The definitions of the parameters of the framework
-        ParamDefinition[] paramDefs;
+        Licensing.ParamDefinition[] paramDefs;
     }
 
     /// Emits when a new licensing framework is added

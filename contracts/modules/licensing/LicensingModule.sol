@@ -263,8 +263,8 @@ contract LicensingModule is BaseModule, ILicensingModule {
             licensor: licensor_,
             ipOrg: ipOrg_,
             frameworkId: frameworkId_.toShortString(),
-            ipaId: input.ipaId,
-            parentLicenseId: input.parentLicenseId
+            ipaId: input_.ipaId,
+            parentLicenseId: input_.parentLicenseId
         });
         return LICENSE_REGISTRY.addLicense(newLicense, caller_, licenseParams);
     }

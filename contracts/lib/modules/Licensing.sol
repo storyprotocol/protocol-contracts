@@ -182,7 +182,7 @@ library Licensing {
     /// @notice Sets the indexes for the chosen options in a MultipleChoice parameter,
     /// and encodes it into bytes
     /// @param choiceIndexes_ the indexes of the chosen options
-    /// @return the encoded value
+    /// @return value the encoded value
     function _encodeMultipleChoice(
         uint8[] memory choiceIndexes_
     ) internal pure returns (bytes memory value) {
