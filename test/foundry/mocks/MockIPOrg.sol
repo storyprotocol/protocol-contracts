@@ -30,7 +30,7 @@ contract MockIPOrg is IIPOrg {
         return _owner;
     }
 
-    function ipOrgAssetType(uint256 id_) external view override(IIPOrg) returns (uint8) {
+    function ipOrgAssetType(uint256 id_) external pure override(IIPOrg) returns (uint8) {
         return 0;
     }
 }

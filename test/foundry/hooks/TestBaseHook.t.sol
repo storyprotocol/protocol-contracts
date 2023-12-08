@@ -72,8 +72,6 @@ contract TestBaseHook is BaseTest {
     }
 
     function test_baseHook_revert_invalidConfig() public {
-        bytes memory hooksParams = "0x1234";
-
         vm.expectRevert(Errors.ZeroAddress.selector);
         hook.validateConfig(abi.encode("ERROR"));
     }

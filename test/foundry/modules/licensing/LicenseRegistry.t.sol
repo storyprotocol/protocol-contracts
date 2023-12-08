@@ -11,6 +11,7 @@ import { BaseTest } from "test/foundry/utils/BaseTest.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { PIPLicensingTerms } from "contracts/lib/modules/PIPLicensingTerms.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
+import { BitMask } from "contracts/lib/BitMask.sol";
 
 // TODO: test on derivativeNeedsApproval = false
 contract LicenseRegistryTest is BaseTest {
@@ -31,6 +32,7 @@ contract LicenseRegistryTest is BaseTest {
     uint256 internal ipaId_2;
 
     modifier withFrameworkConfig(
+        bool allowsDerivatives,
         bool derivativesWithApproval,
         bool reciprocal,
         Licensing.LicensorConfig licensorConfig
@@ -38,42 +40,34 @@ contract LicenseRegistryTest is BaseTest {
         ShortString[] memory channels = new ShortString[](2);
         channels[0] = "test1".toShortString();
         channels[1] = "test2".toShortString();
-        params.push(
-            Licensing.ParamValue({
-                tag: PIPLicensingTerms.CHANNELS_OF_DISTRIBUTION.toShortString(),
-                value: abi.encode(channels)
-            })
-        );
-        params.push(
-            Licensing.ParamValue({
-                tag: PIPLicensingTerms.ATTRIBUTION.toShortString(),
-                value: "" // unset
-            })
-        );
-        params.push(
-            Licensing.ParamValue({
-                tag: PIPLicensingTerms
-                    .DERIVATIVES_WITH_ATTRIBUTION
-                    .toShortString(),
-                value: abi.encode(true)
-            })
-        );
-        params.push(
-            Licensing.ParamValue({
-                tag: PIPLicensingTerms
-                    .DERIVATIVES_WITH_APPROVAL
-                    .toShortString(),
-                value: abi.encode(derivativesWithApproval)
-            })
-        );
-        params.push(
-            Licensing.ParamValue({
-                tag: PIPLicensingTerms
-                    .DERIVATIVES_WITH_RECIPROCAL_LICENSE
-                    .toShortString(),
-                value: abi.encode(reciprocal)
-            })
-        );
+        params.push(Licensing.ParamValue({
+            tag: PIPLicensingTerms.CHANNELS_OF_DISTRIBUTION.toShortString(),
+            value: abi.encode(channels)
+        }));
+        params.push(Licensing.ParamValue({
+            tag: PIPLicensingTerms.ATTRIBUTION.toShortString(),
+            value: ""// unset
+        }));
+        params.push(Licensing.ParamValue({
+            tag: PIPLicensingTerms.DERIVATIVES_ALLOWED.toShortString(),
+            value: abi.encode(allowsDerivatives)
+        }));
+        uint8[] memory indexes = new uint8[](2);
+        if (derivativesWithApproval) {
+            indexes[0] = PIPLicensingTerms.ALLOWED_WITH_APPROVAL_INDEX;
+        }
+        if (reciprocal) {
+            indexes[1] = PIPLicensingTerms.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX;
+        }
+        uint256 derivativeOptions = BitMask._convertToMask(indexes);
+        params.push(Licensing.ParamValue({
+            tag: PIPLicensingTerms.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
+            value: abi.encode(derivativeOptions)
+        }));
+        for(uint256 i = 0; i < params.length; i++) {
+            console2.log(params[i].tag.toString());
+            console2.logBytes(params[i].value);
+        }
 
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: PIPLicensingTerms.FRAMEWORK_ID,
@@ -84,6 +78,7 @@ contract LicenseRegistryTest is BaseTest {
         spg.configureIpOrgLicensing(address(ipOrg), config);
         _;
     }
+
 
     function setUp() public override {
         super.setUp();
@@ -103,11 +98,7 @@ contract LicenseRegistryTest is BaseTest {
 
     function _createLicense_noParent_ipa()
         internal
-        withFrameworkConfig(
-            true,
-            true,
-            Licensing.LicensorConfig.IpOrgOwnerAlways
-        )
+        withFrameworkConfig(true, true, true, Licensing.LicensorConfig.IpOrgOwnerAlways)
         returns (uint256)
     {
         uint256 _parentLicenseId = 0; // no parent

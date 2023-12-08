@@ -88,15 +88,24 @@ contract E2ETest is IE2ETest, BaseTest {
             memory fParams = new Licensing.ParamDefinition[](3);
         fParams[0] = Licensing.ParamDefinition({
             tag: "TEST_TAG_1".toShortString(),
-            paramType: Licensing.ParameterType.Bool
+            paramType: Licensing.ParameterType.Bool,
+            defaultValue: abi.encode(true),
+            availableChoices: ""
         });
         fParams[1] = Licensing.ParamDefinition({
             tag: "TEST_TAG_2".toShortString(),
-            paramType: Licensing.ParameterType.Number
+            paramType: Licensing.ParameterType.Number,
+            defaultValue: abi.encode(123),
+            availableChoices: ""
         });
+        ShortString[] memory choices = new ShortString[](2);
+        choices[0] = "test1".toShortString();
+        choices[1] = "test2".toShortString();
         fParams[2] = Licensing.ParamDefinition({
             tag: "TEST_TAG_3".toShortString(),
-            paramType: Licensing.ParameterType.MultipleChoice
+            paramType: Licensing.ParameterType.MultipleChoice,
+            defaultValue: abi.encode(1),
+            availableChoices: abi.encode(choices)
         });
         Licensing.SetFramework memory framework = Licensing.SetFramework({
             id: "test_framework",
@@ -389,20 +398,27 @@ contract E2ETest is IE2ETest, BaseTest {
         assertEq(rel.srcId, 1);
         assertEq(rel.dstId, 2);
 
-        // vm.prank(ipOrgOwner1);
-        // uint256 lId = spg.createIpaBoundLicense(
-        //     ipOrg1,
-        //     Licensing.LicenseCreation({
-        //         parentLicenseId: 0,
-        //         isCommercial: false
-        //     }),
-        //     1,
-        //     new bytes[](0),
-        //     new bytes[](0)
-        // );
-        // Licensing.LicenseData memory license = licenseRegistry.getLicenseData(licenseId);
-        // assertFalse(license.isCommercial, "commercial");
-        // assertEq(license.ipaId, 1);
+        uint256 _parentLicenseId = 0; // no parent
+        Licensing.LicenseCreation memory creation = Licensing.LicenseCreation({
+            params: new Licensing.ParamValue[](0), // IPOrg has set all the values
+            parentLicenseId: _parentLicenseId,
+            ipaId: ipAssetId_3
+        });
+        vm.prank(ipOrgOwner1);
+        uint256 licenseId = spg.createLicense(
+            address(ipOrg1),
+            creation,
+            new bytes[](0),
+            new bytes[](0)
+        );
+
+        Licensing.LicenseData memory license = licenseRegistry.getLicenseData(licenseId);
+        assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.Active));
+        assertEq(license.derivativesAllowed, false);
+        assertEq(license.isReciprocal, false);
+        assertEq(license.derivativeNeedsApproval, false);
+        assertEq(license.ipaId, ipAssetId_3);
+        assertEq(license.parentLicenseId, _parentLicenseId);
 
         vm.expectEmit(address(registrationModule));
         emit IPAssetTransferred(
@@ -434,18 +450,4 @@ contract E2ETest is IE2ETest, BaseTest {
         registry.setStatus(ipAssetId_2, 0);
         assertEq(registry.status(ipAssetId_2), 0);
     }
-
-    // function _getTerm(
-    //     string memory termId,
-    //     Licensing.CommercialStatus comStatus_
-    // ) internal pure returns (Licensing.LicensingTerm memory) {
-    //     return
-    //         Licensing.LicensingTerm({
-    //             comStatus: comStatus_,
-    //             url: string(abi.encodePacked("https://", termId, ".com")),
-    //             hash: "qwertyu",
-    //             algorithm: "sha256",
-    //             hook: IHook(address(0))
-    //         });
-    // }
 }

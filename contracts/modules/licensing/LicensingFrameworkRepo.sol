@@ -24,10 +24,11 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
     event ParamDefinitionAdded(
         string frameworkId,
         ShortString tag,
-        Licensing.ParameterType paramType
+        Licensing.ParamDefinition definition
     );
 
     mapping(string => Licensing.FrameworkStorage) private _frameworks;
+    mapping(bytes32 => Licensing.ParamDefinition) private _frameworkDefs;
 
     constructor(address accessControl_) AccessControlled(accessControl_) {}
 
@@ -59,31 +60,9 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
             revert Errors.LicensingFrameworkRepo_DuplicateParamType();
         }
         framework.paramTags.add(tag);
-        framework.paramTypes[tag] = paramDef_.paramType;
+        _frameworkDefs[keccak256(abi.encode(frameworkId_, tag))] = paramDef_;
         framework.paramDefs.push(paramDef_);
-        emit ParamDefinitionAdded(frameworkId_, tag, paramDef_.paramType);
-    }
-
-
-    function validateParamValues(
-        string calldata frameworkId_,
-        Licensing.ParamValue[] calldata params_
-    ) external view returns(bool) {
-        Licensing.FrameworkStorage storage framework = _frameworks[frameworkId_];
-        uint256 numParams = params_.length;
-        if (numParams > Licensing.MAX_PARAM_TAGS) {
-            return false;
-        }
-        for (uint256 i = 0; i < numParams; i++) {
-            ShortString tag = params_[i].tag;
-            if (!framework.paramTags.contains(tag)) {
-                return false;
-            }
-            if (!Licensing._validateParamValue(framework.paramTypes[tag], params_[i].value)) {
-                return false;
-            }
-        }
-        return true;
+        emit ParamDefinitionAdded(frameworkId_, tag, paramDef_);
     }
 
     function getLicenseTextUrl(
@@ -99,20 +78,20 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
         Licensing.FrameworkStorage storage framework = _frameworks[
             frameworkId_
         ];
-        ShortString tag = framework.paramTags.at(index);
-        return Licensing.ParamDefinition({ tag: tag, paramType: framework.paramTypes[tag] });
+        return framework.paramDefs[index];
     }
 
     function getTotalParameters(
         string calldata frameworkId_
     ) external view returns (uint256) {
-        return _frameworks[frameworkId_].paramTags.length();
+        return _frameworks[frameworkId_].paramDefs.length;
     }
 
-    function getParameterTags(
-        string calldata frameworkId_
-    ) external view returns (ShortString[] memory) {
-        return _frameworks[frameworkId_].paramTags.values();
+    function getParamDefinition(
+        string calldata frameworkId_,
+        ShortString tag_
+    ) external view returns (Licensing.ParamDefinition memory) {
+        return _frameworkDefs[keccak256(abi.encode(frameworkId_, tag_))];
     }
 
     function getParameterDefs(

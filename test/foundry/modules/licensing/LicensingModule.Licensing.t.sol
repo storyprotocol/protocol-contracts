@@ -10,18 +10,21 @@ import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { BaseTest } from "test/foundry/utils/BaseTest.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { PIPLicensingTerms } from "contracts/lib/modules/PIPLicensingTerms.sol";
+import { BitMask } from "contracts/lib/BitMask.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
 contract LicensingModuleLicensingTest is BaseTest {
     using ShortStrings for *;
+    using BitMask for uint256;
 
     address internal ipaOwner = address(0x13336);
-    Licensing.ParamValue[] internal params;
+    Licensing.ParamValue[] internal ipOrgParams;
 
     uint256 internal ipaId_1;
     uint256 internal ipaId_2;
 
     modifier withFrameworkConfig(
+        bool allowsDerivatives,
         bool derivativesWithApproval,
         bool reciprocal,
         Licensing.LicensorConfig licensorConfig
@@ -29,46 +32,39 @@ contract LicensingModuleLicensingTest is BaseTest {
         ShortString[] memory channels = new ShortString[](2);
         channels[0] = "test1".toShortString();
         channels[1] = "test2".toShortString();
-        params.push(
-            Licensing.ParamValue({
-                tag: PIPLicensingTerms.CHANNELS_OF_DISTRIBUTION.toShortString(),
-                value: abi.encode(channels)
-            })
-        );
-        params.push(
-            Licensing.ParamValue({
-                tag: PIPLicensingTerms.ATTRIBUTION.toShortString(),
-                value: "" // unset
-            })
-        );
-        params.push(
-            Licensing.ParamValue({
-                tag: PIPLicensingTerms
-                    .DERIVATIVES_WITH_ATTRIBUTION
-                    .toShortString(),
-                value: abi.encode(true)
-            })
-        );
-        params.push(
-            Licensing.ParamValue({
-                tag: PIPLicensingTerms
-                    .DERIVATIVES_WITH_APPROVAL
-                    .toShortString(),
-                value: abi.encode(derivativesWithApproval)
-            })
-        );
-        params.push(
-            Licensing.ParamValue({
-                tag: PIPLicensingTerms
-                    .DERIVATIVES_WITH_RECIPROCAL_LICENSE
-                    .toShortString(),
-                value: abi.encode(reciprocal)
-            })
-        );
+        ipOrgParams.push(Licensing.ParamValue({
+            tag: PIPLicensingTerms.CHANNELS_OF_DISTRIBUTION.toShortString(),
+            value: abi.encode(channels)
+        }));
+        ipOrgParams.push(Licensing.ParamValue({
+            tag: PIPLicensingTerms.ATTRIBUTION.toShortString(),
+            value: ""// unset
+        }));
+        ipOrgParams.push(Licensing.ParamValue({
+            tag: PIPLicensingTerms.DERIVATIVES_ALLOWED.toShortString(),
+            value: abi.encode(allowsDerivatives)
+        }));
+        uint8[] memory indexes = new uint8[](2);
+        if (derivativesWithApproval) {
+            indexes[0] = PIPLicensingTerms.ALLOWED_WITH_APPROVAL_INDEX;
+        }
+        if (reciprocal) {
+            indexes[1] = PIPLicensingTerms.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX;
+        }
+        uint256 derivativeOptions = BitMask._convertToMask(indexes);
+        ipOrgParams.push(Licensing.ParamValue({
+            tag: PIPLicensingTerms.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
+            value: abi.encode(derivativeOptions)
+        }));
+        console.log("withFrameworkConfig:");
+        for(uint256 i = 0; i < ipOrgParams.length; i++) {
+            console2.log(ipOrgParams[i].tag.toString());
+            console2.logBytes(ipOrgParams[i].value);
+        }
 
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: PIPLicensingTerms.FRAMEWORK_ID,
-            params: params,
+            params: ipOrgParams,
             licensor: licensorConfig
         });
         vm.prank(ipOrg.owner());
@@ -91,16 +87,10 @@ contract LicensingModuleLicensingTest is BaseTest {
         vm.prank(licensingManager);
         licensingFrameworkRepo.addFramework(framework);
     }
-
+    
     function test_LicensingModule_createLicense_noParent_ipa_userSetsParam()
-        public
-        withFrameworkConfig(
-            true,
-            true,
-            Licensing.LicensorConfig.IpOrgOwnerAlways
-        )
-        returns (uint256)
-    {
+    withFrameworkConfig(true, true, true, Licensing.LicensorConfig.IpOrgOwnerAlways)
+    public returns (uint256) {
         uint256 _parentLicenseId = 0; // no parent
         Licensing.ParamValue[] memory inputParams = _constructInputParams();
         Licensing.LicenseCreation memory creation = Licensing.LicenseCreation({
@@ -125,7 +115,7 @@ contract LicensingModuleLicensingTest is BaseTest {
             0, // no parent
             ipaId_1
         );
-        _assertLicenseParams(licenseRegistry.getParams(licenseId), params);
+        _assertLicenseParams(licenseRegistry.getParams(licenseId), ipOrgParams, inputParams);
 
         return licenseId;
     }
@@ -168,7 +158,7 @@ contract LicensingModuleLicensingTest is BaseTest {
             childLicenseId
         );
 
-        _assertLicenseParams(parentParams, childParams);
+        _assertLicenseParams(parentParams, childParams, new Licensing.ParamValue[](0));
         // additional for license params
         assertEq(parentParams[1].value, childParams[1].value, "attribution");
     }
@@ -191,6 +181,27 @@ contract LicensingModuleLicensingTest is BaseTest {
             new bytes[](0)
         );
         assertEq(childLicenseId, 2);
+        Licensing.LicenseData memory license = licenseRegistry.getLicenseData(childLicenseId);
+        assertEq(uint8(license.status), uint8(Licensing.LicenseStatus.PendingLicensorApproval));
+        assertEq(license.derivativesAllowed, true, "derivativesAllowed");
+        assertEq(license.isReciprocal, true, "isReciprocal");
+        assertEq(license.derivativeNeedsApproval, true, "derivativeNeedsApproval");
+        assertEq(license.revoker, licensingModule.DEFAULT_REVOKER());
+        assertEq(license.licensor, ipOrg.owner());
+        assertEq(license.ipOrg, address(ipOrg));
+        assertEq(license.frameworkId.toString(), PIPLicensingTerms.FRAMEWORK_ID);
+        assertEq(license.ipaId, 0, "ipaId");
+        assertEq(license.parentLicenseId, parentLicenseId);
+        Licensing.ParamValue[] memory parentParams = licenseRegistry.getParams(parentLicenseId);
+        Licensing.ParamValue[] memory childParams = licenseRegistry.getParams(childLicenseId);
+        assertEq(parentParams[0].tag.toString(), childParams[0].tag.toString(), "channel of distribution");
+        assertEq(parentParams[0].value, childParams[0].value, "channel of distribution");
+        assertEq(parentParams[1].tag.toString(), childParams[1].tag.toString(), "attribution");
+        assertEq(parentParams[1].value, childParams[1].value, "attribution");
+        assertEq(parentParams[2].tag.toString(), childParams[2].tag.toString(), "derivatives with attribution");
+        assertEq(parentParams[2].value, childParams[2].value, "derivatives with attribution");
+        assertEq(parentParams[3].tag.toString(), childParams[3].tag.toString(), "derivatives with approval");
+        assertEq(parentParams[3].value, childParams[3].value, "derivatives with approval");
     }
 
     function _constructInputParams()
@@ -276,7 +287,8 @@ contract LicensingModuleLicensingTest is BaseTest {
 
     function _assertLicenseParams(
         Licensing.ParamValue[] memory lParams,
-        Licensing.ParamValue[] memory rParams
+        Licensing.ParamValue[] memory rParams,
+        Licensing.ParamValue[] memory inputParams
     ) internal {
         assertEq(
             lParams[0].tag.toString(),
@@ -289,7 +301,11 @@ contract LicensingModuleLicensingTest is BaseTest {
             rParams[1].tag.toString(),
             "attribution"
         );
-        // assertEq(lParams[1].value, inputParams[0].value); // TODO: check this, set by user
+        if (inputParams.length == 0) {
+            assertEq(lParams[1].value, rParams[1].value, "attribution");
+        } else {
+            assertEq(lParams[1].value, inputParams[0].value, "attribution");
+        }
         assertEq(
             lParams[2].tag.toString(),
             rParams[2].tag.toString(),

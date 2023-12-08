@@ -18,15 +18,21 @@ contract LicensingModuleConfigTest is BaseTest {
         Licensing.ParamDefinition[] memory params = new Licensing.ParamDefinition[](3);
         params[0] = Licensing.ParamDefinition({
             tag: "TEST_TAG_1".toShortString(),
-            paramType: Licensing.ParameterType.Bool
+            paramType: Licensing.ParameterType.Bool,
+            defaultValue: abi.encode(true),
+            availableChoices: ""
         });
         params[1] = Licensing.ParamDefinition({
             tag: "TEST_TAG_2".toShortString(),
-            paramType: Licensing.ParameterType.Number
+            paramType: Licensing.ParameterType.Number,
+            defaultValue: abi.encode(123),
+            availableChoices: ""
         });
         params[2] = Licensing.ParamDefinition({
             tag: "TEST_TAG_3".toShortString(),
-            paramType: Licensing.ParameterType.MultipleChoice
+            paramType: Licensing.ParameterType.Address,
+            defaultValue: abi.encode(0x4545),
+            availableChoices: ""
         });
         Licensing.SetFramework memory framework = Licensing.SetFramework({
             id: "test_framework",
@@ -67,14 +73,14 @@ contract LicensingModuleConfigTest is BaseTest {
         );
     }
 
-    function test_LicensingModule_configIpOrg_revert_paramsNotValid() public {
+    function test_LicensingModule_configIpOrg_revert_paramLengthNotValid() public {
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: "test_framework",
             params: new Licensing.ParamValue[](100),
             licensor: Licensing.LicensorConfig.IpOrgOwnerAlways
         });
         vm.prank(ipOrg.owner());
-        vm.expectRevert(Errors.LicensingModule_InvalidParamValues.selector);
+        vm.expectRevert(Errors.LicensingModule_InvalidParamsLength.selector);
         spg.configureIpOrgLicensing(
             address(ipOrg),
             config
@@ -147,7 +153,6 @@ contract LicensingModuleConfigTest is BaseTest {
             address(ipOrg),
             config
         );
-
     }
     
 
