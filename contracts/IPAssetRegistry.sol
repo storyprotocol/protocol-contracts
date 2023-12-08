@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
-// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
+// See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 import { IIPAssetRegistry } from "contracts/interfaces/IIPAssetRegistry.sol";
 import { IRegistrationModule } from "contracts/interfaces/modules/registration/IRegistrationModule.sol";
 import { IModuleRegistry } from "contracts/interfaces/modules/IModuleRegistry.sol";
-import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
-import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { REGISTRATION_MODULE_KEY } from "contracts/lib/modules/Module.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 
@@ -18,15 +16,14 @@ import { Errors } from "contracts/lib/Errors.sol";
 ///         attributes related to an IP asset - all other attributes, which will be
 ///         specific for a given module, will be queried through the module registry.
 contract IPAssetRegistry is IIPAssetRegistry {
-
     /// @notice Core attributes that make up an IP Asset.
     struct IPA {
-        string name;                 // Human-readable identifier for the IP asset.
-        address registrant;          // Address of the initial registrant of the IP asset.
-        uint8 status;                // Current status of the IP asset (e.g. active, expired, etc.)
-        address ipOrg;               // Address of the governing entity of the IP asset.
-        bytes32 hash;                // A unique content hash of the IP asset for preserving integrity.
-        uint64 registrationDate;     // Timestamp for which the IP asset was first registered.
+        string name; // Human-readable identifier for the IP asset.
+        address registrant; // Address of the initial registrant of the IP asset.
+        uint8 status; // Current status of the IP asset (e.g. active, expired, etc.)
+        address ipOrg; // Address of the governing entity of the IP asset.
+        bytes32 hash; // A unique content hash of the IP asset for preserving integrity.
+        uint64 registrationDate; // Timestamp for which the IP asset was first registered.
     }
 
     /// @notice Used for fetching modules associated with an IP asset.
@@ -36,8 +33,7 @@ contract IPAssetRegistry is IIPAssetRegistry {
     mapping(uint256 => IPA) internal _ipAssets;
 
     /// @notice Tracks the total number of IP Assets in existence.
-    /// TODO(leeren) Switch from numerical ids to a universal namehash.
-    uint256 totalSupply = 0;
+    uint256 public totalSupply = 0;
 
     /// @notice Restricts calls to the registration module of the IP Asset.
     /// TODO(ramarti): Enable IPOrg-specific registration modules to be authorized.
@@ -59,7 +55,7 @@ contract IPAssetRegistry is IIPAssetRegistry {
     constructor(address moduleRegistry_) {
         MODULE_REGISTRY = IModuleRegistry(moduleRegistry_);
     }
-    
+
     /// @notice Registers a new IP asset.
     /// @param registrant_ The initial registrant for the IP asset.
     /// @param name_ A name given to describe the IP asset.
@@ -70,26 +66,19 @@ contract IPAssetRegistry is IIPAssetRegistry {
         string memory name_,
         bytes32 hash_
     ) public onlyRegistrationModule returns (uint256 ipAssetId) {
-
         // Crate a new IP asset with the provided IP attributes.
         ipAssetId = ++totalSupply;
         uint64 registrationDate = uint64(block.timestamp);
         _ipAssets[ipAssetId] = IPA({
             name: name_,
             // For now, let's assume 0 == unset, 1 is OK. TODO: Add status enum and synch with License status
-            status: 1, 
+            status: 1,
             registrant: registrant_,
             ipOrg: ipOrg_,
             hash: hash_,
             registrationDate: registrationDate
         });
-        emit Registered(
-            ipAssetId,
-            name_,
-            ipOrg_,
-            registrant_,
-            hash_
-        );
+        emit Registered(ipAssetId, name_, ipOrg_, registrant_, hash_);
     }
 
     /// @notice Changes the IP Org of an IP asset.
@@ -135,5 +124,4 @@ contract IPAssetRegistry is IIPAssetRegistry {
     function ipAsset(uint256 ipAssetId_) public view returns (IPA memory) {
         return _ipAssets[ipAssetId_];
     }
-
 }

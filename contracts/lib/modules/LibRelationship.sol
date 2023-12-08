@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
+// See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 /// @title Relationship Module Library
@@ -43,10 +43,10 @@ library LibRelationship {
 
     struct CreateRelationshipParams {
         string relType;
-        address srcAddress; 
-        uint srcId;
+        address srcAddress;
+        uint256 srcId;
         address dstAddress;
-        uint dstId;
+        uint256 dstId;
     }
 
     address public constant PROTOCOL_LEVEL_RELATIONSHIP = address(0);
@@ -54,5 +54,4 @@ library LibRelationship {
 
     bytes32 public constant ADD_REL_TYPE_CONFIG = keccak256("ADD_REL_TYPE");
     bytes32 public constant REMOVE_REL_TYPE_CONFIG = keccak256("REMOVE_REL_TYPE");
-
 }

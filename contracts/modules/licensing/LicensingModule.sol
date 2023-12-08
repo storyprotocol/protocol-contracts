@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
-// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
+// See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
 import { Licensing } from "contracts/lib/modules/Licensing.sol";
 import { Errors } from "contracts/lib/Errors.sol";
-import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
 import { BaseModule } from "contracts/modules/base/BaseModule.sol";
 import { IModule } from "contracts/interfaces/modules/base/IModule.sol";
 import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { LicensingFrameworkRepo } from "./LicensingFrameworkRepo.sol";
 import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
-import { IPAsset } from "contracts/lib/IPAsset.sol";
 import { SPUMLParams } from "contracts/lib/modules/SPUMLParams.sol";
 import { ShortStringOps } from "contracts/utils/ShortStringOps.sol";
 import { BitMask } from "contracts/lib/BitMask.sol";
@@ -90,11 +88,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
     ////////////////////////////////////////////////////////////////////////////
 
     /// Module entrypoing to verify execution call
-    function _verifyExecution(
-        IIPOrg ipOrg_,
-        address caller_,
-        bytes calldata params_
-    ) internal virtual override {
+    function _verifyExecution(IIPOrg ipOrg_, address caller_, bytes calldata params_) internal virtual override {
         // Verification done in _performAction for efficiency
     }
 
@@ -107,10 +101,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
         address caller_,
         bytes memory params_
     ) internal virtual override returns (bytes memory result) {
-        (bytes32 action, bytes memory actionParams) = abi.decode(
-            params_,
-            (bytes32, bytes)
-        );
+        (bytes32 action, bytes memory actionParams) = abi.decode(params_, (bytes32, bytes));
         if (action == Licensing.CREATE_LICENSE) {
             // Mint new license
             return _createLicense(ipOrg_, caller_, actionParams);
@@ -121,10 +112,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
             return bytes("");
         } else if (action == Licensing.LINK_LNFT_TO_IPA) {
             // Link derivative license to derivative IPA
-            (uint256 licenseId, uint256 ipaId) = abi.decode(
-                actionParams,
-                (uint256, uint256)
-            );
+            (uint256 licenseId, uint256 ipaId) = abi.decode(actionParams, (uint256, uint256));
             LICENSE_REGISTRY.linkLnftToIpa(licenseId, ipaId);
             return bytes("");
         } else {
@@ -142,17 +130,9 @@ contract LicensingModule is BaseModule, ILicensingModule {
         address caller_,
         bytes memory params_
     ) private returns (bytes memory result) {
-        Licensing.LicenseCreation memory input = abi.decode(
-            params_,
-            (Licensing.LicenseCreation)
-        );
+        Licensing.LicenseCreation memory input = abi.decode(params_, (Licensing.LicenseCreation));
 
-        address licensor = _getLicensor(
-            address(ipOrg_),
-            caller_,
-            input.parentLicenseId,
-            input.ipaId
-        );
+        address licensor = _getLicensor(address(ipOrg_), input.parentLicenseId, input.ipaId);
         // ------ Derivative license checks ------
         if (input.parentLicenseId != 0) {
             if (!LICENSE_REGISTRY.isLicenseActive(input.parentLicenseId)) {
@@ -164,21 +144,13 @@ contract LicensingModule is BaseModule, ILicensingModule {
         }
         // If this is a derivative and parent is reciprocal, license parameters
         // cannot be changed in the new license
-        if (
-            input.parentLicenseId != 0 &&
-            LICENSE_REGISTRY.isReciprocal(input.parentLicenseId)
-        ) {
+        if (input.parentLicenseId != 0 && LICENSE_REGISTRY.isReciprocal(input.parentLicenseId)) {
             if (input.params.length > 0) {
                 revert Errors.LicensingModule_ReciprocalCannotSetParams();
             }
             return
                 abi.encode(
-                    LICENSE_REGISTRY.addReciprocalLicense(
-                        input.parentLicenseId,
-                        licensor,
-                        caller_,
-                        input.ipaId
-                    )
+                    LICENSE_REGISTRY.addReciprocalLicense(input.parentLicenseId, licensor, caller_, input.ipaId)
                 );
         } else {
             // If this is not a derivative, or parent is not reciprocal, caller must be the licensor
@@ -229,10 +201,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
         string memory frameworkId_
     ) private returns (uint256) {
         // Get all param tags from framework
-        Licensing.ParamDefinition[]
-            memory supportedParams = LICENSING_FRAMEWORK_REPO.getParameterDefs(
-                frameworkId_
-            );
+        Licensing.ParamDefinition[] memory supportedParams = LICENSING_FRAMEWORK_REPO.getParameterDefs(frameworkId_);
         // Parse license parameters
         (
             Licensing.ParamValue[] memory licenseParams,
@@ -294,9 +263,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
         )
     {
         uint256 inputLength_ = inputParams_.length;
-        mapping(ShortString => bytes) storage _ipOrgValues = _ipOrgParamValues[
-            ipOrg_
-        ];
+        mapping(ShortString => bytes) storage _ipOrgValues = _ipOrgParamValues[ipOrg_];
         uint256 supportedLength = supportedParams_.length;
         licenseParams = new Licensing.ParamValue[](supportedLength);
 
@@ -316,11 +283,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
                 }
             }
             // Decide which value to use
-            bytes memory resultValue = _decideValueSource(
-                inputValue,
-                ipOrgValue,
-                paramDef
-            );
+            bytes memory resultValue = _decideValueSource(inputValue, ipOrgValue, paramDef);
 
             // Set value in license params
             licenseParams[i] = Licensing.ParamValue(paramDef.tag, resultValue);
@@ -331,18 +294,9 @@ contract LicensingModule is BaseModule, ILicensingModule {
             if (ShortStringOps._equal(paramDef.tag, SPUMLParams.DERIVATIVES_ALLOWED)) {
                 derivativesAllowed = abi.decode(resultValue, (bool));
             } else if (ShortStringOps._equal(paramDef.tag, SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS)) {
-                uint256 derivativeIndexMask = abi.decode(
-                    resultValue,
-                    (uint256)
-                );
-                derivativeNeedsApproval = BitMask._isSet(
-                    derivativeIndexMask,
-                    SPUMLParams.ALLOWED_WITH_APPROVAL_INDEX
-                );
-                isReciprocal = BitMask._isSet(
-                    derivativeIndexMask,
-                    SPUMLParams.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX
-                );
+                uint256 derivativeIndexMask = abi.decode(resultValue, (uint256));
+                derivativeNeedsApproval = BitMask._isSet(derivativeIndexMask, SPUMLParams.ALLOWED_WITH_APPROVAL_INDEX);
+                isReciprocal = BitMask._isSet(derivativeIndexMask, SPUMLParams.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX);
             }
         }
         // In case there is misconfiguration.
@@ -384,13 +338,11 @@ contract LicensingModule is BaseModule, ILicensingModule {
     /// Gets the licensor address for this IPA.
     /// @dev This function is used by _createLicense
     /// @param ipOrg_ the ipOrg contract interface
-    /// @param caller_ address requesting execution
     /// @param parentLicenseId_ the ID of the parent license
     /// @param ipaId_ the ID of the IPA
     /// @return the licensor address
     function _getLicensor(
         address ipOrg_,
-        address caller_,
         uint256 parentLicenseId_,
         uint256 ipaId_
     ) private view returns (address) {
@@ -428,10 +380,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
         bytes calldata params_
     ) internal virtual override returns (bytes memory) {
         // TODO: Revert if terms already exist
-        (bytes32 configType, bytes memory configData) = abi.decode(
-            params_,
-            (bytes32, bytes)
-        );
+        (bytes32 configType, bytes memory configData) = abi.decode(params_, (bytes32, bytes));
         if (configType == Licensing.LICENSING_FRAMEWORK_CONFIG) {
             return _setIpOrgFramework(ipOrg_, caller_, configData);
         } else {
@@ -459,10 +408,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
         if (ipOrg_.owner() != caller_) {
             revert Errors.LicensingModule_CallerNotIpOrgOwner();
         }
-        Licensing.LicensingConfig memory config = abi.decode(
-            params_,
-            (Licensing.LicensingConfig)
-        );
+        Licensing.LicensingConfig memory config = abi.decode(params_, (Licensing.LicensingConfig));
         if (config.licensor == Licensing.LicensorConfig.Unset) {
             revert Errors.LicensingModule_InvalidLicensorConfig();
         }
@@ -471,19 +417,14 @@ contract LicensingModule is BaseModule, ILicensingModule {
             revert Errors.LicensingModule_IpOrgFrameworkAlreadySet();
         }
         Licensing.ParamValue[] memory configParams = config.params;
-        if (
-            configParams.length >
-            LICENSING_FRAMEWORK_REPO.getTotalParameters(config.frameworkId)
-        ) {
+        if (configParams.length > LICENSING_FRAMEWORK_REPO.getTotalParameters(config.frameworkId)) {
             revert Errors.LicensingModule_InvalidParamsLength();
         }
 
         _licensorConfig[ipOrgAddress] = config.licensor;
         _ipOrgFrameworkIds[ipOrgAddress] = config.frameworkId;
 
-        mapping(ShortString => bytes) storage paramValues = _ipOrgParamValues[
-            ipOrgAddress
-        ];
+        mapping(ShortString => bytes) storage paramValues = _ipOrgParamValues[ipOrgAddress];
         uint256 numParams = configParams.length;
         // Add the parameters to storage
         for (uint256 i = 0; i < numParams; i++) {
@@ -491,8 +432,10 @@ contract LicensingModule is BaseModule, ILicensingModule {
             if (paramValues[param.tag].length > 0) {
                 revert Errors.LicensingModule_DuplicateParam();
             }
-            Licensing.ParamDefinition memory paramDef = LICENSING_FRAMEWORK_REPO
-                .getParamDefinition(config.frameworkId, param.tag);
+            Licensing.ParamDefinition memory paramDef = LICENSING_FRAMEWORK_REPO.getParamDefinition(
+                config.frameworkId,
+                param.tag
+            );
             if (!Licensing._validateParamValue(paramDef, param.value)) {
                 revert Errors.LicensingModule_InvalidParamValue();
             }
@@ -505,7 +448,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
             config.licensor,
             configParams
         );
-        
+
         return "";
     }
 

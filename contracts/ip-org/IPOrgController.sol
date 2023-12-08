@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
-// See Story Protocol Alpha Agreement: https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
+// See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
-import { Clones } from '@openzeppelin/contracts/proxy/Clones.sol';
+import { Clones } from "@openzeppelin/contracts/proxy/Clones.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import { AccessControlledUpgradeable } from "contracts/access-control/AccessControlledUpgradeable.sol";
-import { IRegistrationModule } from "contracts/interfaces/modules/registration/IRegistrationModule.sol";
 import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
-import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
-import { IPOrgParams } from "contracts/lib/IPOrgParams.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { Registration } from "contracts/lib/modules/Registration.sol";
 import { IIPOrgController } from "contracts/interfaces/ip-org/IIPOrgController.sol";
@@ -22,12 +19,7 @@ import { REGISTRATION_MODULE } from "contracts/lib/modules/Module.sol";
 /// @notice The IP Org Controller is the protocol-wide factory contract for creating
 ///         and tracking IP Orgs. On top of this, it acts as the ownership controller
 ///         for IP Orgs, allowing orgs to transfer ownership through a 2-step process.
-contract IPOrgController is
-    UUPSUpgradeable,
-    AccessControlledUpgradeable,
-    IIPOrgController
-{
-
+contract IPOrgController is UUPSUpgradeable, AccessControlledUpgradeable, IIPOrgController {
     /// @notice Tracks ownership and registration of IPOrgs.
     struct IPOrgRecord {
         bool registered;
@@ -43,14 +35,14 @@ contract IPOrgController is
         address owner;
     }
 
+    bytes32 private constant _STORAGE_LOCATION =
+        bytes32(uint256(keccak256("story-protocol.ip-org-factory.storage")) - 1);
+
     /// @notice The IP asset module registry.
     address public immutable MODULE_REGISTRY;
 
     /// @notice The IP Org implementation address.
-    address public IP_ORG_IMPL;
-
-    bytes32 private constant _STORAGE_LOCATION = bytes32(uint256(keccak256("story-protocol.ip-org-factory.storage")) - 1);
-
+    address public ipOrgImpl;
 
     /// @notice Creates the IP Org Controller contract.
     /// @param moduleRegistry_ Address of the IP asset module registry.
@@ -62,7 +54,7 @@ contract IPOrgController is
     /// @param accessControl_ Address of the contract responsible for access control.
     /// TODO(leeren): Deprecate this function in favor of an immutable factory.
     function initialize(address accessControl_) public initializer {
-        IP_ORG_IMPL = address(new IPOrg(address(this), MODULE_REGISTRY));
+        ipOrgImpl = address(new IPOrg(address(this), MODULE_REGISTRY));
         __UUPSUpgradeable_init();
         __AccessControlledUpgradeable_init(accessControl_);
     }
@@ -134,7 +126,7 @@ contract IPOrgController is
         IPOrgRecord storage record = _ipOrgRecord(ipOrg_);
 
         // Ensure the pending IP Org owner is accepting the ownership transfer.
-        if (record.pendingOwner != msg.sender)  {
+        if (record.pendingOwner != msg.sender) {
             revert Errors.IPOrgController_InvalidIPOrgOwner();
         }
 
@@ -164,38 +156,17 @@ contract IPOrgController is
             revert Errors.ZeroAddress();
         }
 
-        ipOrg_ = Clones.clone(IP_ORG_IMPL);
-        IPOrg(ipOrg_).initialize(
-            name_,
-            symbol_
-        );
+        ipOrg_ = Clones.clone(ipOrgImpl);
+        IPOrg(ipOrg_).initialize(name_, symbol_);
 
         // Set the registration status of the IP Asset Org to be true.
         IPOrgControllerStorage storage $ = _getIpOrgControllerStorage();
-        $.ipOrgs[ipOrg_] = IPOrgRecord({
-            registered: true,
-            owner: owner_,
-            pendingOwner: address(0)
-        });
+        $.ipOrgs[ipOrg_] = IPOrgRecord({ registered: true, owner: owner_, pendingOwner: address(0) });
 
-        bytes memory encodedParams = abi.encode(
-            Registration.SET_IP_ORG_ASSET_TYPES,
-            abi.encode(ipAssetTypes_)
-        );
-        ModuleRegistry(MODULE_REGISTRY).configure(
-            IIPOrg(ipOrg_),
-            address(this),
-            REGISTRATION_MODULE,
-            encodedParams
-        );
+        bytes memory encodedParams = abi.encode(Registration.SET_IP_ORG_ASSET_TYPES, abi.encode(ipAssetTypes_));
+        ModuleRegistry(MODULE_REGISTRY).configure(IIPOrg(ipOrg_), address(this), REGISTRATION_MODULE, encodedParams);
 
-        emit IPOrgRegistered(
-            owner_,
-            ipOrg_,
-            name_,
-            symbol_,
-            ipAssetTypes_
-        );
+        emit IPOrgRegistered(owner_, ipOrg_, name_, symbol_, ipAssetTypes_);
     }
 
     /// @dev Gets the ownership record of an IP Org.
@@ -209,19 +180,10 @@ contract IPOrgController is
     }
 
     /// @dev Authorizes upgrade to a new contract address via UUPS.
-    function _authorizeUpgrade(address) 
-        internal 
-        virtual 
-        override 
-        onlyRole(AccessControl.UPGRADER_ROLE) {}
-
+    function _authorizeUpgrade(address) internal virtual override onlyRole(AccessControl.UPGRADER_ROLE) {}
 
     /// @dev Retrieves the ERC-1967 storage slot for the IP Org Controller.
-    function _getIpOrgControllerStorage()
-        private
-        pure
-        returns (IPOrgControllerStorage storage $)
-    {
+    function _getIpOrgControllerStorage() private pure returns (IPOrgControllerStorage storage $) {
         bytes32 storageLocation = _STORAGE_LOCATION;
         assembly {
             $.slot := storageLocation

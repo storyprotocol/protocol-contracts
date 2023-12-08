@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.19;
 
 import { Errors } from "contracts/lib/Errors.sol";
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
@@ -10,7 +10,7 @@ import { ModuleRegistry } from "contracts/modules/ModuleRegistry.sol";
 /// @notice This contract is an abstract contract that manages the registration of hooks.
 /// Hooks are small pieces of code that are called before and after certain operations in the protocol.
 /// @dev Each module that inherits from HookRegistry has its own local hook registry.
-/// The HookRegistry supports multiple arrays of hooks, each associated with a different configuration, separated by a `registryKey`
+/// The HookRegistry supports multiple hook arrays, each associated with differentconfigs separated by a `registryKey`
 /// Each module can define its own approach to generate its unique registryKey.
 abstract contract HookRegistry {
     ModuleRegistry public immutable MODULE_REGISTRY;
@@ -39,8 +39,7 @@ abstract contract HookRegistry {
             revert Errors.ZeroAddress();
         }
 
-        if (msg.sender != ipOrg_.owner())
-            revert Errors.HookRegistry_CallerNotIPOrgOwner();
+        if (msg.sender != ipOrg_.owner()) revert Errors.HookRegistry_CallerNotIPOrgOwner();
         _;
     }
 
@@ -81,11 +80,7 @@ abstract contract HookRegistry {
     /// @param registryKey_ The registry key for the hook.
     /// @param hook_ The address of the hook.
     /// @return True if the hook is registered, false otherwise.
-    function isRegistered(
-        HookType hookType_,
-        bytes32 registryKey_,
-        address hook_
-    ) external view returns (bool) {
+    function isRegistered(HookType hookType_, bytes32 registryKey_, address hook_) external view returns (bool) {
         return hookIndex(hookType_, registryKey_, hook_) != INDEX_NOT_FOUND;
     }
 
@@ -95,11 +90,7 @@ abstract contract HookRegistry {
     /// @param registryKey_ The registry key for the hook.
     /// @param index_ The index of the hook.
     /// @return The address of the hook.
-    function hookAt(
-        HookType hookType_,
-        bytes32 registryKey_,
-        uint256 index_
-    ) external view returns (address) {
+    function hookAt(HookType hookType_, bytes32 registryKey_, uint256 index_) external view returns (address) {
         address[] memory hooks = _hooksForType(hookType_, registryKey_);
         if (index_ >= hooks.length) {
             revert Errors.HookRegistry_IndexOutOfBounds(index_);
@@ -129,10 +120,7 @@ abstract contract HookRegistry {
     /// @param hookType_ The type of the hooks.
     /// @param registryKey_ The registry key for the hooks.
     /// @return The total number of hooks.
-    function totalHooks(
-        HookType hookType_,
-        bytes32 registryKey_
-    ) external view returns (uint256) {
+    function totalHooks(HookType hookType_, bytes32 registryKey_) external view returns (uint256) {
         return _hooksForType(hookType_, registryKey_).length;
     }
 
@@ -140,10 +128,7 @@ abstract contract HookRegistry {
     /// @param hookType_ The type of the hooks.
     /// @param registryKey_ The registry key for the hooks.
     /// @return The total number of hook configurations.
-    function totalHooksConfig(
-        HookType hookType_,
-        bytes32 registryKey_
-    ) external view returns (uint256) {
+    function totalHooksConfig(HookType hookType_, bytes32 registryKey_) external view returns (uint256) {
         return _hooksConfigForType(hookType_, registryKey_).length;
     }
 
@@ -152,11 +137,7 @@ abstract contract HookRegistry {
     /// Can only be called by the IP Org owner.
     /// @param hookType_ The type of the hooks to clear.
     /// @param registryKey_ The registry key for the hooks.
-    function clearHooks(
-        HookType hookType_,
-        IIPOrg ipOrg_,
-        bytes32 registryKey_
-    ) public onlyIpOrgOwner(ipOrg_) {
+    function clearHooks(HookType hookType_, IIPOrg ipOrg_, bytes32 registryKey_) public onlyIpOrgOwner(ipOrg_) {
         if (hookType_ == HookType.PreAction && _preActionHooks[registryKey_].length > 0) {
             delete _preActionHooks[registryKey_];
             delete _preActionHooksConfig[registryKey_];
@@ -172,11 +153,7 @@ abstract contract HookRegistry {
     /// @param registryKey_ The registry key for the hook.
     /// @param hook_ The address of the hook.
     /// @return The index of the hook. Returns INDEX_NOT_FOUND if the hook is not registered.
-    function hookIndex(
-        HookType hookType_,
-        bytes32 registryKey_,
-        address hook_
-    ) public view returns (uint256) {
+    function hookIndex(HookType hookType_, bytes32 registryKey_, address hook_) public view returns (uint256) {
         return _hookIndex(_hooksForType(hookType_, registryKey_), hook_);
     }
 
@@ -184,10 +161,7 @@ abstract contract HookRegistry {
     /// @param hookType_ The type of the hooks.
     /// @param registryKey_ The registry key for the hooks.
     /// @return The array of hooks.
-    function _hooksForType(
-        HookType hookType_,
-        bytes32 registryKey_
-    ) internal view returns (address[] storage) {
+    function _hooksForType(HookType hookType_, bytes32 registryKey_) internal view returns (address[] storage) {
         if (hookType_ == HookType.PreAction) {
             return _preActionHooks[registryKey_];
         } else {
@@ -199,10 +173,7 @@ abstract contract HookRegistry {
     /// @param hookType_ The type of the hooks.
     /// @param registryKey_ The registry key for the hooks.
     /// @return The array of hook configurations.
-    function _hooksConfigForType(
-        HookType hookType_,
-        bytes32 registryKey_
-    ) internal view returns (bytes[] storage) {
+    function _hooksConfigForType(HookType hookType_, bytes32 registryKey_) internal view returns (bytes[] storage) {
         if (hookType_ == HookType.PreAction) {
             return _preActionHooksConfig[registryKey_];
         } else {
@@ -251,10 +222,7 @@ abstract contract HookRegistry {
     /// @param hooks The array of hooks.
     /// @param hook_ The hook to find.
     /// @return The index of the hook. Returns INDEX_NOT_FOUND if the hook is not found.
-    function _hookIndex(
-        address[] storage hooks,
-        address hook_
-    ) private view returns (uint256) {
+    function _hookIndex(address[] storage hooks, address hook_) private view returns (uint256) {
         uint256 length = hooks.length;
         for (uint256 i = 0; i < length; ) {
             if (hooks[i] == hook_) {
