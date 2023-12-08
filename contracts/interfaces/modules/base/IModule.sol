@@ -44,6 +44,6 @@ interface IModule {
     /// @param ipOrg_ Address of the IP Org or the zero address (for protocol-wide modules).
     /// @param caller_ Address of configuration caller.
     /// @param params_ ABI-encoded parameters used for module configuration.
-    /// @return Result of the module configuration expressed as a bytes array.
+    /// @return result Result of the module configuration expressed as a bytes array.
     function configure(IIPOrg ipOrg_, address caller_, bytes calldata params_) external returns (bytes memory result);
 }
