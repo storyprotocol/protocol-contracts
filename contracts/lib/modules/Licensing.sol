@@ -2,7 +2,6 @@
 // See https://github.com/storyprotocol/protocol-contracts/blob/main/StoryProtocol-AlphaTestingAgreement-17942166.3.pdf
 pragma solidity ^0.8.19;
 
-import { FixedSet } from "contracts/utils/FixedSet.sol";
 import { BitMask } from "contracts/lib/BitMask.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { ShortStrings, ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
@@ -108,7 +107,7 @@ library Licensing {
         /// Encoded according to paramType, might be empty.
         bytes value;
     }
-    
+
     /// @notice Parameters to set a licensing framework in LicensingFrameworkRepo
     struct SetFramework {
         /// The id of the licensing framework.
@@ -132,21 +131,19 @@ library Licensing {
     }
 
     /// @notice Maximum number of parameters allowed in a licensing framework.
-    uint256 constant MAX_PARAM_TAGS = 255;
+    uint256 public constant MAX_PARAM_TAGS = 255;
 
     /// Input for IpOrg legal terms configuration in LicensingModule (for now, the only option)
-    bytes32 constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");
+    bytes32 public constant LICENSING_FRAMEWORK_CONFIG = keccak256("LICENSING_FRAMEWORK_CONFIG");
     /// Create license action in LicensingModule
-    bytes32 constant CREATE_LICENSE = keccak256("CREATE_LICENSE");
+    bytes32 public constant CREATE_LICENSE = keccak256("CREATE_LICENSE");
     /// Activate license action in LicensingModule
-    bytes32 constant ACTIVATE_LICENSE = keccak256("ACTIVATE_LICENSE");
+    bytes32 public constant ACTIVATE_LICENSE = keccak256("ACTIVATE_LICENSE");
     /// Revoke license action in LicensingModule
-    bytes32 constant LINK_LNFT_TO_IPA = keccak256("LINK_LNFT_TO_IPA");
+    bytes32 public constant LINK_LNFT_TO_IPA = keccak256("LINK_LNFT_TO_IPA");
 
     /// @notice Returns the string representation of a license status.
-    function _statusToString(
-        LicenseStatus status_
-    ) internal pure returns (string memory) {
+    function _statusToString(LicenseStatus status_) internal pure returns (string memory) {
         if (status_ == LicenseStatus.Unset) {
             return "Unset";
         } else if (status_ == LicenseStatus.Active) {
@@ -182,9 +179,7 @@ library Licensing {
     /// and encodes it into bytes
     /// @param choiceIndexes_ the indexes of the chosen options
     /// @return value the encoded value
-    function _encodeMultipleChoice(
-        uint8[] memory choiceIndexes_
-    ) internal pure returns (bytes memory value) {
+    function _encodeMultipleChoice(uint8[] memory choiceIndexes_) internal pure returns (bytes memory value) {
         uint256 mask = BitMask._convertToMask(choiceIndexes_);
         return abi.encode(mask);
     }
@@ -195,10 +190,7 @@ library Licensing {
     /// so they should be done off chain. Also, Boolean decoded as a Number will be valid.
     /// @param paramDef_ the parameter definition
     /// @param value_ the encoded value
-    function _validateParamValue(
-        ParamDefinition memory paramDef_,
-        bytes memory value_
-    ) internal pure returns (bool) {
+    function _validateParamValue(ParamDefinition memory paramDef_, bytes memory value_) internal pure returns (bool) {
         // An empty value signals the parameter is untagged, to trigger default values in the
         // license agreement text, but that's valid
         if (keccak256(value_) == keccak256("")) {
@@ -257,7 +249,10 @@ library Licensing {
     /// @param paramDef_ the parameter definition
     /// @param value_ the encoded value
     /// @return the string representation of the value
-    function _getDecodedParamString(Licensing.ParamDefinition memory paramDef_, bytes memory value_) internal pure returns (string memory) {
+    function _getDecodedParamString(
+        Licensing.ParamDefinition memory paramDef_,
+        bytes memory value_
+    ) internal pure returns (string memory) {
         if (paramDef_.paramType == Licensing.ParameterType.Bool) {
             return abi.decode(value_, (bool)) ? "true" : "false";
         } else if (paramDef_.paramType == Licensing.ParameterType.Number) {

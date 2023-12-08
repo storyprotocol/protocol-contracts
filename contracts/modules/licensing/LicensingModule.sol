@@ -68,18 +68,13 @@ contract LicensingModule is BaseModule, ILicensingModule {
     }
 
     /// @notice Gets the licensing framework config of an IP org.
-    function getIpOrgLicensorConfig(
-        address ipOrg_
-    ) external view returns (Licensing.LicensorConfig) {
+    function getIpOrgLicensorConfig(address ipOrg_) external view returns (Licensing.LicensorConfig) {
         return _licensorConfig[ipOrg_];
     }
 
     /// @notice Gets the value set by an IP org for a parameter of a licensing framework.
     /// If no value is set (bytes.length==0), licensors will be able to set their value.
-    function getIpOrgValueForParam(
-        address ipOrg_,
-        string calldata paramTag_
-    ) external view returns (bytes memory) {
+    function getIpOrgValueForParam(address ipOrg_, string calldata paramTag_) external view returns (bytes memory) {
         return _ipOrgParamValues[ipOrg_][paramTag_.toShortString()];
     }
 
@@ -211,10 +206,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
         ) = _parseLicenseParameters(ipOrg_, input_.params, supportedParams);
 
         Licensing.LicenseStatus newLicenseStatus;
-        if (
-            input_.parentLicenseId != 0 &&
-            LICENSE_REGISTRY.derivativeNeedsApproval(input_.parentLicenseId)
-        ) {
+        if (input_.parentLicenseId != 0 && LICENSE_REGISTRY.derivativeNeedsApproval(input_.parentLicenseId)) {
             // If parent license ID has `derivativeNeedsApproval` = true, then new license is pending licensor approval.
             // This condition is triggered when parent's `isReciprocal` = false but `derivativeNeedsApproval` = true.
             newLicenseStatus = Licensing.LicenseStatus.PendingLicensorApproval;
@@ -341,11 +333,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
     /// @param parentLicenseId_ the ID of the parent license
     /// @param ipaId_ the ID of the IPA
     /// @return the licensor address
-    function _getLicensor(
-        address ipOrg_,
-        uint256 parentLicenseId_,
-        uint256 ipaId_
-    ) private view returns (address) {
+    function _getLicensor(address ipOrg_, uint256 parentLicenseId_, uint256 ipaId_) private view returns (address) {
         Licensing.LicensorConfig licensorConfig = _licensorConfig[ipOrg_];
         if (licensorConfig == Licensing.LicensorConfig.Unset) {
             revert Errors.LicensingModule_IpOrgFrameworkNotSet();
@@ -458,11 +446,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
 
     /// @notice Gets the registry key for the hook.
     /// @dev this functionality is currently disabled.
-    function _hookRegistryKey(
-        IIPOrg ipOrg_,
-        address caller_,
-        bytes calldata params_
-    ) internal view virtual override returns (bytes32) {
+    function _hookRegistryKey(IIPOrg, address, bytes calldata) internal view virtual override returns (bytes32) {
         return keccak256("TODO");
     }
 }

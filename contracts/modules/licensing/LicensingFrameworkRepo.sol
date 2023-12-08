@@ -29,17 +29,10 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
     }
 
     /// Emits when a new licensing framework is added
-    event FrameworkAdded(
-        string frameworkId,
-        string textUrl
-    );
+    event FrameworkAdded(string frameworkId, string textUrl);
 
     /// emits when a new parameter is added to a framework
-    event ParamDefinitionAdded(
-        string frameworkId,
-        ShortString tag,
-        Licensing.ParamDefinition definition
-    );
+    event ParamDefinitionAdded(string frameworkId, ShortString tag, Licensing.ParamDefinition definition);
 
     /// frameworkId => FrameworkStorage
     mapping(string => FrameworkStorage) private _frameworks;
@@ -54,9 +47,7 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
     /// @dev this is an admin only function, and can only be called by the
     /// licensing manager role
     /// @param input_ the input parameters for the framework
-    function addFramework(
-        Licensing.SetFramework calldata input_
-    ) external onlyRole(AccessControl.LICENSING_MANAGER) {
+    function addFramework(Licensing.SetFramework calldata input_) external onlyRole(AccessControl.LICENSING_MANAGER) {
         FrameworkStorage storage framework = _frameworks[input_.id];
         if (framework.paramTags.length() > 0) {
             revert Errors.LicensingFrameworkRepo_FrameworkAlreadyAdded();
@@ -75,10 +66,7 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
     /// @notice Adds a new parameter to a licensing framework
     /// @param frameworkId_ the ID of the framework
     /// @param paramDef_ the definition of the parameter
-    function _addParameter(
-        string calldata frameworkId_,
-        Licensing.ParamDefinition calldata paramDef_
-    ) internal {
+    function _addParameter(string calldata frameworkId_, Licensing.ParamDefinition calldata paramDef_) internal {
         FrameworkStorage storage framework = _frameworks[frameworkId_];
         ShortString tag = paramDef_.tag;
         if (framework.paramTags.contains(tag)) {
@@ -91,9 +79,7 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
     }
 
     /// Gets the URL to the legal document of a licensing framework
-    function getLicenseTextUrl(
-        string calldata frameworkId_
-    ) external view returns (string memory) {
+    function getLicenseTextUrl(string calldata frameworkId_) external view returns (string memory) {
         return _frameworks[frameworkId_].textUrl;
     }
 
@@ -106,18 +92,14 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
         string calldata frameworkId_,
         uint256 index
     ) external view returns (Licensing.ParamDefinition memory) {
-        FrameworkStorage storage framework = _frameworks[
-            frameworkId_
-        ];
+        FrameworkStorage storage framework = _frameworks[frameworkId_];
         return framework.paramDefs[index];
     }
 
     /// Gets the amount of parameters of a licensing framework
     /// @param frameworkId_ the ID of the framework
     /// @return the amount of parameters
-    function getTotalParameters(
-        string calldata frameworkId_
-    ) external view returns (uint256) {
+    function getTotalParameters(string calldata frameworkId_) external view returns (uint256) {
         return _frameworks[frameworkId_].paramDefs.length;
     }
 
@@ -138,9 +120,7 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
     /// many parameters
     /// @param frameworkId_ the ID of the framework
     /// @return the definitions of the parameters
-    function getParameterDefs(
-        string calldata frameworkId_
-    ) external view returns (Licensing.ParamDefinition[] memory) {
+    function getParameterDefs(string calldata frameworkId_) external view returns (Licensing.ParamDefinition[] memory) {
         return _frameworks[frameworkId_].paramDefs;
     }
 }
