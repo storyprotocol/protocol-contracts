@@ -28,7 +28,7 @@ import "contracts/modules/licensing/LicenseRegistry.sol";
 import "contracts/modules/licensing/LicensingFrameworkRepo.sol";
 import "contracts/modules/licensing/LicensingModule.sol";
 import "contracts/lib/modules/Licensing.sol";
-import "contracts/lib/modules/PIPLicensingTerms.sol";
+import "contracts/lib/modules/SPUMLParams.sol";
 import { PolygonToken } from "contracts/lib/hooks/PolygonToken.sol";
 import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 import { Hook } from "contracts/lib/hooks/Hook.sol";
@@ -382,9 +382,9 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         );
 
         // CONFIG LICENSING MODULE
-        Licensing.ParamDefinition[] memory paramDefs = PIPLicensingTerms._getParamDefs();
+        Licensing.ParamDefinition[] memory paramDefs = SPUMLParams._getParamDefs();
         Licensing.SetFramework memory framework = Licensing.SetFramework({
-            id: PIPLicensingTerms.FRAMEWORK_ID,
+            id: SPUMLParams.FRAMEWORK_ID,
             textUrl: vm.envString("PIPL_URL"),
             paramDefs: paramDefs
         });
