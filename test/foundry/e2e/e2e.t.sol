@@ -33,8 +33,8 @@ import { Create2 } from "@openzeppelin/contracts/utils/Create2.sol";
 contract E2ETest is IE2ETest, BaseTest {
     using ShortStrings for *;
 
-    address internal tokenGatedHook;
-    address public polygonTokenHook;
+    TokenGatedHook internal tokenGatedHook;
+    PolygonTokenHook public polygonTokenHook;
     MockERC721 internal mockNFT;
     MockERC20 internal mockERC20;
 
@@ -54,9 +54,9 @@ contract E2ETest is IE2ETest, BaseTest {
     string internal FRAMEWORK_ID_DOGnCO = "test_framework_dog_and_co";
     string internal FRAMEWORK_ID_CATnCO = "test_framework_cat_and_co";
 
+    uint256 internal mockPolygonTokenHookNonce;
+
     // variables defined here to avoid stack too deep error
-    bytes[] internal preHooksDataStory;
-    bytes[] internal preHooksDataCharacter;
     bytes[] internal hooksTransferIPAsset;
     uint256 internal licenseId_1_nonDeriv;
     uint256 internal licenseId_2_deriv;
@@ -101,29 +101,51 @@ contract E2ETest is IE2ETest, BaseTest {
 
         /// TOKEN_GATED_HOOK
         bytes memory tokenGatedHookCode = abi.encodePacked(
-            type(TokenGatedHook).creationCode, abi.encode(address(accessControl)));
-        tokenGatedHook = _deployHook(tokenGatedHookCode, Hook.SYNC_FLAG, 0);
-        moduleRegistry.registerProtocolHook("TokenGatedHook", IHook(tokenGatedHook));
+            type(TokenGatedHook).creationCode,
+            abi.encode(address(accessControl))
+        );
+        tokenGatedHook = TokenGatedHook(
+            _deployHook(tokenGatedHookCode, Hook.SYNC_FLAG, 0)
+        );
+        moduleRegistry.registerProtocolHook(
+            "TokenGatedHook",
+            IHook(tokenGatedHook)
+        );
 
         /// POLYGON_TOKEN_HOOK
         MockPolygonTokenClient mockPolygonTokenClient = new MockPolygonTokenClient();
         bytes memory polygonTokenHookCode = abi.encodePacked(
             type(PolygonTokenHook).creationCode,
-            abi.encode(address(accessControl), mockPolygonTokenClient, address(this))
+            abi.encode(
+                address(accessControl),
+                mockPolygonTokenClient,
+                address(this)
+            )
         );
-        polygonTokenHook = _deployHook(polygonTokenHookCode, Hook.ASYNC_FLAG, 0);
-        moduleRegistry.registerProtocolHook("PolygonTokenHook", IHook(polygonTokenHook));
+        polygonTokenHook = PolygonTokenHook(
+            _deployHook(polygonTokenHookCode, Hook.ASYNC_FLAG, 0)
+        );
+        moduleRegistry.registerProtocolHook(
+            "PolygonTokenHook",
+            IHook(polygonTokenHook)
+        );
 
         /// MOCK_ERC721, for regular token-gated hook
+        /// In the example, ipAssetOwner1 and ipAssetOwner2 are owners of IPAs that are
+        /// registered to an IPOrg (IPOrg 1) that uses TokenGated hook as pre-hook.
         mockNFT = new MockERC721();
         mockNFT.mint(ipAssetOwner1, 1);
         mockNFT.mint(ipAssetOwner2, 2);
 
         /// MOCK_ERC20, for Polygon token hook
+        /// In the example, ipAssetOwner3 and ipAssetOwner4 are owners of IPAs that are
+        /// registered to an IPOrg (IPOrg 2) that uses PolygonToken hook as pre-hook.
         mockERC20 = new MockERC20("MockERC20", "MERC20", 18);
         mockERC20.mint(2000);
-        mockERC20.transfer(ipAssetOwner1, 1000);
-        mockERC20.transfer(ipAssetOwner2, 1000);
+        mockERC20.transfer(ipAssetOwner3, 1000);
+        mockERC20.transfer(ipAssetOwner4, 1000);
+
+        /// From above, you can also stack pre- or post-hooks!
 
         /// Setups
         _setUp_LicensingFramework();
@@ -292,46 +314,7 @@ contract E2ETest is IE2ETest, BaseTest {
         /// =========================================
         ///
 
-        // Add token gated hook & polygon token gated hook
-        // Specify the configuration for the token gated hook, ie. which token to use
-        address[] memory hooks = new address[](2);
-        hooks[0] = tokenGatedHook;
-        hooks[1] = polygonTokenHook;
-
-        TokenGated.Config memory tokenGatedConfig = TokenGated.Config({
-            tokenAddress: address(mockNFT)
-        });
-        PolygonToken.Config memory polygonTokenConfig = PolygonToken.Config({
-            tokenAddress: address(mockNFT),
-            balanceThreshold: 1
-        });
-        bytes[] memory hooksConfig = new bytes[](2);
-        hooksConfig[0] = abi.encode(tokenGatedConfig);
-        hooksConfig[1] = abi.encode(polygonTokenConfig);
-
-        vm.expectEmit(address(registrationModule));
-        emit HooksRegistered(
-            HookRegistry.HookType.PreAction,
-            // from _generateRegistryKey(ipOrg_) => registryKey
-            // keccak256(abi.encode(address(ipOrg1), Registration.REGISTER_IP_ASSET, "REGISTRATION")),
-            keccak256(abi.encode(ipOrg1, "REGISTRATION")),
-            hooks
-        );
-        vm.prank(ipOrgOwner1);
-        // Register hooks for ipOrg1 as pre-action hooks
-        RegistrationModule(registrationModule).registerHooks(
-            HookRegistry.HookType.PreAction,
-            IIPOrg(ipOrg1),
-            hooks,
-            hooksConfig,
-            abi.encode(Registration.REGISTER_IP_ASSET)
-        );
-        // RegistrationModule(registrationModule).registerHooks(
-        //     HookRegistry.HookType.PreAction,
-        //     IIPOrg(ipOrg1),
-        //     hooks,
-        //     hooksConfig
-        // );
+        _registerHooksForIPOrgs();
 
         ///
         /// =========================================
@@ -400,9 +383,9 @@ contract E2ETest is IE2ETest, BaseTest {
             memory crParams = LibRelationship.CreateRelationshipParams({
                 relType: "APPEAR_IN",
                 srcAddress: ipOrg1,
-                srcId: 1,
+                srcId: 1, // source, global asset id
                 dstAddress: ipOrg1,
-                dstId: 2
+                dstId: 2 // destination, global asset id
             });
 
         vm.prank(ipOrgOwner1);
@@ -525,12 +508,9 @@ contract E2ETest is IE2ETest, BaseTest {
 
         ///
         /// =========================================
-        ///         Change Owners of IP Assets
+        ///            IP Assets Transfers
         /// =========================================
         ///
-
-        hooksTransferIPAsset = new bytes[](1);
-        hooksTransferIPAsset[0] = abi.encode(ipAssetOwner1);
 
         vm.expectEmit(address(registrationModule));
         emit IPAssetTransferred(1, ipOrg1, 1, ipAssetOwner1, ipAssetOwner2);
@@ -539,11 +519,54 @@ contract E2ETest is IE2ETest, BaseTest {
             ipOrg1,
             ipAssetOwner1,
             ipAssetOwner2,
-            1,
-            // BaseModule_HooksParamsLengthMismatc
-            hooksTransferIPAsset,
+            1, // global asset id
+            // IPOrg1 has no pre-hooks set for action `TRANSFER_IP_ASSET`, so we pass in empty params
+            new bytes[](0),
             new bytes[](0)
         );
+        assertEq(
+            registry.ipAssetOwner(1),
+            ipAssetOwner2,
+            "owner should be ipAssetOwner2 after transferIPAsset"
+        );
+
+        // Transfer back, `ipAssetOwner2` also has enough balance of mockNFT
+        vm.prank(ipAssetOwner2);
+        spg.transferIPAsset(
+            ipOrg1,
+            ipAssetOwner2,
+            ipAssetOwner1,
+            1, // global asset id
+            // IPOrg1 has no pre-hooks set for action `TRANSFER_IP_ASSET`, so we pass in empty params
+            new bytes[](0),
+            new bytes[](0)
+        );
+        assertEq(
+            registry.ipAssetOwner(1),
+            ipAssetOwner1,
+            "owner should be ipAssetOwner1 after transferIPAsset"
+        );
+
+        // // Since we've configured PolygonToken hook for IPOrg2 on `TRANSFER_IP_ASSET` action,
+        // // it will get triggered here. The hook will check if the sender has enough token
+        // // balance (in this case, mockERC20) to transfer the IP asset. If not, it will revert.
+        // hooksTransferIPAsset = new bytes[](1);
+        // hooksTransferIPAsset[0] = abi.encode(ipAssetOwner4);
+
+        // // vm.expectEmit(address(registrationModule));
+        // // emit IPAssetTransferred(1, ipOrg1, 1, ipAssetOwner1, ipAssetOwner2);
+        // vm.prank(ipAssetOwner4);
+        // spg.transferIPAsset(
+        //     ipOrg2,
+        //     ipAssetOwner4,
+        //     ipAssetOwner3,
+        //     4, // asset id
+        //     // IPOrg2 has 1 pre-hook set for action `TRANSFER_IP_ASSET`
+        //     hooksTransferIPAsset,
+        //     new bytes[](0)
+        // );
+
+        // _triggerMockPolygonTokenHook(ipAssetOwner4);
 
         ///
         /// =========================================
@@ -719,15 +742,127 @@ contract E2ETest is IE2ETest, BaseTest {
         licenseRegistry.linkLnftToIpa(licenseId_2_deriv, ipAssetId_2);
     }
 
+    ///
+    /// =========================================
+    ///
+    ///         Register Hooks for IPOrgs
+    ///
+    /// =========================================
+    ///
+
+    function _registerHooksForIPOrgs() internal {
+        // Add token gated hook & polygon token gated hook
+        // Specify the configuration for the token gated hook, ie. which token to use
+        address[] memory hooks = new address[](1);
+        bytes[] memory hooksConfig = new bytes[](1);
+
+        // TokenGated hook that uses MockERC721
+        TokenGated.Config memory tokenGatedConfig = TokenGated.Config({
+            tokenAddress: address(mockNFT)
+        });
+
+        // PolygonToken hook that uses MockERC20
+        PolygonToken.Config memory polygonTokenConfig = PolygonToken.Config({
+            tokenAddress: address(mockERC20),
+            balanceThreshold: 1
+        });
+
+        //
+        // Register TokenGated hook for IPOrg1 in pre-action hooks.
+        // This hook is triggered on `REGISTER_IP_ASSET` action.
+        // => this means user needs to hold some tokens on Polygon to register IPAs.
+        //
+        hooks[0] = address(tokenGatedHook);
+        hooksConfig[0] = abi.encode(tokenGatedConfig);
+        vm.prank(ipOrgOwner1);
+        vm.expectEmit(address(registrationModule));
+        emit HooksRegistered(
+            HookRegistry.HookType.PreAction,
+            keccak256(
+                abi.encode(
+                    address(ipOrg1),
+                    Registration.REGISTER_IP_ASSET,
+                    "REGISTRATION"
+                )
+            ),
+            hooks
+        );
+        RegistrationModule(registrationModule).registerHooks(
+            HookRegistry.HookType.PreAction,
+            IIPOrg(ipOrg1),
+            hooks,
+            hooksConfig,
+            abi.encode(Registration.REGISTER_IP_ASSET)
+        );
+
+        //
+        // Register PolygonToken hook for IPOrg2 in pre-action hook
+        // This hook is triggered on both `REGISTER_IP_ASSET` and `TRANSFER_IP_ASSET` action.
+        // => this means user needs to hold some tokens on Polygon to register & transfer IPAs.
+        //
+        hooks[0] = address(polygonTokenHook);
+        hooksConfig[0] = abi.encode(polygonTokenConfig);
+        vm.prank(ipOrgOwner2);
+        vm.expectEmit(address(registrationModule));
+        emit HooksRegistered(
+            HookRegistry.HookType.PreAction,
+            keccak256(
+                abi.encode(
+                    address(ipOrg2),
+                    Registration.TRANSFER_IP_ASSET,
+                    "REGISTRATION"
+                )
+            ),
+            hooks
+        );
+        RegistrationModule(registrationModule).registerHooks(
+            HookRegistry.HookType.PreAction,
+            IIPOrg(ipOrg2),
+            hooks,
+            hooksConfig,
+            abi.encode(Registration.TRANSFER_IP_ASSET)
+        );
+
+        vm.prank(ipOrgOwner2);
+        vm.expectEmit(address(registrationModule));
+        emit HooksRegistered(
+            HookRegistry.HookType.PreAction,
+            keccak256(
+                abi.encode(
+                    address(ipOrg2),
+                    Registration.REGISTER_IP_ASSET,
+                    "REGISTRATION"
+                )
+            ),
+            hooks
+        );
+        RegistrationModule(registrationModule).registerHooks(
+            HookRegistry.HookType.PreAction,
+            IIPOrg(ipOrg2),
+            hooks,
+            hooksConfig,
+            abi.encode(Registration.REGISTER_IP_ASSET)
+        );
+    }
+
+    ///
+    /// =========================================
+    ///
+    ///       Register IP Assets for IPOrgs
+    ///
+    /// =========================================
+    ///
+
     function _registerIpAssets() internal {
         //
         // Asset ID 1 (Org 1, ID 1)
         //
 
         string memory ipAssetMediaUrl = "https://arweave.net/character";
+        bytes[] memory preHooksData = new bytes[](0);
 
-        Registration.RegisterIPAssetParams
-            memory registerIpAssetParams = Registration.RegisterIPAssetParams({
+        Registration.RegisterIPAssetParams memory ipAssetData = Registration
+            .RegisterIPAssetParams({
                 owner: ipAssetOwner1,
                 ipOrgAssetType: 0,
                 name: "Character IPA",
@@ -735,13 +870,12 @@ contract E2ETest is IE2ETest, BaseTest {
                 mediaUrl: ipAssetMediaUrl
             });
 
-        TokenGated.Params memory tokenGatedHookDataCharacter = TokenGated
-            .Params({ tokenOwner: ipAssetOwner1 });
-        PolygonToken.Params memory polygonTokenDataCharacter = PolygonToken
-            .Params({ tokenOwnerAddress: ipAssetOwner1 });
-        preHooksDataCharacter = new bytes[](2);
-        preHooksDataCharacter[0] = abi.encode(tokenGatedHookDataCharacter);
-        preHooksDataCharacter[1] = abi.encode(polygonTokenDataCharacter);
+        // hooks
+        TokenGated.Params memory tokenGatedHookData = TokenGated.Params({
+            tokenOwner: ipAssetOwner1
+        });
+        preHooksData = new bytes[](1);
+        preHooksData[0] = abi.encode(tokenGatedHookData);
 
         // TODO: Solve "Stack too deep" for emitting this event
         // vm.expectEmit(address(tokenGatedHook));
@@ -754,18 +888,10 @@ contract E2ETest is IE2ETest, BaseTest {
         vm.prank(ipAssetOwner1);
         (ipAssetId_1, ipOrg1_AssetId_1) = spg.registerIPAsset(
             ipOrg1,
-            registerIpAssetParams,
-            preHooksDataCharacter, // pre-hook TokenGated & PolygonToken
-            new bytes[](0)
+            ipAssetData,
+            preHooksData, // pre-hook param data for hooks: TokenGated
+            new bytes[](0) // no data since there's no registration action hook in post-hook
         );
-
-        // Asset ID 1 has Polygon Token hook as pre-hook action for
-        // IPA Registration. So we mock the callback from Polygon Token hook.
-        bytes32 requestIdStory = keccak256(
-            abi.encodePacked(polygonTokenHook, uint256(1))
-        );
-        PolygonTokenHook(polygonTokenHook).handleCallback(requestIdStory, 1);
-
         assertEq(ipAssetId_1, 1, "ipAssetId_1 should be 1");
         assertEq(ipOrg1_AssetId_1, 1, "ipOrg1_AssetId_1 should be 1");
         assertEq(
@@ -784,24 +910,22 @@ contract E2ETest is IE2ETest, BaseTest {
         //
 
         ipAssetMediaUrl = "https://arweave.net/story";
-        registerIpAssetParams = Registration.RegisterIPAssetParams({
+        ipAssetData = Registration.RegisterIPAssetParams({
             owner: ipAssetOwner2,
             ipOrgAssetType: 1,
             name: "Story IPA",
-            hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83931111,
+            hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83931166,
             mediaUrl: ipAssetMediaUrl
         });
-        TokenGated.Params memory tokenGatedHookDataStory = TokenGated.Params({
-            tokenOwner: ipAssetOwner2
-        });
-        preHooksDataStory = new bytes[](1);
-        preHooksDataStory[0] = abi.encode(tokenGatedHookDataStory);
+        tokenGatedHookData = TokenGated.Params({ tokenOwner: ipAssetOwner2 });
+        preHooksData = new bytes[](1);
+        preHooksData[0] = abi.encode(tokenGatedHookData);
         vm.prank(ipAssetOwner2);
         (ipAssetId_2, ipOrg1_AssetId_2) = spg.registerIPAsset(
             ipOrg1,
-            registerIpAssetParams,
-            preHooksDataStory, // pre-hook TokenGated
-            new bytes[](0)
+            ipAssetData,
+            preHooksData, // pre-hook param data for hooks: TokenGated
+            new bytes[](0) // no data since there's no registration action hook in post-hook
         );
         assertEq(ipAssetId_2, 2, "ipAssetId_2 should be 2");
         assertEq(ipOrg1_AssetId_2, 2, "ipOrg1_AssetId_2 should be 2");
@@ -827,21 +951,48 @@ contract E2ETest is IE2ETest, BaseTest {
         // Asset ID 3 (Org 2, ID 1)
         //
 
+        PolygonToken.Params memory polygonTokenHookParams = PolygonToken
+            .Params({ tokenOwnerAddress: ipAssetOwner3 });
+        preHooksData = new bytes[](1);
+        preHooksData[0] = abi.encode(polygonTokenHookParams);
+
         ipAssetMediaUrl = "https://arweave.net/story2";
-        registerIpAssetParams = Registration.RegisterIPAssetParams({
+        ipAssetData = Registration.RegisterIPAssetParams({
             owner: ipAssetOwner3,
             ipOrgAssetType: 1,
             name: "Story IPA 2",
-            hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83933333,
+            hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83933377,
             mediaUrl: ipAssetMediaUrl
         });
         vm.prank(ipAssetOwner3);
-        (ipAssetId_3, ipOrg2_AssetId_1) = spg.registerIPAsset(
+        // TODO: also check for event `AsyncHookExecuted`
+        vm.expectEmit(address(registrationModule));
+        emit RequestPending(ipAssetOwner3);
+        // vm.expectEmit(address(polygonTokenHook));
+        // emit PolygonTokenBalanceRequest(
+        //     _getMockPolygonTokenHookReqId(),
+        //     address(registrationModule),
+        //     address(mockERC20),
+        //     address(ipAssetOwner3),
+        //     address(polygonTokenHook),
+        //     polygonTokenHook.handleCallback.selector
+        // );
+        spg.registerIPAsset(
             ipOrg2,
-            registerIpAssetParams,
-            new bytes[](0), // no pre-hook
+            ipAssetData,
+            preHooksData, // pre-hook params: PolygonToken
             new bytes[](0) // no post-hook
         );
+
+        // Registering IPAsset with Async hook will not return the proper Global Asset ID & Org's Asset ID
+        // So we manually have to find the Global Asset ID & Org's Asset ID
+        ipAssetId_3 = 3;
+        ipOrg2_AssetId_1 = 1;
+
+        // IPOrg2 has Polygon Token hook as pre-hook action for
+        // IPA Registration. So we mock the callback from Polygon Token hook.
+        _triggerMockPolygonTokenHook(ipAssetOwner3);
+
         assertEq(ipAssetId_3, 3, "ipAssetId_3 should be 3");
         assertEq(ipOrg2_AssetId_1, 1, "ipOrg2_AssetId_1 should be 1");
         assertEq(
@@ -859,21 +1010,49 @@ contract E2ETest is IE2ETest, BaseTest {
         // Asset ID 4 (Org 2, ID 2)
         //
 
+        polygonTokenHookParams = PolygonToken.Params({
+            tokenOwnerAddress: ipAssetOwner4
+        });
+        preHooksData = new bytes[](1);
+        preHooksData[0] = abi.encode(polygonTokenHookParams);
+
         ipAssetMediaUrl = "https://arweave.net/music1";
-        registerIpAssetParams = Registration.RegisterIPAssetParams({
+        ipAssetData = Registration.RegisterIPAssetParams({
             owner: ipAssetOwner4,
             ipOrgAssetType: 1,
             name: "Music IPA",
-            hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83933333,
+            hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83933388,
             mediaUrl: ipAssetMediaUrl
         });
         vm.prank(ipAssetOwner4);
-        (ipAssetId_4, ipOrg2_AssetId_2) = spg.registerIPAsset(
+        // TODO: also check for event `AsyncHookExecuted`
+        vm.expectEmit(address(registrationModule));
+        emit RequestPending(ipAssetOwner4);
+        // vm.expectEmit(address(polygonTokenHook));
+        // emit PolygonTokenBalanceRequest(
+        //     _getMockPolygonTokenHookReqId(),
+        //     address(registrationModule),
+        //     address(mockERC20),
+        //     address(ipAssetOwner4),
+        //     address(polygonTokenHook),
+        //     polygonTokenHook.handleCallback.selector
+        // );
+        spg.registerIPAsset(
             ipOrg2,
-            registerIpAssetParams,
-            new bytes[](0), // no pre-hook
+            ipAssetData,
+            preHooksData, // pre-hook params: PolygonToken
             new bytes[](0) // no post-hook
         );
+
+        // Registering IPAsset with Async hook will not return the proper Global Asset ID & Org's Asset ID
+        // So we manually have to find the Global Asset ID & Org's Asset ID
+        ipAssetId_4 = 4;
+        ipOrg2_AssetId_2 = 2;
+
+        // IPOrg2 has Polygon Token hook as pre-hook action for
+        // IPA Registration. So we mock the callback from Polygon Token hook.
+        _triggerMockPolygonTokenHook(ipAssetOwner4);
+
         assertEq(ipAssetId_4, 4, "ipAssetId_4 should be 4");
         assertEq(ipOrg2_AssetId_2, 2, "ipOrg2_AssetId_2 should be 2");
         assertEq(
@@ -887,18 +1066,22 @@ contract E2ETest is IE2ETest, BaseTest {
             string.concat("tokenURI should be ", ipAssetMediaUrl)
         );
 
+        //
+        // Asset ID 5 (Org 3, ID 1)
+        //
+
         ipAssetMediaUrl = "https://arweave.net/music2";
-        registerIpAssetParams = Registration.RegisterIPAssetParams({
+        ipAssetData = Registration.RegisterIPAssetParams({
             owner: ipAssetOwner5,
             ipOrgAssetType: 1,
             name: "Music IPA 2",
-            hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83933333,
+            hash: 0x558b44f88e5959cec9c7836078a53ff4d6432142a9d5caa6f3a6eb7c83933399,
             mediaUrl: ipAssetMediaUrl
         });
         vm.prank(ipAssetOwner5);
         (ipAssetId_5, ipOrg3_AssetId_1) = spg.registerIPAsset(
             ipOrg3,
-            registerIpAssetParams,
+            ipAssetData,
             new bytes[](0), // no pre-hook
             new bytes[](0) // no post-hook
         );
@@ -950,5 +1133,34 @@ contract E2ETest is IE2ETest, BaseTest {
         // TODO test event
         vm.prank(caller);
         spg.addRelationshipType(params);
+    }
+
+    function _triggerMockPolygonTokenHook(address caller_) internal {
+        bytes32 polygonHookReqId = _getMockPolygonTokenHookReqId();
+        mockPolygonTokenHookNonce++;
+
+        // vm.expectEmit(address(registrationModule));
+        // emit RequestCompleted(address(caller_));
+        // vm.expectEmit(address(polygonTokenHook));
+        // emit AsyncHookCalledBack(
+        //     address(polygonTokenHook),
+        //     address(registrationModule),
+        //     polygonHookReqId,
+        //     abi.encode(mockERC20.balanceOf(address(caller_)))
+        // );
+        polygonTokenHook.handleCallback(
+            polygonHookReqId,
+            mockERC20.balanceOf(address(caller_))
+        );
+    }
+
+    function _getMockPolygonTokenHookReqId() internal returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    address(polygonTokenHook),
+                    uint256(mockPolygonTokenHookNonce)
+                )
+            );
     }
 }
