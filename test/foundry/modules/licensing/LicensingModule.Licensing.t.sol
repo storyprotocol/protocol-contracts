@@ -213,27 +213,6 @@ contract LicensingModuleLicensingTest is BaseTest {
         );
     }
 
-    // function test_LicensingModule_revert_createAction_InvalidLicensorConfig()
-    //     public
-    //     withFrameworkConfig(true, true, Licensing.LicensorConfig(uint(10000)))
-    // {
-    //     uint256 _parentLicenseId = 0; // no parent
-    //     Licensing.ParamValue[] memory inputParams = _constructInputParams();
-    //     Licensing.LicenseCreation memory creation = Licensing.LicenseCreation({
-    //         params: inputParams,
-    //         parentLicenseId: _parentLicenseId,
-    //         ipaId: ipaId_1
-    //     });
-    //     vm.prank(ipOrg.owner());
-    //     vm.expectRevert(Errors.LicensingModule_IpOrgFrameworkNotSet.selector);
-    //     spg.createLicense(
-    //         address(ipOrg),
-    //         creation,
-    //         new bytes[](0),
-    //         new bytes[](0)
-    //     );
-    // }
-
     function _constructInputParams()
         internal
         pure
