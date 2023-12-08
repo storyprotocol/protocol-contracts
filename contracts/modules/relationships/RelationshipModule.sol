@@ -9,7 +9,7 @@ import { IIPOrg } from "contracts/interfaces/ip-org/IIPOrg.sol";
 import { AccessControlled } from "contracts/access-control/AccessControlled.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { LibRelationship } from "contracts/lib/modules/LibRelationship.sol";
-import { LibUintArrayMask } from "contracts/lib/LibUintArrayMask.sol";
+import { BitMask } from "contracts/lib/BitMask.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IRegistrationModule } from "contracts/interfaces/modules/registration/IRegistrationModule.sol";
 import { ModuleRegistryKeys } from "contracts/lib/modules/ModuleRegistryKeys.sol";
@@ -147,7 +147,10 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
                 revert Errors.RelationshipModule_IpOrgRelatableCannotBeProtocolLevel();
             }
             _verifySupportedIpOrgIndexType(ipOrg_, allowedTypes_);
-            return (ipOrg_, LibUintArrayMask._convertToMask(allowedTypes_));
+            if (allowedTypes_.length == 0) {
+                revert Errors.EmptyArray();
+            }
+            return (ipOrg_, BitMask._convertToMask(allowedTypes_));
         } else if (relatable_ == LibRelationship.Relatables.LICENSE) {
             return (address(LICENSE_REGISTRY), 0);
         } else if (relatable_ == LibRelationship.Relatables.ADDRESS) {
@@ -231,7 +234,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         }
         if (relType.srcSubtypesMask != 0) {
             uint8 srcType = ipOrg_.ipOrgAssetType(createParams.srcId);
-            if (!LibUintArrayMask._isAssetTypeOnMask(relType.srcSubtypesMask, srcType)) {
+            if (!BitMask._isSet(relType.srcSubtypesMask, srcType)) {
                 revert Errors.RelationshipModule_InvalidSrcId();
             }
         }
@@ -246,7 +249,7 @@ contract RelationshipModule is BaseModule, IRelationshipModule, AccessControlled
         }
         if (relType.dstSubtypesMask != 0) {
             uint8 dstType = ipOrg_.ipOrgAssetType(createParams.dstId);
-            if (!LibUintArrayMask._isAssetTypeOnMask(relType.dstSubtypesMask, dstType)) {
+            if (!BitMask._isSet(relType.dstSubtypesMask, dstType)) {
                 revert Errors.RelationshipModule_InvalidDstId();
             }
         }

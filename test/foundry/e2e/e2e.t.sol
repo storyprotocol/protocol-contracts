@@ -61,6 +61,7 @@ contract E2ETest is IE2ETest, BaseTest {
     uint256 internal licenseId_1_nonDeriv;
     uint256 internal licenseId_2_deriv;
     uint256 internal licenseId_3_deriv;
+    uint256 internal licenseId_4_sub_deriv;
     uint256 internal ipAssetId_1;
     uint256 internal ipAssetId_2;
     uint256 internal ipAssetId_3;
@@ -155,20 +156,31 @@ contract E2ETest is IE2ETest, BaseTest {
     }
 
     function _setUp_LicensingFramework() internal {
-        /// Licensing Framework (ID: dog & co.)
+        //
+        /// Licensing Framework with ID: Dog & Co.
+        //
         Licensing.ParamDefinition[]
             memory fParams = new Licensing.ParamDefinition[](3);
         fParams[0] = Licensing.ParamDefinition({
             tag: "TEST_TAG_DOG_1".toShortString(),
-            paramType: Licensing.ParameterType.Bool
+            paramType: Licensing.ParameterType.Bool,
+            defaultValue: abi.encode(true),
+            availableChoices: ""
         });
         fParams[1] = Licensing.ParamDefinition({
             tag: "TEST_TAG_DOG_2".toShortString(),
-            paramType: Licensing.ParameterType.Number
+            paramType: Licensing.ParameterType.Number,
+            defaultValue: abi.encode(123),
+            availableChoices: ""
         });
+        ShortString[] memory choices = new ShortString[](2);
+        choices[0] = "test1_dog".toShortString();
+        choices[1] = "test2_dog".toShortString();
         fParams[2] = Licensing.ParamDefinition({
             tag: "TEST_TAG_DOG_3".toShortString(),
-            paramType: Licensing.ParameterType.MultipleChoice
+            paramType: Licensing.ParameterType.MultipleChoice,
+            defaultValue: abi.encode(1),
+            availableChoices: abi.encode(choices)
         });
         vm.prank(licensingManager);
         licensingFrameworkRepo.addFramework(
@@ -179,11 +191,18 @@ contract E2ETest is IE2ETest, BaseTest {
             })
         );
 
-        /// Licensing Framework (ID: cat and co)
+        //
+        // Licensing Framework with ID: Cat & Co.
+        //
         fParams = new Licensing.ParamDefinition[](1);
+        choices = new ShortString[](2);
+        choices[0] = "test1_cat".toShortString();
+        choices[1] = "test2_cat".toShortString();
         fParams[0] = Licensing.ParamDefinition({
             tag: "TEST_TAG_CAT_1".toShortString(),
-            paramType: Licensing.ParameterType.MultipleChoice
+            paramType: Licensing.ParameterType.MultipleChoice,
+            defaultValue: abi.encode(0),
+            availableChoices: abi.encode(choices)
         });
         vm.prank(licensingManager);
         licensingFrameworkRepo.addFramework(
@@ -194,7 +213,9 @@ contract E2ETest is IE2ETest, BaseTest {
             })
         );
 
-        // Licensing Framework (ID: PIPLicensingTerms)
+        //
+        // Licensing Framework with ID: PIPLicensingTerms
+        //
         Licensing.ParamDefinition[] memory paramDefs = PIPLicensingTerms
             ._getParamDefs();
         vm.prank(licensingManager);
@@ -440,7 +461,7 @@ contract E2ETest is IE2ETest, BaseTest {
             .LicensingConfig({
                 frameworkId: FRAMEWORK_ID_DOGnCO,
                 params: lParams,
-                licensor: Licensing.LicensorConfig.ParentOrIpaOrIpOrgOwners
+                licensor: Licensing.LicensorConfig.Source
             });
 
         // TODO: event check for `configureIpOrgLicensing`
@@ -455,7 +476,8 @@ contract E2ETest is IE2ETest, BaseTest {
         channels[0] = "test1".toShortString();
         channels[1] = "test2".toShortString();
 
-        lParams = new Licensing.ParamValue[](5);
+        // Use the list of terms from PIPLicensingTerms
+        lParams = new Licensing.ParamValue[](4); // max is four, see PIPLicensingTerms
         lParams[0] = Licensing.ParamValue({
             tag: PIPLicensingTerms.CHANNELS_OF_DISTRIBUTION.toShortString(),
             value: abi.encode(channels)
@@ -465,17 +487,11 @@ contract E2ETest is IE2ETest, BaseTest {
             value: "" // unset
         });
         lParams[2] = Licensing.ParamValue({
-            tag: PIPLicensingTerms.DERIVATIVES_WITH_ATTRIBUTION.toShortString(),
+            tag: PIPLicensingTerms.DERIVATIVES_ALLOWED.toShortString(),
             value: abi.encode(true)
         });
         lParams[3] = Licensing.ParamValue({
-            tag: PIPLicensingTerms.DERIVATIVES_WITH_APPROVAL.toShortString(),
-            value: abi.encode(true)
-        });
-        lParams[4] = Licensing.ParamValue({
-            tag: PIPLicensingTerms
-                .DERIVATIVES_WITH_RECIPROCAL_LICENSE
-                .toShortString(),
+            tag: PIPLicensingTerms.ALLOWED_WITH_APPROVAL.toShortString(),
             value: abi.encode(true)
         });
 
@@ -598,18 +614,27 @@ contract E2ETest is IE2ETest, BaseTest {
         //
         // Create a license for Asset ID 3 (Org 2, ID 1)
         // Use PIPLicensingTerms license framework, which is attached to Org 2 (cat & co.)
-        // Recall that "derivativeNeedsApproval = true" for PIPLicensingTerms
         //
 
-        Licensing.ParamValue[] memory inputParams = new Licensing.ParamValue[](
-            1
-        );
-        inputParams[0] = Licensing.ParamValue({
-            tag: PIPLicensingTerms.ATTRIBUTION.toShortString(),
+        lParams = new Licensing.ParamValue[](3);
+        // allow derivatives of license
+        lParams[0] = Licensing.ParamValue({
+            tag: PIPLicensingTerms.DERIVATIVES_ALLOWED.toShortString(),
+            value: abi.encode(true)
+        });
+        // licensor must approve derivatives
+        lParams[1] = Licensing.ParamValue({
+            tag: PIPLicensingTerms.ALLOWED_WITH_APPROVAL.toShortString(),
+            value: abi.encode(true)
+        });
+        lParams[2] = Licensing.ParamValue({
+            tag: PIPLicensingTerms
+                .ALLOWED_WITH_RECIPROCAL_LICENSE
+                .toShortString(),
             value: abi.encode(true)
         });
         Licensing.LicenseCreation memory lCreation = Licensing.LicenseCreation({
-            params: inputParams,
+            params: lParams,
             parentLicenseId: 0, // no parent
             ipaId: ipAssetId_3
         });
@@ -626,12 +651,41 @@ contract E2ETest is IE2ETest, BaseTest {
         assertEq(
             uint8(licenseData_1_nonDeriv.status),
             uint8(Licensing.LicenseStatus.Active),
-            "License should active be if it's not a derivative"
+            "License 1 should active be if it's not a derivative"
         );
+
+        assertEq(
+            licenseData_1_nonDeriv.derivativesAllowed,
+            true,
+            "License 1 should allow derivatives"
+        );
+        assertEq(
+            licenseData_1_nonDeriv.isReciprocal,
+            true,
+            "License 1 should be reciprocal"
+        );
+        assertEq(
+            licenseData_1_nonDeriv.derivativeNeedsApproval,
+            true,
+            "License 1's derivatives need approval"
+        );
+        assertEq(
+            licenseData_1_nonDeriv.ipaId,
+            ipAssetId_3,
+            "License 1's linked IPA ID should be 3"
+        );
+        assertEq(
+            licenseData_1_nonDeriv.parentLicenseId,
+            0,
+            "License 1 should have no parent license"
+        );
+
+        // Since this is a license without a parent license, the license should be activated immediately on
+        // `createLicense`. This is already checked about via status == LicenseStatus.Active, but again checked here.
         vm.expectRevert(
             Errors.LicenseRegistry_LicenseNotPendingApproval.selector
         );
-        vm.prank(ipOrgOwner2); // PIPLicensingTerms specifies the licensor as IPOrgOwnerAlways
+        vm.prank(ipOrgOwner2);
         spg.activateLicense(address(ipOrg2), licenseId_1_nonDeriv);
 
         //
@@ -642,14 +696,32 @@ contract E2ETest is IE2ETest, BaseTest {
         // the two sub-licenses can't modify the params, ie. they inherit the parent's params.
         //
         // First sub-license is created without a linked IP asset, second sub-license is created with a linked IP asset.
+        // Both sub-licenses will be pending approval on creation — parent license has specified in its license terms.
+        // They will need to get approved by the parent license's licensor.
+        //
+        // Third sub-sub-license is derived from the second sub-license, and created without a linked IP asset.
+        // This license will be approved immediately on creation, as the second sub-license didn't specify the
+        // "require approval from derivatives" (ALLOWED_WITH_APPROVAL) in its terms.
+        //
         //
 
         //
-        // First once should have no IP asset linked on creation
+        // First once should have no IP asset linked on creation.
+        // This license does NOT allow derivatives.
         //
+
+        lParams = new Licensing.ParamValue[](6);
+        lParams[0] = Licensing.ParamValue({
+            tag: PIPLicensingTerms.CHANNELS_OF_DISTRIBUTION.toShortString(),
+            value: abi.encode(true)
+        });
+        lParams[1] = Licensing.ParamValue({
+            tag: PIPLicensingTerms.ATTRIBUTION.toShortString(),
+            value: abi.encode(true)
+        });
 
         lCreation = Licensing.LicenseCreation({
-            params: new Licensing.ParamValue[](0),
+            params: lParams,
             parentLicenseId: licenseId_1_nonDeriv,
             ipaId: 0 // no linked IP asset
         });
@@ -661,33 +733,64 @@ contract E2ETest is IE2ETest, BaseTest {
             new bytes[](0)
         );
         assertEq(licenseId_2_deriv, 2, "License ID should be 2");
-        Licensing.LicenseData memory licenseData_2_derive = licenseRegistry
+        Licensing.LicenseData memory licenseData_2_deriv = licenseRegistry
             .getLicenseData(licenseId_2_deriv);
         assertEq(
-            uint8(licenseData_2_derive.status),
+            uint8(licenseData_2_deriv.status),
             uint8(Licensing.LicenseStatus.PendingLicensorApproval),
-            "License should pending approval be if it's a derivative"
+            "License 2 should pending approval be if it's a derivative"
         );
 
         // Because we set the licensorConfig to `Licensing.LicensorConfig.IpOrgOwnerAlways` in PIPLicensingTerms,
         // the licensor is ipOrgOwner2.
         vm.prank(ipOrgOwner2);
         spg.activateLicense(address(ipOrg2), licenseId_2_deriv);
-        licenseData_2_derive = licenseRegistry.getLicenseData(
-            licenseId_2_deriv
-        ); // refresh license data cached in memory
+        licenseData_2_deriv = licenseRegistry.getLicenseData(licenseId_2_deriv); // refresh license data in mem
         assertEq(
-            uint8(licenseData_2_derive.status),
+            uint8(licenseData_2_deriv.status),
             uint8(Licensing.LicenseStatus.Active),
-            "License should be active"
+            "License 2 should be active"
+        );
+        assertEq(
+            licenseData_2_deriv.derivativesAllowed,
+            true,
+            "License 2 should allow derivatives"
+        );
+        assertEq(
+            licenseData_2_deriv.isReciprocal,
+            true,
+            "License 2 should be reciprocal"
+        );
+        assertEq(
+            licenseData_2_deriv.derivativeNeedsApproval,
+            true,
+            "License 2's derivatives need approval"
+        );
+        assertEq(
+            licenseData_2_deriv.ipaId,
+            ipAssetId_3,
+            "License 2's linked IPA ID should be 3"
+        );
+        assertEq(
+            licenseData_2_deriv.parentLicenseId,
+            0,
+            "License 2 should have no parent license"
         );
 
         //
         // Second one should have an IP asset linked on creation
+        // This license allows derivatives.
         //
 
+        lParams = new Licensing.ParamValue[](1);
+        // allow derivatives without approval
+        lParams[0] = Licensing.ParamValue({
+            tag: PIPLicensingTerms.DERIVATIVES_ALLOWED.toShortString(),
+            value: abi.encode(true)
+        });
+
         lCreation = Licensing.LicenseCreation({
-            params: new Licensing.ParamValue[](0),
+            params: new Licensing.ParamValue[](0), // no licensing params
             parentLicenseId: licenseId_1_nonDeriv,
             ipaId: ipAssetId_3 // linked IP asset (owned by IPOrg 2)
         });
@@ -699,24 +802,47 @@ contract E2ETest is IE2ETest, BaseTest {
             new bytes[](0)
         );
         assertEq(licenseId_3_deriv, 3, "License ID should be 3");
-        Licensing.LicenseData memory licenseData_3_derive = licenseRegistry
+        Licensing.LicenseData memory licenseData_3_deriv = licenseRegistry
             .getLicenseData(licenseId_3_deriv);
         assertEq(
-            uint8(licenseData_3_derive.status),
+            uint8(licenseData_3_deriv.status),
             uint8(Licensing.LicenseStatus.PendingLicensorApproval),
-            "License should pending approval be if it's a derivative"
+            "License 3 should pending approval be if it's a derivative"
         );
 
         // Comment above on the first license applies here as well.
         vm.prank(ipOrgOwner2);
         spg.activateLicense(address(ipOrg2), licenseId_3_deriv);
-        licenseData_3_derive = licenseRegistry.getLicenseData(
-            licenseId_3_deriv
-        ); // refresh license data cached in memory
+        licenseData_3_deriv = licenseRegistry.getLicenseData(licenseId_3_deriv); // refresh license data
         assertEq(
-            uint8(licenseData_3_derive.status),
+            uint8(licenseData_3_deriv.status),
             uint8(Licensing.LicenseStatus.Active),
-            "License should be active"
+            "License 3 should be active"
+        );
+
+        //
+        // Create another license that has parent license (licenseId_4_sub_deriv), which is also a sublicense.
+        //
+
+        lCreation = Licensing.LicenseCreation({
+            params: new Licensing.ParamValue[](0), // no licensing params
+            parentLicenseId: licenseId_3_deriv,
+            ipaId: 0 // no linked IPA
+        });
+        vm.prank(ipOrgOwner3);
+        licenseId_4_sub_deriv = spg.createLicense(
+            address(ipOrg3),
+            lCreation,
+            new bytes[](0),
+            new bytes[](0)
+        );
+        assertEq(licenseId_4_sub_deriv, 4, "License ID should be 4");
+        Licensing.LicenseData memory licenseData_4_sub_deriv = licenseRegistry
+            .getLicenseData(licenseId_4_sub_deriv);
+        assertEq(
+            uint8(licenseData_4_sub_deriv.status),
+            uint8(Licensing.LicenseStatus.Active),
+            "License 4 should active on creation"
         );
 
         ///

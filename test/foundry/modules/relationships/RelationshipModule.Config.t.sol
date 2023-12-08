@@ -6,7 +6,7 @@ import 'test/foundry/utils/BaseTest.sol';
 import 'contracts/modules/relationships/RelationshipModule.sol';
 import 'contracts/lib/modules/LibRelationship.sol';
 import { AccessControl } from "contracts/lib/AccessControl.sol";
-import { LibUintArrayMask } from "contracts/lib/LibUintArrayMask.sol";
+import { BitMask } from "contracts/lib/BitMask.sol";
 
 contract RelationshipModuleConfigTest is BaseTest {
 
@@ -69,9 +69,9 @@ contract RelationshipModuleConfigTest is BaseTest {
             "TEST_RELATIONSHIP"
         );
         assertEq(relType.src, address(ipOrg));
-        assertEq(relType.srcSubtypesMask, LibUintArrayMask._convertToMask(allowedSrcs));
+        assertEq(relType.srcSubtypesMask, BitMask._convertToMask(allowedSrcs));
         assertEq(relType.dst, address(ipOrg));
-        assertEq(relType.dstSubtypesMask, LibUintArrayMask._convertToMask(allowedDsts));
+        assertEq(relType.dstSubtypesMask, BitMask._convertToMask(allowedDsts));
 
     }
 
