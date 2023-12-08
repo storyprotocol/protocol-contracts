@@ -12,11 +12,11 @@ import { MockERC721 } from "test/foundry/mocks/MockERC721.sol";
 contract BitMaskHarness {
 
     function convertToMask(uint8[] calldata assetTypes) pure external returns (uint256) {
-        return BitMask._convertToMask(assetTypes);
+        return BitMask.convertToMask(assetTypes);
     }
 
     function isSet(uint256 mask, uint8 assetType) pure external returns (bool) {
-        return BitMask._isSet(mask, assetType);
+        return BitMask.isSet(mask, assetType);
     }
 
 }
@@ -29,7 +29,7 @@ contract BitMaskTest is Test {
         checker = new BitMaskHarness();
     }
 
-    function test_BitMask_convertToMask() public {
+    function test_BitMaskconvertToMask() public {
         for (uint8 i = 1; i <= 254; i++) {
             uint8[] memory assetTypes = new uint8[](i);
             uint256 resultMask;
@@ -42,7 +42,7 @@ contract BitMaskTest is Test {
         }
     }
 
-    function test_BitMask_isSetOnMaskTrue() public {
+    function test_BitMaskisSetOnMaskTrue() public {
         uint256 mask = 0;
         for (uint256 i = 0; i < 256; i++) {
             mask |= 1 << (i & 0xff);
@@ -52,7 +52,7 @@ contract BitMaskTest is Test {
         }
     }
 
-    function test_BitMask_isSetOnMaskFalse() public {
+    function test_BitMaskisSetOnMaskFalse() public {
         for (uint8 i = 1; i <= uint8(254); i++) {
             uint256 zeroMask;
             assertFalse(checker.isSet(zeroMask, i));

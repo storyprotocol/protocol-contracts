@@ -166,7 +166,7 @@ library Licensing {
         bytes memory availableChoices
     ) internal pure returns (ShortString[] memory) {
         uint256 mask = abi.decode(value, (uint256));
-        uint8[] memory indexes = BitMask._getSetIndexes(mask);
+        uint8[] memory indexes = BitMask.getSetIndexes(mask);
         ShortString[] memory choices = abi.decode(availableChoices, (ShortString[]));
         ShortString[] memory result = new ShortString[](indexes.length);
         for (uint256 i = 0; i < indexes.length; i++) {
@@ -180,7 +180,7 @@ library Licensing {
     /// @param choiceIndexes_ the indexes of the chosen options
     /// @return value the encoded value
     function _encodeMultipleChoice(uint8[] memory choiceIndexes_) internal pure returns (bytes memory value) {
-        uint256 mask = BitMask._convertToMask(choiceIndexes_);
+        uint256 mask = BitMask.convertToMask(choiceIndexes_);
         return abi.encode(mask);
     }
 

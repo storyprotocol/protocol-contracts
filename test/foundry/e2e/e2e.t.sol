@@ -203,7 +203,7 @@ contract E2ETest is IE2ETest, BaseTest {
             tag: SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
             paramType: Licensing.ParameterType.MultipleChoice,
             // defaultValue: abi.encode(
-            //     BitMask._convertToMask(enabledDerivativeIndice)
+            //     BitMask.convertToMask(enabledDerivativeIndice)
             // ),
             defaultValue: "",
             availableChoices: abi.encode(derivativeChoices)
@@ -531,7 +531,7 @@ contract E2ETest is IE2ETest, BaseTest {
         lParams[3] = Licensing.ParamValue({
             tag: SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
             // (active) derivative options are set via bitmask
-            value: abi.encode(BitMask._convertToMask(enabledDerivativeIndice))
+            value: abi.encode(BitMask.convertToMask(enabledDerivativeIndice))
         });
 
         Licensing.LicensingConfig memory licensingConfig = Licensing
@@ -885,7 +885,7 @@ contract E2ETest is IE2ETest, BaseTest {
         // derivative options => derivatives must be of reciprocal
         lParams[1] = Licensing.ParamValue({
             tag: SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
-            value: abi.encode(BitMask._convertToMask(enabledDerivativeIndice))
+            value: abi.encode(BitMask.convertToMask(enabledDerivativeIndice))
         });
 
         lCreation = Licensing.LicenseCreation({

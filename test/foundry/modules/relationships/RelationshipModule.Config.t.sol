@@ -69,9 +69,9 @@ contract RelationshipModuleConfigTest is BaseTest {
             "TEST_RELATIONSHIP"
         );
         assertEq(relType.src, address(ipOrg));
-        assertEq(relType.srcSubtypesMask, BitMask._convertToMask(allowedSrcs));
+        assertEq(relType.srcSubtypesMask, BitMask.convertToMask(allowedSrcs));
         assertEq(relType.dst, address(ipOrg));
-        assertEq(relType.dstSubtypesMask, BitMask._convertToMask(allowedDsts));
+        assertEq(relType.dstSubtypesMask, BitMask.convertToMask(allowedDsts));
 
     }
 

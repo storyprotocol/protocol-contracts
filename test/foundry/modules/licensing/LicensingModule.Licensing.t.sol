@@ -55,7 +55,7 @@ contract LicensingModuleLicensingTest is BaseTest {
         if (reciprocal) {
             indexes[1] = SPUMLParams.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX;
         }
-        uint256 derivativeOptions = BitMask._convertToMask(indexes);
+        uint256 derivativeOptions = BitMask.convertToMask(indexes);
         ipOrgParams.push(Licensing.ParamValue({
             tag: SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
             value: abi.encode(derivativeOptions)

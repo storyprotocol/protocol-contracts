@@ -287,8 +287,8 @@ contract LicensingModule is BaseModule, ILicensingModule {
                 derivativesAllowed = abi.decode(resultValue, (bool));
             } else if (ShortStringOps._equal(paramDef.tag, SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS)) {
                 uint256 derivativeIndexMask = abi.decode(resultValue, (uint256));
-                derivativeNeedsApproval = BitMask._isSet(derivativeIndexMask, SPUMLParams.ALLOWED_WITH_APPROVAL_INDEX);
-                isReciprocal = BitMask._isSet(derivativeIndexMask, SPUMLParams.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX);
+                derivativeNeedsApproval = BitMask.isSet(derivativeIndexMask, SPUMLParams.ALLOWED_WITH_APPROVAL_INDEX);
+                isReciprocal = BitMask.isSet(derivativeIndexMask, SPUMLParams.ALLOWED_WITH_RECIPROCAL_LICENSE_INDEX);
             }
         }
         // In case there is misconfiguration.
