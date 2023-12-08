@@ -11,7 +11,7 @@ import { AccessControl } from "contracts/lib/AccessControl.sol";
 import { Errors } from "contracts/lib/Errors.sol";
 import { IAccessControlled } from "contracts/interfaces/access-control/IAccessControlled.sol";
 
-/// @title Access Controlled Contract (upgradeable variant)
+/// @title Upgradeable Access Controlled Contract
 /// @notice This contract is to be inherited by any upgradeable protocol components that require
 ///         granular roles for execution, as defined by the Access Control Singleton contract.
 abstract contract AccessControlledUpgradeable is UUPSUpgradeable, IAccessControlled {
@@ -25,8 +25,8 @@ abstract contract AccessControlledUpgradeable is UUPSUpgradeable, IAccessControl
     // keccak256(bytes.concat(bytes32(uint256(keccak256("story-protocol.access-controlled-upgradeable.storage")) - 1)))
     bytes32 private constant _STORAGE_LOCATION = 0x06c308ca3b780cede1217f5877d0c7fbf50796d93f836cb3b60e6457b0cf03b6;
 
-    /// @notice Checks if msg.sender has `role`, reverts if not.
-    /// @param role_ the role to be tested, defined in Roles.sol and set in AccessControlSingleton instance.
+    /// @notice Checks if msg.sender has role `role`, reverts otherwise.
+    /// @param role_ The role being checked for, set by the Access Control Singleton.
     modifier onlyRole(bytes32 role_) {
         if (!_hasRole(role_, msg.sender)) {
             revert Errors.MissingRole(role_, msg.sender);
@@ -34,8 +34,8 @@ abstract contract AccessControlledUpgradeable is UUPSUpgradeable, IAccessControl
         _;
     }
 
-    /// @notice Sets AccessControlSingleton instance. Restricted to PROTOCOL_ADMIN_ROLE
-    /// @param accessControl_ address of the new instance of AccessControlSingleton.
+    /// @notice Sets the Access Control Singleton used for authorization.
+    /// @param accessControl_ The address of the new Access Control Singleton.
     function setAccessControl(address accessControl_) public onlyRole(AccessControl.PROTOCOL_ADMIN_ROLE) {
         if (!accessControl_.supportsInterface(type(IAccessControl).interfaceId))
             revert Errors.UnsupportedInterface("IAccessControl");
@@ -50,8 +50,8 @@ abstract contract AccessControlledUpgradeable is UUPSUpgradeable, IAccessControl
         return address($.accessControl);
     }
 
-    /// @notice Initializer method, access point to initialize inheritance tree.
-    /// @param accessControl_ address of AccessControlSingleton.
+    /// @dev Initializer function called during contract initialization.
+    /// @param accessControl_ Address of the protocol-wide Access Control Singleton.
     // solhint-disable-next-line func-name-mixedcase
     function __AccessControlledUpgradeable_init(address accessControl_) internal initializer {
         if (!accessControl_.supportsInterface(type(IAccessControl).interfaceId))
@@ -61,10 +61,10 @@ abstract contract AccessControlledUpgradeable is UUPSUpgradeable, IAccessControl
         emit AccessControlUpdated(accessControl_);
     }
 
-    /// @notice Checks if `account has `role` assigned.
-    /// @param role_ the role to be tested, defined in Roles.sol and set in AccessControlSingleton instance.
-    /// @param account_ the address to be tested for the role.
-    /// @return return true if account has role, false otherwise.
+    /// @notice Checks if account `account_` has `role` assigned.
+    /// @param role_ The role being checked for as defined by the Access Control Singlton.
+    /// @param account_ The address whose role permissions are being checked for.
+    /// @return return True if the account has the role, False otherwise.
     function _hasRole(bytes32 role_, address account_) internal view returns (bool) {
         AccessControlledStorage storage $ = _getAccessControlledUpgradeable();
         return $.accessControl.hasRole(role_, account_);

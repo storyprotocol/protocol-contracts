@@ -3,7 +3,8 @@ pragma solidity ^0.8.19;
 
 /// @notice IP Org Interface
 interface IIPOrg {
-    /// @notice Returns the current owner of the IP asset within th IP Org.
+    /// @notice Returns the current owner of the IP asset within the IP Org.
+    /// @return The address of the owner of the IP asset.
     function ownerOf(uint256 id) external view returns (address);
 
     /// @notice Transfers ownership of the IP asset wrapper within an IP Org.
@@ -25,12 +26,15 @@ interface IIPOrg {
     function mint(address owner, uint8 assetType) external returns (uint256 id);
 
     /// @notice Gets the current owner of the IP Org.
+    /// @return The address of the IP Org owner.
     function owner() external view returns (address);
 
     /// @notice Returns contract-level metadata for the IP Org.
+    /// @return The contract-wide URI associated with the IP Org.
     function contractURI() external view returns (string memory);
 
-    /// @notice Returns the Ip Org asset type for a given IP Org asset.
+    /// @notice Returns the IP Org asset type for a given IP Org asset.
+    /// @return The id associated with the IP Org asset type.
     function ipOrgAssetType(uint256 id_) external view returns (uint8);
 
     /// @notice Gets the global IP asset id associated with this IP Org asset.

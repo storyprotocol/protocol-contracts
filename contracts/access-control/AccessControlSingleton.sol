@@ -15,8 +15,8 @@ import { Errors } from "contracts/lib/Errors.sol";
 ///         are may be granted granular access to certain roles by utilizing the `onlyRole`
 ///         modifier with the required role input as a parameter.
 contract AccessControlSingleton is AccessControlUpgradeable, UUPSUpgradeable, Multicall {
-    /// @notice Initializer method, access point to initialize inheritance tree.
-    /// @param admin_ address to be the PROTOCOL_ADMIN_ROLE.
+    /// @notice Initialize the Access Control Singleton contract.
+    /// @param admin_ address to inherit the PROTOCOL_ADMIN_ROLE.
     function initialize(address admin_) external initializer {
         if (admin_ == address(0)) revert Errors.ZeroAddress();
         __AccessControl_init();
@@ -24,9 +24,9 @@ contract AccessControlSingleton is AccessControlUpgradeable, UUPSUpgradeable, Mu
         _grantRole(AccessControl.PROTOCOL_ADMIN_ROLE, admin_);
     }
 
-    /// @notice Method for PROTOCOL_ADMIN_ROLE to create new roles, and define their role admin.
-    /// @param role_ id of the new role. Should be keccak256("<ROLE_NAME>").
-    /// @param admin_ role id that will be the role admin for the new role.
+    /// @notice Defines the admin role associated for a given protocol role.
+    /// @param role_ The id of the new role, given by keccak256("<ROLE_NAME>").
+    /// @param admin_ The id of the admin role provisioned for the provided role.
     function setRoleAdmin(bytes32 role_, bytes32 admin_) external onlyRole(AccessControl.PROTOCOL_ADMIN_ROLE) {
         _setRoleAdmin(role_, admin_);
     }

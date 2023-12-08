@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { IHook, HookResult } from "contracts/interfaces/hooks/base/IHook.sol";
-import { Errors } from "contracts/lib/Errors.sol";
-import { AccessControlled } from "contracts/access-control/AccessControlled.sol";
 import { AccessControl } from "contracts/lib/AccessControl.sol";
+import { AccessControlled } from "contracts/access-control/AccessControlled.sol";
+import { Errors } from "contracts/lib/Errors.sol";
+import { IHook, HookResult } from "contracts/interfaces/hooks/base/IHook.sol";
 
-/// @title BaseHook
+/// @title Base Hook
 /// @notice This contract serves as the foundation for all hook contracts.
-/// @dev It provides the authorization check shared by all hooks. AsyncBaseHook and SyncBaseHook inherit from BaseHook.
-/// Concrete hooks usually inherit from AsyncBaseHook or SyncBaseHook, not directly from BaseHook.
+/// @dev This contract provides authorization checks shared by all hooks, and is inherited
+///      by the AsyncBaseHook and SyncBaseHook, which hook implementations should extend from.
 abstract contract BaseHook is IHook, AccessControlled {
-    /// @notice Constructs the BaseHook contract.
-    /// @param accessControl_ The address of the access control contract.
+    /// @notice Creates the Base Hook contract.
+    /// @param accessControl_ The address of the contract used for authorization.
     constructor(address accessControl_) AccessControlled(accessControl_) {}
 
     /// @notice Executes a synchronous hook.
@@ -37,16 +37,15 @@ abstract contract BaseHook is IHook, AccessControlled {
     }
 
     /// @notice Validates the configuration for the hook.
-    /// @dev This function calls the internal _validateConfig function with the provided configuration data.
-    /// If the validation fails, it will revert with an error.
+    /// @dev If validation fails, this function will throw.
     /// @param hookConfig_ The configuration data for the hook.
     function validateConfig(bytes calldata hookConfig_) external view override {
         _validateConfig(hookConfig_);
     }
 
     /// @notice Validates the configuration for the hook.
-    /// @dev This function should be overridden by concrete hook to provide specific validation logic.
-    /// If the validation fails, it will revert with an error.
+    /// @dev This function is intended to be overridden by hook implementations to provide
+    ///      specialized validation logic. If validation fails, this function should throw.
     /// @param hookConfig_ The configuration data for the hook.
     function _validateConfig(bytes memory hookConfig_) internal view virtual;
 }
