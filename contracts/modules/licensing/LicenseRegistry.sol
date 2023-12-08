@@ -13,6 +13,8 @@ import { ShortString, ShortStrings } from "@openzeppelin/contracts/utils/ShortSt
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 
+import "forge-std/console2.sol";
+
 /// @title LicenseRegistry
 /// @notice This contract is the source of truth for all licenses that are registered in the protocol.
 /// It will only be written by licensing modules.
@@ -278,12 +280,17 @@ contract LicenseRegistry is ERC721 {
             '", "description": "License agreement stating the terms of a Story Protocol IP Org", "attributes": ['
         ));
         
-        string memory licenseAttributes = string(
+        string memory licenseAttributes1 = string(
             abi.encodePacked(
                 '{"trait_type": "IP Org", "value": "', Strings.toHexString(uint160(license.ipOrg), 20), '"},',
-                '{"trait_type": "Framework ID", "value": "', license.frameworkId, '"},',
+                '{"trait_type": "Framework ID", "value": "', license.frameworkId.toString(), '"},',
                 '{"trait_type": "Framework URL", "value": "', LICENSING_FRAMEWORK_REPO.getLicenseTextUrl(license.frameworkId.toString()), '"},',
-                '{"trait_type": "Status", "value": "', Licensing._statusToString(license.status), '"},',
+                '{"trait_type": "Status", "value": "', Licensing._statusToString(license.status), '"},'
+            )
+        );
+
+        string memory licenseAttributes2 = string(
+            abi.encodePacked(
                 '{"trait_type": "Licensor", "value": "', Strings.toHexString(uint160(license.licensor), 20), '"},',
                 '{"trait_type": "Licensee", "value": "', Strings.toHexString(uint160(_ownerOf(tokenId)), 20), '"},',
                 '{"trait_type": "Revoker", "value": "', Strings.toHexString(uint160(license.revoker), 20), '"},',
@@ -291,14 +298,25 @@ contract LicenseRegistry is ERC721 {
                 '{"trait_type": "Derivative IPA", "value": "', Strings.toString(license.ipaId), '"},'
             )
         );
-        // uint256 paramCount = license.params.length;
+        Licensing.ParamValue[] memory params = _licenseParams[tokenId];
+        uint256 paramCount = params.length;
         string memory paramAttributes;
-        // TODO attributes
-        // for(uint256 i = 0; i < paramCount; i++) {
-        //paramAttributes = string(abi.encodePacked(
-        //    '{"trait_type": "', license.params[i].tag.toString(), '", "value": "', license.params[i].value.toString(), '"},'
-        //));
-        // }
+        for (uint256 i = 0; i < paramCount; i++) {
+            console2.log(params[i].tag.toString());
+            Licensing.ParamDefinition memory paramDef = LICENSING_FRAMEWORK_REPO.getParamDefinition(
+                license.frameworkId.toString(),
+                params[i].tag
+            );
+            string memory value = Licensing._getDecodedParamString(paramDef, params[i].value);
+            console2.log(value);
+            paramAttributes = string(
+                abi.encodePacked(
+                    '{"trait_type": "', params[i].tag.toString(), '", "value": "', value, '"}'
+                )
+            );
+            if (i ==)
+        }
+        paramAttributes = string(abi.encodePacked(paramAttributes, ));
 
         return string(abi.encodePacked(
             "data:application/json;base64,",
@@ -306,7 +324,8 @@ contract LicenseRegistry is ERC721 {
                 bytes(
                     string(abi.encodePacked(
                         baseJson,
-                        licenseAttributes,
+                        licenseAttributes1,
+                        licenseAttributes2,
                         paramAttributes,
                         ']}'
                     )

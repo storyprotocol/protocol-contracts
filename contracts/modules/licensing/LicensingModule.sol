@@ -281,7 +281,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
         bytes memory inputValue,
         bytes memory ipOrgValue,
         Licensing.ParamDefinition memory paramDef
-    ) private pure returns (bytes memory) {
+    ) private view returns (bytes memory) {
         if (inputValue.length > 0) {
             // If user has set it, but ipOrg has too, revert
             if (ipOrgValue.length > 0) {

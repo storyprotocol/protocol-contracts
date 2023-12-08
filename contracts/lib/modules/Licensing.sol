@@ -4,12 +4,16 @@ pragma solidity ^0.8.19;
 
 import { IHook } from "contracts/interfaces/hooks/base/IHook.sol";
 import { FixedSet } from "contracts/utils/FixedSet.sol";
-import { ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import { BitMask } from "contracts/lib/BitMask.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
+import { ShortStrings, ShortString } from "@openzeppelin/contracts/utils/ShortStrings.sol";
+
+import "forge-std/console2.sol";
 
 /// @title Licensing Module Library
 /// Structs needed by the Licensing Modules and registries
 library Licensing {
+    using ShortStrings for *;
     enum LicenseStatus {
         Unset,
         Active,
@@ -117,8 +121,11 @@ library Licensing {
     function _decodeMultipleChoice(
         bytes memory value,
         bytes memory availableChoices
-    ) internal pure returns (ShortString[] memory) {
-        uint8[] memory indexes = BitMask._getSetIndexes(abi.decode(value, (uint256)));
+    ) internal view returns (ShortString[] memory) {
+        uint256 mask = abi.decode(value, (uint256));
+        console2.log(mask);
+        uint8[] memory indexes = BitMask._getSetIndexes(mask);
+        console2.log(indexes.length);
         ShortString[] memory choices = abi.decode(availableChoices, (ShortString[]));
         ShortString[] memory result = new ShortString[](indexes.length);
         for (uint256 i = 0; i < indexes.length; i++) {
@@ -129,7 +136,7 @@ library Licensing {
 
     function _encodeMultipleChoice(
         uint8[] memory choiceIndexes_
-    ) internal pure returns (bytes memory value) {
+    ) internal view returns (bytes memory value) {
         uint256 mask = BitMask._convertToMask(choiceIndexes_);
         return abi.encode(mask);
     }
@@ -137,7 +144,7 @@ library Licensing {
     function _validateParamValue(
         ParamDefinition memory paramDef_,
         bytes memory value_
-    ) internal pure returns (bool) {
+    ) internal view returns (bool) {
         // An empty value signals the parameter is untagged, to trigger default values in the
         // license agreement text, but that's valid
         if (keccak256(value_) == keccak256("")) {
@@ -177,6 +184,41 @@ library Licensing {
             }
         }
         return true;
+    }
+
+    function _shortStringArrayToJsonArray(ShortString[] memory ss) internal pure returns (string memory) {
+        string memory result = "[";
+        uint256 len = ss.length;
+        for (uint256 i = 0; i < len; i++) {
+            ShortString s = ss[i];
+            result = string(abi.encode(result, s.toString()));
+            if (i != len - 1) {
+                result = string(abi.encode(result, ", "));
+            }
+        }
+        return string(abi.encode(result, "]"));
+    }
+
+    function _getDecodedParamString(Licensing.ParamDefinition memory paramDef_, bytes memory value_) internal view returns (string memory) {
+        if (paramDef_.paramType == Licensing.ParameterType.Bool) {
+            return abi.decode(value_, (bool)) ? "true" : "false";
+        } else if (paramDef_.paramType == Licensing.ParameterType.Number) {
+            return Strings.toString(abi.decode(value_, (uint256)));
+        } else if (paramDef_.paramType == Licensing.ParameterType.String) {
+            return abi.decode(value_, (string));
+        } else if (paramDef_.paramType == Licensing.ParameterType.Address) {
+            address addr = abi.decode(value_, (address));
+            return Strings.toHexString(uint160(addr), 20);
+        } else if (paramDef_.paramType == Licensing.ParameterType.ShortStringArray) {
+            ShortString[] memory choices = abi.decode(value_, (ShortString[]));
+            return "";
+            //return _shortStringArrayToJsonArray(choices);
+        } else if (paramDef_.paramType == Licensing.ParameterType.MultipleChoice) {
+            ShortString[] memory choices = _decodeMultipleChoice(value_, paramDef_.availableChoices);
+            return "";
+            //return _shortStringArrayToJsonArray(choices);
+        }
+        return "";
     }
 
 }

@@ -64,11 +64,6 @@ contract LicenseRegistryTest is BaseTest {
             tag: SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
             value: abi.encode(derivativeOptions)
         }));
-        for(uint256 i = 0; i < params.length; i++) {
-            console2.log(params[i].tag.toString());
-            console2.logBytes(params[i].value);
-        }
-
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: SPUMLParams.FRAMEWORK_ID,
             params: params,
@@ -343,6 +338,15 @@ contract LicenseRegistryTest is BaseTest {
         vm.prank(ipOrg.owner());
         vm.expectRevert(Errors.LicenseRegistry_LicenseNotActive.selector);
         licenseRegistry.linkLnftToIpa(childLicenseId, ipaId_1);
+    }
+
+    function test_LicenseRegistry_metadata() public {
+        (
+            ,
+            uint256 childLicenseId
+        ) = _createLicense_parent_noIpa_reciprocal();
+        console.log(licenseRegistry.tokenURI(childLicenseId));
+        assertEq(childLicenseId,2222);
     }
 
     function _constructInputParams()

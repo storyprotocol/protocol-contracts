@@ -56,12 +56,6 @@ contract LicensingModuleLicensingTest is BaseTest {
             tag: SPUMLParams.DERIVATIVES_ALLOWED_OPTIONS.toShortString(),
             value: abi.encode(derivativeOptions)
         }));
-        console.log("withFrameworkConfig:");
-        for(uint256 i = 0; i < ipOrgParams.length; i++) {
-            console2.log(ipOrgParams[i].tag.toString());
-            console2.logBytes(ipOrgParams[i].value);
-        }
-
         Licensing.LicensingConfig memory config = Licensing.LicensingConfig({
             frameworkId: SPUMLParams.FRAMEWORK_ID,
             params: ipOrgParams,
