@@ -15,7 +15,7 @@ contract BitMaskHarness {
         return BitMask._convertToMask(assetTypes);
     }
 
-    function isSet(uint256 mask, uint8 assetType) view external returns (bool) {
+    function isSet(uint256 mask, uint8 assetType) pure external returns (bool) {
         return BitMask._isSet(mask, assetType);
     }
 
