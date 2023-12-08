@@ -60,6 +60,7 @@ contract RegistrationModule is BaseModule, IRegistrationModule, AccessControlled
     /// @param ipOrg_ The IP Org for which the hooks are being registered.
     /// @param hooks_ The addresses of the hooks to register.
     /// @param hooksConfig_ The configurations for the hooks.
+    /// @param registerParams_ The parameters for the registration.
     function registerHooks(
         HookType hType_,
         IIPOrg ipOrg_,
