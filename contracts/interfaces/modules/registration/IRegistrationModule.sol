@@ -52,7 +52,7 @@ interface IRegistrationModule is IModule {
     /// @notice Gets the IP asset id associated with an IP Org asset.
     /// @param ipOrg_ The address of the governing IP asset IP Org.
     /// @param ipOrgAssetId_ The localized id of the IP asset within the IP Org.
-    function ipAssetId(address ipOrg_, uint256 ipOrgAssetId_) external returns (uint256);
+    function ipAssetId(address ipOrg_, uint256 ipOrgAssetId_) external view returns (uint256);
 
     /// @notice Renders metadata of an IP Asset localized for an IP Org.
     /// @param ipOrg_ The address of the IP Org of the IP asset.
