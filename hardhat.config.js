@@ -11,7 +11,7 @@ require('@openzeppelin/hardhat-upgrades');
 require('solidity-docgen');
 
 const namespacedStorageKey = require("./script/hardhat/namespacedStorageKey.js");
-const defenderUpdateContracts = require("./script/hardhat/defenderUpdateContracts.js");
+const defenderUpdateContracts = require("./script/hardhat/defender/updateContracts.js");
 const { task } = require("hardhat/config");
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -46,10 +46,10 @@ module.exports = {
       chainId: 1,
       accounts: [process.env.MAINNET_PRIVATEKEY || "0x1234567890123456789012345678901234567890123456789012345678901234"]
     },
-    goerli: {
-      url: process.env.GOERLI_RPC_URL || "",
-      chainId: 5,
-      accounts: [process.env.GOERLI_PRIVATEKEY || "0x1234567890123456789012345678901234567890123456789012345678901234"]
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL || "",
+      chainId: 11155111,
+      accounts: [process.env.SEPOLIA_PRIVATEKEY || "0x1234567890123456789012345678901234567890123456789012345678901234"]
     },
     local: {
       url: "http://127.0.0.1:8545",
