@@ -232,54 +232,74 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
         licensingModule = newAddress;
 
-        /// HOOKS_FACTORY
-        contractKey = "HooksFactory";
+        /// DEPLOY HOOKS
+        if (deployHooks) {
+            _deployHooks(contractKey, newAddress);
+        }
+        
+        /// IF CONFIGURE IN SCRIPT, CONFIGURE DEPLOYMENT WITH DEPLOYER ADDRESS
+        if (configureInScript) {
+            _configureDeployment();
+        }
 
-        console.log(string.concat("Deploying ", contractKey, "..."));
-        newAddress = address(new HooksFactory());
-        console.log(string.concat(contractKey, " deployed to:"), newAddress);
+        _writeDeployment();
+        _endBroadcast();
+    }
 
-        hooksFactory = newAddress;
+    function _deployHooks(string memory contractKey, address newAddress) private {
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
+        //                                      DEPLOY-HOOKS                                               //
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
+         /// HOOKS_FACTORY
+         contractKey = "HooksFactory";
 
-        /// TOKEN_GATED_HOOK
-        contractKey = "TokenGatedHook";
+         console.log(string.concat("Deploying ", contractKey, "..."));
+         newAddress = address(new HooksFactory());
+         console.log(string.concat(contractKey, " deployed to:"), newAddress);
+ 
+         hooksFactory = newAddress;
+ 
+         /// TOKEN_GATED_HOOK
+         contractKey = "TokenGatedHook";
+ 
+         console.log(string.concat("Deploying ", contractKey, "..."));
+         bytes memory tokenGatedHookCode = abi.encodePacked(
+             type(TokenGatedHook).creationCode, abi.encode(address(accessControl)));
+         newAddress = HooksFactory(hooksFactory).deploy(tokenGatedHookCode, Hook.SYNC_FLAG, block.timestamp);
+         _writeAddress(contractKey, newAddress);
+         console.log(string.concat(contractKey, " deployed to:"), newAddress);
+ 
+         tokenGatedHook = newAddress;
+ 
+         /// POLYGON_TOKEN_HOOK
+         contractKey = "PolygonTokenHook";
+ 
+         console.log(string.concat("Deploying ", contractKey, "..."));
+         bytes memory polygonTokenHookCode = abi.encodePacked(
+             type(PolygonTokenHook).creationCode,
+             abi.encode(
+                 address(accessControl),
+                 vm.envAddress("POLYGON_TOKEN_ORACLE_CLIENT"),
+                 vm.envAddress("POLYGON_TOKEN_ORACLE_COORDINATOR")
+             ));
+         newAddress = HooksFactory(hooksFactory).deploy(polygonTokenHookCode, Hook.ASYNC_FLAG, block.timestamp);
+         _writeAddress(contractKey, newAddress);
+         console.log(string.concat(contractKey, " deployed to:"), newAddress);
+ 
+         polygonTokenHook = newAddress;
+ 
+         /// MOCK_ERC_721
+         contractKey = "MockERC721";
+ 
+         console.log(string.concat("Deploying ", contractKey, "..."));
+         newAddress = address(new MockERC721());
+         _writeAddress(contractKey, newAddress);
+         console.log(string.concat(contractKey, " deployed to:"), newAddress);
+ 
+         mockNFT = newAddress;
+    }
 
-        console.log(string.concat("Deploying ", contractKey, "..."));
-        bytes memory tokenGatedHookCode = abi.encodePacked(
-            type(TokenGatedHook).creationCode, abi.encode(address(accessControl)));
-        newAddress = HooksFactory(hooksFactory).deploy(tokenGatedHookCode, Hook.SYNC_FLAG, block.timestamp);
-        _writeAddress(contractKey, newAddress);
-        console.log(string.concat(contractKey, " deployed to:"), newAddress);
-
-        tokenGatedHook = newAddress;
-
-        /// POLYGON_TOKEN_HOOK
-        contractKey = "PolygonTokenHook";
-
-        console.log(string.concat("Deploying ", contractKey, "..."));
-        bytes memory polygonTokenHookCode = abi.encodePacked(
-            type(PolygonTokenHook).creationCode,
-            abi.encode(
-                address(accessControl),
-                vm.envAddress("POLYGON_TOKEN_ORACLE_CLIENT"),
-                vm.envAddress("POLYGON_TOKEN_ORACLE_COORDINATOR")
-            ));
-        newAddress = HooksFactory(hooksFactory).deploy(polygonTokenHookCode, Hook.ASYNC_FLAG, block.timestamp);
-        _writeAddress(contractKey, newAddress);
-        console.log(string.concat(contractKey, " deployed to:"), newAddress);
-
-        polygonTokenHook = newAddress;
-
-        /// MOCK_ERC_721
-        contractKey = "MockERC721";
-
-        console.log(string.concat("Deploying ", contractKey, "..."));
-        newAddress = address(new MockERC721());
-        _writeAddress(contractKey, newAddress);
-        console.log(string.concat(contractKey, " deployed to:"), newAddress);
-
-        mockNFT = newAddress;
-
+    function _configureDeployment() private {
         /////////////////////////////////////////////////////////////////////////////////////////////////////
         //                                      CONFIGURATION                                              //
         /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -391,7 +411,5 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         });
         LicensingFrameworkRepo(licensingFrameworkRepo).addFramework(framework);
 
-        _writeDeployment();
-        _endBroadcast();
     }
 }

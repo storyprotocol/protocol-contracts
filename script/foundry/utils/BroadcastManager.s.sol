@@ -7,21 +7,16 @@ import "script/foundry/utils/StringUtil.sol";
 contract BroadcastManager is Script {
 
     address public admin = address(0x456);
-    bool failIfDeployingToProd;
+    bool public configureInScript = true;
+    bool public deployHooks = true;
 
     function _beginBroadcast() internal {
-        if (failIfDeployingToProd) {
-            require(block.chainid != 1, "Cannot deploy to mainnet");
-            // TODO: add other prod chains
-        }
         uint256 deployerPrivateKey;
-        if (block.chainid == 5) {
-            deployerPrivateKey = vm.envUint("GOERLI_PRIVATEKEY");
-            admin = vm.envAddress("GOERLI_ADMIN_ADDRESS");
-            vm.startBroadcast(deployerPrivateKey);
-        } else if (block.chainid == 11155111) {
+        configureInScript = vm.envBool("CONFIGURE_IN_SCRIPT");
+        deployHooks = vm.envBool("DEPLOY_HOOKS");
+        if (block.chainid == 11155111) {
             deployerPrivateKey = vm.envUint("SEPOLIA_PRIVATEKEY");
-            admin = vm.envAddress("SEPOLIA_ADMIN_ADDRESS");
+            admin = vm.envAddress("SEPOLIA_MULTISIG_ADDRESS");
             vm.startBroadcast(deployerPrivateKey);
         } else {
             vm.startPrank(admin);
