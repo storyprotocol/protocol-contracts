@@ -10,12 +10,8 @@ require("@nomiclabs/hardhat-etherscan");
 require('@openzeppelin/hardhat-upgrades');
 require('solidity-docgen');
 
-const createFranchise = require("./script/hardhat/createFranchise.js");
-const createIPAsset = require("./script/hardhat/createIPAsset.js");
-const getIPAssetRegistryAddress = require("./script/hardhat/getIPAssetRegistryAddress.js");
-const getIPAsset = require("./script/hardhat/getIPAsset.js");
-const sbUploader = require("./script/hardhat/sbUploader.js");
 const namespacedStorageKey = require("./script/hardhat/namespacedStorageKey.js");
+const defenderUpdateContracts = require("./script/hardhat/defenderUpdateContracts.js");
 const { task } = require("hardhat/config");
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -28,49 +24,9 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
-task('sp:create-franchise')
-    .addPositionalParam('name', 'Franchise name')
-    .addPositionalParam('symbol', 'Franchise symbol')
-    .addPositionalParam('description', 'Franchise description')
-    .addPositionalParam('tokenURI', 'Franchise token URI (arweave URL with metadata)')
-    .addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
-    .setDescription('Mint Franchise NFT and create IPAssetsRegistry contract')
-    .setAction(createFranchise);
-
-task('sp:get-ip-asset-registry-address')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Asset in, as given by FranchiseRegistry contract')
-    .setDescription('Get the address of the IPAssetsRegistry contract for the given Franchise')
-    .setAction(getIPAssetRegistryAddress);
-
-task('sp:create-ip-asset')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Asset in, as given by FranchiseRegistry contract')
-    .addPositionalParam('ipAssetType', 'STORY, CHARACTER, ART, GROUP, LOCATION or ITEM')
-    .addPositionalParam('name', 'IP Asset name')
-    .addPositionalParam('description', 'IP Asset description')
-    .addPositionalParam('mediaURL', 'IP Asset media URL')
-    .addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
-    .setDescription('Mint IP Asset NFT and create IPAssetsRegistry contract')
-    .setAction(createIPAsset);
-
-task('sp:read-ip-asset')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Asset in, as given by FranchiseRegistry contract')
-    .addPositionalParam('ipAssetId', 'Id of the IP Asset to read')
-    .setDescription('Get the IP Asset details')
-    .setAction(getIPAsset);
-
-task('sp:uploader')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Assets in, as given by FranchiseRegistry contract')
-    .addPositionalParam('filePath', 'path to the Json data')
-    .addOptionalParam('batchSize', 'Number of blocks to upload in each batch', 100, types.int)
-    .setDescription('Mass upload IP Assets from a Json file')
-    .setAction(sbUploader);
-
-task('sp:update-ip-assets')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Assets in, as given by FranchiseRegistry contract')
-    .addPositionalParam('tx', 'tx hash that created blocks')
-    .addPositionalParam('filePath', 'path to the Json data')
-    .setDescription('Update ids for blocks in the Json file')
-    .setAction(sbUploader.updateIds);
+task('sp:defender:update-contracts')
+    .setDescription('Uploads contract data to Defender')
+    .setAction(defenderUpdateContracts);
 
 task('sp:eip7201-key')
     .addPositionalParam('namespace', 'Namespace, for example erc7201:example.main')
