@@ -47,7 +47,7 @@ contract LicensingFrameworkRepo is AccessControlled, Multicall {
     /// @dev this is an admin only function, and can only be called by the
     /// licensing manager role
     /// @param input_ the input parameters for the framework
-    function addFramework(Licensing.SetFramework calldata input_) external onlyRole(AccessControl.LICENSING_MANAGER) {
+    function addFramework(Licensing.SetFramework calldata input_) external onlyRole(AccessControl.LICENSING_MANAGER_ROLE) {
         FrameworkStorage storage framework = _frameworks[input_.id];
         if (framework.paramTags.length() > 0) {
             revert Errors.LicensingFrameworkRepo_FrameworkAlreadyAdded();
