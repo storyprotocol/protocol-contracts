@@ -77,7 +77,7 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
 
         // Create Licensing contracts
         licensingFrameworkRepo = new LicensingFrameworkRepo(address(accessControl));
-        _grantRole(vm, AccessControl.LICENSING_MANAGER, licensingManager);
+        _grantRole(vm, AccessControl.LICENSING_MANAGER_ROLE, licensingManager);
 
         licenseRegistry = new LicenseRegistry(
             address(registry),
