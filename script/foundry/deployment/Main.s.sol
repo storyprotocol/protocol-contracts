@@ -318,10 +318,6 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
             admin
         );
         accessControlSingleton.grantRole(
-            AccessControl.LICENSING_MANAGER,
-            admin
-        );
-        accessControlSingleton.grantRole(
             AccessControl.IPORG_CREATOR_ROLE,
             admin
         );
