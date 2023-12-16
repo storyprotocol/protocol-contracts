@@ -22,7 +22,6 @@ async function main(hre) {
         }
 
         contracts[contractName] = await ethers.getContractAt(contractName, contractAddress);
-        console.log(contracts[contractName]);
     }
 
     return { chainId, contracts, deployment };

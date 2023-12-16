@@ -11,7 +11,8 @@ require('@openzeppelin/hardhat-upgrades');
 require('solidity-docgen');
 
 const namespacedStorageKey = require("./script/hardhat/namespacedStorageKey.js");
-const defenderUpdateContracts = require("./script/hardhat/defender/updateContracts.js");
+const defenderAdminProposal = require("./script/hardhat/defender/adminProposal.js");
+
 const { task } = require("hardhat/config");
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -24,9 +25,10 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
-task('sp:defender:update-contracts')
-    .setDescription('Uploads contract data to Defender')
-    .setAction(defenderUpdateContracts);
+task('sp:defender:admin-proposal')
+    .addPositionalParam('proposalFileName', 'Name of the proposal file in scripts/hardhat/proposals, without .js extension')
+    .setDescription('Creates a proposal on Defender, to be signed by the multisig')
+    .setAction(defenderAdminProposal);
 
 task('sp:eip7201-key')
     .addPositionalParam('namespace', 'Namespace, for example erc7201:example.main')
