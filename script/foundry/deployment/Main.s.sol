@@ -55,6 +55,8 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
     address licensingFrameworkRepo;
     address hooksFactory;
 
+    bool configByMultisig = false;
+
     constructor() JsonDeploymentHandler("main") {}
 
     /// @dev To use, run the following command (e.g. for Sepolia):
@@ -62,9 +64,23 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
     function run() public {
         _beginBroadcast();
+        configByMultisig = vm.envBool("DEPLOYMENT_CONFIG_BY_MULTISIG");
+        console.log("configByMultisig:", configByMultisig);
+
+        if (configByMultisig) {
+            _deployProtocolContracts(multisig);
+        } else {
+            _deployProtocolContracts(deployer);
+            _configureDeployment();
+        }
+
+        _writeDeployment();
+        _endBroadcast();
+    }
+
+    function _deployProtocolContracts(address accessControlAdmin) private {
         string memory contractKey;
         address newAddress;
-
         /// ACCESS CONTROL SINGLETON
         contractKey = "AccessControlSingleton-Impl";
 
@@ -80,7 +96,7 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
             newAddress,
             abi.encodeWithSelector(
                 bytes4(keccak256(bytes("initialize(address)"))),
-                admin
+                accessControlAdmin
             )
         );
         _writeAddress(contractKey, newAddress);
@@ -224,7 +240,7 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
                     ipOrgController: IPOrgController(ipOrgController)
                 }),
                 licensingFrameworkRepo,
-                admin
+                accessControlAdmin
             )
         );
         _writeAddress(contractKey, newAddress);
@@ -232,18 +248,7 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
         licensingModule = newAddress;
 
-        /// DEPLOY HOOKS
-        if (deployHooks) {
-            _deployHooks(contractKey, newAddress);
-        }
-        
-        /// IF CONFIGURE IN SCRIPT, CONFIGURE DEPLOYMENT WITH DEPLOYER ADDRESS
-        if (configureInScript) {
-            _configureDeployment();
-        }
-
-        _writeDeployment();
-        _endBroadcast();
+        _deployHooks(contractKey, newAddress);
     }
 
     function _deployHooks(string memory contractKey, address newAddress) private {
@@ -299,56 +304,42 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
          mockNFT = newAddress;
     }
 
+
+    function _grantContractRoles() private {
+        console.log("Granting roles to contracts...");
+        AccessControlSingleton accessControlSingleton = AccessControlSingleton(
+            accessControl
+        );
+        accessControlSingleton.grantRole(AccessControl.MODULE_EXECUTOR_ROLE, spg);
+        accessControlSingleton.grantRole(AccessControl.MODULE_EXECUTOR_ROLE, ipOrgController);
+        accessControlSingleton.grantRole(AccessControl.HOOK_CALLER_ROLE, moduleRegistry);
+        accessControlSingleton.grantRole(AccessControl.HOOK_CALLER_ROLE, registrationModule);
+        accessControlSingleton.grantRole(AccessControl.HOOK_CALLER_ROLE, relationshipModule);
+        accessControlSingleton.grantRole(AccessControl.HOOK_CALLER_ROLE, licensingModule);
+        console.log("Roles granted to contracts");
+    }
+
+
+
     function _configureDeployment() private {
         /////////////////////////////////////////////////////////////////////////////////////////////////////
         //                                      CONFIGURATION                                              //
         /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        /// GRANT ROLEs
+        /// GRANT TEMPOARY ROLES FOR DEPLOYER
         AccessControlSingleton accessControlSingleton = AccessControlSingleton(
             accessControl
         );
-        accessControlSingleton.grantRole(AccessControl.UPGRADER_ROLE, admin);
-        accessControlSingleton.grantRole(
-            AccessControl.RELATIONSHIP_MANAGER_ROLE,
-            admin
-        );
-        accessControlSingleton.grantRole(
-            AccessControl.LICENSING_MANAGER_ROLE,
-            admin
-        );
-        accessControlSingleton.grantRole(
-            AccessControl.IPORG_CREATOR_ROLE,
-            admin
-        );
-        accessControlSingleton.grantRole(
-            AccessControl.MODULE_REGISTRAR_ROLE,
-            admin
-        );
-        accessControlSingleton.grantRole(
-            AccessControl.MODULE_EXECUTOR_ROLE,
-            spg
-        );
-        accessControlSingleton.grantRole(
-            AccessControl.MODULE_EXECUTOR_ROLE,
-            ipOrgController
-        );
-        accessControlSingleton.grantRole(
-            AccessControl.HOOK_CALLER_ROLE,
-            moduleRegistry
-        );
-        accessControlSingleton.grantRole(
-            AccessControl.HOOK_CALLER_ROLE,
-            registrationModule
-        );
-        accessControlSingleton.grantRole(
-            AccessControl.HOOK_CALLER_ROLE,
-            relationshipModule
-        );
-        accessControlSingleton.grantRole(
-            AccessControl.HOOK_CALLER_ROLE,
-            licensingModule
-        );
+        console.log("Granting temporary roles to deployer...");
+        accessControlSingleton.grantRole(AccessControl.MODULE_REGISTRAR_ROLE, deployer);
+        accessControlSingleton.grantRole(AccessControl.LICENSING_MANAGER_ROLE, deployer);
+        console.log("Granted");
+
+        if (AccessControlSingleton(accessControl).hasRole(AccessControl.PROTOCOL_ADMIN_ROLE, deployer) == false) {
+            revert("AccessControlSingleton-Proxy: protocol admin role not granted");
+        }
+        // GRANT ROLES TO THE CONTRACTS
+        _grantContractRoles();
 
         // REGISTER MODULES
         ModuleRegistry(moduleRegistry).registerProtocolModule(
@@ -367,7 +358,7 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         ipAssetTypes[0] = "STORY";
         ipAssetTypes[1] = "CHARACTER";
         address ipOrg = StoryProtocol(spg).registerIpOrg(
-            admin,
+            deployer,
             "Sample IP Org",
             "SIPO",
             ipAssetTypes
@@ -406,6 +397,24 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
             paramDefs: paramDefs
         });
         LicensingFrameworkRepo(licensingFrameworkRepo).addFramework(framework);
+
+        // GRANT ROLES FOR MULTISIG
+        console.log("Granting roles to multisig...");
+        accessControlSingleton.grantRole(AccessControl.UPGRADER_ROLE, multisig);
+        accessControlSingleton.grantRole(AccessControl.RELATIONSHIP_MANAGER_ROLE, multisig);
+        accessControlSingleton.grantRole(AccessControl.LICENSING_MANAGER_ROLE, multisig);
+        accessControlSingleton.grantRole(AccessControl.IPORG_CREATOR_ROLE, multisig);
+        accessControlSingleton.grantRole(AccessControl.MODULE_REGISTRAR_ROLE, multisig);
+        console.log("Granted");
+
+        // RENOUNCE ROLES FOR DEPLOYER
+        console.log("Renouncing roles for deployer...");
+        accessControlSingleton.renounceRole(AccessControl.MODULE_REGISTRAR_ROLE, deployer);
+        accessControlSingleton.renounceRole(AccessControl.LICENSING_MANAGER_ROLE, deployer);
+
+        accessControlSingleton.renounceRole(AccessControl.PROTOCOL_ADMIN_ROLE, deployer);
+        console.log("Renounced");
+
 
     }
 }

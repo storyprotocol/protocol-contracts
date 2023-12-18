@@ -6,21 +6,24 @@ import "script/foundry/utils/StringUtil.sol";
 
 contract BroadcastManager is Script {
 
-    address public admin = address(0x456);
-    bool public configureInScript = true;
-    bool public deployHooks = true;
+    address public multisig;
+    address public deployer;
 
     function _beginBroadcast() internal {
         uint256 deployerPrivateKey;
-        configureInScript = vm.envBool("CONFIGURE_IN_SCRIPT");
-        deployHooks = vm.envBool("DEPLOY_HOOKS");
         if (block.chainid == 11155111) {
             deployerPrivateKey = vm.envUint("SEPOLIA_PRIVATEKEY");
-            admin = vm.envAddress("SEPOLIA_MULTISIG_ADDRESS");
+            multisig = vm.envAddress("SEPOLIA_MULTISIG_ADDRESS");
             vm.startBroadcast(deployerPrivateKey);
+            deployer = msg.sender;
+        } else if (block.chainid == 31337) {
+            multisig = address(0x456);
+            deployer = address(0x999);
+            vm.startPrank(deployer);
         } else {
-            vm.startPrank(admin);
+            revert("Unsupported chain");
         }
+        
     }
 
     function _endBroadcast() internal {
