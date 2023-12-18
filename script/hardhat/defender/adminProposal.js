@@ -36,6 +36,22 @@ function getStep(defenderContractId, contract, functionName, functionInputs) {
     }
 }
 
+/// @dev Create a Defender proposal, using the Defender SDK
+/// This script will read the proposal from a file in the script/proposals folder
+/// The proposal file should export an object with the following properties:
+/// - title: string
+/// - description: string
+/// - network: string
+/// - steps: array of objects with the following properties:
+///   - contractName: string
+///   - functionName: string
+///   - functionInputs: array of function inputs
+/// The script will then create a Defender proposal with the given steps
+/// The proposal will be created on the network specified in the proposal file
+/// The script will use the Defender API key and secret specified in the .env file
+/// The script will use the Defender multisig address specified in the .env file
+/// The file may contain multiple actions, which will be executed in order but batch into a single
+/// transaction to minimize signing processes for the multisig.
 async function main(args, hre) {
     const creds = { apiKey: process.env.DEFENDER_API_KEY, apiSecret: process.env.DEFENDER_API_SECRET };
     const client = new Defender(creds);
