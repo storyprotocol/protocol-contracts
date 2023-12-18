@@ -11,7 +11,12 @@ contract BroadcastManager is Script {
 
     function _beginBroadcast() internal {
         uint256 deployerPrivateKey;
-        if (block.chainid == 11155111) {
+        if (block.chainid == 1) {
+            deployerPrivateKey = vm.envUint("MAINNET_PRIVATEKEY");
+            deployer = vm.envAddress("MAINNET_DEPLOYER_ADDRESS");
+            multisig = vm.envAddress("MAINNET_MULTISIG_ADDRESS");
+            vm.startBroadcast(deployerPrivateKey);
+        } else if (block.chainid == 11155111) {
             deployerPrivateKey = vm.envUint("SEPOLIA_PRIVATEKEY");
             deployer = vm.envAddress("SEPOLIA_DEPLOYER_ADDRESS");
             multisig = vm.envAddress("SEPOLIA_MULTISIG_ADDRESS");
