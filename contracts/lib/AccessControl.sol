@@ -30,6 +30,4 @@ library AccessControl {
     // Role that can execute Hooks
     bytes32 public constant HOOK_CALLER_ROLE = keccak256("HOOK_CALLER_ROLE");
 
-    // Role to set legal terms in TermsRepository
-    bytes32 public constant LICENSING_MANAGER = keccak256("LICENSING_MANAGER");
 }

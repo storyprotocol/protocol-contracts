@@ -85,7 +85,7 @@ contract E2ETest is IE2ETest, BaseTest {
     function setUp() public virtual override {
         super.setUp();
         _grantRole(vm, AccessControl.RELATIONSHIP_MANAGER_ROLE, admin);
-        _grantRole(vm, AccessControl.LICENSING_MANAGER, admin);
+        _grantRole(vm, AccessControl.LICENSING_MANAGER_ROLE, admin);
         _grantRole(
             vm,
             AccessControl.HOOK_CALLER_ROLE,

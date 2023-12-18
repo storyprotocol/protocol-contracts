@@ -22,7 +22,7 @@ contract LicensingFrameworkRepoTest is Test, AccessControlHelper {
 
     function setUp() public {
         _setupAccessControl();
-        _grantRole(vm, AccessControl.LICENSING_MANAGER, admin);
+        _grantRole(vm, AccessControl.LICENSING_MANAGER_ROLE, admin);
         repo = new LicensingFrameworkRepo(address(accessControl));
     }
 
@@ -68,7 +68,7 @@ contract LicensingFrameworkRepoTest is Test, AccessControlHelper {
         vm.expectRevert(
             abi.encodeWithSelector(
                 Errors.MissingRole.selector,
-                AccessControl.LICENSING_MANAGER,
+                AccessControl.LICENSING_MANAGER_ROLE,
                 address(this)
             )
         );
