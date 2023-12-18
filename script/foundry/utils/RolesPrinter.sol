@@ -18,9 +18,6 @@ contract RolesPrinter is Script {
         console.log("LICENSING_MANAGER_ROLE");
         console.logBytes32(keccak256("LICENSING_MANAGER_ROLE"));
 
-        console.log("IPORG_CREATOR_ROLE");
-        console.logBytes32(keccak256("IPORG_CREATOR_ROLE"));
-
         console.log("MODULE_REGISTRAR_ROLE");
         console.logBytes32(keccak256("MODULE_REGISTRAR_ROLE"));
 

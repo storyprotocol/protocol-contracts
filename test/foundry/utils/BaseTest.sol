@@ -70,7 +70,6 @@ contract BaseTest is BaseTestUtils, ProxyHelper, AccessControlHelper {
         );
 
         spg = new StoryProtocol(ipOrgController, moduleRegistry);
-        _grantRole(vm, AccessControl.IPORG_CREATOR_ROLE, address(spg));
         _grantRole(vm, AccessControl.MODULE_EXECUTOR_ROLE, address(spg));
         _grantRole(vm, AccessControl.MODULE_EXECUTOR_ROLE, address(address(ipOrgController)));
         _grantRole(vm, AccessControl.MODULE_REGISTRAR_ROLE, address(this));

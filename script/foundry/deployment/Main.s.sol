@@ -404,7 +404,6 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
         accessControlSingleton.grantRole(AccessControl.UPGRADER_ROLE, multisig);
         accessControlSingleton.grantRole(AccessControl.RELATIONSHIP_MANAGER_ROLE, multisig);
         accessControlSingleton.grantRole(AccessControl.LICENSING_MANAGER_ROLE, multisig);
-        accessControlSingleton.grantRole(AccessControl.IPORG_CREATOR_ROLE, multisig);
         accessControlSingleton.grantRole(AccessControl.MODULE_REGISTRAR_ROLE, multisig);
         console.log("Granted");
 

@@ -20,11 +20,6 @@ module.exports = {
         {
             contractName: 'AccessControlSingleton',
             functionName: 'grantRole',
-            functionInputs: [roles["IPORG_CREATOR_ROLE"], safeAddress],
-        },
-        {
-            contractName: 'AccessControlSingleton',
-            functionName: 'grantRole',
             functionInputs: [roles["MODULE_REGISTRAR_ROLE"], safeAddress],
         }
         // TODO: add contract roles
