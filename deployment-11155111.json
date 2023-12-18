@@ -1,16 +1,19 @@
 {
   "main": {
-    "AccessControlSingleton-Impl": "0x14BA932B1aeEDA6049fcDF4Ee4DC71a5dF9d0afc",
-    "AccessControlSingleton-Proxy": "0x26bEDDa91c04086bA47cC3F3D34BA70A6E9eD882",
-    "IPAssetRegistry": "0x8FD58dB76De625cE586a8cF6ae96eFE96B58fb63",
-    "IPOrgController-Impl": "0xD691dc0f5C3e7602642859C35EE90Dd53Ec3402D",
-    "IPOrgController-Proxy": "0x813d230B3d30DcCE7F8E46e31c2c6A9d2Cb6cd57",
-    "LicenseRegistry": "0xC4854890191fA0d26da0369748cD998a85CeD04c",
-    "LicensingFrameworkRepo": "0xF089bC3Ab3046bC533A1a069c1C4eF30C00Efbea",
-    "LicensingModule": "0x9d8D9590290bC127C6ee12dCDce9417Ff90a954c",
-    "ModuleRegistry": "0x09D11C1f302e1897F695694634f609837ec19e14",
-    "RegistrationModule": "0xF97d4400CCe4A55a652ddE0D5ad6c89af51Fa75A",
-    "RelationshipModule": "0xB3c012e317C9F734CD021D48147e13202730DEa4",
-    "StoryProtocol": "0xfa460AC82d196ac2D53D659CE392a9AF33c59ab9"
+    "AccessControlSingleton-Impl": "0x492673f8AfA4aaf88cC4A6Ce4bD6e52c42A9e484",
+    "AccessControlSingleton-Proxy": "0xFDb1A620f6F3857529D6d1E68E3fF8e507B72c1e",
+    "IPAssetRegistry": "0x95998Cf78998ac2B17C58Fa20b679b1C78824EcE",
+    "IPOrgController-Impl": "0xEA356E6aE7835e0D209e94caBB04795a3c6bEc11",
+    "IPOrgController-Proxy": "0xa949beCa2743A707fFc53A355721BfBF724E7914",
+    "LicenseRegistry": "0x552af4Bae5ac4394eE8c04cA9DB68b7022e9091a",
+    "LicensingFrameworkRepo": "0xFe21c58fdf15dE5EC9652a119F90C11E01B1e953",
+    "LicensingModule": "0x6E4e00C8FEF107652F9351B6ABD4bc76d2922ba1",
+    "MockERC721": "0x4E6cA660341B6F2EDE541Fe635Ce632B06Ef6BB9",
+    "ModuleRegistry": "0x88831dA16858e6f4a8505c47B2e1CE0638bd914a",
+    "PolygonTokenHook": "0x549AcbA884b8ecB7F415E51Bf639F7CD59F44Bd5",
+    "RegistrationModule": "0xBade2f82162687397a6E4d80829cF4A138b46FF1",
+    "RelationshipModule": "0x04b2Edb9C1A35bbA621AB7fB4672B7BB3137A6Bc",
+    "StoryProtocol": "0x8B9537739B82629315D42fcC1d7DfaE034dB9195",
+    "TokenGatedHook": "0x89e764B5A999653eB4532a848a28289F80EcE031"
   }
 }

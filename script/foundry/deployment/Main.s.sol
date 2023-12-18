@@ -400,6 +400,7 @@ contract Main is Script, BroadcastManager, JsonDeploymentHandler, ProxyHelper {
 
         // GRANT ROLES FOR MULTISIG
         console.log("Granting roles to multisig...");
+        accessControlSingleton.grantRole(AccessControl.PROTOCOL_ADMIN_ROLE, multisig);
         accessControlSingleton.grantRole(AccessControl.UPGRADER_ROLE, multisig);
         accessControlSingleton.grantRole(AccessControl.RELATIONSHIP_MANAGER_ROLE, multisig);
         accessControlSingleton.grantRole(AccessControl.LICENSING_MANAGER_ROLE, multisig);
