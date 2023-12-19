@@ -36,6 +36,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.9.3",
     "@openzeppelin/contracts-upgradeable": "^4.9.3",
+    "@openzeppelin/defender-sdk": "^1.7.0",
     "solmate": "^6.2.0"
   }
 }

@@ -6,26 +6,30 @@ import "script/foundry/utils/StringUtil.sol";
 
 contract BroadcastManager is Script {
 
-    address public admin = address(0x456);
-    bool failIfDeployingToProd;
+    address public multisig;
+    address public deployer;
 
     function _beginBroadcast() internal {
-        if (failIfDeployingToProd) {
-            require(block.chainid != 1, "Cannot deploy to mainnet");
-            // TODO: add other prod chains
-        }
         uint256 deployerPrivateKey;
-        if (block.chainid == 5) {
-            deployerPrivateKey = vm.envUint("GOERLI_PRIVATEKEY");
-            admin = vm.envAddress("GOERLI_ADMIN_ADDRESS");
+        if (block.chainid == 1) {
+            deployerPrivateKey = vm.envUint("MAINNET_PRIVATEKEY");
+            deployer = vm.envAddress("MAINNET_DEPLOYER_ADDRESS");
+            multisig = vm.envAddress("MAINNET_MULTISIG_ADDRESS");
             vm.startBroadcast(deployerPrivateKey);
         } else if (block.chainid == 11155111) {
             deployerPrivateKey = vm.envUint("SEPOLIA_PRIVATEKEY");
-            admin = vm.envAddress("SEPOLIA_ADMIN_ADDRESS");
+            deployer = vm.envAddress("SEPOLIA_DEPLOYER_ADDRESS");
+            multisig = vm.envAddress("SEPOLIA_MULTISIG_ADDRESS");
             vm.startBroadcast(deployerPrivateKey);
+
+        } else if (block.chainid == 31337) {
+            multisig = address(0x456);
+            deployer = address(0x999);
+            vm.startPrank(deployer);
         } else {
-            vm.startPrank(admin);
+            revert("Unsupported chain");
         }
+        
     }
 
     function _endBroadcast() internal {

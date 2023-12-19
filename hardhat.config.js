@@ -10,12 +10,9 @@ require("@nomiclabs/hardhat-etherscan");
 require('@openzeppelin/hardhat-upgrades');
 require('solidity-docgen');
 
-const createFranchise = require("./script/hardhat/createFranchise.js");
-const createIPAsset = require("./script/hardhat/createIPAsset.js");
-const getIPAssetRegistryAddress = require("./script/hardhat/getIPAssetRegistryAddress.js");
-const getIPAsset = require("./script/hardhat/getIPAsset.js");
-const sbUploader = require("./script/hardhat/sbUploader.js");
 const namespacedStorageKey = require("./script/hardhat/namespacedStorageKey.js");
+const defenderAdminProposal = require("./script/hardhat/defender/adminProposal.js");
+
 const { task } = require("hardhat/config");
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -28,49 +25,10 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
-task('sp:create-franchise')
-    .addPositionalParam('name', 'Franchise name')
-    .addPositionalParam('symbol', 'Franchise symbol')
-    .addPositionalParam('description', 'Franchise description')
-    .addPositionalParam('tokenURI', 'Franchise token URI (arweave URL with metadata)')
-    .addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
-    .setDescription('Mint Franchise NFT and create IPAssetsRegistry contract')
-    .setAction(createFranchise);
-
-task('sp:get-ip-asset-registry-address')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Asset in, as given by FranchiseRegistry contract')
-    .setDescription('Get the address of the IPAssetsRegistry contract for the given Franchise')
-    .setAction(getIPAssetRegistryAddress);
-
-task('sp:create-ip-asset')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Asset in, as given by FranchiseRegistry contract')
-    .addPositionalParam('ipAssetType', 'STORY, CHARACTER, ART, GROUP, LOCATION or ITEM')
-    .addPositionalParam('name', 'IP Asset name')
-    .addPositionalParam('description', 'IP Asset description')
-    .addPositionalParam('mediaURL', 'IP Asset media URL')
-    .addOptionalParam('events', 'Show events in the tx receipt', false, types.boolean)
-    .setDescription('Mint IP Asset NFT and create IPAssetsRegistry contract')
-    .setAction(createIPAsset);
-
-task('sp:read-ip-asset')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Asset in, as given by FranchiseRegistry contract')
-    .addPositionalParam('ipAssetId', 'Id of the IP Asset to read')
-    .setDescription('Get the IP Asset details')
-    .setAction(getIPAsset);
-
-task('sp:uploader')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Assets in, as given by FranchiseRegistry contract')
-    .addPositionalParam('filePath', 'path to the Json data')
-    .addOptionalParam('batchSize', 'Number of blocks to upload in each batch', 100, types.int)
-    .setDescription('Mass upload IP Assets from a Json file')
-    .setAction(sbUploader);
-
-task('sp:update-ip-assets')
-    .addPositionalParam('franchiseId', 'Id of the Franchise to create the IP Assets in, as given by FranchiseRegistry contract')
-    .addPositionalParam('tx', 'tx hash that created blocks')
-    .addPositionalParam('filePath', 'path to the Json data')
-    .setDescription('Update ids for blocks in the Json file')
-    .setAction(sbUploader.updateIds);
+task('sp:defender:admin-proposal')
+    .addPositionalParam('proposalFileName', 'Name of the proposal file in scripts/hardhat/proposals, without .js extension')
+    .setDescription('Creates a proposal on Defender, to be signed by the multisig')
+    .setAction(defenderAdminProposal);
 
 task('sp:eip7201-key')
     .addPositionalParam('namespace', 'Namespace, for example erc7201:example.main')
@@ -90,10 +48,10 @@ module.exports = {
       chainId: 1,
       accounts: [process.env.MAINNET_PRIVATEKEY || "0x1234567890123456789012345678901234567890123456789012345678901234"]
     },
-    goerli: {
-      url: process.env.GOERLI_RPC_URL || "",
-      chainId: 5,
-      accounts: [process.env.GOERLI_PRIVATEKEY || "0x1234567890123456789012345678901234567890123456789012345678901234"]
+    sepolia: {
+      url: process.env.SEPOLIA_RPC_URL || "",
+      chainId: 11155111,
+      accounts: [process.env.SEPOLIA_PRIVATEKEY || "0x1234567890123456789012345678901234567890123456789012345678901234"]
     },
     local: {
       url: "http://127.0.0.1:8545",

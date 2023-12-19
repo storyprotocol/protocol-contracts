@@ -6,7 +6,7 @@ forge-cache/
 
 # Ignores development broadcast logs
 !/broadcast
-/broadcast/*/31337/
+/broadcast/*/
 /broadcast/**/dry-run/
 
 # Docs
@@ -32,3 +32,4 @@ script/data/
 # Coverage
 coverage/
 lcov.info
+

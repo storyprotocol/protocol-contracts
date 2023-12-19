@@ -56,7 +56,6 @@ contract IPOrgControllerTest is Test, ProxyHelper, AccessControlHelper {
 
     function setUp() public {
         _setupAccessControl();
-        _grantRole(vm, AccessControl.IPORG_CREATOR_ROLE, ipOrgOwner);
 
         moduleRegistry = new ModuleRegistry(address(accessControl));
         registry = new IPAssetRegistry(address(moduleRegistry));
