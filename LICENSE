@@ -1,100 +1,50 @@
-Business Source License 1.1
+ALPHA TESTING AGREEMENT
 
-License text copyright (c) 2017 MariaDB Corporation Ab, All Rights Reserved.
-"Business Source License" is a trademark of MariaDB Corporation Ab.
+Thank you for agreeing to help Story Protocol, Inc. (“Story”) test and validate our emerging protocol (the “Protocol”). This Alpha Testing Agreement (this “Agreement”) is entered into between Story, a Delaware corporation, and you (as an individual and on behalf of the entity who you represent) (“You”). This Alpha Testing Agreement governs your access to and use of the initial version of the Protocol, including certain pre-release software, pre-release developer dashboards, and related software (collectively, the “Software”) and API offered by Story to You solely for testing and evaluation purposes. Further description and related details of the Software and the API may be provided to you at the time you access or engage with the Software and the API. 
 
------------------------------------------------------------------------------
+By accessing or using the Software and api, you agree to be bound by this Agreement and accept all of its terms. If you do not accept all the terms of this Agreement, then you may not use the Software.
 
-Parameters
+Acknowledgment of Software and API Limitations. You acknowledge that: (a) the Software and API have not been made commercially available by Story; (b) the Software and API may not operate properly, be in final form or fully functional; (c) the Software and API may contain errors, design flaws or other problems; (d) it may not be possible to make the Software and API fully functional; (e) use of the Software and API may result in unexpected results, corruption or loss of data, or other unpredictable damage or loss; (f) the Software and API may include open source software, which is licensed pursuant to terms referenced in the software; and (g) Story has no obligation to release a commercial version of the Software and API or otherwise introduce the Software and API to the general public. You assume all risk arising from use of the Software and API, as further stated in this Agreement. 
 
-Licensor:             Story Protocol Inc.
+License.  
 
-Licensed Work:        Story Protocol Contracts
-                      The Licensed Work is (c) 2023 Story Protocol Inc.
+License Grant to the Protocol Source Code. Subject to your compliance with the terms and conditions of this Agreement, Story hereby grants to you a limited, nonexclusive, nontransferable, royalty-free, revocable license to access, use, and modify the Software solely for the purposes of testing and evaluation, and not for general production, release, or commercial use. You may modify the Software only to: (a) develop Updates and Improvements and (b) develop Your Applications (as defined below). “Update” means a modification or addition to the Software, such as a bug fix, patch, or other minor change that does not materially change utility, functionality, capability, application or platform; and “Improvements” means a new version of the Software that performs substantially the same function as the Software on which it is based, which represents a major change in utility, functionality, capability, application or platform. Updates and Improvements, if implemented by Story, will be deemed part of the Software. 
 
-Additional Use Grant: Any uses listed and defined at
-                      contracts-license-grants.storyprotocol.eth
+License Grant to API. Subject to your compliance with the terms and conditions of this Agreement, Story hereby grants to you a license to the API pursuant to the MIT open-source license. 
 
-Change Date:          The earlier of 2027-04-01 or a date specified at
-                      contracts-license-date.storyprotocol.eth
+Restrictions. You acknowledge that the Software and the API contain trade secrets of Story and its licensors, and, in order to protect such trade secrets and other interests that Story and its licensors may have in the Software and the API, you agree not to: (i) distribute, sell, sublicense or otherwise transfer the Software or the API, (ii) use the Software in any manner or for any purpose that infringes, misappropriates, or otherwise violates any Intellectual Property Right or other right of any third party, or that violates any applicable law; (iii) interfere with, or disrupt the integrity or performance of the Software or API, or any data or content contained therein or transmitted thereby; (iv) access or search the Software or API(or download any data or content contained therein or transmitted thereby) through the use of any engine, software, tool, agent, device or mechanism (including spiders, robots, crawlers or any other similar data mining tools) other than software or Software or API features provided by Story for use expressly for such purposes; (v) use the Software, API, or any other Story Confidential Information for benchmarking or competitive analysis, to develop, commercialize, license or sell any product, service or technology that could, directly or indirectly, compete with the Software or API; or (vi) make the functionality of the Software or API available to third party users other than its employees or individual contractors that it authorizes to use the Software or API on its behalf (“Authorized Users”). You may permit Authorized Users to use the Software and API, provided that you are responsible for all acts or omissions by its Authorized Users in connection with their use of the Software and API and their compliance with the terms and conditions of this Agreement.
 
-Change License:       GNU General Public License v2.0 or later
+Fees. Story, in its sole discretion and with reasonable prior written notice, may require payment of a fee for your access and use of the Software (or certain portions thereof). You agree to pay any applicable fees, including any third-party fees, associated with your use of the Protocol.
 
------------------------------------------------------------------------------
+Feedback. You agree to (a) test the Software and API and cooperate with Story in evaluating the Software and API, and (b) provide Story with feedback as reasonably requested from time to time. All feedback, comments, and suggestions for improvements that you provide to Story hereunder are referred to collectively as “Feedback”. 
 
-Terms
+Ownership. As between the parties, Story is the sole owner of all rights, title and interest in and to the Software and API, including all intellectual property rights therein. You will not acquire any rights or licenses in the Software, API, or Story’s Confidential Information, except as expressly provided in Section 2.1 this Agreement. You hereby irrevocably transfer and assign to Story and agree to irrevocably transfer and assign to Story, any right, title and interest that it may acquire or possess in and to the Software, API, Updates, Improvements, and any Feedback, including all worldwide patent rights (including patent applications and disclosures), copyright rights, trade secret rights, and other intellectual property rights (collectively, “Intellectual Property Rights”) therein. At Story’s request and expense, during and after the term of this Agreement, you will assist and cooperate with Story in all respects (and will cause its employees and subcontractors to assist and cooperate with Story in all respects), and will execute documents (and will cause your employees and subcontractors to execute documents), and will take such further acts reasonably requested by Story to enable Story to acquire, perfect, maintain and enforce Story’s Intellectual Property Rights in and to the Software, API, Updates, and Improvements or Feedback. You hereby appoint the officers of Story as your attorney-in-fact to execute documents on behalf of you and your employees and subcontractors for this limited purpose, with such power coupled with an interest.
 
-The Licensor hereby grants you the right to copy, modify, create derivative
-works, redistribute, and make non-production use of the Licensed Work. The
-Licensor may make an Additional Use Grant, above, permitting limited
-production use.
+User Content, Updates, Improvements, and Data. 
 
-Effective on the Change Date, or the fourth anniversary of the first publicly
-available distribution of a specific version of the Licensed Work under this
-License, whichever comes first, the Licensor hereby grants you rights under
-the terms of the Change License, and the rights granted in the paragraph
-above terminate.
+User Content. The Software and API may allow you to import, store, and share content such as text, files, graphics, images, music, audio and video. Anything (other than Feedback) that you post or otherwise make available through the Software or API is referred to as “User Content.” Story does not claim any ownership rights in any User Content and nothing in this Agreement will be deemed to restrict any rights that you may have to your User Content. By making any User Content available through the Software or API you hereby grant to Story a non-exclusive, transferable, worldwide, royalty-free license, with the right to sublicense, to use, copy, modify, create derivative works based upon, distribute, publicly display, and publicly perform your User Content in connection with operating, providing, and improving (including for training, optimizing, and developing) the Software and API and Story’s other products and services. You are solely responsible for all your User Content. You represent and warrant that you have (and will have) all rights that are necessary to grant us the license rights in your User Content under this Agreement. You represent and warrant that neither your User Content, nor your use and provision of your User Content to be made available through the Software or API, nor any use of your User Content by Story on or through the Software or API will infringe, misappropriate or violate a third party’s Intellectual Property Rights, or rights of publicity or privacy, or result in the violation of any applicable law or regulation.
 
-If your use of the Licensed Work does not comply with the requirements
-currently in effect as described in this License, you must purchase a
-commercial license from the Licensor, its affiliated entities, or authorized
-resellers, or you must refrain from using the Licensed Work.
+Your Applications. In connection with your use of the Software and API, you may develop and provide Story with Your Applications. For the purpose of this Agreement, “Your Applications” means a free-standing software application designed to be interoperable with, and run on, the Protocol. You and Story agree that, as between the parties, to the fullest extent permitted by applicable law, Your Applications (excluding the Software, API, and all Intellectual Property Rights therein) will be owned by you. You hereby grant to Story a non-exclusive, transferable, worldwide, royalty-free license, to use, copy, modify, create derivative works based upon, distribute, publicly display, and publicly perform the Your Applications during the term of this Agreement. You represent and warrant that neither Your Application or license grant to Story, nor any use of Your Applications by Story on or through the Software or API will infringe, misappropriate or violate a third party’s Intellectual Property Rights, or rights of publicity or privacy, or result in the violation of any applicable law or regulation.
 
-All copies of the original and modified Licensed Work, and derivative works
-of the Licensed Work, are subject to this License. This License applies
-separately for each version of the Licensed Work and the Change Date may vary
-for each version of the Licensed Work released by Licensor.
+Information Collection and Use. Story may collect, store, retain, and use your personal information (including, without limitation, your email address, IP address, social media account information, and social media posts) to facilitate your use of the Software and API. Story may also use or disclose such personal information collected for Story’s current and future business purposes, such as product development, research, legal compliance, and QA testing, including disclosing such personal information to third parties for such purposes. You agree to all such collection, use, and disclosure of your personal information by Story. Story will use and retain such personal information in accordance with applicable laws governing the use and retention of such personal information. Notwithstanding the foregoing, Story has no obligation to retain any data or information that you may have provided to Story.
 
-You must conspicuously display this License on each original or modified copy
-of the Licensed Work. If you receive the Licensed Work in original or
-modified form from a third party, the terms and conditions set forth in this
-License apply to your use of that work.
+Confidentiality and No Disparagement.  
 
-Any use of the Licensed Work in violation of this License will automatically
-terminate your rights under this License for the current and all other
-versions of the Licensed Work.
+For purposes of this Agreement, “Confidential Information” means the Software, API, this Agreement, and any information or materials disclosed by or on behalf of Story to you that a person exercising reasonable business judgment would understand to be confidential or proprietary including without limitation business plans; competitive strategy; marketing plans; contracts and licenses; employee, customer, supplier, shareholder, partner or investor lists; inventions, improvements, designs, formulae, algorithms, processes, technology, know-how, business processes, trade secrets and business models; notes, sketches, flow charts, and elements thereof; source code, object code, graphical design, databases, user interfaces, works of authorship, and other intellectual property, including that of any customer, supplier or other third party; and strategy, activities, or contemplated activities with respect to development, acquisition, exploitation and/or enforcement of intellectual property rights. You agree: (i) to maintain all Confidential Information in strict confidence; (ii) not to disclose Confidential Information to any third parties; (iii) not disclose or cause to be disclosed any Confidential Information except to your employees or consultants who have a bona fide need to know such Confidential Information to use the Software or API under this Agreement and who are bound by written agreements with non-use and confidentiality obligations at least as protective as those set forth in this Agreement; (iv) not to use any Confidential Information for any purpose except for the purpose of testing and evaluating the Software and API in accordance with this Agreement; (v) maintain the Confidential Information in strict confidence; and (vi) protect and safeguard the Confidential Information using at least the same degree of care as you use to protect the confidentiality of your own confidential information of similar importance, but no less than a commercially reasonable degree of care. not disclose or cause to be disclosed any Confidential Information except to your Authorized Users who have a bona fide need to know such Confidential Information to use the Software and API under this Agreement and who are bound by written agreements with non-use and confidentiality obligations at least as protective as those set forth in this Agreement.
 
-This License does not grant you any right in any trademark or logo of
-Licensor or its affiliates (provided that you may use a trademark or logo of
-Licensor as expressly required by this License).
+The obligations and restrictions in Section 6.1 will not apply to any information or materials that: (a) were, at the date of disclosure, or have subsequently become, generally known or available to the public through no act or failure to act by you; (b) were rightfully known by you prior to the disclosure of such information or materials from Story; (c) are rightfully acquired by you from a third party who has the right to disclose such information or materials without breach of any obligation of confidentiality or restricted use to Story; or (d) are independently developed by you without access to any Confidential Information.
 
-TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSED WORK IS PROVIDED ON
-AN "AS IS" BASIS. LICENSOR HEREBY DISCLAIMS ALL WARRANTIES AND CONDITIONS,
-EXPRESS OR IMPLIED, INCLUDING (WITHOUT LIMITATION) WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AND
-TITLE.
+You will not at any time make, publish or communicate to any person or entity or in any public forum any defamatory or disparaging remarks, comments, or statements concerning Story, any of its employees or directors, the Software, or the Protocol. 
 
-MariaDB hereby grants you permission to use this License’s text to license
-your works, and to refer to it using the trademark "Business Source License",
-as long as you comply with the Covenants of Licensor below.
+Upon termination of this Agreement, or earlier upon Story’s request, you will promptly destroy all tangible items and embodiments containing or consisting of Confidential Information and all copies thereof. All Confidential Information remains the sole and exclusive property of Story.  
 
------------------------------------------------------------------------------
+You agree that any breach of this Agreement by you may result in irreparable harm to Story, for which damages would be an inadequate remedy and therefore, in addition to its rights and remedies otherwise available at law, Story shall be entitled to seek equitable relief, including injunction, in the event of such breach.
 
-Covenants of Licensor
+Termination. Story reserves the right to modify or terminate the Software and API, this Agreement, or your use of the Software and API, or to limit or deny access to the Software and API, at any time, in its sole discretion, for any reason, upon five (5) business days prior written notice and without liability to you. If Story has reasonably determined that you are in violation of or may reasonably and imminently violate any terms of this Agreement, then Story may immediately terminate this Agreement and your use of the Software and API. You may discontinue your access and use of the Software and API at any time. Upon any termination, discontinuation or cancellation of the Software or API, this Agreement or your access, the following sections of this Agreement will survive: 1, 2.3, 4, 5.1, 5.3, 6, 7, 8, 9, and 10.
 
-In consideration of the right to use this License’s text and the "Business
-Source License" name and trademark, Licensor covenants to MariaDB, and to all
-other recipients of the licensed work to be provided by Licensor:
+Warranty Disclaimers. You acknowledge that the Software AND API are being provided “AS IS.” STORY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT, AND ANY WARRANTIES ARISING OUT OF COURSE OF DEALING OR USAGE OF TRADE. STORY MAKES NO WARRANTY THAT ANY OF THE SOFTWARE OR API WILL MEET YOUR REQUIREMENTS AND/OR THAT THE SOFTWARE OR API WILL BE UNINTERRUPTED, TIMELY OR ERROR-FREE, NOR DOES STORY MAKE ANY WARRANTY AS TO THE RESULTS THAT MAY BE OBTAINED FROM THE USE OF THE SOFTWARE OR API OR THE ACCURACY OF ANY OTHER INFORMATION OBTAINED THROUGH THE SOFTWARE OR API. YOU UNDERSTAND AND AGREE THAT ANY MATERIAL AND/OR DATA DOWNLOADED OR OTHERWISE OBTAINED THROUGH THE USE OF ANY OF THE SOFTWARE OR API IS DONE AT YOUR SOLE RISK AND THAT YOU WILL BE SOLELY RESPONSIBLE FOR ANY DAMAGE TO YOUR COMPUTER SYSTEM AND/OR LOSS OF DATA THAT RESULTS FROM THE DOWNLOAD OF SUCH MATERIAL AND/OR DATA.
 
-1. To specify as the Change License the GPL Version 2.0 or any later version,
-   or a license that is compatible with GPL Version 2.0 or a later version,
-   where "compatible" means that software provided under the Change License can
-   be included in a program with software provided under GPL Version 2.0 or a
-   later version. Licensor may specify additional Change Licenses without
-   limitation.
+Limitation on Liability. IN NO EVENT WILL STORY BE LIABLE TO YOU OR TO ANY THIRD PARTY FOR DAMAGES OF ANY KIND, INCLUDING, WITHOUT LIMITATION, DIRECT, SPECIAL, INCIDENTAL, PUNITIVE OR CONSEQUENTIAL DAMAGES (INCLUDING LOSS OF USE, DATA, BUSINESS OR PROFITS) ARISING OUT OF OR IN CONNECTION WITH THIS AGREEMENT OR THE INSTALLATION OR USE OF OR INABILITY TO USE THE SOFTWARE OR API OR FOR ANY ERROR OR DEFECT IN THE SOFTWARE OR API, WHETHER SUCH LIABILITY ARISES FROM ANY CLAIM BASED UPON CONTRACT, WARRANTY, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, AND WHETHER OR NOT STORY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH LOSS OR DAMAGE. TO THE EXTENT PERMITTED BY APPLICABLE LAW, STORY’S LIABILITY HEREUNDER IS LIMITED TO $50.00. THE PARTIES HAVE AGREED THAT THE LIMITATIONS IN THIS SECTION WILL SURVIVE AND APPLY EVEN IF ANY LIMITED REMEDY SPECIFIED IN THIS AGREEMENT IS FOUND TO HAVE FAILED OF ITS ESSENTIAL PURPOSE. 
 
-2. To either: (a) specify an additional grant of rights to use that does not
-   impose any additional restriction on the right granted in this License, as
-   the Additional Use Grant; or (b) insert the text "None".
+Miscellaneous. This Agreement will be governed and construed in accordance with the laws of the State of Delaware, without regard to its conflict of laws provisions. The exclusive jurisdiction and venue of any action related to this Agreement will be the state and federal courts located in the San Francisco, California, and each of the parties hereto waives any objection to jurisdiction and venue in such courts. This Agreement constitutes the entire and exclusive understanding and agreement between Story and you with respect to its subject matter and supersedes and replaces any and all prior oral or written understandings or agreements between Story and you with respect to its subject matter. If for any reason a court of competent jurisdiction finds any provision of this Agreement invalid or unenforceable, that provision will be enforced to the maximum extent permissible, and the other provisions of this Agreement will remain in full force and effect. You may not assign or transfer this Agreement, by operation of law or otherwise, without Story’s prior written consent. “Including” means “including, without limitation.” Any attempt by you to assign or transfer this Agreement, without such consent, will be null and of no effect. Story s may freely assign or transfer this Agreement without restriction. Subject to the foregoing, this Agreement will bind and inure to the benefit of the parties, their successors and permitted assigns. Story’s failure to enforce any right or provision of this Agreement will not be considered a waiver of those rights. The waiver of any such right or provision will be effective only if in writing and signed by a duly authorized representative of Story. Except as expressly set forth in this Agreement, the exercise by either party of any of its remedies under this Agreement will be without prejudice to its other remedies under this Agreement or otherwise. Electronic signatures will have the same weight and effect as originals.
 
-3. To specify a Change Date.
-
-4. Not to modify this License in any other way.
-
------------------------------------------------------------------------------
-
-Notice
-
-The Business Source License (this document, or the "License") is not an Open
-Source license. However, the Licensed Work will eventually be made available
-under an Open Source License, as stated in this License.
