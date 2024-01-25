@@ -172,7 +172,7 @@ You can refer to the [config.ts](https://github.com/OpenZeppelin/solidity-docgen
 
 ## License
 
-The primary license for StoryProtocol is the Business Source License 1.1 (`BUSL-1.1`), see [LICENSE](https://github.com/storyprotocol/protocol-contracts/blob/main/LICENSE). Minus the following exceptions:
+The primary license for StoryProtocol is the Alpha Testing Agreement, see [LICENSE](https://github.com/storyprotocol/protocol-contracts/blob/main/LICENSE). Minus the following exceptions:
 - [Hooks](./contracts/hooks) and [Base Modules](./contracts/modules/base) have an MIT License
 - [Interfaces](./contracts/interfaces) have an MIT license
 
