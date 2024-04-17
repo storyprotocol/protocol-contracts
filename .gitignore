@@ -17,7 +17,6 @@ docs/
 
 .idea/
 .vscode
-.github/
 node_modules/
 
 # OSX
