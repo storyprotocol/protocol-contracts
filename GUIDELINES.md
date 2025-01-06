@@ -29,7 +29,7 @@ In some cases unit tests may be insufficient and complementary techniques should
 
 1. Property-based tests (aka. fuzzing) for math-heavy code.
 2. hardhat test using `hardhat-upgrades` OZ plugin to verify storage and upgradeability (until they support Foundry).
-3. Fork tests for upgreadeability to new implementations for upgradeable contracts, testing against the deployed contracts.
+3. Fork tests for upgradeability to new implementations for upgradeable contracts, testing against the deployed contracts.
 4. E2E tests for critical (happy) paths.
 5. Formal verification for state machines.
 
@@ -67,7 +67,7 @@ External contributions must be reviewed separately by multiple maintainers.
 
 Automation should be used as much as possible to reduce the possibility of human error and forgetfulness.
 
-Automations that make use of sensitive credentials must use secure secret management, and must be strengthened against attacks such as [those on GitHub Actions worklows](https://github.com/nikitastupin/pwnhub).
+Automations that make use of sensitive credentials must use secure secret management, and must be strengthened against attacks such as [those on GitHub Actions workflows](https://github.com/nikitastupin/pwnhub).
 
 Some other examples of automation are:
 
