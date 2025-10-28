@@ -12,13 +12,13 @@
 Story Protocol is a decentralized IP protocol for powering the next wave of creative innovation on the Internet. By providing a decentralized IP registry and a set of powerful modules centered around IP licensing, Story Protocol enables creators to build new forms of IP without the friction imposed by traditional processes.
 
 ## Documentation
-[See Documenentation](https://docs.storyprotocol.xyz/docs/overview-2)
+[See Documenentation](https://docs.storyprotocol.xyz/docs/what-is-story)
 
 ## Guidelines
 [See our contribution guidelines](./GUIDELINES.md)
 
 # Deployed Contracts
-- [Sepolia addresses](https://github.com/storyprotocol/protocol-contracts/deployment-11155111.json)
+- [Sepolia addresses](https://docs.storyprotocol.xyz/docs/deployed-smart-contracts)
 
 # Installing
 
