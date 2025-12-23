@@ -168,7 +168,7 @@ contract LicensingModule is BaseModule, ILicensingModule {
 
     /// @notice Creates a non-reciprocal license, meaning that the license parameters
     /// do not come from the parent license, but from the ipOrg configuration.
-    /// This proccess serves for licenses without parent, or for derivatives
+    /// This process serves for licenses without parent, or for derivatives
     /// of non-reciprocal licenses.
     /// Determining the license parameters is a 3-step process:
     /// 1. Get the default values set by the ipOrg and the framework defaults

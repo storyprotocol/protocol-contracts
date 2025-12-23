@@ -108,7 +108,7 @@ contract LicensingFrameworkRepoTest is Test, AccessControlHelper {
             availableChoices: ""
         });
         assertTrue(Licensing.validateParamValue(pDef, abi.encode(1123123)));
-        //WARNING: everyting can be decoded as a number
+        //WARNING: everything can be decoded as a number
        
     }
 
