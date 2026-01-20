@@ -28,8 +28,8 @@
 
     **Hooks**
 
-    -   SyncBaseHook: to be inherited by all the syncrhonous actions (payment, token gating, etc)
-    -   AsyncBaseHook: to be inherited by all the asyncrhonous actions (oracles, multi step/sig actions, etc)
+    -   SyncBaseHook: to be inherited by all the synchronous actions (payment, token gating, etc)
+    -   AsyncBaseHook: to be inherited by all the asynchronous actions (oracles, multi step/sig actions, etc)
     -   TokenGatedHook: checks if caller owns an NFT, if not the module action cannot continue.
     -   PolygonTokenHook: example async hook, checks if caller owns tokens in the Polygon network.
 
