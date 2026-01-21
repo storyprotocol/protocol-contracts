@@ -10,7 +10,7 @@ release: 'alpha'
 **Describe the bug**
 
 A clear and concise description of what the bug is.
-For security related issues, please contact the team via immunefi directly.
+For security related issues, please contact the team via Immunefi directly.
 
 **More details**
 1. Which network (Sepolia, Mainnet)?

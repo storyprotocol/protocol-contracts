@@ -12,7 +12,7 @@
 Story Protocol is a decentralized IP protocol for powering the next wave of creative innovation on the Internet. By providing a decentralized IP registry and a set of powerful modules centered around IP licensing, Story Protocol enables creators to build new forms of IP without the friction imposed by traditional processes.
 
 ## Documentation
-[See Documenentation](https://docs.storyprotocol.xyz/docs/overview-2)
+[See Documentation](https://docs.storyprotocol.xyz/docs/overview-2)
 
 ## Guidelines
 [See our contribution guidelines](./GUIDELINES.md)
@@ -88,7 +88,7 @@ Before using any task, make sure you have run
 npx hardhat compile
 ```
 
-NOTE: All task that generate transactions can be called with additional param `--events true ` so they print the tx receipt's events
+NOTE: All tasks that generate transactions can be called with additional param `--events true ` so they print the tx receipt's events
 Create a Franchise
 ```
 npx hardhat --network <networ name> sp:create-franchise -name="Test" -description="Short description" -symbol="TT"
